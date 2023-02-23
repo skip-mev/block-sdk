@@ -1,0 +1,14 @@
+syntax = "proto3";
+package skipmev.pob.auction.v1;
+
+option go_package = "github.com/skip-mev/pob/x/auction/types";
+
+import "gogoproto/gogo.proto";
+
+// GenesisState defines the genesis state of the x/auction module.
+message GenesisState {
+  Params params = 1 [(gogoproto.nullable) = false];
+}
+
+// Params defines the parameters of the x/auction module.
+message Params {}
