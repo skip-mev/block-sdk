@@ -1,14 +1,42 @@
 syntax = "proto3";
 package skipmev.pob.auction.v1;
 
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "amino/amino.proto";
+
 option go_package = "github.com/skip-mev/pob/x/auction/types";
 
-import "gogoproto/gogo.proto";
-
 // GenesisState defines the genesis state of the x/auction module.
-message GenesisState {
-  Params params = 1 [(gogoproto.nullable) = false];
-}
+message GenesisState { Params params = 1 [ (gogoproto.nullable) = false ]; }
 
 // Params defines the parameters of the x/auction module.
-message Params {}
+message Params {
+  option (amino.name) = "cosmos-sdk/x/auction/Params";
+
+  // max_bundle_size is the maximum number of transactions that can be bundled
+  // in a single bundle.
+  uint32 max_bundle_size = 1;
+  // escrow_account_address is the address of the account that will hold the
+  // funds for the auctions.
+  string escrow_account_address = 2;
+  // reserve_fee specifies a fee that the bidder must pay to enter the auction.
+  repeated cosmos.base.v1beta1.Coin reserve_fee = 3 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // min_buy_in_fee speficies the bid floor for the auction.
+  repeated cosmos.base.v1beta1.Coin min_buy_in_fee = 4 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+  // min_bid_increment specifies the minimum amount that the next bid must be
+  // greater than the previous bid.
+  repeated cosmos.base.v1beta1.Coin min_bid_increment = 5 [
+    (gogoproto.nullable) = false,
+    (amino.dont_omitempty) = true,
+    (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
+  ];
+}

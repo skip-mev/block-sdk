@@ -1,0 +1,28 @@
+syntax = "proto3";
+package skipmev.pob.auction.v1;
+
+import "gogoproto/gogo.proto";
+import "google/api/annotations.proto";
+import "cosmos_proto/cosmos.proto";
+import "cosmos/query/v1/query.proto";
+import "pob/auction/v1/genesis.proto";
+
+option go_package = "github.com/skip-mev/pob/x/auction/types";
+
+// Query defines the x/auction querier service.
+service Query {
+  // Params queries the parameters of the x/auction module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/pob/auction/v1/params";
+  }
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+}
