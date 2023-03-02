@@ -26,7 +26,7 @@ message Params {
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  // min_buy_in_fee speficies the bid floor for the auction.
+  // min_buy_in_fee specifies the bid floor for the auction.
   repeated cosmos.base.v1beta1.Coin min_buy_in_fee = 4 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,

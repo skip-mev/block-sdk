@@ -81,7 +81,7 @@ type Params struct {
 	EscrowAccountAddress string `protobuf:"bytes,2,opt,name=escrow_account_address,json=escrowAccountAddress,proto3" json:"escrow_account_address,omitempty"`
 	// reserve_fee specifies a fee that the bidder must pay to enter the auction.
 	ReserveFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,3,rep,name=reserve_fee,json=reserveFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"reserve_fee"`
-	// min_buy_in_fee speficies the bid floor for the auction.
+	// min_buy_in_fee specifies the bid floor for the auction.
 	MinBuyInFee github_com_cosmos_cosmos_sdk_types.Coins `protobuf:"bytes,4,rep,name=min_buy_in_fee,json=minBuyInFee,proto3,castrepeated=github.com/cosmos/cosmos-sdk/types.Coins" json:"min_buy_in_fee"`
 	// min_bid_increment specifies the minimum amount that the next bid must be
 	// greater than the previous bid.
