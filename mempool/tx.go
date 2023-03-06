@@ -7,23 +7,25 @@ import (
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
 
-type (
-	// WrappedTx defines a wrapper around an sdk.Tx with additional metadata.
-	WrappedTx struct {
-		sdk.Tx
+// WrappedBidTx defines a wrapper around an sdk.Tx that contains a single
+// MsgAuctionBid message with additional metadata.
+type WrappedBidTx struct {
+	sdk.Tx
 
-		hash [32]byte
+	hash [32]byte
+	bid  sdk.Coins
+}
+
+func NewWrappedBidTx(tx sdk.Tx, hash [32]byte, bid sdk.Coins) *WrappedBidTx {
+	return &WrappedBidTx{
+		Tx:   tx,
+		hash: hash,
+		bid:  bid,
 	}
+}
 
-	// WrappedBidTx defines a wrapper around an sdk.Tx that contains a single
-	// MsgAuctionBid message with additional metadata.
-	WrappedBidTx struct {
-		sdk.Tx
-
-		hash [32]byte
-		bid  sdk.Coins
-	}
-)
+func (wbtx *WrappedBidTx) GetHash() [32]byte { return wbtx.hash }
+func (wbtx *WrappedBidTx) GetBid() sdk.Coins { return wbtx.bid }
 
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if
 // one exists. If a MsgAuctionBid does exist and other messages are also present,
@@ -47,8 +49,7 @@ func GetMsgAuctionBidFromTx(tx sdk.Tx) (*auctiontypes.MsgAuctionBid, error) {
 		return auctionBidMsgs[0], nil
 
 	default:
-		// A transaction with at at least one MsgAuctionBid message and some other
-		// message.
+		// a transaction with at at least one MsgAuctionBid message
 		return nil, errors.New("invalid MsgAuctionBid transaction")
 	}
 }
