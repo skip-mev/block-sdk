@@ -20,13 +20,13 @@ message Params {
   // escrow_account_address is the address of the account that will hold the
   // funds for the auctions.
   string escrow_account_address = 2;
-  // reserve_fee specifies a fee that the bidder must pay to enter the auction.
+  // reserve_fee specifies the bid floor for the auction.
   repeated cosmos.base.v1beta1.Coin reserve_fee = 3 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
-  // min_buy_in_fee specifies the bid floor for the auction.
+  // min_buy_in_fee specifies the fee that the bidder must pay to enter the auction.
   repeated cosmos.base.v1beta1.Coin min_buy_in_fee = 4 [
     (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true,

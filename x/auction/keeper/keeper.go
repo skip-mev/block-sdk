@@ -120,7 +120,7 @@ func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coins, error) {
 	return params.ReserveFee, nil
 }
 
-// GetMinBuyInFee returns the bid floor for an auction.
+// GetMinBuyInFee returns the fee that the bidder must pay to enter the auction.
 func (k Keeper) GetMinBuyInFee(ctx sdk.Context) (sdk.Coins, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
