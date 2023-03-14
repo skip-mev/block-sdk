@@ -18,7 +18,5 @@ const (
 	prefixParams = iota + 1
 )
 
-var (
-	// KeyPrefixParams is the store key for the auction module's parameters.
-	KeyParams = []byte{prefixParams}
-)
+// KeyParams is the store key for the auction module's parameters.
+var KeyParams = []byte{prefixParams}

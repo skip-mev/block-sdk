@@ -48,7 +48,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			totalTxBytes int64
 		)
 
-		bidTxMap := make(map[string]struct{})
+		bidTxMap := make(map[string]struct{}) //nolint
 		bidTxIterator := h.mempool.AuctionBidSelect(ctx)
 
 		// Attempt to select the highest bid transaction that is valid and whose

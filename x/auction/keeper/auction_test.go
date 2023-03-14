@@ -16,15 +16,15 @@ import (
 func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 	var (
 		// Tx building variables
-		accounts []Account = []Account{} // tracks the order of signers in the bundle
-		balance  sdk.Coins = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
-		bid      sdk.Coins = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		accounts = []Account{} // tracks the order of signers in the bundle
+		balance  = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
+		bid      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
 
 		// Auction params
-		maxBundleSize uint32         = 10
-		reserveFee    sdk.Coins      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		minBuyInFee   sdk.Coins      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		escrowAddress sdk.AccAddress = sdk.AccAddress([]byte("escrow"))
+		maxBundleSize uint32 = 10
+		reserveFee           = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		minBuyInFee          = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		escrowAddress        = sdk.AccAddress([]byte("escrow"))
 	)
 
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
@@ -160,11 +160,9 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 }
 
 func (suite *IntegrationTestSuite) TestValidateBundle() {
-	var (
-		// TODO: Update this to be multi-dimensional to test multi-sig
-		// https://github.com/skip-mev/pob/issues/14
-		accounts []Account // tracks the order of signers in the bundle
-	)
+	// TODO: Update this to be multi-dimensional to test multi-sig
+	// https://github.com/skip-mev/pob/issues/14
+	var accounts []Account // tracks the order of signers in the bundle
 
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	bidder := RandomAccounts(rng, 1)[0]

@@ -72,7 +72,6 @@ func TestMsgAuctionBid(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-
 			err := tc.msg.ValidateBasic()
 			if tc.expectPass {
 				if err != nil {
@@ -115,7 +114,6 @@ func TestMsgUpdateParams(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.description, func(t *testing.T) {
-
 			err := tc.msg.ValidateBasic()
 			if tc.expectPass {
 				if err != nil {

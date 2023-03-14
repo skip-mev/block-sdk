@@ -8,9 +8,7 @@ import (
 	"github.com/skip-mev/pob/x/auction/types"
 )
 
-var (
-	_ types.MsgServer = MsgServer{}
-)
+var _ types.MsgServer = MsgServer{}
 
 // MsgServer is the wrapper for the auction module's msg service.
 type MsgServer struct {

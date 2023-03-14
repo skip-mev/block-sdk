@@ -10,11 +10,11 @@ var (
 	// TODO: Choose reasonable default values.
 	//
 	// Ref: https://github.com/skip-mev/pob/issues/7
-	DefaultMaxBundleSize        uint32 = 0
-	DefaultEscrowAccountAddress        = ""
-	DefaultReserveFee                  = sdk.Coins{}
-	DefaultMinBuyInFee                 = sdk.Coins{}
-	DefaultMinBidIncrement             = sdk.Coins{}
+	DefaultMaxBundleSize        uint32
+	DefaultEscrowAccountAddress string
+	DefaultReserveFee           = sdk.Coins{}
+	DefaultMinBuyInFee          = sdk.Coins{}
+	DefaultMinBidIncrement      = sdk.Coins{}
 )
 
 // NewParams returns a new Params instance with the provided values.

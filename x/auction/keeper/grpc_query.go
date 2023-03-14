@@ -7,9 +7,7 @@ import (
 	"github.com/skip-mev/pob/x/auction/types"
 )
 
-var (
-	_ types.QueryServer = QueryServer{}
-)
+var _ types.QueryServer = QueryServer{}
 
 // QueryServer defines the auction module's gRPC querier service.
 type QueryServer struct {
