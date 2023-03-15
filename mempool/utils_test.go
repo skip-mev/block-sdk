@@ -11,8 +11,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
+	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
 
 type encodingConfig struct {
@@ -65,4 +68,81 @@ func RandomAccounts(r *rand.Rand, n int) []Account {
 	}
 
 	return accs
+}
+
+func createTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.Msg) (authsigning.Tx, error) {
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+
+	sigV2 := signing.SignatureV2{
+		PubKey: account.PrivKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: nonce,
+	}
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	return txBuilder.GetTx(), nil
+}
+
+func createRandomMsgs(numberMsgs int) []sdk.Msg {
+	msgs := make([]sdk.Msg, numberMsgs)
+	for i := 0; i < numberMsgs; i++ {
+		msgs[i] = &banktypes.MsgSend{
+			FromAddress: sdk.AccAddress([]byte("addr1_______________")).String(),
+			ToAddress:   sdk.AccAddress([]byte("addr2_______________")).String(),
+		}
+	}
+
+	return msgs
+}
+
+// createMsgAuctionBid creates a new MsgAuctionBid with numberMsgs of referenced transactions embedded into the message and the inputted bid/bidder.
+func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, numberMsgs int) (*auctiontypes.MsgAuctionBid, error) {
+	bidMsg := &auctiontypes.MsgAuctionBid{
+		Bidder:       bidder.Address.String(),
+		Bid:          bid,
+		Transactions: make([][]byte, numberMsgs),
+	}
+
+	for i := 0; i < numberMsgs; i++ {
+		txBuilder := txCfg.NewTxBuilder()
+
+		msgs := []sdk.Msg{
+			&banktypes.MsgSend{
+				FromAddress: bidder.Address.String(),
+				ToAddress:   bidder.Address.String(),
+			},
+		}
+		if err := txBuilder.SetMsgs(msgs...); err != nil {
+			return nil, err
+		}
+
+		sigV2 := signing.SignatureV2{
+			PubKey: bidder.PrivKey.PubKey(),
+			Data: &signing.SingleSignatureData{
+				SignMode:  txCfg.SignModeHandler().DefaultMode(),
+				Signature: nil,
+			},
+			Sequence: nonce + uint64(i),
+		}
+		if err := txBuilder.SetSignatures(sigV2); err != nil {
+			return nil, err
+		}
+
+		bz, err := txCfg.TxEncoder()(txBuilder.GetTx())
+		if err != nil {
+			return nil, err
+		}
+
+		bidMsg.Transactions[i] = bz
+	}
+
+	return bidMsg, nil
 }

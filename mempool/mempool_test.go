@@ -7,169 +7,171 @@ import (
 
 	"github.com/cometbft/cometbft/libs/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/skip-mev/pob/mempool"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
-	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestAuctionMempool(t *testing.T) {
-	encCfg := createTestEncodingConfig()
-	amp := mempool.NewAuctionMempool(encCfg.TxConfig.TxDecoder(), 0)
-	ctx := sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
-	rng := rand.New(rand.NewSource(time.Now().Unix()))
-	accounts := RandomAccounts(rng, 5)
+type IntegrationTestSuite struct {
+	suite.Suite
 
-	accNonces := map[string]uint64{}
-	for _, acc := range accounts {
-		accNonces[acc.Address.String()] = 0
-	}
-
-	// insert a bunch of normal txs
-	for i := 0; i < 1000; i++ {
-		p := rng.Int63n(500-1) + 1
-		j := rng.Intn(len(accounts))
-		acc := accounts[j]
-		txBuilder := encCfg.TxConfig.NewTxBuilder()
-
-		msgs := []sdk.Msg{
-			&banktypes.MsgSend{
-				FromAddress: acc.Address.String(),
-				ToAddress:   acc.Address.String(),
-			},
-		}
-		err := txBuilder.SetMsgs(msgs...)
-		require.NoError(t, err)
-
-		sigV2 := signing.SignatureV2{
-			PubKey: acc.PrivKey.PubKey(),
-			Data: &signing.SingleSignatureData{
-				SignMode:  encCfg.TxConfig.SignModeHandler().DefaultMode(),
-				Signature: nil,
-			},
-			Sequence: accNonces[acc.Address.String()],
-		}
-		err = txBuilder.SetSignatures(sigV2)
-		require.NoError(t, err)
-
-		accNonces[acc.Address.String()]++
-
-		require.NoError(t, amp.Insert(ctx.WithPriority(p), txBuilder.GetTx()))
-	}
-
-	require.Nil(t, amp.AuctionBidSelect(ctx))
-
-	// insert bid transactions
-	var highestBid sdk.Coins
-	biddingAccs := RandomAccounts(rng, 100)
-
-	for _, acc := range biddingAccs {
-		p := rng.Int63n(500-1) + 1
-		txBuilder := encCfg.TxConfig.NewTxBuilder()
-
-		// keep track of highest bid
-		bid := sdk.NewCoins(sdk.NewInt64Coin("foo", p))
-		if bid.IsAllGT(highestBid) {
-			highestBid = bid
-		}
-
-		bidMsg, err := createMsgAuctionBid(encCfg.TxConfig, acc, bid)
-		require.NoError(t, err)
-
-		msgs := []sdk.Msg{bidMsg}
-		err = txBuilder.SetMsgs(msgs...)
-		require.NoError(t, err)
-
-		sigV2 := signing.SignatureV2{
-			PubKey: acc.PrivKey.PubKey(),
-			Data: &signing.SingleSignatureData{
-				SignMode:  encCfg.TxConfig.SignModeHandler().DefaultMode(),
-				Signature: nil,
-			},
-			Sequence: 0,
-		}
-		err = txBuilder.SetSignatures(sigV2)
-		require.NoError(t, err)
-
-		require.NoError(t, amp.Insert(ctx.WithPriority(p), txBuilder.GetTx()))
-
-		// Insert the referenced txs just to ensure that they are removed from the
-		// mempool in cases where they exist.
-		for _, refRawTx := range bidMsg.GetTransactions() {
-			refTx, err := encCfg.TxConfig.TxDecoder()(refRawTx)
-			require.NoError(t, err)
-			require.NoError(t, amp.Insert(ctx.WithPriority(0), refTx))
-		}
-	}
-
-	expectedCount := 1000 + 100 + 200
-	require.Equal(t, expectedCount, amp.CountTx())
-
-	// select the top bid and misc txs
-	bidTx := amp.AuctionBidSelect(ctx).Tx()
-	require.Len(t, bidTx.GetMsgs(), 1)
-	require.Equal(t, highestBid, bidTx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid).Bid)
-
-	// remove the top bid tx (without removing the referenced txs)
-	prevAuctionCount := amp.CountAuctionTx()
-	require.NoError(t, amp.RemoveWithoutRefTx(bidTx))
-	require.Equal(t, expectedCount-1, amp.CountTx())
-	require.Equal(t, prevAuctionCount-1, amp.CountAuctionTx())
-
-	// the next bid tx should be less than or equal to the previous highest bid
-	nextBidTx := amp.AuctionBidSelect(ctx).Tx()
-	require.Len(t, nextBidTx.GetMsgs(), 1)
-	msgAuctionBid := nextBidTx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid)
-	require.True(t, highestBid.IsAllGTE(msgAuctionBid.Bid))
-
-	// remove the top bid tx (including the ref txs)
-	prevGlobalCount := amp.CountTx()
-	require.NoError(t, amp.Remove(nextBidTx))
-	require.Equal(t, prevGlobalCount-1-2, amp.CountTx())
+	encCfg   encodingConfig
+	mempool  *mempool.AuctionMempool
+	ctx      sdk.Context
+	random   *rand.Rand
+	accounts []Account
+	nonces   map[string]uint64
 }
 
-func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins) (*auctiontypes.MsgAuctionBid, error) {
-	bidMsg := &auctiontypes.MsgAuctionBid{
-		Bidder:       bidder.Address.String(),
-		Bid:          bid,
-		Transactions: make([][]byte, 2),
+func TestMempoolTestSuite(t *testing.T) {
+	suite.Run(t, new(IntegrationTestSuite))
+}
+
+func (suite *IntegrationTestSuite) SetupTest() {
+	// Mempool setup
+	suite.encCfg = createTestEncodingConfig()
+	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), 0)
+	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
+
+	// Init accounts
+	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
+	suite.accounts = RandomAccounts(suite.random, 5)
+
+	suite.nonces = make(map[string]uint64)
+	for _, acc := range suite.accounts {
+		suite.nonces[acc.Address.String()] = 0
+	}
+}
+
+// CreateFilledMempool creates a pre-filled mempool with numNormalTxs normal transactions, numAuctionTxs auction transactions, and numBundledTxs bundled
+// transactions per auction transaction. If insertRefTxs is true, it will also insert a the referenced transactions into the mempool. This returns
+// the total number of transactions inserted into the mempool.
+func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionTxs, numBundledTxs int, insertRefTxs bool) int {
+	// Insert a bunch of normal transactions into the global mempool
+	for i := 0; i < numNormalTxs; i++ {
+		// create a few random msgs
+		randomMsgs := createRandomMsgs(3)
+
+		// randomly select an account to create the tx
+		randomIndex := suite.random.Intn(len(suite.accounts))
+		acc := suite.accounts[randomIndex]
+		nonce := suite.nonces[acc.Address.String()]
+		randomTx, err := createTx(suite.encCfg.TxConfig, acc, nonce, randomMsgs)
+		suite.Require().NoError(err)
+
+		suite.nonces[acc.Address.String()]++
+		priority := suite.random.Int63n(100) + 1
+		suite.Require().NoError(suite.mempool.Insert(suite.ctx.WithPriority(priority), randomTx))
 	}
 
-	for i := 0; i < 2; i++ {
-		txBuilder := txCfg.NewTxBuilder()
+	suite.Require().Equal(numNormalTxs, suite.mempool.CountTx())
+	suite.Require().Equal(0, suite.mempool.CountAuctionTx())
 
-		msgs := []sdk.Msg{
-			&banktypes.MsgSend{
-				FromAddress: bidder.Address.String(),
-				ToAddress:   bidder.Address.String(),
-			},
-		}
-		if err := txBuilder.SetMsgs(msgs...); err != nil {
-			return nil, err
-		}
+	// Insert a bunch of auction transactions into the global mempool and auction mempool
+	for i := 0; i < numAuctionTxs; i++ {
+		// randomly select a bidder to create the tx
+		acc := RandomAccounts(suite.random, 1)[0]
 
-		sigV2 := signing.SignatureV2{
-			PubKey: bidder.PrivKey.PubKey(),
-			Data: &signing.SingleSignatureData{
-				SignMode:  txCfg.SignModeHandler().DefaultMode(),
-				Signature: nil,
-			},
-			Sequence: uint64(i + 1),
-		}
-		if err := txBuilder.SetSignatures(sigV2); err != nil {
-			return nil, err
-		}
+		// create a new auction bid msg with numBundledTxs bundled transactions
+		priority := suite.random.Int63n(100) + 1
+		bid := sdk.NewCoins(sdk.NewInt64Coin("foo", priority))
+		nonce := suite.nonces[acc.Address.String()]
+		bidMsg, err := createMsgAuctionBid(suite.encCfg.TxConfig, acc, bid, nonce, numBundledTxs)
+		suite.nonces[acc.Address.String()] += uint64(numBundledTxs)
+		suite.Require().NoError(err)
 
-		bz, err := txCfg.TxEncoder()(txBuilder.GetTx())
-		if err != nil {
-			return nil, err
-		}
+		// create the auction tx
+		nonce = suite.nonces[acc.Address.String()]
+		auctionTx, err := createTx(suite.encCfg.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
+		suite.Require().NoError(err)
 
-		bidMsg.Transactions[i] = bz
+		// insert the auction tx into the global mempool
+		suite.Require().NoError(suite.mempool.Insert(suite.ctx.WithPriority(priority), auctionTx))
+		suite.nonces[acc.Address.String()]++
+
+		if insertRefTxs {
+			for _, refRawTx := range bidMsg.GetTransactions() {
+				refTx, err := suite.encCfg.TxConfig.TxDecoder()(refRawTx)
+				suite.Require().NoError(err)
+				suite.Require().NoError(suite.mempool.Insert(suite.ctx.WithPriority(priority), refTx))
+			}
+		}
 	}
 
-	return bidMsg, nil
+	var totalNumTxs int
+	suite.Require().Equal(numAuctionTxs, suite.mempool.CountAuctionTx())
+	if insertRefTxs {
+		totalNumTxs = numNormalTxs + numAuctionTxs*(numBundledTxs+1)
+		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
+	} else {
+		totalNumTxs = numNormalTxs + numAuctionTxs
+		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
+	}
+
+	return totalNumTxs
+}
+
+func (suite *IntegrationTestSuite) TestAuctionMempoolRemove() {
+	numberTotalTxs := 100
+	numberAuctionTxs := 10
+	numberBundledTxs := 5
+	insertRefTxs := true
+	numMempoolTxs := suite.CreateFilledMempool(numberTotalTxs, numberAuctionTxs, numberBundledTxs, insertRefTxs)
+
+	// Select the top bid tx from the auction mempool and do sanity checks
+	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
+	suite.Require().NotNil(auctionIterator)
+	tx := auctionIterator.Tx()
+	suite.Require().Len(tx.GetMsgs(), 1)
+	suite.Require().NoError(suite.mempool.RemoveWithoutRefTx(tx))
+
+	// Ensure that the auction tx was removed from the auction and global mempool
+	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
+	suite.Require().Equal(numMempoolTxs-1, suite.mempool.CountTx())
+
+	// Attempt to remove again and ensure that the tx is not found
+	suite.Require().NoError(suite.mempool.RemoveWithoutRefTx(tx))
+	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
+	suite.Require().Equal(numMempoolTxs-1, suite.mempool.CountTx())
+
+	// Attempt to remove with the bundled txs
+	suite.Require().NoError(suite.mempool.Remove(tx))
+	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
+	suite.Require().Equal(numMempoolTxs-numberBundledTxs-1, suite.mempool.CountTx())
+}
+
+func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
+	numberTotalTxs := 100
+	numberAuctionTxs := 10
+	numberBundledTxs := 5
+	insertRefTxs := true
+	suite.CreateFilledMempool(numberTotalTxs, numberAuctionTxs, numberBundledTxs, insertRefTxs)
+
+	// iterate through the entire auction mempool and ensure the bids are in order
+	var highestBid sdk.Coins
+	var prevBid sdk.Coins
+	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
+	numberTxsSeen := 0
+	for auctionIterator != nil {
+		tx := auctionIterator.Tx()
+		suite.Require().Len(tx.GetMsgs(), 1)
+
+		msgAuctionBid := tx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid)
+		if highestBid == nil {
+			highestBid = msgAuctionBid.Bid
+			prevBid = msgAuctionBid.Bid
+		} else {
+			suite.Require().True(msgAuctionBid.Bid.IsAllLTE(highestBid))
+			suite.Require().True(msgAuctionBid.Bid.IsAllLTE(prevBid))
+			prevBid = msgAuctionBid.Bid
+		}
+
+		suite.Require().Len(msgAuctionBid.GetTransactions(), numberBundledTxs)
+
+		auctionIterator = auctionIterator.Next()
+		numberTxsSeen++
+	}
+
+	suite.Require().Equal(numberAuctionTxs, numberTxsSeen)
 }
