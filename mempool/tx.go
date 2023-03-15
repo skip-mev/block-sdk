@@ -4,27 +4,25 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
 
 // WrappedBidTx defines a wrapper around an sdk.Tx that contains a single
 // MsgAuctionBid message with additional metadata.
 type WrappedBidTx struct {
-	sdk.Tx
+	signing.Tx
 
-	hash [32]byte
-	bid  sdk.Coins
+	bid sdk.Coins
 }
 
-func NewWrappedBidTx(tx sdk.Tx, hash [32]byte, bid sdk.Coins) *WrappedBidTx {
+func NewWrappedBidTx(tx sdk.Tx, bid sdk.Coins) *WrappedBidTx {
 	return &WrappedBidTx{
-		Tx:   tx,
-		hash: hash,
-		bid:  bid,
+		Tx:  tx.(signing.Tx),
+		bid: bid,
 	}
 }
 
-func (wbtx *WrappedBidTx) GetHash() [32]byte { return wbtx.hash }
 func (wbtx *WrappedBidTx) GetBid() sdk.Coins { return wbtx.bid }
 
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if

@@ -48,7 +48,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			totalTxBytes int64
 		)
 
-		bidTxMap := make(map[string]struct{}) //nolint
+		bidTxMap := make(map[string]struct{})
 		bidTxIterator := h.mempool.AuctionBidSelect(ctx)
 
 		// Attempt to select the highest bid transaction that is valid and whose
@@ -59,7 +59,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 			bidTxBz, err := h.txVerifier.PrepareProposalVerifyTx(tmpBidTx)
 			if err != nil {
-				h.RemoveTx(tmpBidTx)
+				h.RemoveTx(tmpBidTx, true)
 				continue selectBidTxLoop
 			}
 
@@ -70,7 +70,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 					// This should never happen, as CheckTx will ensure only valid bids
 					// enter the mempool, but in case it does, we need to remove the
 					// transaction from the mempool.
-					h.RemoveTx(tmpBidTx)
+					h.RemoveTx(tmpBidTx, true)
 					continue selectBidTxLoop
 				}
 
@@ -80,14 +80,14 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 					if err != nil {
 						// Malformed bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
-						h.RemoveTx(tmpBidTx)
+						h.RemoveTx(tmpBidTx, true)
 						continue selectBidTxLoop
 					}
 
 					if _, err := h.txVerifier.PrepareProposalVerifyTx(refTx); err != nil {
 						// Invalid bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
-						h.RemoveTx(tmpBidTx)
+						h.RemoveTx(tmpBidTx, true)
 						continue selectBidTxLoop
 					}
 
@@ -135,7 +135,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 			txBz, err := h.txVerifier.PrepareProposalVerifyTx(memTx)
 			if err != nil {
-				h.RemoveTx(memTx)
+				h.RemoveTx(memTx, false)
 				continue selectTxLoop
 			}
 
@@ -168,8 +168,15 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	}
 }
 
-func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
-	err := h.mempool.Remove(tx)
+func (h *ProposalHandler) RemoveTx(tx sdk.Tx, isAuctionTx bool) {
+	var err error
+
+	if isAuctionTx {
+		err = h.mempool.RemoveWithoutRefTx(tx)
+	} else {
+		err = h.mempool.Remove(tx)
+	}
+
 	if err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}

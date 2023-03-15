@@ -18,7 +18,7 @@ import (
 
 func TestAuctionMempool(t *testing.T) {
 	encCfg := createTestEncodingConfig()
-	amp := mempool.NewAuctionMempool(encCfg.TxConfig.TxEncoder())
+	amp := mempool.NewAuctionMempool(encCfg.TxConfig.TxDecoder(), 0)
 	ctx := sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	accounts := RandomAccounts(rng, 5)
@@ -60,7 +60,7 @@ func TestAuctionMempool(t *testing.T) {
 		require.NoError(t, amp.Insert(ctx.WithPriority(p), txBuilder.GetTx()))
 	}
 
-	require.Nil(t, amp.SelectTopAuctionBidTx())
+	require.Nil(t, amp.AuctionBidSelect(ctx))
 
 	// insert bid transactions
 	var highestBid sdk.Coins
@@ -109,13 +109,26 @@ func TestAuctionMempool(t *testing.T) {
 	require.Equal(t, expectedCount, amp.CountTx())
 
 	// select the top bid and misc txs
-	bidTx := amp.SelectTopAuctionBidTx()
+	bidTx := amp.AuctionBidSelect(ctx).Tx()
 	require.Len(t, bidTx.GetMsgs(), 1)
 	require.Equal(t, highestBid, bidTx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid).Bid)
 
-	// remove bid tx, which should also removed the referenced txs
-	require.NoError(t, amp.Remove(bidTx))
-	require.Equal(t, expectedCount-3, amp.CountTx())
+	// remove the top bid tx (without removing the referenced txs)
+	prevAuctionCount := amp.CountAuctionTx()
+	require.NoError(t, amp.RemoveWithoutRefTx(bidTx))
+	require.Equal(t, expectedCount-1, amp.CountTx())
+	require.Equal(t, prevAuctionCount-1, amp.CountAuctionTx())
+
+	// the next bid tx should be less than or equal to the previous highest bid
+	nextBidTx := amp.AuctionBidSelect(ctx).Tx()
+	require.Len(t, nextBidTx.GetMsgs(), 1)
+	msgAuctionBid := nextBidTx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid)
+	require.True(t, highestBid.IsAllGTE(msgAuctionBid.Bid))
+
+	// remove the top bid tx (including the ref txs)
+	prevGlobalCount := amp.CountTx()
+	require.NoError(t, amp.Remove(nextBidTx))
+	require.Equal(t, prevGlobalCount-1-2, amp.CountTx())
 }
 
 func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins) (*auctiontypes.MsgAuctionBid, error) {
