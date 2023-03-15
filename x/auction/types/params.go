@@ -7,10 +7,7 @@ import (
 )
 
 var (
-	// TODO: Choose reasonable default values.
-	//
-	// Ref: https://github.com/skip-mev/pob/issues/7
-	DefaultMaxBundleSize        uint32
+	DefaultMaxBundleSize        uint32 = 2
 	DefaultEscrowAccountAddress string
 	DefaultReserveFee           = sdk.Coins{}
 	DefaultMinBuyInFee          = sdk.Coins{}

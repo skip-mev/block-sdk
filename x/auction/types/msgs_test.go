@@ -99,6 +99,7 @@ func TestMsgUpdateParams(t *testing.T) {
 				Authority: "",
 				Params:    types.Params{},
 			},
+			expectPass: false,
 		},
 		{
 			description: "invalid message with invalid params (invalid escrow address)",
@@ -109,6 +110,16 @@ func TestMsgUpdateParams(t *testing.T) {
 				},
 			},
 			expectPass: false,
+		},
+		{
+			description: "valid message",
+			msg: types.MsgUpdateParams{
+				Authority: sdk.AccAddress([]byte("test")).String(),
+				Params: types.Params{
+					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
+				},
+			},
+			expectPass: true,
 		},
 	}
 
