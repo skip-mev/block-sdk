@@ -158,6 +158,16 @@ func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
 	return nil
 }
 
+// GetTopAuctionTx returns the highest bidding transaction in the auction mempool.
+func (am *AuctionMempool) GetTopAuctionTx(ctx context.Context) sdk.Tx {
+	iterator := am.auctionIndex.Select(ctx, nil)
+	if iterator == nil {
+		return nil
+	}
+
+	return iterator.Tx()
+}
+
 // AuctionBidSelect returns an iterator over auction bids transactions only.
 func (am *AuctionMempool) AuctionBidSelect(ctx context.Context) sdkmempool.Iterator {
 	return am.auctionIndex.Select(ctx, nil)

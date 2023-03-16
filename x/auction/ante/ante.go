@@ -12,12 +12,14 @@ var _ sdk.AnteDecorator = AuctionDecorator{}
 type AuctionDecorator struct {
 	auctionKeeper keeper.Keeper
 	txDecoder     sdk.TxDecoder
+	mempool       *mempool.AuctionMempool
 }
 
-func NewAuctionDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder) AuctionDecorator {
+func NewAuctionDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder, mempool *mempool.AuctionMempool) AuctionDecorator {
 	return AuctionDecorator{
 		auctionKeeper: ak,
 		txDecoder:     txDecoder,
+		mempool:       mempool,
 	}
 }
 
@@ -46,10 +48,25 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			transactions[i] = decodedTx
 		}
 
-		if err := ad.auctionKeeper.ValidateAuctionMsg(ctx, bidder, auctionMsg.Bid, transactions); err != nil {
+		highestBid, err := ad.GetHighestAuctionBid(ctx)
+		if err != nil {
+			return ctx, errors.Wrap(err, "failed to get highest auction bid")
+		}
+
+		if err := ad.auctionKeeper.ValidateAuctionMsg(ctx, bidder, auctionMsg.Bid, highestBid, transactions); err != nil {
 			return ctx, errors.Wrap(err, "failed to validate auction bid")
 		}
 	}
 
 	return next(ctx, tx, simulate)
+}
+
+// GetHighestAuctionBid returns the highest auction bid if one exists.
+func (ad AuctionDecorator) GetHighestAuctionBid(ctx sdk.Context) (sdk.Coins, error) {
+	auctionTx := ad.mempool.GetTopAuctionTx(ctx)
+	if auctionTx == nil {
+		return sdk.NewCoins(), nil
+	}
+
+	return auctionTx.(*mempool.WrappedBidTx).GetBid(), nil
 }

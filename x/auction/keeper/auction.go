@@ -6,10 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-// ValidateAuctionMsg validates that the MsgAuctionBid is valid. It checks that the bidder has sufficient funds to bid the
-// amount specified in the message, that the bundle size is not greater than the max bundle size, and that the bundle
-// transactions are valid.
-func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coins, transactions []sdk.Tx) error {
+// ValidateAuctionMsg validates that the MsgAuctionBid can be included in the auction.
+func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid, highestBid sdk.Coins, transactions []sdk.Tx) error {
 	// Validate the bundle size.
 	maxBundleSize, err := k.GetMaxBundleSize(ctx)
 	if err != nil {
@@ -21,7 +19,7 @@ func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid s
 	}
 
 	// Validate the bid amount.
-	if err := k.ValidateAuctionBid(ctx, bidder, bid); err != nil {
+	if err := k.ValidateAuctionBid(ctx, bidder, bid, highestBid); err != nil {
 		return err
 	}
 
@@ -40,8 +38,20 @@ func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid s
 	return nil
 }
 
-// ValidateAuctionBid validates that the bidder has sufficient funds to participate in the auction.
-func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coins) error {
+// ValidateAuctionBid validates that the bidder has sufficient funds to participate in the auction and that the bid amount
+// is sufficiently high enough.
+func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, highestBid sdk.Coins) error {
+	// Ensure the bid is greater than the highest bid + min bid increment.
+	minBidIncrement, err := k.GetMinBidIncrement(ctx)
+	if err != nil {
+		return err
+	}
+
+	minBid := highestBid.Add(minBidIncrement...)
+	if !bid.IsAllGTE(minBid) {
+		return fmt.Errorf("bid amount (%s) is less than the highest bid (%s) + min bid increment (%s)", bid, highestBid, minBidIncrement)
+	}
+
 	// Get the bid floor.
 	reserveFee, err := k.GetReserveFee(ctx)
 	if err != nil {
