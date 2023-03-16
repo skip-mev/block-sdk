@@ -7,21 +7,23 @@ import (
 )
 
 var (
-	DefaultMaxBundleSize        uint32 = 2
-	DefaultEscrowAccountAddress string
-	DefaultReserveFee           = sdk.Coins{}
-	DefaultMinBuyInFee          = sdk.Coins{}
-	DefaultMinBidIncrement      = sdk.Coins{}
+	DefaultMaxBundleSize          uint32 = 2
+	DefaultEscrowAccountAddress   string
+	DefaultReserveFee             = sdk.Coins{}
+	DefaultMinBuyInFee            = sdk.Coins{}
+	DefaultMinBidIncrement        = sdk.Coins{}
+	DefaultFrontRunningProtection = true
 )
 
 // NewParams returns a new Params instance with the provided values.
-func NewParams(maxBundleSize uint32, escrowAccountAddress string, reserveFee, minBuyInFee, minBidIncrement sdk.Coins) Params {
+func NewParams(maxBundleSize uint32, escrowAccountAddress string, reserveFee, minBuyInFee, minBidIncrement sdk.Coins, frontRunningProtection bool) Params {
 	return Params{
-		MaxBundleSize:        maxBundleSize,
-		EscrowAccountAddress: escrowAccountAddress,
-		ReserveFee:           reserveFee,
-		MinBuyInFee:          minBuyInFee,
-		MinBidIncrement:      minBidIncrement,
+		MaxBundleSize:          maxBundleSize,
+		EscrowAccountAddress:   escrowAccountAddress,
+		ReserveFee:             reserveFee,
+		MinBuyInFee:            minBuyInFee,
+		MinBidIncrement:        minBidIncrement,
+		FrontRunningProtection: frontRunningProtection,
 	}
 }
 
@@ -33,6 +35,7 @@ func DefaultParams() Params {
 		DefaultReserveFee,
 		DefaultMinBuyInFee,
 		DefaultMinBidIncrement,
+		DefaultFrontRunningProtection,
 	)
 }
 

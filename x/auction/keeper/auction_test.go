@@ -21,10 +21,11 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 		bid      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
 
 		// Auction params
-		maxBundleSize uint32 = 10
-		reserveFee           = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		minBuyInFee          = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		escrowAddress        = sdk.AccAddress([]byte("escrow"))
+		maxBundleSize          uint32 = 10
+		reserveFee                    = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		minBuyInFee                   = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		escrowAddress                 = sdk.AccAddress([]byte("escrow"))
+		frontRunningProtection        = true
 	)
 
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
@@ -114,6 +115,14 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 			},
 			false,
 		},
+		{
+			"disabled front-running protection",
+			func() {
+				accounts = RandomAccounts(rnd, 10)
+				frontRunningProtection = false
+			},
+			true,
+		},
 	}
 
 	for _, tc := range cases {
@@ -134,10 +143,11 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 				suite.authorityAccount.String(),
 			)
 			params := auctiontypes.Params{
-				MaxBundleSize:        maxBundleSize,
-				ReserveFee:           reserveFee,
-				MinBuyInFee:          minBuyInFee,
-				EscrowAccountAddress: escrowAddress.String(),
+				MaxBundleSize:          maxBundleSize,
+				ReserveFee:             reserveFee,
+				MinBuyInFee:            minBuyInFee,
+				EscrowAccountAddress:   escrowAddress.String(),
+				FrontRunningProtection: frontRunningProtection,
 			}
 			suite.auctionKeeper.SetParams(suite.ctx, params)
 

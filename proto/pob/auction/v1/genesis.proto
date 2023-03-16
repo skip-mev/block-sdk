@@ -39,4 +39,7 @@ message Params {
     (amino.dont_omitempty) = true,
     (gogoproto.castrepeated) = "github.com/cosmos/cosmos-sdk/types.Coins"
   ];
+  // front_running_protection specifies whether front running and sandwich attack protection
+  // is enabled.
+  bool front_running_protection = 6;
 }
