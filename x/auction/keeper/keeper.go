@@ -15,15 +15,24 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	bankkeeper types.BankKeeper
+	bankKeeper    types.BankKeeper
+	distrKeeper   types.DistributionKeeper
+	stakingKeeper types.StakingKeeper
 
-	// The address that is capable of executing a MsgUpdateParams message. Typically this will be the
-	// governance module's address.
+	// The address that is capable of executing a MsgUpdateParams message.
+	// Typically this will be the governance module's address.
 	authority string
 }
 
-// NewKeeper creates a new keeper instance.
-func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, accountKeeper types.AccountKeeper, bankkeeper types.BankKeeper, authority string) Keeper {
+func NewKeeper(
+	cdc codec.BinaryCodec,
+	storeKey storetypes.StoreKey,
+	accountKeeper types.AccountKeeper,
+	bankKeeper types.BankKeeper,
+	distrKeeper types.DistributionKeeper,
+	stakingKeeper types.StakingKeeper,
+	authority string,
+) Keeper {
 	// Ensure that the authority address is valid.
 	if _, err := sdk.AccAddressFromBech32(authority); err != nil {
 		panic(err)
@@ -35,10 +44,12 @@ func NewKeeper(cdc codec.BinaryCodec, storeKey storetypes.StoreKey, accountKeepe
 	}
 
 	return Keeper{
-		cdc:        cdc,
-		storeKey:   storeKey,
-		bankkeeper: bankkeeper,
-		authority:  authority,
+		cdc:           cdc,
+		storeKey:      storeKey,
+		bankKeeper:    bankKeeper,
+		distrKeeper:   distrKeeper,
+		stakingKeeper: stakingKeeper,
+		authority:     authority,
 	}
 }
 
@@ -138,6 +149,16 @@ func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coins, error) {
 	}
 
 	return params.MinBidIncrement, nil
+}
+
+// GetProposerFee returns the proposer fee for the auction module.
+func (k Keeper) GetProposerFee(ctx sdk.Context) (sdk.Dec, error) {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return sdk.ZeroDec(), err
+	}
+
+	return params.ProposerFee, nil
 }
 
 // FrontRunningProtectionEnabled returns true if front-running protection is enabled.

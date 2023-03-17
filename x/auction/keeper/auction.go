@@ -70,7 +70,7 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 
 	// Ensure the bidder has enough funds to cover all the inclusion fees.
 	minBalance := bid.Add(minBuyInFee...)
-	balances := k.bankkeeper.GetAllBalances(ctx, bidder)
+	balances := k.bankKeeper.GetAllBalances(ctx, bidder)
 	if !balances.IsAllGTE(minBalance) {
 		return fmt.Errorf("insufficient funds to bid %s (reserve fee + bid) with balance %s", minBalance, balances)
 	}
@@ -103,8 +103,8 @@ func (k Keeper) ValidateAuctionBundle(ctx sdk.Context, bidder sdk.AccAddress, tr
 	// Check that all subsequent transactions are signed by either
 	// 1. the same party as the first transaction
 	// 2. the same party for some arbitrary number of txs and then are all remaining txs are signed by the bidder.
-	for _, txbytes := range transactions[1:] {
-		txSigners, err := k.getTxSigners(txbytes)
+	for _, refTx := range transactions[1:] {
+		txSigners, err := k.getTxSigners(refTx)
 		if err != nil {
 			return err
 		}

@@ -26,7 +26,6 @@ var (
 // ConsensusVersion defines the current x/auction module consensus version.
 const ConsensusVersion = 1
 
-// -------------------- AppModuleBasic -------------------- //
 // AppModuleBasic defines the basic application module used by the auction module.
 type AppModuleBasic struct {
 	cdc codec.Codec
@@ -70,16 +69,11 @@ func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *r
 }
 
 // GetTxCmd returns the root tx command for the auction module.
-func (AppModuleBasic) GetTxCmd() *cobra.Command {
-	return nil
-}
+func (AppModuleBasic) GetTxCmd() *cobra.Command { return nil }
 
 // GetQueryCmd returns no root query command for the auction module.
-func (AppModuleBasic) GetQueryCmd() *cobra.Command {
-	return nil
-}
+func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
 
-// -------------------- AppModule -------------------- //
 type AppModule struct {
 	AppModuleBasic
 
@@ -98,7 +92,11 @@ func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, accountKeeper types.Acc
 	}
 }
 
-// RegisterServices registers a the gRPC Query and Msg services for the auciton module.
+// ConsensusVersion implements AppModule/ConsensusVersion.
+func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
+
+// RegisterServices registers a the gRPC Query and Msg services for the x/auction
+// module.
 func (am AppModule) RegisterServices(cfg module.Configurator) {
 	// TODO: Define the gRPC querier service and register it with the auction module configurator
 	// TODO: Define the gRPC Msg service and register it with the auction module configurator
@@ -106,33 +104,24 @@ func (am AppModule) RegisterServices(cfg module.Configurator) {
 
 func (a AppModuleBasic) RegisterRESTRoutes(ctx client.Context, r *mux.Router) {}
 
-// RegisterInvariants registers the invariants of the module. If an invariant deviates from its predicted value, the InvariantRegistry triggers appropriate logic (most often the chain will be halted)
+// RegisterInvariants registers the invariants of the module. If an invariant
+// deviates from its predicted value, the InvariantRegistry triggers appropriate
+// logic (most often the chain will be halted).
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// InitGenesis performs the module's genesis initialization for the auction module. It returns no validator updates.
+// InitGenesis performs the module's genesis initialization for the auction
+// module. It returns no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	am.keeper.InitGenesis(ctx, genState)
-
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the auction module's exported genesis state as raw JSON bytes.
+// ExportGenesis returns the auction module's exported genesis state as raw
+// JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := am.keeper.ExportGenesis(ctx)
 	return cdc.MustMarshalJSON(genState)
-}
-
-// ConsensusVersion implements AppModule/ConsensusVersion.
-func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
-
-// BeginBlock returns the begin blocker for the auction module.
-func (am AppModule) BeginBlock(_ sdk.Context, _ abci.RequestBeginBlock) {} //nolint
-
-// EndBlock returns the end blocker for the auction module. It returns no validator updates.
-
-func (am AppModule) EndBlock(_ sdk.Context, _ abci.RequestEndBlock) []abci.ValidatorUpdate { //nolint
-	return []abci.ValidatorUpdate{}
 }

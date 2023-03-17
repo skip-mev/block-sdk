@@ -116,6 +116,7 @@ func TestMsgUpdateParams(t *testing.T) {
 			msg: types.MsgUpdateParams{
 				Authority: sdk.AccAddress([]byte("test")).String(),
 				Params: types.Params{
+					ProposerFee:          sdk.NewDec(1),
 					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
 				},
 			},

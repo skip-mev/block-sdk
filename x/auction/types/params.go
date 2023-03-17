@@ -3,6 +3,7 @@ package types
 import (
 	fmt "fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
@@ -13,10 +14,17 @@ var (
 	DefaultMinBuyInFee            = sdk.Coins{}
 	DefaultMinBidIncrement        = sdk.Coins{}
 	DefaultFrontRunningProtection = true
+	DefaultProposerFee            = sdk.ZeroDec()
 )
 
 // NewParams returns a new Params instance with the provided values.
-func NewParams(maxBundleSize uint32, escrowAccountAddress string, reserveFee, minBuyInFee, minBidIncrement sdk.Coins, frontRunningProtection bool) Params {
+func NewParams(
+	maxBundleSize uint32,
+	escrowAccountAddress string,
+	reserveFee, minBuyInFee, minBidIncrement sdk.Coins,
+	frontRunningProtection bool,
+	proposerFee sdk.Dec,
+) Params {
 	return Params{
 		MaxBundleSize:          maxBundleSize,
 		EscrowAccountAddress:   escrowAccountAddress,
@@ -24,6 +32,7 @@ func NewParams(maxBundleSize uint32, escrowAccountAddress string, reserveFee, mi
 		MinBuyInFee:            minBuyInFee,
 		MinBidIncrement:        minBidIncrement,
 		FrontRunningProtection: frontRunningProtection,
+		ProposerFee:            proposerFee,
 	}
 }
 
@@ -36,6 +45,7 @@ func DefaultParams() Params {
 		DefaultMinBuyInFee,
 		DefaultMinBidIncrement,
 		DefaultFrontRunningProtection,
+		DefaultProposerFee,
 	)
 }
 
@@ -57,10 +67,29 @@ func (p Params) Validate() error {
 		return fmt.Errorf("invalid minimum bid increment (%s)", err)
 	}
 
+	if err := validateProposerFee(p.ProposerFee); err != nil {
+		return err
+	}
+
 	return nil
 }
 
-// validateEscrowAccountAddress ensures the escrow account address is a valid address (if set).
+func validateProposerFee(v sdk.Dec) error {
+	if v.IsNil() {
+		return fmt.Errorf("proposer fee cannot be nil: %s", v)
+	}
+	if v.IsNegative() {
+		return fmt.Errorf("proposer fee cannot be negative: %s", v)
+	}
+	if v.GT(math.LegacyOneDec()) {
+		return fmt.Errorf("proposer fee too large: %s", v)
+	}
+
+	return nil
+}
+
+// validateEscrowAccountAddress ensures the escrow account address is a valid
+// address.
 func validateEscrowAccountAddress(account string) error {
 	// If the escrow account address is set, ensure it is a valid address.
 	if _, err := sdk.AccAddressFromBech32(account); err != nil {

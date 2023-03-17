@@ -4,16 +4,12 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/types/tx/signing"
-	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/skip-mev/pob/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
 
-func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
+func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 	var (
 		// Tx building variables
 		accounts = []Account{} // tracks the order of signers in the bundle
@@ -161,6 +157,8 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 				suite.key,
 				suite.accountKeeper,
 				suite.bankKeeper,
+				suite.distrKeeper,
+				suite.stakingKeeper,
 				suite.authorityAccount.String(),
 			)
 			params := auctiontypes.Params{
@@ -191,7 +189,7 @@ func (suite *IntegrationTestSuite) TestValidateAuctionMsg() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestValidateBundle() {
+func (suite *KeeperTestSuite) TestValidateBundle() {
 	// TODO: Update this to be multi-dimensional to test multi-sig
 	// https://github.com/skip-mev/pob/issues/14
 	var accounts []Account // tracks the order of signers in the bundle
@@ -300,34 +298,4 @@ func (suite *IntegrationTestSuite) TestValidateBundle() {
 			}
 		})
 	}
-}
-
-// createRandomTx creates a random transaction with a given account, nonce, and number of messages.
-func createRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs uint64) (authsigning.Tx, error) {
-	msgs := make([]sdk.Msg, numberMsgs)
-	for i := 0; i < int(numberMsgs); i++ {
-		msgs[i] = &banktypes.MsgSend{
-			FromAddress: account.Address.String(),
-			ToAddress:   account.Address.String(),
-		}
-	}
-
-	txBuilder := txCfg.NewTxBuilder()
-	if err := txBuilder.SetMsgs(msgs...); err != nil {
-		return nil, err
-	}
-
-	sigV2 := signing.SignatureV2{
-		PubKey: account.PrivKey.PubKey(),
-		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
-			Signature: nil,
-		},
-		Sequence: nonce,
-	}
-	if err := txBuilder.SetSignatures(sigV2); err != nil {
-		return nil, err
-	}
-
-	return txBuilder.GetTx(), nil
 }
