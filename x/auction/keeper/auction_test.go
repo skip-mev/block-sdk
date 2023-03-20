@@ -290,7 +290,7 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			}
 
 			// Validate the bundle
-			err := suite.auctionKeeper.ValidateAuctionBundle(suite.ctx, bidder.Address, bundle)
+			err := suite.auctionKeeper.ValidateAuctionBundle(bidder.Address, bundle)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {

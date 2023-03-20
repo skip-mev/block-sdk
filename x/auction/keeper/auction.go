@@ -30,7 +30,7 @@ func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 	}
 
 	if protectionEnabled {
-		if err := k.ValidateAuctionBundle(ctx, bidder, transactions); err != nil {
+		if err := k.ValidateAuctionBundle(bidder, transactions); err != nil {
 			return err
 		}
 	}
@@ -88,7 +88,7 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 //  2. valid: [tx1, tx2, tx3, tx4] where tx1 - tx4 are signed by the bidder.
 //  3. invalid: [tx1, tx2, tx3] where tx1 and tx3 are signed by the bidder and tx2 is signed by some other signer. (possible sandwich attack)
 //  4. invalid: [tx1, tx2, tx3] where tx1 is signed by the bidder, and tx2 - tx3 are signed by some other signer. (possible front-running attack)
-func (k Keeper) ValidateAuctionBundle(ctx sdk.Context, bidder sdk.AccAddress, transactions []sdk.Tx) error {
+func (k Keeper) ValidateAuctionBundle(bidder sdk.AccAddress, transactions []sdk.Tx) error {
 	if len(transactions) <= 1 {
 		return nil
 	}

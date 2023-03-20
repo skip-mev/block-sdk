@@ -20,7 +20,7 @@ func NewQueryServer(keeper Keeper) *QueryServer {
 }
 
 // Params queries all parameters of the auction module.
-func (q QueryServer) Params(c context.Context, req *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+func (q QueryServer) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
 	ctx := sdk.UnwrapSDKContext(c)
 
 	params, err := q.keeper.GetParams(ctx)

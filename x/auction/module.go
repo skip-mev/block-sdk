@@ -52,7 +52,7 @@ func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 }
 
 // ValidateGenesis performs genesis state validation for the auction module.
-func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, config client.TxEncodingConfig, bz json.RawMessage) error {
+func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
 		return fmt.Errorf("failed to unmarshal %s genesis state: %w", types.ModuleName, err)
@@ -97,12 +97,12 @@ func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
 // RegisterServices registers a the gRPC Query and Msg services for the x/auction
 // module.
-func (am AppModule) RegisterServices(cfg module.Configurator) {
+func (am AppModule) RegisterServices(_ module.Configurator) {
 	// TODO: Define the gRPC querier service and register it with the auction module configurator
 	// TODO: Define the gRPC Msg service and register it with the auction module configurator
 }
 
-func (a AppModuleBasic) RegisterRESTRoutes(ctx client.Context, r *mux.Router) {}
+func (a AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 
 // RegisterInvariants registers the invariants of the module. If an invariant
 // deviates from its predicted value, the InvariantRegistry triggers appropriate

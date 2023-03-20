@@ -67,11 +67,7 @@ func (p Params) Validate() error {
 		return fmt.Errorf("invalid minimum bid increment (%s)", err)
 	}
 
-	if err := validateProposerFee(p.ProposerFee); err != nil {
-		return err
-	}
-
-	return nil
+	return validateProposerFee(p.ProposerFee)
 }
 
 func validateProposerFee(v sdk.Dec) error {
