@@ -48,7 +48,7 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			transactions[i] = decodedTx
 		}
 
-		highestBid, err := ad.GetHighestAuctionBid(ctx)
+		highestBid, err := ad.GetTopAuctionBid(ctx, tx)
 		if err != nil {
 			return ctx, errors.Wrap(err, "failed to get highest auction bid")
 		}
@@ -61,12 +61,18 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	return next(ctx, tx, simulate)
 }
 
-// GetHighestAuctionBid returns the highest auction bid if one exists.
-func (ad AuctionDecorator) GetHighestAuctionBid(ctx sdk.Context) (sdk.Coins, error) {
+// GetTopAuctionBid returns the highest auction bid if one exists. If the current transaction is the highest
+// bidding transaction, then an empty coin set is returned.
+func (ad AuctionDecorator) GetTopAuctionBid(ctx sdk.Context, currTx sdk.Tx) (sdk.Coins, error) {
 	auctionTx := ad.mempool.GetTopAuctionTx(ctx)
 	if auctionTx == nil {
 		return sdk.NewCoins(), nil
 	}
 
-	return auctionTx.(*mempool.WrappedBidTx).GetBid(), nil
+	wrappedTx := auctionTx.(*mempool.WrappedBidTx)
+	if wrappedTx.Tx == currTx {
+		return sdk.NewCoins(), nil
+	}
+
+	return wrappedTx.GetBid(), nil
 }

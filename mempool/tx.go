@@ -51,3 +51,13 @@ func GetMsgAuctionBidFromTx(tx sdk.Tx) (*auctiontypes.MsgAuctionBid, error) {
 		return nil, errors.New("invalid MsgAuctionBid transaction")
 	}
 }
+
+// UnwrapBidTx attempts to unwrap a WrappedBidTx from an sdk.Tx if one exists.
+func UnwrapBidTx(tx sdk.Tx) sdk.Tx {
+	wTx, ok := tx.(*WrappedBidTx)
+	if ok {
+		return wTx.Tx
+	}
+
+	return tx
+}

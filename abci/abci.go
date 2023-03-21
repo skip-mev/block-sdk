@@ -50,16 +50,17 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		bidTxMap := make(map[string]struct{})
 		bidTxIterator := h.mempool.AuctionBidSelect(ctx)
+		txsToRemove := make(map[sdk.Tx]struct{}, 0)
 
 		// Attempt to select the highest bid transaction that is valid and whose
 		// bundled transactions are valid.
 	selectBidTxLoop:
 		for ; bidTxIterator != nil; bidTxIterator = bidTxIterator.Next() {
-			tmpBidTx := bidTxIterator.Tx()
+			tmpBidTx := mempool.UnwrapBidTx(bidTxIterator.Tx())
 
 			bidTxBz, err := h.txVerifier.PrepareProposalVerifyTx(tmpBidTx)
 			if err != nil {
-				h.RemoveTx(tmpBidTx, true)
+				txsToRemove[tmpBidTx] = struct{}{}
 				continue selectBidTxLoop
 			}
 
@@ -70,7 +71,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 					// This should never happen, as CheckTx will ensure only valid bids
 					// enter the mempool, but in case it does, we need to remove the
 					// transaction from the mempool.
-					h.RemoveTx(tmpBidTx, true)
+					txsToRemove[tmpBidTx] = struct{}{}
 					continue selectBidTxLoop
 				}
 
@@ -80,14 +81,14 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 					if err != nil {
 						// Malformed bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
-						h.RemoveTx(tmpBidTx, true)
+						txsToRemove[tmpBidTx] = struct{}{}
 						continue selectBidTxLoop
 					}
 
 					if _, err := h.txVerifier.PrepareProposalVerifyTx(refTx); err != nil {
 						// Invalid bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
-						h.RemoveTx(tmpBidTx, true)
+						txsToRemove[tmpBidTx] = struct{}{}
 						continue selectBidTxLoop
 					}
 
@@ -125,7 +126,13 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			break selectBidTxLoop
 		}
 
-		iterator := h.mempool.Select(ctx, req.Txs)
+		// Remove all invalid transactions from the mempool.
+		for tx := range txsToRemove {
+			h.RemoveTx(tx)
+		}
+
+		iterator := h.mempool.Select(ctx, nil)
+		txsToRemove = map[sdk.Tx]struct{}{}
 
 		// Select remaining transactions for the block proposal until we've reached
 		// size capacity.
@@ -135,12 +142,11 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 			txBz, err := h.txVerifier.PrepareProposalVerifyTx(memTx)
 			if err != nil {
-				h.RemoveTx(memTx, false)
+				txsToRemove[memTx] = struct{}{}
 				continue selectTxLoop
 			}
 
-			// Referenced/bundled transaction should not exist in the mempool,
-			// however, we cannot guarantee this won't happen. So, we explicitly
+			// Referenced/bundled transaction may exist in the mempool, so we explicitly
 			// check prior to considering the transaction.
 			txHash := sha256.Sum256(txBz)
 			txHashStr := hex.EncodeToString(txHash[:])
@@ -156,6 +162,11 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			}
 		}
 
+		// Remove all invalid transactions from the mempool.
+		for tx := range txsToRemove {
+			h.RemoveTx(tx)
+		}
+
 		return abci.ResponsePrepareProposal{Txs: selectedTxs}
 	}
 }
@@ -168,16 +179,8 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	}
 }
 
-func (h *ProposalHandler) RemoveTx(tx sdk.Tx, isAuctionTx bool) {
-	var err error
-
-	if isAuctionTx {
-		err = h.mempool.RemoveWithoutRefTx(tx)
-	} else {
-		err = h.mempool.Remove(tx)
-	}
-
-	if err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
+func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
+	if err := h.mempool.RemoveWithoutRefTx(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}
 }
