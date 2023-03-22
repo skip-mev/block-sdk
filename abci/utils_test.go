@@ -146,3 +146,45 @@ func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, n
 
 	return bidMsg, nil
 }
+
+func createAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, signers []Account) (authsigning.Tx, error) {
+	bidMsg := &auctiontypes.MsgAuctionBid{
+		Bidder:       bidder.Address.String(),
+		Bid:          bid,
+		Transactions: make([][]byte, len(signers)),
+	}
+
+	for i := 0; i < len(signers); i++ {
+		randomMsg := createRandomMsgs(signers[i].Address, 1)
+		randomTx, err := createTx(txCfg, signers[i], 0, randomMsg)
+		if err != nil {
+			return nil, err
+		}
+
+		bz, err := txCfg.TxEncoder()(randomTx)
+		if err != nil {
+			return nil, err
+		}
+
+		bidMsg.Transactions[i] = bz
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(bidMsg); err != nil {
+		return nil, err
+	}
+
+	sigV2 := signing.SignatureV2{
+		PubKey: bidder.PrivKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: nonce,
+	}
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	return txBuilder.GetTx(), nil
+}

@@ -1,6 +1,7 @@
 package abci
 
 import (
+	"bytes"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -175,7 +176,38 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // block proposal verification.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req abci.RequestProcessProposal) abci.ResponseProcessProposal {
-		panic("not implemented")
+		for index, txBz := range req.Txs {
+			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBz)
+			if err != nil {
+				return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+			}
+
+			msgAuctionBid, err := mempool.GetMsgAuctionBidFromTx(tx)
+			if err != nil {
+				return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+			}
+
+			if msgAuctionBid != nil {
+				// Only the first transaction can be an auction bid tx
+				if index != 0 {
+					return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+				}
+
+				// The order of transactions in the block proposal must follow the order of transactions in the bid.
+				if len(req.Txs) < len(msgAuctionBid.Transactions)+1 {
+					return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+				}
+
+				for i, refTxRaw := range msgAuctionBid.Transactions {
+					if !bytes.Equal(refTxRaw, req.Txs[i+1]) {
+						return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+					}
+				}
+			}
+
+		}
+
+		return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 	}
 }
 
