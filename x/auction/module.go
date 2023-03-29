@@ -77,18 +77,14 @@ func (AppModuleBasic) GetQueryCmd() *cobra.Command { return nil }
 type AppModule struct {
 	AppModuleBasic
 
-	keeper        keeper.Keeper
-	accountKeeper types.AccountKeeper
-	bankKeeper    types.BankKeeper
+	keeper keeper.Keeper
 }
 
 // NewAppModule creates a new AppModule object.
-func NewAppModule(cdc codec.Codec, keeper keeper.Keeper, accountKeeper types.AccountKeeper, bankKeeper types.BankKeeper) AppModule {
+func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 	return AppModule{
 		AppModuleBasic: AppModuleBasic{cdc: cdc},
 		keeper:         keeper,
-		accountKeeper:  accountKeeper,
-		bankKeeper:     bankKeeper,
 	}
 }
 
@@ -97,9 +93,9 @@ func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
 // RegisterServices registers a the gRPC Query and Msg services for the x/auction
 // module.
-func (am AppModule) RegisterServices(_ module.Configurator) {
-	// TODO: Define the gRPC querier service and register it with the auction module configurator
-	// TODO: Define the gRPC Msg service and register it with the auction module configurator
+func (am AppModule) RegisterServices(cfc module.Configurator) {
+	types.RegisterMsgServer(cfc.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
+	types.RegisterQueryServer(cfc.QueryServer(), keeper.NewQueryServer(am.keeper))
 }
 
 func (a AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
