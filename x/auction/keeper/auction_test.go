@@ -5,6 +5,7 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
@@ -12,7 +13,7 @@ import (
 func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 	var (
 		// Tx building variables
-		accounts = []Account{} // tracks the order of signers in the bundle
+		accounts = []testutils.Account{} // tracks the order of signers in the bundle
 		balance  = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
 		bid      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
 
@@ -29,7 +30,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 	)
 
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	bidder := RandomAccounts(rnd, 1)[0]
+	bidder := testutils.RandomAccounts(rnd, 1)[0]
 
 	cases := []struct {
 		name     string
@@ -65,60 +66,60 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 				// reset the balance and bid to their original values
 				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
-				accounts = RandomAccounts(rnd, int(maxBundleSize+1))
+				accounts = testutils.RandomAccounts(rnd, int(maxBundleSize+1))
 			},
 			false,
 		},
 		{
 			"frontrunning bundle",
 			func() {
-				randomAccount := RandomAccounts(rnd, 1)[0]
-				accounts = []Account{bidder, randomAccount}
+				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
+				accounts = []testutils.Account{bidder, randomAccount}
 			},
 			false,
 		},
 		{
 			"sandwiching bundle",
 			func() {
-				randomAccount := RandomAccounts(rnd, 1)[0]
-				accounts = []Account{bidder, randomAccount, bidder}
+				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
+				accounts = []testutils.Account{bidder, randomAccount, bidder}
 			},
 			false,
 		},
 		{
 			"valid bundle",
 			func() {
-				randomAccount := RandomAccounts(rnd, 1)[0]
-				accounts = []Account{randomAccount, randomAccount, bidder, bidder, bidder}
+				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
+				accounts = []testutils.Account{randomAccount, randomAccount, bidder, bidder, bidder}
 			},
 			true,
 		},
 		{
 			"valid bundle with only bidder txs",
 			func() {
-				accounts = []Account{bidder, bidder, bidder, bidder}
+				accounts = []testutils.Account{bidder, bidder, bidder, bidder}
 			},
 			true,
 		},
 		{
 			"valid bundle with only random txs from single same user",
 			func() {
-				randomAccount := RandomAccounts(rnd, 1)[0]
-				accounts = []Account{randomAccount, randomAccount, randomAccount, randomAccount}
+				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
+				accounts = []testutils.Account{randomAccount, randomAccount, randomAccount, randomAccount}
 			},
 			true,
 		},
 		{
 			"invalid bundle with random accounts",
 			func() {
-				accounts = RandomAccounts(rnd, 2)
+				accounts = testutils.RandomAccounts(rnd, 2)
 			},
 			false,
 		},
 		{
 			"disabled front-running protection",
 			func() {
-				accounts = RandomAccounts(rnd, 10)
+				accounts = testutils.RandomAccounts(rnd, 10)
 				frontRunningProtection = false
 			},
 			true,
@@ -126,7 +127,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 		{
 			"invalid bundle that does not outbid the highest bid",
 			func() {
-				accounts = []Account{bidder, bidder, bidder}
+				accounts = []testutils.Account{bidder, bidder, bidder}
 				highestBid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(500)))
 				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(500)))
 			},
@@ -174,7 +175,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 			// Create the bundle of transactions ordered by accounts
 			bundle := make([]sdk.Tx, 0)
 			for _, acc := range accounts {
-				tx, err := createRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
 				suite.Require().NoError(err)
 				bundle = append(bundle, tx)
 			}
@@ -192,10 +193,10 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 func (suite *KeeperTestSuite) TestValidateBundle() {
 	// TODO: Update this to be multi-dimensional to test multi-sig
 	// https://github.com/skip-mev/pob/issues/14
-	var accounts []Account // tracks the order of signers in the bundle
+	var accounts []testutils.Account // tracks the order of signers in the bundle
 
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
-	bidder := RandomAccounts(rng, 1)[0]
+	bidder := testutils.RandomAccounts(rng, 1)[0]
 
 	cases := []struct {
 		name     string
@@ -205,69 +206,69 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 		{
 			"valid empty bundle",
 			func() {
-				accounts = make([]Account, 0)
+				accounts = make([]testutils.Account, 0)
 			},
 			true,
 		},
 		{
 			"valid single tx bundle",
 			func() {
-				accounts = []Account{bidder}
+				accounts = []testutils.Account{bidder}
 			},
 			true,
 		},
 		{
 			"valid multi-tx bundle by same account",
 			func() {
-				accounts = []Account{bidder, bidder, bidder, bidder}
+				accounts = []testutils.Account{bidder, bidder, bidder, bidder}
 			},
 			true,
 		},
 		{
 			"valid single-tx bundle by a different account",
 			func() {
-				randomAccount := RandomAccounts(rng, 1)[0]
-				accounts = []Account{randomAccount}
+				randomAccount := testutils.RandomAccounts(rng, 1)[0]
+				accounts = []testutils.Account{randomAccount}
 			},
 			true,
 		},
 		{
 			"valid multi-tx bundle by a different accounts",
 			func() {
-				randomAccount := RandomAccounts(rng, 1)[0]
-				accounts = []Account{randomAccount, bidder}
+				randomAccount := testutils.RandomAccounts(rng, 1)[0]
+				accounts = []testutils.Account{randomAccount, bidder}
 			},
 			true,
 		},
 		{
 			"invalid frontrunning bundle",
 			func() {
-				randomAccount := RandomAccounts(rng, 1)[0]
-				accounts = []Account{bidder, randomAccount}
+				randomAccount := testutils.RandomAccounts(rng, 1)[0]
+				accounts = []testutils.Account{bidder, randomAccount}
 			},
 			false,
 		},
 		{
 			"invalid sandwiching bundle",
 			func() {
-				randomAccount := RandomAccounts(rng, 1)[0]
-				accounts = []Account{bidder, randomAccount, bidder}
+				randomAccount := testutils.RandomAccounts(rng, 1)[0]
+				accounts = []testutils.Account{bidder, randomAccount, bidder}
 			},
 			false,
 		},
 		{
 			"invalid multi account bundle",
 			func() {
-				accounts = RandomAccounts(rng, 3)
+				accounts = testutils.RandomAccounts(rng, 3)
 			},
 			false,
 		},
 		{
 			"invalid multi account bundle without bidder",
 			func() {
-				randomAccount1 := RandomAccounts(rng, 1)[0]
-				randomAccount2 := RandomAccounts(rng, 1)[0]
-				accounts = []Account{randomAccount1, randomAccount2}
+				randomAccount1 := testutils.RandomAccounts(rng, 1)[0]
+				randomAccount2 := testutils.RandomAccounts(rng, 1)[0]
+				accounts = []testutils.Account{randomAccount1, randomAccount2}
 			},
 			false,
 		},
@@ -284,7 +285,7 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			bundle := make([]sdk.Tx, 0)
 			for _, acc := range accounts {
 				// Create a random tx
-				tx, err := createRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
 				suite.Require().NoError(err)
 				bundle = append(bundle, tx)
 			}

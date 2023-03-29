@@ -14,6 +14,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/mempool"
+	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/auction/ante"
 	"github.com/skip-mev/pob/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
@@ -27,7 +28,7 @@ type ABCITestSuite struct {
 	// mempool setup
 	mempool         *mempool.AuctionMempool
 	logger          log.Logger
-	encodingConfig  encodingConfig
+	encodingConfig  testutils.EncodingConfig
 	proposalHandler *abci.ProposalHandler
 
 	// auction bid setup
@@ -36,16 +37,16 @@ type ABCITestSuite struct {
 
 	// auction setup
 	auctionKeeper    keeper.Keeper
-	bankKeeper       *MockBankKeeper
-	accountKeeper    *MockAccountKeeper
-	distrKeeper      *MockDistributionKeeper
-	stakingKeeper    *MockStakingKeeper
+	bankKeeper       *testutils.MockBankKeeper
+	accountKeeper    *testutils.MockAccountKeeper
+	distrKeeper      *testutils.MockDistributionKeeper
+	stakingKeeper    *testutils.MockStakingKeeper
 	auctionDecorator ante.AuctionDecorator
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
 
 	// account set up
-	accounts []Account
+	accounts []testutils.Account
 	balances sdk.Coins
 	random   *rand.Rand
 	nonces   map[string]uint64
@@ -57,10 +58,10 @@ func TestABCISuite(t *testing.T) {
 
 func (suite *ABCITestSuite) SetupTest() {
 	// General config
-	suite.encodingConfig = createTestEncodingConfig()
+	suite.encodingConfig = testutils.CreateTestEncodingConfig()
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	suite.key = sdk.NewKVStoreKey(auctiontypes.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, sdk.NewTransientStoreKey("transient_test"))
+	suite.key = storetypes.NewKVStoreKey(auctiontypes.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
 
 	// Mempool set up
@@ -70,11 +71,11 @@ func (suite *ABCITestSuite) SetupTest() {
 
 	// Mock keepers set up
 	ctrl := gomock.NewController(suite.T())
-	suite.accountKeeper = NewMockAccountKeeper(ctrl)
+	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
 	suite.accountKeeper.EXPECT().GetModuleAddress(auctiontypes.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
-	suite.bankKeeper = NewMockBankKeeper(ctrl)
-	suite.distrKeeper = NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = NewMockStakingKeeper(ctrl)
+	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
+	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
+	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
 
 	// Auction keeper / decorator set up
@@ -92,7 +93,7 @@ func (suite *ABCITestSuite) SetupTest() {
 	suite.auctionDecorator = ante.NewAuctionDecorator(suite.auctionKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 	// Accounts set up
-	suite.accounts = RandomAccounts(suite.random, 1)
+	suite.accounts = testutils.RandomAccounts(suite.random, 1)
 	suite.balances = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000000000000000000)))
 	suite.nonces = make(map[string]uint64)
 	for _, acc := range suite.accounts {
@@ -151,10 +152,10 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 		acc := suite.accounts[randomIndex]
 
 		// create a few random msgs
-		randomMsgs := createRandomMsgs(acc.Address, 3)
+		randomMsgs := testutils.CreateRandomMsgs(acc.Address, 3)
 
 		nonce := suite.nonces[acc.Address.String()]
-		randomTx, err := createTx(suite.encodingConfig.TxConfig, acc, nonce, randomMsgs)
+		randomTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, randomMsgs)
 		suite.Require().NoError(err)
 
 		suite.nonces[acc.Address.String()]++
@@ -173,13 +174,13 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 
 		// create a new auction bid msg with numBundledTxs bundled transactions
 		nonce := suite.nonces[acc.Address.String()]
-		bidMsg, err := createMsgAuctionBid(suite.encodingConfig.TxConfig, acc, suite.auctionBidAmount, nonce, numBundledTxs)
+		bidMsg, err := testutils.CreateMsgAuctionBid(suite.encodingConfig.TxConfig, acc, suite.auctionBidAmount, nonce, numBundledTxs)
 		suite.nonces[acc.Address.String()] += uint64(numBundledTxs)
 		suite.Require().NoError(err)
 
 		// create the auction tx
 		nonce = suite.nonces[acc.Address.String()]
-		auctionTx, err := createTx(suite.encodingConfig.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
+		auctionTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
 		suite.Require().NoError(err)
 
 		// insert the auction tx into the global mempool
@@ -684,11 +685,11 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 		{
 			"auction tx with frontrunning",
 			func() {
-				randomAccount := RandomAccounts(suite.random, 1)[0]
+				randomAccount := testutils.RandomAccounts(suite.random, 1)[0]
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(696969696969)))
 				nonce := suite.nonces[bidder.Address.String()]
-				frontRunningTx, _ = createAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []Account{bidder, randomAccount})
+				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []testutils.Account{bidder, randomAccount})
 				suite.Require().NotNil(frontRunningTx)
 
 				numNormalTxs = 100
@@ -703,11 +704,11 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 		{
 			"auction tx with frontrunning, but frontrunning protection disabled",
 			func() {
-				randomAccount := RandomAccounts(suite.random, 1)[0]
+				randomAccount := testutils.RandomAccounts(suite.random, 1)[0]
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(696969696969)))
 				nonce := suite.nonces[bidder.Address.String()]
-				frontRunningTx, _ = createAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []Account{bidder, randomAccount})
+				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []testutils.Account{bidder, randomAccount})
 				suite.Require().NotNil(frontRunningTx)
 
 				numAuctionTxs = 0

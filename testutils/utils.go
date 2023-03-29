@@ -1,4 +1,4 @@
-package abci_test
+package test
 
 import (
 	"math/rand"
@@ -18,14 +18,14 @@ import (
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 )
 
-type encodingConfig struct {
+type EncodingConfig struct {
 	InterfaceRegistry types.InterfaceRegistry
 	Codec             codec.Codec
 	TxConfig          client.TxConfig
 	Amino             *codec.LegacyAmino
 }
 
-func createTestEncodingConfig() encodingConfig {
+func CreateTestEncodingConfig() EncodingConfig {
 	cdc := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
 
@@ -35,7 +35,7 @@ func createTestEncodingConfig() encodingConfig {
 
 	codec := codec.NewProtoCodec(interfaceRegistry)
 
-	return encodingConfig{
+	return EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
 		Codec:             codec,
 		TxConfig:          tx.NewTxConfig(codec, tx.DefaultSignModes),
@@ -71,7 +71,7 @@ func RandomAccounts(r *rand.Rand, n int) []Account {
 	return accs
 }
 
-func createTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.Msg) (authsigning.Tx, error) {
+func CreateTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.Msg) (authsigning.Tx, error) {
 	txBuilder := txCfg.NewTxBuilder()
 	if err := txBuilder.SetMsgs(msgs...); err != nil {
 		return nil, err
@@ -92,7 +92,78 @@ func createTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.M
 	return txBuilder.GetTx(), nil
 }
 
-func createRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
+func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs uint64) (authsigning.Tx, error) {
+	msgs := make([]sdk.Msg, numberMsgs)
+	for i := 0; i < int(numberMsgs); i++ {
+		msgs[i] = &banktypes.MsgSend{
+			FromAddress: account.Address.String(),
+			ToAddress:   account.Address.String(),
+		}
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+
+	sigV2 := signing.SignatureV2{
+		PubKey: account.PrivKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: nonce,
+	}
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	return txBuilder.GetTx(), nil
+}
+
+func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, signers []Account) (authsigning.Tx, error) {
+	bidMsg := &auctiontypes.MsgAuctionBid{
+		Bidder:       bidder.Address.String(),
+		Bid:          bid,
+		Transactions: make([][]byte, len(signers)),
+	}
+
+	for i := 0; i < len(signers); i++ {
+		randomMsg := CreateRandomMsgs(signers[i].Address, 1)
+		randomTx, err := CreateTx(txCfg, signers[i], 0, randomMsg)
+		if err != nil {
+			return nil, err
+		}
+
+		bz, err := txCfg.TxEncoder()(randomTx)
+		if err != nil {
+			return nil, err
+		}
+
+		bidMsg.Transactions[i] = bz
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(bidMsg); err != nil {
+		return nil, err
+	}
+
+	sigV2 := signing.SignatureV2{
+		PubKey: bidder.PrivKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: nonce,
+	}
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	return txBuilder.GetTx(), nil
+}
+
+func CreateRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
 	msgs := make([]sdk.Msg, numberMsgs)
 	for i := 0; i < numberMsgs; i++ {
 		msgs[i] = &banktypes.MsgSend{
@@ -104,7 +175,7 @@ func createRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
 	return msgs
 }
 
-func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, numberMsgs int) (*auctiontypes.MsgAuctionBid, error) {
+func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, numberMsgs int) (*auctiontypes.MsgAuctionBid, error) {
 	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
@@ -145,46 +216,4 @@ func createMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, n
 	}
 
 	return bidMsg, nil
-}
-
-func createAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, signers []Account) (authsigning.Tx, error) {
-	bidMsg := &auctiontypes.MsgAuctionBid{
-		Bidder:       bidder.Address.String(),
-		Bid:          bid,
-		Transactions: make([][]byte, len(signers)),
-	}
-
-	for i := 0; i < len(signers); i++ {
-		randomMsg := createRandomMsgs(signers[i].Address, 1)
-		randomTx, err := createTx(txCfg, signers[i], 0, randomMsg)
-		if err != nil {
-			return nil, err
-		}
-
-		bz, err := txCfg.TxEncoder()(randomTx)
-		if err != nil {
-			return nil, err
-		}
-
-		bidMsg.Transactions[i] = bz
-	}
-
-	txBuilder := txCfg.NewTxBuilder()
-	if err := txBuilder.SetMsgs(bidMsg); err != nil {
-		return nil, err
-	}
-
-	sigV2 := signing.SignatureV2{
-		PubKey: bidder.PrivKey.PubKey(),
-		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
-			Signature: nil,
-		},
-		Sequence: nonce,
-	}
-	if err := txBuilder.SetSignatures(sigV2); err != nil {
-		return nil, err
-	}
-
-	return txBuilder.GetTx(), nil
 }

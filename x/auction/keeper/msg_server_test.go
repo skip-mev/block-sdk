@@ -6,12 +6,13 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/auction/types"
 )
 
 func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
-	accounts := RandomAccounts(rng, 4)
+	accounts := testutils.RandomAccounts(rng, 4)
 
 	bidder := accounts[0]
 	escrow := accounts[1]

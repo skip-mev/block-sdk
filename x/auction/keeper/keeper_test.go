@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/mempool"
+	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/auction/keeper"
 	"github.com/skip-mev/pob/x/auction/types"
 
@@ -18,11 +19,11 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	auctionKeeper    keeper.Keeper
-	bankKeeper       *MockBankKeeper
-	accountKeeper    *MockAccountKeeper
-	distrKeeper      *MockDistributionKeeper
-	stakingKeeper    *MockStakingKeeper
-	encCfg           encodingConfig
+	bankKeeper       *testutils.MockBankKeeper
+	accountKeeper    *testutils.MockAccountKeeper
+	distrKeeper      *testutils.MockDistributionKeeper
+	stakingKeeper    *testutils.MockStakingKeeper
+	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
 	msgServer        types.MsgServer
 	key              *storetypes.KVStoreKey
@@ -36,19 +37,19 @@ func TestKeeperTestSuite(t *testing.T) {
 }
 
 func (suite *KeeperTestSuite) SetupTest() {
-	suite.encCfg = createTestEncodingConfig()
-	suite.key = sdk.NewKVStoreKey(types.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, sdk.NewTransientStoreKey("transient_test"))
+	suite.encCfg = testutils.CreateTestEncodingConfig()
+	suite.key = storetypes.NewKVStoreKey(types.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
 
 	ctrl := gomock.NewController(suite.T())
 
-	suite.accountKeeper = NewMockAccountKeeper(ctrl)
+	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
 	suite.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
 
-	suite.bankKeeper = NewMockBankKeeper(ctrl)
-	suite.distrKeeper = NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = NewMockStakingKeeper(ctrl)
+	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
+	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
+	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
 	suite.auctionKeeper = keeper.NewKeeper(
 		suite.encCfg.Codec,

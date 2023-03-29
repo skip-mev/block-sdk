@@ -9,6 +9,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/mempool"
+	testutils "github.com/skip-mev/pob/testutils"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
 	"github.com/stretchr/testify/suite"
 )
@@ -16,11 +17,11 @@ import (
 type IntegrationTestSuite struct {
 	suite.Suite
 
-	encCfg   encodingConfig
+	encCfg   testutils.EncodingConfig
 	mempool  *mempool.AuctionMempool
 	ctx      sdk.Context
 	random   *rand.Rand
-	accounts []Account
+	accounts []testutils.Account
 	nonces   map[string]uint64
 }
 
@@ -30,13 +31,13 @@ func TestMempoolTestSuite(t *testing.T) {
 
 func (suite *IntegrationTestSuite) SetupTest() {
 	// Mempool setup
-	suite.encCfg = createTestEncodingConfig()
+	suite.encCfg = testutils.CreateTestEncodingConfig()
 	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), 0)
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
 
 	// Init accounts
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	suite.accounts = RandomAccounts(suite.random, 5)
+	suite.accounts = testutils.RandomAccounts(suite.random, 5)
 
 	suite.nonces = make(map[string]uint64)
 	for _, acc := range suite.accounts {
@@ -51,13 +52,13 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 	// Insert a bunch of normal transactions into the global mempool
 	for i := 0; i < numNormalTxs; i++ {
 		// create a few random msgs
-		randomMsgs := createRandomMsgs(3)
 
 		// randomly select an account to create the tx
 		randomIndex := suite.random.Intn(len(suite.accounts))
 		acc := suite.accounts[randomIndex]
 		nonce := suite.nonces[acc.Address.String()]
-		randomTx, err := createTx(suite.encCfg.TxConfig, acc, nonce, randomMsgs)
+		randomMsgs := testutils.CreateRandomMsgs(acc.Address, 3)
+		randomTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, randomMsgs)
 		suite.Require().NoError(err)
 
 		suite.nonces[acc.Address.String()]++
@@ -71,19 +72,19 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 	// Insert a bunch of auction transactions into the global mempool and auction mempool
 	for i := 0; i < numAuctionTxs; i++ {
 		// randomly select a bidder to create the tx
-		acc := RandomAccounts(suite.random, 1)[0]
+		acc := testutils.RandomAccounts(suite.random, 1)[0]
 
 		// create a new auction bid msg with numBundledTxs bundled transactions
 		priority := suite.random.Int63n(100) + 1
 		bid := sdk.NewCoins(sdk.NewInt64Coin("foo", priority))
 		nonce := suite.nonces[acc.Address.String()]
-		bidMsg, err := createMsgAuctionBid(suite.encCfg.TxConfig, acc, bid, nonce, numBundledTxs)
+		bidMsg, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, acc, bid, nonce, numBundledTxs)
 		suite.nonces[acc.Address.String()] += uint64(numBundledTxs)
 		suite.Require().NoError(err)
 
 		// create the auction tx
 		nonce = suite.nonces[acc.Address.String()]
-		auctionTx, err := createTx(suite.encCfg.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
+		auctionTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
 		suite.Require().NoError(err)
 
 		// insert the auction tx into the global mempool

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/mempool"
+	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/auction/ante"
 	"github.com/skip-mev/pob/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/pob/x/auction/types"
@@ -21,15 +22,15 @@ type AnteTestSuite struct {
 	ctx sdk.Context
 
 	// mempool setup
-	encodingConfig encodingConfig
+	encodingConfig testutils.EncodingConfig
 	random         *rand.Rand
 
 	// auction setup
 	auctionKeeper    keeper.Keeper
-	bankKeeper       *MockBankKeeper
-	accountKeeper    *MockAccountKeeper
-	distrKeeper      *MockDistributionKeeper
-	stakingKeeper    *MockStakingKeeper
+	bankKeeper       *testutils.MockBankKeeper
+	accountKeeper    *testutils.MockAccountKeeper
+	distrKeeper      *testutils.MockDistributionKeeper
+	stakingKeeper    *testutils.MockStakingKeeper
 	auctionDecorator ante.AuctionDecorator
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
@@ -41,19 +42,19 @@ func TestAnteTestSuite(t *testing.T) {
 
 func (suite *AnteTestSuite) SetupTest() {
 	// General config
-	suite.encodingConfig = createTestEncodingConfig()
+	suite.encodingConfig = testutils.CreateTestEncodingConfig()
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	suite.key = sdk.NewKVStoreKey(auctiontypes.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, sdk.NewTransientStoreKey("transient_test"))
+	suite.key = storetypes.NewKVStoreKey(auctiontypes.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
 
 	// Keepers set up
 	ctrl := gomock.NewController(suite.T())
-	suite.accountKeeper = NewMockAccountKeeper(ctrl)
+	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
 	suite.accountKeeper.EXPECT().GetModuleAddress(auctiontypes.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
-	suite.bankKeeper = NewMockBankKeeper(ctrl)
-	suite.distrKeeper = NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = NewMockStakingKeeper(ctrl)
+	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
+	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
+	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
 	suite.auctionKeeper = keeper.NewKeeper(
 		suite.encodingConfig.Codec,
@@ -82,13 +83,13 @@ func (suite *AnteTestSuite) executeAnteHandler(tx sdk.Tx, balance sdk.Coins) (sd
 func (suite *AnteTestSuite) TestAnteHandler() {
 	var (
 		// Bid set up
-		bidder  = RandomAccounts(suite.random, 1)[0]
+		bidder  = testutils.RandomAccounts(suite.random, 1)[0]
 		bid     = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
 		balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
-		signers = []Account{bidder}
+		signers = []testutils.Account{bidder}
 
 		// Top bidding auction tx set up
-		topBidder    = RandomAccounts(suite.random, 1)[0]
+		topBidder    = testutils.RandomAccounts(suite.random, 1)[0]
 		topBid       = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(100)))
 		insertTopBid = true
 
@@ -168,30 +169,30 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				insertTopBid = true
 				topBidder = bidder
 				topBid = bid
-				signers = []Account{}
+				signers = []testutils.Account{}
 			},
 			true,
 		},
 		{
 			"invalid frontrunning auction bid tx",
 			func() {
-				randomAccount := RandomAccounts(suite.random, 2)
+				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
 				otherUser := randomAccount[1]
 				insertTopBid = false
 
-				signers = []Account{bidder, otherUser}
+				signers = []testutils.Account{bidder, otherUser}
 			},
 			false,
 		},
 		{
 			"valid frontrunning auction bid tx",
 			func() {
-				randomAccount := RandomAccounts(suite.random, 2)
+				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
 				otherUser := randomAccount[1]
 
-				signers = []Account{bidder, otherUser}
+				signers = []testutils.Account{bidder, otherUser}
 				frontRunningProtection = false
 			},
 			true,
@@ -199,11 +200,11 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 		{
 			"invalid sandwiching auction bid tx",
 			func() {
-				randomAccount := RandomAccounts(suite.random, 2)
+				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
 				otherUser := randomAccount[1]
 
-				signers = []Account{bidder, otherUser, bidder}
+				signers = []testutils.Account{bidder, otherUser, bidder}
 				frontRunningProtection = true
 			},
 			false,
@@ -211,7 +212,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 		{
 			"invalid auction bid tx with many signers",
 			func() {
-				signers = RandomAccounts(suite.random, 10)
+				signers = testutils.RandomAccounts(suite.random, 10)
 				frontRunningProtection = true
 			},
 			false,
@@ -236,7 +237,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			// Insert the top bid into the mempool
 			mempool := mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), 0)
 			if insertTopBid {
-				topAuctionTx, err := createAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, []Account{})
+				topAuctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, []testutils.Account{})
 				suite.Require().NoError(err)
 				suite.Require().Equal(0, mempool.CountTx())
 				suite.Require().Equal(0, mempool.CountAuctionTx())
@@ -246,7 +247,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			}
 
 			// Create the actual auction tx and insert into the mempool
-			auctionTx, err := createAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, signers)
+			auctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, signers)
 			suite.Require().NoError(err)
 
 			// Execute the ante handler
