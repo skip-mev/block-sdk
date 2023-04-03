@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/auction/keeper"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	"github.com/skip-mev/pob/x/builder/keeper"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
 func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
@@ -149,11 +149,11 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 
 			tc.malleate()
 
-			// Set up the new auction keeper with mocks customized for this test case
+			// Set up the new builder keeper with mocks customized for this test case
 			suite.bankKeeper.EXPECT().GetAllBalances(suite.ctx, bidder.Address).Return(balance).AnyTimes()
 			suite.bankKeeper.EXPECT().SendCoins(suite.ctx, bidder.Address, escrowAddress, reserveFee).Return(nil).AnyTimes()
 
-			suite.auctionKeeper = keeper.NewKeeper(
+			suite.builderKeeper = keeper.NewKeeper(
 				suite.encCfg.Codec,
 				suite.key,
 				suite.accountKeeper,
@@ -162,7 +162,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 				suite.stakingKeeper,
 				suite.authorityAccount.String(),
 			)
-			params := auctiontypes.Params{
+			params := buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
 				MinBuyInFee:            minBuyInFee,
@@ -170,7 +170,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 				FrontRunningProtection: frontRunningProtection,
 				MinBidIncrement:        minBidIncrement,
 			}
-			suite.auctionKeeper.SetParams(suite.ctx, params)
+			suite.builderKeeper.SetParams(suite.ctx, params)
 
 			// Create the bundle of transactions ordered by accounts
 			bundle := make([]sdk.Tx, 0)
@@ -180,7 +180,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 				bundle = append(bundle, tx)
 			}
 
-			err := suite.auctionKeeper.ValidateAuctionMsg(suite.ctx, bidder.Address, bid, highestBid, bundle)
+			err := suite.builderKeeper.ValidateAuctionMsg(suite.ctx, bidder.Address, bid, highestBid, bundle)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {
@@ -291,7 +291,7 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			}
 
 			// Validate the bundle
-			err := suite.auctionKeeper.ValidateAuctionBundle(bidder.Address, bundle)
+			err := suite.builderKeeper.ValidateAuctionBundle(bidder.Address, bundle)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {

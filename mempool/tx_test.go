@@ -7,7 +7,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	pobcodec "github.com/skip-mev/pob/codec"
 	"github.com/skip-mev/pob/mempool"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/require"
 )
 
@@ -15,7 +15,7 @@ func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {
 	encCfg := pobcodec.CreateEncodingConfig()
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(&auctiontypes.MsgAuctionBid{})
+	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
 
 	msg, err := mempool.GetMsgAuctionBidFromTx(txBuilder.GetTx())
 	require.NoError(t, err)
@@ -27,8 +27,8 @@ func TestGetMsgAuctionBidFromTx_MultiMsgBid(t *testing.T) {
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(
-		&auctiontypes.MsgAuctionBid{},
-		&auctiontypes.MsgAuctionBid{},
+		&buildertypes.MsgAuctionBid{},
+		&buildertypes.MsgAuctionBid{},
 		&banktypes.MsgSend{},
 	)
 
@@ -52,7 +52,7 @@ func TestGetUnwrappedTx(t *testing.T) {
 	encCfg := pobcodec.CreateEncodingConfig()
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(&auctiontypes.MsgAuctionBid{})
+	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
 	tx := txBuilder.GetTx()
 
 	bid := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000000)))

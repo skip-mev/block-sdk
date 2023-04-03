@@ -5,17 +5,17 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/x/auction/types"
+	"github.com/skip-mev/pob/x/builder/types"
 )
 
 var _ types.MsgServer = MsgServer{}
 
-// MsgServer is the wrapper for the auction module's msg service.
+// MsgServer is the wrapper for the builder module's msg service.
 type MsgServer struct {
 	Keeper
 }
 
-// NewMsgServerImpl returns an implementation of the auction MsgServer interface.
+// NewMsgServerImpl returns an implementation of the builder MsgServer interface.
 func NewMsgServerImpl(keeper Keeper) *MsgServer {
 	return &MsgServer{Keeper: keeper}
 }

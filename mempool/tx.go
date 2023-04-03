@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
 // WrappedBidTx defines a wrapper around an sdk.Tx that contains a single
@@ -28,10 +28,10 @@ func (wbtx *WrappedBidTx) GetBid() sdk.Coins { return wbtx.bid }
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if
 // one exists. If a MsgAuctionBid does exist and other messages are also present,
 // an error is returned. If no MsgAuctionBid is present, <nil, nil> is returned.
-func GetMsgAuctionBidFromTx(tx sdk.Tx) (*auctiontypes.MsgAuctionBid, error) {
-	auctionBidMsgs := make([]*auctiontypes.MsgAuctionBid, 0)
+func GetMsgAuctionBidFromTx(tx sdk.Tx) (*buildertypes.MsgAuctionBid, error) {
+	auctionBidMsgs := make([]*buildertypes.MsgAuctionBid, 0)
 	for _, msg := range tx.GetMsgs() {
-		t, ok := msg.(*auctiontypes.MsgAuctionBid)
+		t, ok := msg.(*buildertypes.MsgAuctionBid)
 		if ok {
 			auctionBidMsgs = append(auctionBidMsgs, t)
 		}

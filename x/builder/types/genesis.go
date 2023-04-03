@@ -14,7 +14,7 @@ func DefaultGenesisState() *GenesisState {
 	}
 }
 
-// Validate performs basic validation of the auction module genesis state.
+// Validate performs basic validation of the builder module genesis state.
 func (gs GenesisState) Validate() error {
 	return gs.Params.Validate()
 }

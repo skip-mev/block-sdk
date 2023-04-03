@@ -10,7 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/mempool"
 	testutils "github.com/skip-mev/pob/testutils"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -158,7 +158,7 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
 		tx := auctionIterator.Tx()
 		suite.Require().Len(tx.GetMsgs(), 1)
 
-		msgAuctionBid := tx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid)
+		msgAuctionBid := tx.GetMsgs()[0].(*buildertypes.MsgAuctionBid)
 		if highestBid == nil {
 			highestBid = msgAuctionBid.Bid
 			prevBid = msgAuctionBid.Bid

@@ -9,8 +9,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/mempool"
 	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/auction/keeper"
-	"github.com/skip-mev/pob/x/auction/types"
+	"github.com/skip-mev/pob/x/builder/keeper"
+	"github.com/skip-mev/pob/x/builder/types"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -18,7 +18,7 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	auctionKeeper    keeper.Keeper
+	builderKeeper    keeper.Keeper
 	bankKeeper       *testutils.MockBankKeeper
 	accountKeeper    *testutils.MockAccountKeeper
 	distrKeeper      *testutils.MockDistributionKeeper
@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
 	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
-	suite.auctionKeeper = keeper.NewKeeper(
+	suite.builderKeeper = keeper.NewKeeper(
 		suite.encCfg.Codec,
 		suite.key,
 		suite.accountKeeper,
@@ -61,9 +61,9 @@ func (suite *KeeperTestSuite) SetupTest() {
 		suite.authorityAccount.String(),
 	)
 
-	err := suite.auctionKeeper.SetParams(suite.ctx, types.DefaultParams())
+	err := suite.builderKeeper.SetParams(suite.ctx, types.DefaultParams())
 	suite.Require().NoError(err)
 
 	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), 0)
-	suite.msgServer = keeper.NewMsgServerImpl(suite.auctionKeeper)
+	suite.msgServer = keeper.NewMsgServerImpl(suite.builderKeeper)
 }

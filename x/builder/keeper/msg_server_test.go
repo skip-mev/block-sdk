@@ -7,7 +7,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/auction/types"
+	"github.com/skip-mev/pob/x/builder/types"
 )
 
 func (suite *KeeperTestSuite) TestMsgAuctionBid() {
@@ -46,7 +46,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			malleate: func() {
 				params := types.DefaultParams()
 				params.MaxBundleSize = 2
-				suite.auctionKeeper.SetParams(suite.ctx, params)
+				suite.builderKeeper.SetParams(suite.ctx, params)
 			},
 			expectErr: true,
 		},
@@ -61,7 +61,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 				params := types.DefaultParams()
 				params.ProposerFee = sdk.ZeroDec()
 				params.EscrowAccountAddress = escrow.Address.String()
-				suite.auctionKeeper.SetParams(suite.ctx, params)
+				suite.builderKeeper.SetParams(suite.ctx, params)
 
 				suite.bankKeeper.EXPECT().
 					SendCoins(
@@ -86,7 +86,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 				params := types.DefaultParams()
 				params.ProposerFee = sdk.MustNewDecFromStr("0.30")
 				params.EscrowAccountAddress = escrow.Address.String()
-				suite.auctionKeeper.SetParams(suite.ctx, params)
+				suite.builderKeeper.SetParams(suite.ctx, params)
 
 				suite.distrKeeper.EXPECT().
 					GetPreviousProposerConsAddr(suite.ctx).

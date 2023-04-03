@@ -11,9 +11,9 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/mempool"
 	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/auction/ante"
-	"github.com/skip-mev/pob/x/auction/keeper"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	"github.com/skip-mev/pob/x/builder/ante"
+	"github.com/skip-mev/pob/x/builder/keeper"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -25,13 +25,13 @@ type AnteTestSuite struct {
 	encodingConfig testutils.EncodingConfig
 	random         *rand.Rand
 
-	// auction setup
-	auctionKeeper    keeper.Keeper
+	// builder setup
+	builderKeeper    keeper.Keeper
 	bankKeeper       *testutils.MockBankKeeper
 	accountKeeper    *testutils.MockAccountKeeper
 	distrKeeper      *testutils.MockDistributionKeeper
 	stakingKeeper    *testutils.MockStakingKeeper
-	auctionDecorator ante.AuctionDecorator
+	builderDecorator ante.BuilderDecorator
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
 }
@@ -44,19 +44,19 @@ func (suite *AnteTestSuite) SetupTest() {
 	// General config
 	suite.encodingConfig = testutils.CreateTestEncodingConfig()
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	suite.key = storetypes.NewKVStoreKey(auctiontypes.StoreKey)
+	suite.key = storetypes.NewKVStoreKey(buildertypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
 
 	// Keepers set up
 	ctrl := gomock.NewController(suite.T())
 	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
-	suite.accountKeeper.EXPECT().GetModuleAddress(auctiontypes.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
+	suite.accountKeeper.EXPECT().GetModuleAddress(buildertypes.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
 	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
 	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
 	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
-	suite.auctionKeeper = keeper.NewKeeper(
+	suite.builderKeeper = keeper.NewKeeper(
 		suite.encodingConfig.Codec,
 		suite.key,
 		suite.accountKeeper,
@@ -65,7 +65,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		suite.stakingKeeper,
 		suite.authorityAccount.String(),
 	)
-	err := suite.auctionKeeper.SetParams(suite.ctx, auctiontypes.DefaultParams())
+	err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.DefaultParams())
 	suite.Require().NoError(err)
 }
 
@@ -77,7 +77,7 @@ func (suite *AnteTestSuite) executeAnteHandler(tx sdk.Tx, balance sdk.Coins) (sd
 		return ctx, nil
 	}
 
-	return suite.auctionDecorator.AnteHandle(suite.ctx, tx, false, next)
+	return suite.builderDecorator.AnteHandle(suite.ctx, tx, false, next)
 }
 
 func (suite *AnteTestSuite) TestAnteHandler() {
@@ -225,7 +225,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			tc.malleate()
 
 			// Set the auction params
-			err := suite.auctionKeeper.SetParams(suite.ctx, auctiontypes.Params{
+			err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
 				MinBuyInFee:            minBuyInFee,
@@ -251,7 +251,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			suite.Require().NoError(err)
 
 			// Execute the ante handler
-			suite.auctionDecorator = ante.NewAuctionDecorator(suite.auctionKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), mempool)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), mempool)
 			_, err = suite.executeAnteHandler(auctionTx, balance)
 			if tc.pass {
 				suite.Require().NoError(err)

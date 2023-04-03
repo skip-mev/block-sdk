@@ -13,7 +13,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/mempool"
-	auctiontypes "github.com/skip-mev/pob/x/auction/types"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
 type ProposalHandler struct {
@@ -67,7 +67,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 			bidTxSize := int64(len(bidTxBz))
 			if bidTxSize <= req.MaxTxBytes {
-				bidMsg, ok := tmpBidTx.GetMsgs()[0].(*auctiontypes.MsgAuctionBid)
+				bidMsg, ok := tmpBidTx.GetMsgs()[0].(*buildertypes.MsgAuctionBid)
 				if !ok {
 					// This should never happen, as CheckTx will ensure only valid bids
 					// enter the mempool, but in case it does, we need to remove the

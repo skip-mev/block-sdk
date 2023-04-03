@@ -1,20 +1,20 @@
 syntax = "proto3";
-package skipmev.pob.auction.v1;
+package skipmev.pob.builder.v1;
 
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/skip-mev/pob/x/auction/types";
+option go_package = "github.com/skip-mev/pob/x/builder/types";
 
-// GenesisState defines the genesis state of the x/auction module.
+// GenesisState defines the genesis state of the x/builder module.
 message GenesisState {
   Params params = 1 [(gogoproto.nullable) = false];
 }
 
-// Params defines the parameters of the x/auction module.
+// Params defines the parameters of the x/builder module.
 message Params {
-  option (amino.name) = "cosmos-sdk/x/auction/Params";
+  option (amino.name) = "cosmos-sdk/x/builder/Params";
 
   // max_bundle_size is the maximum number of transactions that can be bundled
   // in a single bundle.
