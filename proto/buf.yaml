@@ -5,7 +5,7 @@ name: buf.build/skip-mev/pob
 # Ref: https://github.com/skip-mev/pob/issues/4
 deps:
   - buf.build/cosmos/cosmos-proto:1935555c206d4afb9e94615dfd0fad31
-  - buf.build/cosmos/cosmos-sdk:2aa7ff2b23df473a85b7a7fe1884105d
+  - buf.build/cosmos/cosmos-sdk:v0.47.0
   - buf.build/cosmos/gogo-proto:a14993478f40695898ed8a86931094b6656e8a5d
   - buf.build/googleapis/googleapis
 breaking:
