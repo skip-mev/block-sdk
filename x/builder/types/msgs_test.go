@@ -125,6 +125,31 @@ func TestMsgUpdateParams(t *testing.T) {
 			},
 			expectPass: true,
 		},
+		{
+			description: "invalid message with multiple fee denoms",
+			msg: types.MsgUpdateParams{
+				Authority: sdk.AccAddress([]byte("test")).String(),
+				Params: types.Params{
+					ProposerFee:          sdk.NewDec(1),
+					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
+					ReserveFee:           sdk.NewCoin("test", sdk.NewInt(100)),
+					MinBidIncrement:      sdk.NewCoin("test2", sdk.NewInt(100)),
+					MinBuyInFee:          sdk.NewCoin("test3", sdk.NewInt(100)),
+				},
+			},
+			expectPass: false,
+		},
+		{
+			description: "invalid message with unset fee denoms",
+			msg: types.MsgUpdateParams{
+				Authority: sdk.AccAddress([]byte("test")).String(),
+				Params: types.Params{
+					ProposerFee:          sdk.NewDec(1),
+					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
+				},
+			},
+			expectPass: false,
+		},
 	}
 
 	for _, tc := range cases {
