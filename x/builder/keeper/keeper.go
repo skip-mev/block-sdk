@@ -122,30 +122,30 @@ func (k Keeper) GetEscrowAccount(ctx sdk.Context) (sdk.AccAddress, error) {
 }
 
 // GetReserveFee returns the reserve fee of the builder module.
-func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coins, error) {
+func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return sdk.NewCoins(), err
+		return sdk.Coin{}, err
 	}
 
 	return params.ReserveFee, nil
 }
 
 // GetMinBuyInFee returns the fee that the bidder must pay to enter the builder.
-func (k Keeper) GetMinBuyInFee(ctx sdk.Context) (sdk.Coins, error) {
+func (k Keeper) GetMinBuyInFee(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return sdk.NewCoins(), err
+		return sdk.Coin{}, err
 	}
 
 	return params.MinBuyInFee, nil
 }
 
 // GetMinBidIncrement returns the minimum bid increment for the builder.
-func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coins, error) {
+func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return sdk.NewCoins(), err
+		return sdk.Coin{}, err
 	}
 
 	return params.MinBidIncrement, nil

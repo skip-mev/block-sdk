@@ -18,7 +18,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "invalid message with empty bidder",
 			msg: types.MsgAuctionBid{
 				Bidder:       "",
-				Bid:          sdk.NewCoins(),
+				Bid:          sdk.Coin{},
 				Transactions: [][]byte{},
 			},
 			expectPass: false,
@@ -27,7 +27,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "invalid message with empty bid",
 			msg: types.MsgAuctionBid{
 				Bidder:       sdk.AccAddress([]byte("test")).String(),
-				Bid:          sdk.NewCoins(),
+				Bid:          sdk.Coin{},
 				Transactions: [][]byte{},
 			},
 			expectPass: false,
@@ -36,7 +36,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "invalid message with empty transactions",
 			msg: types.MsgAuctionBid{
 				Bidder:       sdk.AccAddress([]byte("test")).String(),
-				Bid:          sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(100))),
+				Bid:          sdk.NewCoin("test", sdk.NewInt(100)),
 				Transactions: [][]byte{},
 			},
 			expectPass: false,
@@ -45,7 +45,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "valid message",
 			msg: types.MsgAuctionBid{
 				Bidder:       sdk.AccAddress([]byte("test")).String(),
-				Bid:          sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(100))),
+				Bid:          sdk.NewCoin("test", sdk.NewInt(100)),
 				Transactions: [][]byte{[]byte("test")},
 			},
 			expectPass: true,
@@ -54,7 +54,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "valid message with multiple transactions",
 			msg: types.MsgAuctionBid{
 				Bidder:       sdk.AccAddress([]byte("test")).String(),
-				Bid:          sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(100))),
+				Bid:          sdk.NewCoin("test", sdk.NewInt(100)),
 				Transactions: [][]byte{[]byte("test"), []byte("test2")},
 			},
 			expectPass: true,
@@ -63,7 +63,7 @@ func TestMsgAuctionBid(t *testing.T) {
 			description: "invalid message with empty transaction in transactions",
 			msg: types.MsgAuctionBid{
 				Bidder:       sdk.AccAddress([]byte("test")).String(),
-				Bid:          sdk.NewCoins(sdk.NewCoin("test", sdk.NewInt(100))),
+				Bid:          sdk.NewCoin("test", sdk.NewInt(100)),
 				Transactions: [][]byte{[]byte("test"), []byte("")},
 			},
 			expectPass: false,
@@ -118,6 +118,9 @@ func TestMsgUpdateParams(t *testing.T) {
 				Params: types.Params{
 					ProposerFee:          sdk.NewDec(1),
 					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
+					ReserveFee:           sdk.NewCoin("test", sdk.NewInt(100)),
+					MinBidIncrement:      sdk.NewCoin("test", sdk.NewInt(100)),
+					MinBuyInFee:          sdk.NewCoin("test", sdk.NewInt(100)),
 				},
 			},
 			expectPass: true,

@@ -55,7 +55,7 @@ func TestGetUnwrappedTx(t *testing.T) {
 	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
 	tx := txBuilder.GetTx()
 
-	bid := sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000000)))
+	bid := sdk.NewCoin("foo", sdk.NewInt(1000000))
 	wrappedTx := mempool.NewWrappedBidTx(tx, bid)
 	unWrappedTx := mempool.UnwrapBidTx(wrappedTx)
 

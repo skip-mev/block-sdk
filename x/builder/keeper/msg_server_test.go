@@ -54,7 +54,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			name: "valid bundle with no proposer fee",
 			msg: &types.MsgAuctionBid{
 				Bidder:       bidder.Address.String(),
-				Bid:          sdk.NewCoins(sdk.NewInt64Coin("foo", 1024)),
+				Bid:          sdk.NewInt64Coin("foo", 1024),
 				Transactions: [][]byte{{0xFF}, {0xFF}},
 			},
 			malleate: func() {
@@ -79,7 +79,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			name: "valid bundle with proposer fee",
 			msg: &types.MsgAuctionBid{
 				Bidder:       bidder.Address.String(),
-				Bid:          sdk.NewCoins(sdk.NewInt64Coin("foo", 3416)),
+				Bid:          sdk.NewInt64Coin("foo", 3416),
 				Transactions: [][]byte{{0xFF}, {0xFF}},
 			},
 			malleate: func() {

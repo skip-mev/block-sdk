@@ -76,7 +76,7 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 
 		// create a new auction bid msg with numBundledTxs bundled transactions
 		priority := suite.random.Int63n(100) + 1
-		bid := sdk.NewCoins(sdk.NewInt64Coin("foo", priority))
+		bid := sdk.NewInt64Coin("foo", priority)
 		nonce := suite.nonces[acc.Address.String()]
 		bidMsg, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, acc, bid, nonce, numBundledTxs)
 		suite.nonces[acc.Address.String()] += uint64(numBundledTxs)
@@ -150,8 +150,8 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
 	suite.CreateFilledMempool(numberTotalTxs, numberAuctionTxs, numberBundledTxs, insertRefTxs)
 
 	// iterate through the entire auction mempool and ensure the bids are in order
-	var highestBid sdk.Coins
-	var prevBid sdk.Coins
+	var highestBid sdk.Coin
+	var prevBid sdk.Coin
 	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
 	numberTxsSeen := 0
 	for auctionIterator != nil {
@@ -159,12 +159,12 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
 		suite.Require().Len(tx.GetMsgs(), 1)
 
 		msgAuctionBid := tx.GetMsgs()[0].(*buildertypes.MsgAuctionBid)
-		if highestBid == nil {
+		if highestBid.IsNil() {
 			highestBid = msgAuctionBid.Bid
 			prevBid = msgAuctionBid.Bid
 		} else {
-			suite.Require().True(msgAuctionBid.Bid.IsAllLTE(highestBid))
-			suite.Require().True(msgAuctionBid.Bid.IsAllLTE(prevBid))
+			suite.Require().True(msgAuctionBid.Bid.IsLTE(highestBid))
+			suite.Require().True(msgAuctionBid.Bid.IsLTE(prevBid))
 			prevBid = msgAuctionBid.Bid
 		}
 

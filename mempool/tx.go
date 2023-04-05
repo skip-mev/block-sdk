@@ -13,17 +13,17 @@ import (
 type WrappedBidTx struct {
 	signing.Tx
 
-	bid sdk.Coins
+	bid sdk.Coin
 }
 
-func NewWrappedBidTx(tx sdk.Tx, bid sdk.Coins) *WrappedBidTx {
+func NewWrappedBidTx(tx sdk.Tx, bid sdk.Coin) *WrappedBidTx {
 	return &WrappedBidTx{
 		Tx:  tx.(signing.Tx),
 		bid: bid,
 	}
 }
 
-func (wbtx *WrappedBidTx) GetBid() sdk.Coins { return wbtx.bid }
+func (wbtx *WrappedBidTx) GetBid() sdk.Coin { return wbtx.bid }
 
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if
 // one exists. If a MsgAuctionBid does exist and other messages are also present,

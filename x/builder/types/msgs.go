@@ -51,7 +51,7 @@ func (m MsgAuctionBid) ValidateBasic() error {
 	}
 
 	// Validate the bid.
-	if m.Bid.IsZero() {
+	if m.Bid.IsNil() {
 		return fmt.Errorf("no bid included")
 	}
 

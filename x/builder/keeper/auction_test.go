@@ -15,18 +15,18 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 		// Tx building variables
 		accounts = []testutils.Account{} // tracks the order of signers in the bundle
 		balance  = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
-		bid      = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		bid      = sdk.NewCoin("foo", sdk.NewInt(1000))
 
 		// Auction params
 		maxBundleSize          uint32 = 10
-		reserveFee                    = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		minBuyInFee                   = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-		minBidIncrement               = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(1000))
+		minBuyInFee                   = sdk.NewCoin("foo", sdk.NewInt(1000))
+		minBidIncrement               = sdk.NewCoin("foo", sdk.NewInt(1000))
 		escrowAddress                 = sdk.AccAddress([]byte("escrow"))
 		frontRunningProtection        = true
 
 		// mempool variables
-		highestBid = sdk.NewCoins()
+		highestBid = sdk.Coin{}
 	)
 
 	rnd := rand.New(rand.NewSource(time.Now().Unix()))
@@ -40,14 +40,14 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 		{
 			"insufficient bid amount",
 			func() {
-				bid = sdk.NewCoins()
+				bid = sdk.Coin{}
 			},
 			false,
 		},
 		{
 			"insufficient balance",
 			func() {
-				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				balance = sdk.NewCoins()
 			},
 			false,
@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 			"bid amount equals the balance (not accounting for the reserve fee)",
 			func() {
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(2000)))
-				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(2000)))
+				bid = sdk.NewCoin("foo", sdk.NewInt(2000))
 			},
 			false,
 		},
@@ -64,7 +64,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 			"too many transactions in the bundle",
 			func() {
 				// reset the balance and bid to their original values
-				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
+				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
 				accounts = testutils.RandomAccounts(rnd, int(maxBundleSize+1))
 			},
@@ -128,18 +128,26 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 			"invalid bundle that does not outbid the highest bid",
 			func() {
 				accounts = []testutils.Account{bidder, bidder, bidder}
-				highestBid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(500)))
-				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(500)))
+				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
+				bid = sdk.NewCoin("foo", sdk.NewInt(500))
 			},
 			false,
 		},
 		{
 			"valid bundle that outbids the highest bid",
 			func() {
-				highestBid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(500)))
-				bid = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1500)))
+				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
+				bid = sdk.NewCoin("foo", sdk.NewInt(1500))
 			},
 			true,
+		},
+		{
+			"attempting to bid with a different denom",
+			func() {
+				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
+				bid = sdk.NewCoin("foo2", sdk.NewInt(1500))
+			},
+			false,
 		},
 	}
 

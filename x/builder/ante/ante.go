@@ -52,7 +52,7 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			transactions[i] = decodedTx
 		}
 
-		topBid := sdk.NewCoins()
+		topBid := sdk.Coin{}
 
 		// If the current transaction is the highest bidding transaction, then the highest bid is empty.
 		isTopBidTx, err := ad.IsTopBidTx(ctx, tx)
@@ -77,10 +77,10 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 }
 
 // GetTopAuctionBid returns the highest auction bid if one exists.
-func (ad BuilderDecorator) GetTopAuctionBid(ctx sdk.Context) (sdk.Coins, error) {
+func (ad BuilderDecorator) GetTopAuctionBid(ctx sdk.Context) (sdk.Coin, error) {
 	auctionTx := ad.mempool.GetTopAuctionTx(ctx)
 	if auctionTx == nil {
-		return sdk.NewCoins(), nil
+		return sdk.Coin{}, nil
 	}
 
 	return auctionTx.(*mempool.WrappedBidTx).GetBid(), nil

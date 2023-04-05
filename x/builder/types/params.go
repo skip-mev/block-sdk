@@ -10,9 +10,9 @@ import (
 var (
 	DefaultMaxBundleSize          uint32 = 2
 	DefaultEscrowAccountAddress   string
-	DefaultReserveFee             = sdk.Coins{}
-	DefaultMinBuyInFee            = sdk.Coins{}
-	DefaultMinBidIncrement        = sdk.Coins{}
+	DefaultReserveFee             = sdk.Coin{}
+	DefaultMinBuyInFee            = sdk.Coin{}
+	DefaultMinBidIncrement        = sdk.Coin{}
 	DefaultFrontRunningProtection = true
 	DefaultProposerFee            = sdk.ZeroDec()
 )
@@ -21,7 +21,7 @@ var (
 func NewParams(
 	maxBundleSize uint32,
 	escrowAccountAddress string,
-	reserveFee, minBuyInFee, minBidIncrement sdk.Coins,
+	reserveFee, minBuyInFee, minBidIncrement sdk.Coin,
 	frontRunningProtection bool,
 	proposerFee sdk.Dec,
 ) Params {
@@ -55,19 +55,27 @@ func (p Params) Validate() error {
 		return err
 	}
 
-	if err := p.ReserveFee.Validate(); err != nil {
+	if err := validateFee(p.ReserveFee); err != nil {
 		return fmt.Errorf("invalid reserve fee (%s)", err)
 	}
 
-	if err := p.MinBuyInFee.Validate(); err != nil {
+	if err := validateFee(p.MinBuyInFee); err != nil {
 		return fmt.Errorf("invalid minimum buy-in fee (%s)", err)
 	}
 
-	if err := p.MinBidIncrement.Validate(); err != nil {
+	if err := validateFee(p.MinBidIncrement); err != nil {
 		return fmt.Errorf("invalid minimum bid increment (%s)", err)
 	}
 
 	return validateProposerFee(p.ProposerFee)
+}
+
+func validateFee(fee sdk.Coin) error {
+	if fee.IsNil() {
+		return fmt.Errorf("fee cannot be nil: %s", fee)
+	}
+
+	return fee.Validate()
 }
 
 func validateProposerFee(v sdk.Dec) error {
@@ -84,8 +92,6 @@ func validateProposerFee(v sdk.Dec) error {
 	return nil
 }
 
-// validateEscrowAccountAddress ensures the escrow account address is a valid
-// address.
 func validateEscrowAccountAddress(account string) error {
 	// If the escrow account address is set, ensure it is a valid address.
 	if _, err := sdk.AccAddressFromBech32(account); err != nil {

@@ -121,7 +121,7 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs ui
 	return txBuilder.GetTx(), nil
 }
 
-func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, signers []Account) (authsigning.Tx, error) {
+func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce uint64, signers []Account) (authsigning.Tx, error) {
 	bidMsg := &buildertypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
@@ -175,7 +175,7 @@ func CreateRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
 	return msgs
 }
 
-func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coins, nonce uint64, numberMsgs int) (*buildertypes.MsgAuctionBid, error) {
+func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce uint64, numberMsgs int) (*buildertypes.MsgAuctionBid, error) {
 	bidMsg := &buildertypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
