@@ -41,17 +41,6 @@ func (k Keeper) ValidateAuctionMsg(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 // ValidateAuctionBid validates that the bidder has sufficient funds to participate in the auction and that the bid amount
 // is sufficiently high enough.
 func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, highestBid sdk.Coins) error {
-	// Ensure the bid is greater than the highest bid + min bid increment.
-	minBidIncrement, err := k.GetMinBidIncrement(ctx)
-	if err != nil {
-		return err
-	}
-
-	minBid := highestBid.Add(minBidIncrement...)
-	if !bid.IsAllGTE(minBid) {
-		return fmt.Errorf("bid amount (%s) is less than the highest bid (%s) + min bid increment (%s)", bid, highestBid, minBidIncrement)
-	}
-
 	// Get the bid floor.
 	reserveFee, err := k.GetReserveFee(ctx)
 	if err != nil {
@@ -60,6 +49,19 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 
 	if !bid.IsAllGTE(reserveFee) {
 		return fmt.Errorf("bid amount (%s) is less than the reserve fee (%s)", bid, reserveFee)
+	}
+
+	if !highestBid.Empty() {
+		// Ensure the bid is greater than the highest bid + min bid increment.
+		minBidIncrement, err := k.GetMinBidIncrement(ctx)
+		if err != nil {
+			return err
+		}
+
+		minBid := highestBid.Add(minBidIncrement...)
+		if !bid.IsAllGTE(minBid) {
+			return fmt.Errorf("bid amount (%s) is less than the highest bid (%s) + min bid increment (%s)", bid, highestBid, minBidIncrement)
+		}
 	}
 
 	// Get the pay-to-play fee.
