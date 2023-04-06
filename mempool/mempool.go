@@ -34,7 +34,12 @@ type AuctionMempool struct {
 func AuctionTxPriority() TxPriority[string] {
 	return TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
-			return tx.(*WrappedBidTx).GetBid().String()
+			msgAuctionBid, err := GetMsgAuctionBidFromTx(tx)
+			if err != nil {
+				panic(err)
+			}
+
+			return msgAuctionBid.Bid.String()
 		},
 		Compare: func(a, b string) int {
 			aCoins, _ := sdk.ParseCoinsNormalized(a)
@@ -99,7 +104,7 @@ func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 	}
 
 	if msg != nil {
-		if err := am.auctionIndex.Insert(ctx, NewWrappedBidTx(tx, msg.GetBid())); err != nil {
+		if err := am.auctionIndex.Insert(ctx, tx); err != nil {
 			removeTx(am.globalIndex, tx)
 			return fmt.Errorf("failed to insert tx into auction index: %w", err)
 		}
@@ -123,7 +128,7 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 	// 2. Remove the bid from the auction index (if applicable). In addition, we
 	// remove all referenced transactions from the global mempool.
 	if msg != nil {
-		removeTx(am.auctionIndex, NewWrappedBidTx(tx, msg.GetBid()))
+		removeTx(am.auctionIndex, tx)
 
 		for _, refRawTx := range msg.GetTransactions() {
 			refTx, err := am.txDecoder(refRawTx)
@@ -152,7 +157,7 @@ func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
 	}
 
 	if msg != nil {
-		removeTx(am.auctionIndex, NewWrappedBidTx(tx, msg.GetBid()))
+		removeTx(am.auctionIndex, tx)
 	}
 
 	return nil

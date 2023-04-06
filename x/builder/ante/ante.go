@@ -83,7 +83,12 @@ func (ad BuilderDecorator) GetTopAuctionBid(ctx sdk.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, nil
 	}
 
-	return auctionTx.(*mempool.WrappedBidTx).GetBid(), nil
+	msgAuctionBid, err := mempool.GetMsgAuctionBidFromTx(auctionTx)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	return msgAuctionBid.Bid, nil
 }
 
 // IsTopBidTx returns true if the transaction inputted is the highest bidding auction transaction in the mempool.
@@ -93,8 +98,7 @@ func (ad BuilderDecorator) IsTopBidTx(ctx sdk.Context, tx sdk.Tx) (bool, error) 
 		return false, nil
 	}
 
-	topBidTx := mempool.UnwrapBidTx(auctionTx)
-	topBidBz, err := ad.txEncoder(topBidTx)
+	topBidBz, err := ad.txEncoder(auctionTx)
 	if err != nil {
 		return false, err
 	}

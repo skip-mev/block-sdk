@@ -3,7 +3,6 @@ package mempool_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	pobcodec "github.com/skip-mev/pob/codec"
 	"github.com/skip-mev/pob/mempool"
@@ -46,23 +45,4 @@ func TestGetMsgAuctionBidFromTx_NoBid(t *testing.T) {
 	msg, err := mempool.GetMsgAuctionBidFromTx(txBuilder.GetTx())
 	require.NoError(t, err)
 	require.Nil(t, msg)
-}
-
-func TestGetUnwrappedTx(t *testing.T) {
-	encCfg := pobcodec.CreateEncodingConfig()
-
-	txBuilder := encCfg.TxConfig.NewTxBuilder()
-	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
-	tx := txBuilder.GetTx()
-
-	bid := sdk.NewCoin("foo", sdk.NewInt(1000000))
-	wrappedTx := mempool.NewWrappedBidTx(tx, bid)
-	unWrappedTx := mempool.UnwrapBidTx(wrappedTx)
-
-	unwrappedBz, err := encCfg.TxConfig.TxEncoder()(unWrappedTx)
-	require.NoError(t, err)
-
-	txBz, err := encCfg.TxConfig.TxEncoder()(tx)
-	require.NoError(t, err)
-	require.Equal(t, txBz, unwrappedBz)
 }

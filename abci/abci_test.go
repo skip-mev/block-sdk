@@ -234,7 +234,7 @@ func (suite *ABCITestSuite) exportMempool(exportRefTxs bool) [][]byte {
 
 	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
 	for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
-		auctionTx := auctionIterator.Tx().(*mempool.WrappedBidTx).Tx
+		auctionTx := auctionIterator.Tx()
 		txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(auctionTx)
 		suite.Require().NoError(err)
 
@@ -771,6 +771,6 @@ func (suite *ABCITestSuite) isTopBidValid() bool {
 	}
 
 	// check if the top bid is valid
-	_, err := suite.executeAnteHandler(iterator.Tx().(*mempool.WrappedBidTx).Tx)
+	_, err := suite.executeAnteHandler(iterator.Tx())
 	return err == nil
 }

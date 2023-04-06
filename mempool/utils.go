@@ -4,26 +4,8 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
-
-// WrappedBidTx defines a wrapper around an sdk.Tx that contains a single
-// MsgAuctionBid message with additional metadata.
-type WrappedBidTx struct {
-	signing.Tx
-
-	bid sdk.Coin
-}
-
-func NewWrappedBidTx(tx sdk.Tx, bid sdk.Coin) *WrappedBidTx {
-	return &WrappedBidTx{
-		Tx:  tx.(signing.Tx),
-		bid: bid,
-	}
-}
-
-func (wbtx *WrappedBidTx) GetBid() sdk.Coin { return wbtx.bid }
 
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if
 // one exists. If a MsgAuctionBid does exist and other messages are also present,
@@ -50,18 +32,4 @@ func GetMsgAuctionBidFromTx(tx sdk.Tx) (*buildertypes.MsgAuctionBid, error) {
 		// a transaction with at at least one MsgAuctionBid message
 		return nil, errors.New("invalid MsgAuctionBid transaction")
 	}
-}
-
-// UnwrapBidTx attempts to unwrap a WrappedBidTx from an sdk.Tx if one exists.
-func UnwrapBidTx(tx sdk.Tx) sdk.Tx {
-	if tx == nil {
-		return nil
-	}
-
-	wTx, ok := tx.(*WrappedBidTx)
-	if ok {
-		return wTx.Tx
-	}
-
-	return tx
 }
