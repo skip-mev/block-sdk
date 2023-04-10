@@ -350,7 +350,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = false
 			},
 			4,
-			1,
+			10,
 			true,
 		},
 		{
@@ -362,7 +362,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			31,
-			31,
+			40,
 			true,
 		},
 		{
@@ -470,7 +470,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			201,
-			201,
+			300,
 			true,
 		},
 	}
