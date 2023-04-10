@@ -183,7 +183,7 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 			// Create the bundle of transactions ordered by accounts
 			bundle := make([]sdk.Tx, 0)
 			for _, acc := range accounts {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 100)
 				suite.Require().NoError(err)
 				bundle = append(bundle, tx)
 			}
@@ -293,7 +293,7 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			bundle := make([]sdk.Tx, 0)
 			for _, acc := range accounts {
 				// Create a random tx
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 1000)
 				suite.Require().NoError(err)
 				bundle = append(bundle, tx)
 			}

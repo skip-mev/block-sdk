@@ -155,7 +155,7 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 		randomMsgs := testutils.CreateRandomMsgs(acc.Address, 3)
 
 		nonce := suite.nonces[acc.Address.String()]
-		randomTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, randomMsgs)
+		randomTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, randomMsgs)
 		suite.Require().NoError(err)
 
 		suite.nonces[acc.Address.String()]++
@@ -180,7 +180,7 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 
 		// create the auction tx
 		nonce = suite.nonces[acc.Address.String()]
-		auctionTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
+		auctionTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, []sdk.Msg{bidMsg})
 		suite.Require().NoError(err)
 
 		// insert the auction tx into the global mempool
@@ -689,7 +689,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoin("foo", sdk.NewInt(696969696969))
 				nonce := suite.nonces[bidder.Address.String()]
-				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []testutils.Account{bidder, randomAccount})
+				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, 1000, []testutils.Account{bidder, randomAccount})
 				suite.Require().NotNil(frontRunningTx)
 
 				numNormalTxs = 100
@@ -708,7 +708,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoin("foo", sdk.NewInt(696969696969))
 				nonce := suite.nonces[bidder.Address.String()]
-				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, []testutils.Account{bidder, randomAccount})
+				frontRunningTx, _ = testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, suite.accounts[0], bid, nonce+1, 1000, []testutils.Account{bidder, randomAccount})
 				suite.Require().NotNil(frontRunningTx)
 
 				numAuctionTxs = 0

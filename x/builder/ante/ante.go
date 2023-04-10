@@ -2,6 +2,7 @@ package ante
 
 import (
 	"bytes"
+	"fmt"
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -11,12 +12,20 @@ import (
 
 var _ sdk.AnteDecorator = BuilderDecorator{}
 
-type BuilderDecorator struct {
-	builderKeeper keeper.Keeper
-	txDecoder     sdk.TxDecoder
-	txEncoder     sdk.TxEncoder
-	mempool       *mempool.AuctionMempool
-}
+type (
+	BuilderDecorator struct {
+		builderKeeper keeper.Keeper
+		txDecoder     sdk.TxDecoder
+		txEncoder     sdk.TxEncoder
+		mempool       *mempool.AuctionMempool
+	}
+
+	TxWithTimeoutHeight interface {
+		sdk.Tx
+
+		GetTimeoutHeight() uint64
+	}
+)
 
 func NewBuilderDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, mempool *mempool.AuctionMempool) BuilderDecorator {
 	return BuilderDecorator{
@@ -37,6 +46,16 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	// Validate the auction bid if one exists.
 	if auctionMsg != nil {
+		auctionTx, ok := tx.(TxWithTimeoutHeight)
+		if !ok {
+			return ctx, fmt.Errorf("transaction does not implement TxWithTimeoutHeight")
+		}
+
+		timeout := auctionTx.GetTimeoutHeight()
+		if timeout == 0 {
+			return ctx, fmt.Errorf("timeout height cannot be zero")
+		}
+
 		bidder, err := sdk.AccAddressFromBech32(auctionMsg.Bidder)
 		if err != nil {
 			return ctx, errors.Wrapf(err, "invalid bidder address (%s)", auctionMsg.Bidder)

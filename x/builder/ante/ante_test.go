@@ -92,6 +92,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 		topBidder    = testutils.RandomAccounts(suite.random, 1)[0]
 		topBid       = sdk.NewCoin("foo", sdk.NewInt(100))
 		insertTopBid = true
+		timeout      = uint64(1000)
 
 		// Auction setup
 		maxBundleSize          uint32 = 5
@@ -159,8 +160,16 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			true,
 		},
 		{
+			"invalid auction bid tx with no timeout",
+			func() {
+				timeout = 0
+			},
+			false,
+		},
+		{
 			"auction tx is the top bidding tx",
 			func() {
+				timeout = 1000
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
@@ -237,7 +246,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			// Insert the top bid into the mempool
 			mempool := mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), 0)
 			if insertTopBid {
-				topAuctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, []testutils.Account{})
+				topAuctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, timeout, []testutils.Account{})
 				suite.Require().NoError(err)
 				suite.Require().Equal(0, mempool.CountTx())
 				suite.Require().Equal(0, mempool.CountAuctionTx())
@@ -247,7 +256,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			}
 
 			// Create the actual auction tx and insert into the mempool
-			auctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, signers)
+			auctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, timeout, signers)
 			suite.Require().NoError(err)
 
 			// Execute the ante handler

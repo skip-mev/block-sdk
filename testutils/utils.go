@@ -71,7 +71,7 @@ func RandomAccounts(r *rand.Rand, n int) []Account {
 	return accs
 }
 
-func CreateTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.Msg) (authsigning.Tx, error) {
+func CreateTx(txCfg client.TxConfig, account Account, nonce, timeout uint64, msgs []sdk.Msg) (authsigning.Tx, error) {
 	txBuilder := txCfg.NewTxBuilder()
 	if err := txBuilder.SetMsgs(msgs...); err != nil {
 		return nil, err
@@ -89,10 +89,12 @@ func CreateTx(txCfg client.TxConfig, account Account, nonce uint64, msgs []sdk.M
 		return nil, err
 	}
 
+	txBuilder.SetTimeoutHeight(timeout)
+
 	return txBuilder.GetTx(), nil
 }
 
-func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs uint64) (authsigning.Tx, error) {
+func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64) (authsigning.Tx, error) {
 	msgs := make([]sdk.Msg, numberMsgs)
 	for i := 0; i < int(numberMsgs); i++ {
 		msgs[i] = &banktypes.MsgSend{
@@ -118,10 +120,12 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs ui
 		return nil, err
 	}
 
+	txBuilder.SetTimeoutHeight(timeout)
+
 	return txBuilder.GetTx(), nil
 }
 
-func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce uint64, signers []Account) (authsigning.Tx, error) {
+func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) (authsigning.Tx, error) {
 	bidMsg := &buildertypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
@@ -130,7 +134,7 @@ func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.C
 
 	for i := 0; i < len(signers); i++ {
 		randomMsg := CreateRandomMsgs(signers[i].Address, 1)
-		randomTx, err := CreateTx(txCfg, signers[i], 0, randomMsg)
+		randomTx, err := CreateTx(txCfg, signers[i], 0, timeout, randomMsg)
 		if err != nil {
 			return nil, err
 		}
@@ -159,6 +163,8 @@ func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.C
 	if err := txBuilder.SetSignatures(sigV2); err != nil {
 		return nil, err
 	}
+
+	txBuilder.SetTimeoutHeight(timeout)
 
 	return txBuilder.GetTx(), nil
 }

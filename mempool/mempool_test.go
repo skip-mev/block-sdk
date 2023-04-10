@@ -58,7 +58,7 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 		acc := suite.accounts[randomIndex]
 		nonce := suite.nonces[acc.Address.String()]
 		randomMsgs := testutils.CreateRandomMsgs(acc.Address, 3)
-		randomTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, randomMsgs)
+		randomTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, 100, randomMsgs)
 		suite.Require().NoError(err)
 
 		suite.nonces[acc.Address.String()]++
@@ -84,7 +84,7 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 
 		// create the auction tx
 		nonce = suite.nonces[acc.Address.String()]
-		auctionTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, []sdk.Msg{bidMsg})
+		auctionTx, err := testutils.CreateTx(suite.encCfg.TxConfig, acc, nonce, 1000, []sdk.Msg{bidMsg})
 		suite.Require().NoError(err)
 
 		// insert the auction tx into the global mempool
