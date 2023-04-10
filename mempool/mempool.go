@@ -2,6 +2,8 @@ package mempool
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
 
@@ -27,6 +29,14 @@ type AuctionMempool struct {
 	// txDecoder defines the sdk.Tx decoder that allows us to decode transactions
 	// and construct sdk.Txs from the bundled transactions.
 	txDecoder sdk.TxDecoder
+
+	// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
+	// to bytes.
+	txEncoder sdk.TxEncoder
+
+	// txIndex is a map of all transactions in the mempool. It is used
+	// to quickly check if a transaction is already in the mempool.
+	txIndex map[string]struct{}
 }
 
 // AuctionTxPriority returns a TxPriority over auction bid transactions only. It
@@ -72,7 +82,7 @@ func AuctionTxPriority() TxPriority[string] {
 	}
 }
 
-func NewAuctionMempool(txDecoder sdk.TxDecoder, maxTx int) *AuctionMempool {
+func NewAuctionMempool(txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, maxTx int) *AuctionMempool {
 	return &AuctionMempool{
 		globalIndex: NewPriorityMempool(
 			PriorityNonceMempoolConfig[int64]{
@@ -87,6 +97,8 @@ func NewAuctionMempool(txDecoder sdk.TxDecoder, maxTx int) *AuctionMempool {
 			},
 		),
 		txDecoder: txDecoder,
+		txEncoder: txEncoder,
+		txIndex:   make(map[string]struct{}),
 	}
 }
 
@@ -105,10 +117,17 @@ func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 
 	if msg != nil {
 		if err := am.auctionIndex.Insert(ctx, tx); err != nil {
-			removeTx(am.globalIndex, tx)
+			am.removeTx(am.globalIndex, tx)
 			return fmt.Errorf("failed to insert tx into auction index: %w", err)
 		}
 	}
+
+	txHashStr, err := am.getTxHashStr(tx)
+	if err != nil {
+		return err
+	}
+
+	am.txIndex[txHashStr] = struct{}{}
 
 	return nil
 }
@@ -118,7 +137,7 @@ func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 // referenced transactions from the global mempool.
 func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 	// 1. Remove the tx from the global index
-	removeTx(am.globalIndex, tx)
+	am.removeTx(am.globalIndex, tx)
 
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
@@ -128,7 +147,7 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 	// 2. Remove the bid from the auction index (if applicable). In addition, we
 	// remove all referenced transactions from the global mempool.
 	if msg != nil {
-		removeTx(am.auctionIndex, tx)
+		am.removeTx(am.auctionIndex, tx)
 
 		for _, refRawTx := range msg.GetTransactions() {
 			refTx, err := am.txDecoder(refRawTx)
@@ -136,7 +155,7 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 				return fmt.Errorf("failed to decode referenced tx: %w", err)
 			}
 
-			removeTx(am.globalIndex, refTx)
+			am.removeTx(am.globalIndex, refTx)
 		}
 	}
 
@@ -149,7 +168,7 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 // API is used to ensure that searchers are unable to remove valid transactions
 // from the global mempool.
 func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
-	removeTx(am.globalIndex, tx)
+	am.removeTx(am.globalIndex, tx)
 
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
@@ -157,7 +176,7 @@ func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
 	}
 
 	if msg != nil {
-		removeTx(am.auctionIndex, tx)
+		am.removeTx(am.auctionIndex, tx)
 	}
 
 	return nil
@@ -190,9 +209,40 @@ func (am *AuctionMempool) CountTx() int {
 	return am.globalIndex.CountTx()
 }
 
-func removeTx(mp sdkmempool.Mempool, tx sdk.Tx) {
+// Contains returns true if the transaction is contained in the mempool.
+func (am *AuctionMempool) Contains(tx sdk.Tx) (bool, error) {
+	txHashStr, err := am.getTxHashStr(tx)
+	if err != nil {
+		return false, fmt.Errorf("failed to get tx hash string: %w", err)
+	}
+
+	_, ok := am.txIndex[txHashStr]
+	return ok, nil
+}
+
+// getTxHashStr returns the transaction hash string for a given transaction.
+func (am *AuctionMempool) getTxHashStr(tx sdk.Tx) (string, error) {
+	txBz, err := am.txEncoder(tx)
+	if err != nil {
+		return "", fmt.Errorf("failed to encode transaction: %w", err)
+	}
+
+	txHash := sha256.Sum256(txBz)
+	txHashStr := hex.EncodeToString(txHash[:])
+
+	return txHashStr, nil
+}
+
+func (am *AuctionMempool) removeTx(mp sdkmempool.Mempool, tx sdk.Tx) {
 	err := mp.Remove(tx)
 	if err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}
+
+	txHashStr, err := am.getTxHashStr(tx)
+	if err != nil {
+		panic(fmt.Errorf("failed to get tx hash string: %w", err))
+	}
+
+	delete(am.txIndex, txHashStr)
 }
