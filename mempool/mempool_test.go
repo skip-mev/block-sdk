@@ -112,10 +112,9 @@ func (suite *IntegrationTestSuite) CreateFilledMempool(numNormalTxs, numAuctionT
 	var totalNumTxs int
 	suite.Require().Equal(numAuctionTxs, suite.mempool.CountAuctionTx())
 	if insertRefTxs {
-		totalNumTxs = numNormalTxs + numAuctionTxs*(numBundledTxs+1)
+		totalNumTxs = numNormalTxs + numAuctionTxs*(numBundledTxs)
 		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
 	} else {
-		totalNumTxs = numNormalTxs + numAuctionTxs
 		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
 	}
 
@@ -138,7 +137,7 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolRemove() {
 
 	// Ensure that the auction tx was removed from the auction and global mempool
 	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
-	suite.Require().Equal(numMempoolTxs-1, suite.mempool.CountTx())
+	suite.Require().Equal(numMempoolTxs, suite.mempool.CountTx())
 	contains, err := suite.mempool.Contains(tx)
 	suite.Require().NoError(err)
 	suite.Require().False(contains)
@@ -146,12 +145,12 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolRemove() {
 	// Attempt to remove again and ensure that the tx is not found
 	suite.Require().NoError(suite.mempool.RemoveWithoutRefTx(tx))
 	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
-	suite.Require().Equal(numMempoolTxs-1, suite.mempool.CountTx())
+	suite.Require().Equal(numMempoolTxs, suite.mempool.CountTx())
 
 	// Attempt to remove with the bundled txs
 	suite.Require().NoError(suite.mempool.Remove(tx))
 	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
-	suite.Require().Equal(numMempoolTxs-numberBundledTxs-1, suite.mempool.CountTx())
+	suite.Require().Equal(numMempoolTxs-numberBundledTxs, suite.mempool.CountTx())
 
 	auctionMsg, err := mempool.GetMsgAuctionBidFromTx(tx)
 	suite.Require().NoError(err)

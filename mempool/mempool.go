@@ -106,18 +106,19 @@ func NewAuctionMempool(txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, maxTx i
 // auction tx (tx that contains a single MsgAuctionBid), it will also insert the
 // transaction into the auction index.
 func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
-	if err := am.globalIndex.Insert(ctx, tx); err != nil {
-		return fmt.Errorf("failed to insert tx into global index: %w", err)
-	}
-
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return err
 	}
 
-	if msg != nil {
+	// Insert the transactions into the appropriate index.
+	switch {
+	case msg == nil:
+		if err := am.globalIndex.Insert(ctx, tx); err != nil {
+			return fmt.Errorf("failed to insert tx into global index: %w", err)
+		}
+	case msg != nil:
 		if err := am.auctionIndex.Insert(ctx, tx); err != nil {
-			am.removeTx(am.globalIndex, tx)
 			return fmt.Errorf("failed to insert tx into auction index: %w", err)
 		}
 	}
@@ -136,19 +137,19 @@ func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 // auction tx (tx that contains a single MsgAuctionBid), it will also remove all
 // referenced transactions from the global mempool.
 func (am *AuctionMempool) Remove(tx sdk.Tx) error {
-	// 1. Remove the tx from the global index
-	am.removeTx(am.globalIndex, tx)
-
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return err
 	}
 
-	// 2. Remove the bid from the auction index (if applicable). In addition, we
-	// remove all referenced transactions from the global mempool.
-	if msg != nil {
+	// Remove the transactions from the appropriate index.
+	switch {
+	case msg == nil:
+		am.removeTx(am.globalIndex, tx)
+	case msg != nil:
 		am.removeTx(am.auctionIndex, tx)
 
+		// Remove all referenced transactions from the global mempool.
 		for _, refRawTx := range msg.GetTransactions() {
 			refTx, err := am.txDecoder(refRawTx)
 			if err != nil {
@@ -168,8 +169,6 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 // API is used to ensure that searchers are unable to remove valid transactions
 // from the global mempool.
 func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
-	am.removeTx(am.globalIndex, tx)
-
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return err

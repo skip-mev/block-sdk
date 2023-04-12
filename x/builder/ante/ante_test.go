@@ -251,7 +251,6 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				suite.Require().Equal(0, mempool.CountTx())
 				suite.Require().Equal(0, mempool.CountAuctionTx())
 				suite.Require().NoError(mempool.Insert(suite.ctx, topAuctionTx))
-				suite.Require().Equal(1, mempool.CountTx())
 				suite.Require().Equal(1, mempool.CountAuctionTx())
 			}
 

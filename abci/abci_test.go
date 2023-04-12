@@ -2,6 +2,9 @@ package abci_test
 
 import (
 	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"testing"
 	"time"
@@ -30,6 +33,7 @@ type ABCITestSuite struct {
 	logger          log.Logger
 	encodingConfig  testutils.EncodingConfig
 	proposalHandler *abci.ProposalHandler
+	txs             map[string]struct{}
 
 	// auction bid setup
 	auctionBidAmount sdk.Coin
@@ -66,6 +70,7 @@ func (suite *ABCITestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0)
+	suite.txs = make(map[string]struct{})
 	suite.auctionBidAmount = sdk.NewCoin("foo", sdk.NewInt(1000000000))
 	suite.minBidIncrement = sdk.NewCoin("foo", sdk.NewInt(1000))
 
@@ -116,6 +121,13 @@ func (suite *ABCITestSuite) PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error) {
 		return nil, err
 	}
 
+	hash := sha256.Sum256(txBz)
+	txHash := hex.EncodeToString(hash[:])
+	if _, ok := suite.txs[txHash]; ok {
+		return nil, fmt.Errorf("tx already in mempool")
+	}
+	suite.txs[txHash] = struct{}{}
+
 	return txBz, nil
 }
 
@@ -129,6 +141,13 @@ func (suite *ABCITestSuite) ProcessProposalVerifyTx(txBz []byte) (sdk.Tx, error)
 	if err != nil {
 		return tx, err
 	}
+
+	hash := sha256.Sum256(txBz)
+	txHash := hex.EncodeToString(hash[:])
+	if _, ok := suite.txs[txHash]; ok {
+		return nil, fmt.Errorf("tx already in mempool")
+	}
+	suite.txs[txHash] = struct{}{}
 
 	return tx, nil
 }
@@ -214,11 +233,11 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 	var totalNumTxs int
 	suite.Require().Equal(numAuctionTxs, suite.mempool.CountAuctionTx())
 	if insertRefTxs {
-		totalNumTxs = numNormalTxs + numAuctionTxs*(numBundledTxs+1)
+		totalNumTxs = numNormalTxs + numAuctionTxs*(numBundledTxs)
 		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
 		suite.Require().Equal(totalNumTxs, numSeenGlobalTxs)
 	} else {
-		totalNumTxs = numNormalTxs + numAuctionTxs
+		totalNumTxs = numNormalTxs
 		suite.Require().Equal(totalNumTxs, suite.mempool.CountTx())
 		suite.Require().Equal(totalNumTxs, numSeenGlobalTxs)
 	}
@@ -297,7 +316,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			4,
-			4,
+			3,
 			true,
 		},
 		{
@@ -309,7 +328,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = false
 			},
 			4,
-			1,
+			0,
 			true,
 		},
 		{
@@ -350,7 +369,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = false
 			},
 			4,
-			10,
+			0,
 			true,
 		},
 		{
@@ -362,7 +381,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			31,
-			40,
+			30,
 			true,
 		},
 		{
@@ -395,7 +414,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				numBundledTxs = 0
 			},
 			2,
-			2,
+			1,
 			true,
 		},
 		{
@@ -407,7 +426,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = false
 			},
 			5,
-			2,
+			1,
 			true,
 		},
 		{
@@ -434,7 +453,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				numBundledTxs = 0
 			},
 			101,
-			101,
+			100,
 			true,
 		},
 		{
@@ -446,7 +465,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			104,
-			104,
+			103,
 			true,
 		},
 		{
@@ -458,7 +477,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = false
 			},
 			104,
-			101,
+			100,
 			true,
 		},
 		{
@@ -470,7 +489,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				insertRefTxs = true
 			},
 			201,
-			300,
+			200,
 			true,
 		},
 	}
