@@ -107,60 +107,37 @@ func (suite *ABCITestSuite) SetupTest() {
 
 	// Proposal handler set up
 	suite.logger = log.NewNopLogger()
-	suite.proposalHandler = abci.NewProposalHandler(suite.mempool, suite.logger, suite, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
+	suite.proposalHandler = abci.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
 }
 
-func (suite *ABCITestSuite) PrepareProposalVerifyTx(tx sdk.Tx) ([]byte, error) {
-	_, err := suite.executeAnteHandler(tx)
-	if err != nil {
-		return nil, err
-	}
-
-	txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
-	if err != nil {
-		return nil, err
-	}
-
-	hash := sha256.Sum256(txBz)
-	txHash := hex.EncodeToString(hash[:])
-	if _, ok := suite.txs[txHash]; ok {
-		return nil, fmt.Errorf("tx already in mempool")
-	}
-	suite.txs[txHash] = struct{}{}
-
-	return txBz, nil
-}
-
-func (suite *ABCITestSuite) ProcessProposalVerifyTx(txBz []byte) (sdk.Tx, error) {
-	tx, err := suite.encodingConfig.TxConfig.TxDecoder()(txBz)
-	if err != nil {
-		return nil, err
-	}
-
-	_, err = suite.executeAnteHandler(tx)
-	if err != nil {
-		return tx, err
-	}
-
-	hash := sha256.Sum256(txBz)
-	txHash := hex.EncodeToString(hash[:])
-	if _, ok := suite.txs[txHash]; ok {
-		return nil, fmt.Errorf("tx already in mempool")
-	}
-	suite.txs[txHash] = struct{}{}
-
-	return tx, nil
-}
-
-func (suite *ABCITestSuite) executeAnteHandler(tx sdk.Tx) (sdk.Context, error) {
+func (suite *ABCITestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 	signer := tx.GetMsgs()[0].GetSigners()[0]
-	suite.bankKeeper.EXPECT().GetAllBalances(suite.ctx, signer).AnyTimes().Return(suite.balances)
+	suite.bankKeeper.EXPECT().GetAllBalances(ctx, signer).AnyTimes().Return(suite.balances)
 
 	next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 		return ctx, nil
 	}
 
-	return suite.builderDecorator.AnteHandle(suite.ctx, tx, false, next)
+	ctx, err := suite.builderDecorator.AnteHandle(ctx, tx, false, next)
+	if err != nil {
+		return ctx, err
+	}
+
+	bz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
+	if err != nil {
+		return ctx, err
+	}
+
+	if !simulate {
+		hash := sha256.Sum256(bz)
+		txHash := hex.EncodeToString(hash[:])
+		if _, ok := suite.txs[txHash]; ok {
+			return ctx, fmt.Errorf("tx already in mempool")
+		}
+		suite.txs[txHash] = struct{}{}
+	}
+
+	return ctx, nil
 }
 
 func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, numBundledTxs int, insertRefTxs bool) int {
@@ -790,6 +767,6 @@ func (suite *ABCITestSuite) isTopBidValid() bool {
 	}
 
 	// check if the top bid is valid
-	_, err := suite.executeAnteHandler(iterator.Tx())
+	_, err := suite.anteHandler(suite.ctx, iterator.Tx(), true)
 	return err == nil
 }

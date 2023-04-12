@@ -9,33 +9,32 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/baseapp"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/mempool"
 )
 
 type ProposalHandler struct {
-	mempool    *mempool.AuctionMempool
-	logger     log.Logger
-	txVerifier baseapp.ProposalTxVerifier
-	txEncoder  sdk.TxEncoder
-	txDecoder  sdk.TxDecoder
+	mempool     *mempool.AuctionMempool
+	logger      log.Logger
+	anteHandler sdk.AnteHandler
+	txEncoder   sdk.TxEncoder
+	txDecoder   sdk.TxDecoder
 }
 
 func NewProposalHandler(
 	mp *mempool.AuctionMempool,
 	logger log.Logger,
-	txVerifier baseapp.ProposalTxVerifier,
+	anteHandler sdk.AnteHandler,
 	txEncoder sdk.TxEncoder,
 	txDecoder sdk.TxDecoder,
 ) *ProposalHandler {
 	return &ProposalHandler{
-		mempool:    mp,
-		logger:     logger,
-		txVerifier: txVerifier,
-		txEncoder:  txEncoder,
-		txDecoder:  txDecoder,
+		mempool:     mp,
+		logger:      logger,
+		anteHandler: anteHandler,
+		txEncoder:   txEncoder,
+		txDecoder:   txDecoder,
 	}
 }
 
@@ -56,9 +55,10 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		// bundled transactions are valid.
 	selectBidTxLoop:
 		for ; bidTxIterator != nil; bidTxIterator = bidTxIterator.Next() {
+			cacheCtx, write := ctx.CacheContext()
 			tmpBidTx := bidTxIterator.Tx()
 
-			bidTxBz, err := h.txVerifier.PrepareProposalVerifyTx(tmpBidTx)
+			bidTxBz, err := h.PrepareProposalVerifyTx(cacheCtx, tmpBidTx)
 			if err != nil {
 				txsToRemove[tmpBidTx] = struct{}{}
 				continue selectBidTxLoop
@@ -84,7 +84,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 						continue selectBidTxLoop
 					}
 
-					if _, err := h.txVerifier.PrepareProposalVerifyTx(refTx); err != nil {
+					if _, err := h.PrepareProposalVerifyTx(cacheCtx, refTx); err != nil {
 						// Invalid bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
 						txsToRemove[tmpBidTx] = struct{}{}
@@ -105,6 +105,10 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 					txHash := hex.EncodeToString(hash[:])
 					seenTxs[txHash] = struct{}{}
 				}
+
+				// Write the cache context to the original context when we know we have a
+				// valid top of block bundle.
+				write()
 
 				break selectBidTxLoop
 			}
@@ -144,7 +148,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 				continue selectTxLoop
 			}
 
-			txBz, err = h.txVerifier.PrepareProposalVerifyTx(memTx)
+			txBz, err = h.PrepareProposalVerifyTx(ctx, memTx)
 			if err != nil {
 				txsToRemove[memTx] = struct{}{}
 				continue selectTxLoop
@@ -174,7 +178,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req abci.RequestProcessProposal) abci.ResponseProcessProposal {
 		for index, txBz := range req.Txs {
-			tx, err := h.txVerifier.ProcessProposalVerifyTx(txBz)
+			tx, err := h.ProcessProposalVerifyTx(ctx, txBz)
 			if err != nil {
 				return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 			}
@@ -206,6 +210,36 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 		return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 	}
+}
+
+// PrepareProposalVerifyTx encodes a transaction and verifies it.
+func (h *ProposalHandler) PrepareProposalVerifyTx(ctx sdk.Context, tx sdk.Tx) ([]byte, error) {
+	txBz, err := h.txEncoder(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	return txBz, h.verifyTx(ctx, tx)
+}
+
+// ProcessProposalVerifyTx decodes a transaction and verifies it.
+func (h *ProposalHandler) ProcessProposalVerifyTx(ctx sdk.Context, txBz []byte) (sdk.Tx, error) {
+	tx, err := h.txDecoder(txBz)
+	if err != nil {
+		return nil, err
+	}
+
+	return tx, h.verifyTx(ctx, tx)
+}
+
+// VerifyTx verifies a transaction against the application's state.
+func (h *ProposalHandler) verifyTx(ctx sdk.Context, tx sdk.Tx) error {
+	if h.anteHandler != nil {
+		_, err := h.anteHandler(ctx, tx, false)
+		return err
+	}
+
+	return nil
 }
 
 func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
