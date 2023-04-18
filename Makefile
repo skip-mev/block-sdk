@@ -47,3 +47,26 @@ proto-update-deps:
 	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
+
+###############################################################################
+###                                Linting                                  ###
+###############################################################################
+
+golangci_lint_cmd=golangci-lint
+golangci_version=v1.51.2
+
+lint:
+	@echo "--> Running linter"
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
+	@golangci-lint run
+
+lint-fix:
+	@echo "--> Running linter"
+	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
+	@golangci-lint run --fix
+
+lint-markdown:
+	@echo "--> Running markdown linter"
+	@markdownlint **/*.md
+
+.PHONY: lint lint-fix lint-markdown

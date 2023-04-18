@@ -1,3 +1,4 @@
+<!-- markdownlint-disable MD013 -->
 <h1 align="center">Protocol-Owned Builder</h1>
 
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#wip)
@@ -146,7 +147,8 @@ $ go install github.com/skip-mev/pob
 
     e. With Cosmos SDK version 0.47.0, the process of building blocks has been
     updated and moved from the consensus layer, CometBFT, to the application layer.
-    When a new block is requested, the proposer for that height will utilize the `PrepareProposal` handler to build a block while the `ProcessProposal` handler
+    When a new block is requested, the proposer for that height will utilize the
+    `PrepareProposal` handler to build a block while the `ProcessProposal` handler
     will verify the contents of the block proposal by all validators. The
     combination of the `AuctionMempool`, `PrepareProposal` and `ProcessProposal`
     handlers allows the application to verifiably build valid blocks with
