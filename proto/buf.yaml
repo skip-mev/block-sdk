@@ -1,12 +1,10 @@
 version: v1
 name: buf.build/skip-mev/pob
 
-# TODO: Update once an official tag of v0.47.x has been released.
-# Ref: https://github.com/skip-mev/pob/issues/4
 deps:
-  - buf.build/cosmos/cosmos-proto:1935555c206d4afb9e94615dfd0fad31
+  - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/cosmos-sdk:v0.47.0
-  - buf.build/cosmos/gogo-proto:a14993478f40695898ed8a86931094b6656e8a5d
+  - buf.build/cosmos/gogo-proto
   - buf.build/googleapis/googleapis
 breaking:
   use:

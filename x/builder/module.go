@@ -5,14 +5,20 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"cosmossdk.io/api/tendermint/abci"
+	"cosmossdk.io/core/appmodule"
+	"cosmossdk.io/depinject"
+	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	cdctypes "github.com/cosmos/cosmos-sdk/codec/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
+	modulev1 "github.com/skip-mev/pob/api/pob/builder/module/v1"
 	"github.com/skip-mev/pob/x/builder/client/cli"
 	"github.com/skip-mev/pob/x/builder/keeper"
 	"github.com/skip-mev/pob/x/builder/types"
@@ -83,6 +89,8 @@ type AppModule struct {
 	keeper keeper.Keeper
 }
 
+var _ appmodule.AppModule = AppModule{}
+
 // NewAppModule creates a new AppModule object.
 func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 	return AppModule{
@@ -90,6 +98,12 @@ func NewAppModule(cdc codec.Codec, keeper keeper.Keeper) AppModule {
 		keeper:         keeper,
 	}
 }
+
+// IsAppModule implements the appmodule.AppModule interface.
+func (am AppModule) IsAppModule() {}
+
+// IsOnePerModuleType implements the depinject.OnePerModuleType interface.
+func (am AppModule) IsOnePerModuleType() {}
 
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
@@ -123,4 +137,53 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := am.keeper.ExportGenesis(ctx)
 	return cdc.MustMarshalJSON(genState)
+}
+
+func init() {
+	appmodule.Register(
+		&modulev1.Module{},
+		appmodule.Provide(ProvideModule),
+	)
+}
+
+type Inputs struct {
+	depinject.In
+
+	Config *modulev1.Module
+	Cdc    codec.Codec
+	Key    *storetypes.KVStoreKey
+
+	AccountKeeper      types.AccountKeeper
+	BankKeeper         types.BankKeeper
+	DistributionKeeper types.DistributionKeeper
+	StakingKeeper      types.StakingKeeper
+}
+
+type Outputs struct {
+	depinject.Out
+
+	BuilderKeeper keeper.Keeper
+	Module        appmodule.AppModule
+}
+
+func ProvideModule(in Inputs) Outputs {
+	// default to governance authority if not provided
+	authority := authtypes.NewModuleAddress(govtypes.ModuleName)
+	if in.Config.Authority != "" {
+		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
+	}
+
+	builderKeeper := keeper.NewKeeper(
+		in.Cdc,
+		in.Key,
+		in.AccountKeeper,
+		in.BankKeeper,
+		in.DistributionKeeper,
+		in.StakingKeeper,
+		authority.String(),
+	)
+
+	m := NewAppModule(in.Cdc, builderKeeper)
+
+	return Outputs{BuilderKeeper: builderKeeper, Module: m}
 }

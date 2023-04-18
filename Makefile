@@ -33,6 +33,10 @@ proto-gen:
 	@echo "Generating Protobuf files"
 	@$(protoImage) sh ./scripts/protocgen.sh
 
+proto-pulsar-gen:
+	@echo "Generating Dep-Inj Protobuf files"
+	@$(protoImage) sh ./scripts/protocgen-pulsar.sh
+
 proto-format:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 

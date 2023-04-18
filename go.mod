@@ -3,11 +3,13 @@ module github.com/skip-mev/pob
 go 1.20
 
 require (
-	cosmossdk.io/api v0.4.0
+	cosmossdk.io/api v0.3.1
+	cosmossdk.io/core v0.3.2
+	cosmossdk.io/depinject v1.0.0-alpha.3
 	cosmossdk.io/errors v1.0.0-beta.7
 	cosmossdk.io/math v1.0.0
 	github.com/cometbft/cometbft v0.37.0
-	github.com/cosmos/cosmos-proto v1.0.0-beta.3
+	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.1
 	github.com/cosmos/gogoproto v1.4.7
 	github.com/golang/mock v1.6.0
@@ -19,11 +21,10 @@ require (
 	github.com/stretchr/testify v1.8.2
 	google.golang.org/genproto v0.0.0-20230320184635-7606e756e683
 	google.golang.org/grpc v1.54.0
+	google.golang.org/protobuf v1.30.0
 )
 
 require (
-	cosmossdk.io/core v0.3.2 // indirect
-	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
 	filippo.io/edwards25519 v1.0.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
@@ -107,7 +108,6 @@ require (
 	golang.org/x/sys v0.6.0 // indirect
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
-	google.golang.org/protobuf v1.30.0 // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
