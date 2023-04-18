@@ -1,6 +1,7 @@
-<!-- markdownlint-disable MD013 -->
 <h1 align="center">Protocol-Owned Builder</h1>
 
+<!-- markdownlint-disable MD013 -->
+<!-- markdownlint-disable MD041 -->
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](https://www.repostatus.org/badges/latest/active.svg)](https://www.repostatus.org/#wip)
 [![GoDoc](https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go)](https://godoc.org/github.com/skip-mev/pob)
 [![Go Report Card](https://goreportcard.com/badge/github.com/skip-mev/pob?style=flat-square)](https://goreportcard.com/report/github.com/skip-mev/pob)
