@@ -69,7 +69,8 @@ func (suite *ABCITestSuite) SetupTest() {
 	suite.ctx = testCtx.Ctx
 
 	// Mempool set up
-	suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0)
+	config := mempool.NewDefaultConfig(suite.encodingConfig.TxConfig.TxDecoder())
+	suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, config)
 	suite.txs = make(map[string]struct{})
 	suite.auctionBidAmount = sdk.NewCoin("foo", sdk.NewInt(1000000000))
 	suite.minBidIncrement = sdk.NewCoin("foo", sdk.NewInt(1000))
@@ -522,10 +523,10 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				auctionTx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[0])
 				suite.Require().NoError(err)
 
-				msgAuctionBid, err := mempool.GetMsgAuctionBidFromTx(auctionTx)
+				bidInfo, err := suite.mempool.GetAuctionBidInfo(auctionTx)
 				suite.Require().NoError(err)
 
-				for index, tx := range msgAuctionBid.GetTransactions() {
+				for index, tx := range bidInfo.Transactions {
 					suite.Require().Equal(tx, res.Txs[index+1])
 				}
 			}

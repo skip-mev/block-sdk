@@ -51,41 +51,25 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		}
 	}
 
-	auctionMsg, err := mempool.GetMsgAuctionBidFromTx(tx)
+	isAuctionTx, err := ad.mempool.IsAuctionTx(tx)
 	if err != nil {
 		return ctx, err
 	}
 
 	// Validate the auction bid if one exists.
-	if auctionMsg != nil {
-		auctionTx, ok := tx.(TxWithTimeoutHeight)
-		if !ok {
-			return ctx, fmt.Errorf("transaction does not implement TxWithTimeoutHeight")
+	if isAuctionTx {
+		// Auction transactions must have a timeout set to a valid block height.
+		if err := ad.HasValidTimeout(ctx, tx); err != nil {
+			return ctx, err
 		}
 
-		timeout := auctionTx.GetTimeoutHeight()
-		if timeout == 0 {
-			return ctx, fmt.Errorf("timeout height cannot be zero")
-		}
-
-		bidder, err := sdk.AccAddressFromBech32(auctionMsg.Bidder)
+		bidInfo, err := ad.mempool.GetAuctionBidInfo(tx)
 		if err != nil {
-			return ctx, errors.Wrapf(err, "invalid bidder address (%s)", auctionMsg.Bidder)
+			return ctx, err
 		}
-
-		transactions := make([]sdk.Tx, len(auctionMsg.Transactions))
-		for i, tx := range auctionMsg.Transactions {
-			decodedTx, err := ad.txDecoder(tx)
-			if err != nil {
-				return ctx, errors.Wrapf(err, "failed to decode transaction (%s)", tx)
-			}
-
-			transactions[i] = decodedTx
-		}
-
-		topBid := sdk.Coin{}
 
 		// If the current transaction is the highest bidding transaction, then the highest bid is empty.
+		topBid := sdk.Coin{}
 		isTopBidTx, err := ad.IsTopBidTx(ctx, tx)
 		if err != nil {
 			return ctx, errors.Wrap(err, "failed to check if current transaction is highest bidding transaction")
@@ -99,7 +83,13 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			}
 		}
 
-		if err := ad.builderKeeper.ValidateAuctionMsg(ctx, bidder, auctionMsg.Bid, topBid, transactions); err != nil {
+		// Extract signers from bundle for verification.
+		signers, err := ad.mempool.GetBundleSigners(bidInfo.Transactions)
+		if err != nil {
+			return ctx, errors.Wrap(err, "failed to get bundle signers")
+		}
+
+		if err := ad.builderKeeper.ValidateBidInfo(ctx, topBid, bidInfo, signers); err != nil {
 			return ctx, errors.Wrap(err, "failed to validate auction bid")
 		}
 	}
@@ -114,12 +104,12 @@ func (ad BuilderDecorator) GetTopAuctionBid(ctx sdk.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, nil
 	}
 
-	msgAuctionBid, err := mempool.GetMsgAuctionBidFromTx(auctionTx)
+	bid, err := ad.mempool.GetBid(auctionTx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
-	return msgAuctionBid.Bid, nil
+	return bid, nil
 }
 
 // IsTopBidTx returns true if the transaction inputted is the highest bidding auction transaction in the mempool.
@@ -140,4 +130,23 @@ func (ad BuilderDecorator) IsTopBidTx(ctx sdk.Context, tx sdk.Tx) (bool, error) 
 	}
 
 	return bytes.Equal(topBidBz, currentTxBz), nil
+}
+
+// HasValidTimeout returns true if the transaction has a valid timeout height.
+func (ad BuilderDecorator) HasValidTimeout(ctx sdk.Context, tx sdk.Tx) error {
+	auctionTx, ok := tx.(TxWithTimeoutHeight)
+	if !ok {
+		return fmt.Errorf("transaction does not implement TxWithTimeoutHeight")
+	}
+
+	timeout := auctionTx.GetTimeoutHeight()
+	if timeout == 0 {
+		return fmt.Errorf("timeout height cannot be zero")
+	}
+
+	if timeout < uint64(ctx.BlockHeight()) {
+		return fmt.Errorf("timeout height cannot be less than the current block height")
+	}
+
+	return nil
 }

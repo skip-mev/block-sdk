@@ -32,7 +32,8 @@ func TestMempoolTestSuite(t *testing.T) {
 func (suite *IntegrationTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
-	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), suite.encCfg.TxConfig.TxEncoder(), 0)
+	config := mempool.NewDefaultConfig(suite.encCfg.TxConfig.TxDecoder())
+	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), suite.encCfg.TxConfig.TxEncoder(), 0, config)
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
 
 	// Init accounts

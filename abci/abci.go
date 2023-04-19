@@ -66,17 +66,20 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 			bidTxSize := int64(len(bidTxBz))
 			if bidTxSize <= req.MaxTxBytes {
-				bidMsg, err := mempool.GetMsgAuctionBidFromTx(tmpBidTx)
+				bundledTransactions, err := h.mempool.GetBundledTransactions(tmpBidTx)
 				if err != nil {
-					// This should never happen, as CheckTx will ensure only valid bids
-					// enter the mempool, but in case it does, we need to remove the
-					// transaction from the mempool.
+					// Some transactions in the bundle may be malformatted or invalid, so
+					// we remove the bid transaction and try the next top bid.
 					txsToRemove[tmpBidTx] = struct{}{}
 					continue selectBidTxLoop
 				}
 
-				for _, refTxRaw := range bidMsg.Transactions {
-					refTx, err := h.txDecoder(refTxRaw)
+				// store the bytes of each ref tx as sdk.Tx bytes in order to build a valid proposal
+				sdkTxBytes := make([][]byte, len(bundledTransactions))
+
+				// Ensure that the bundled transactions are valid
+				for index, rawRefTx := range bundledTransactions {
+					refTx, err := h.mempool.WrapBundleTransaction(rawRefTx)
 					if err != nil {
 						// Malformed bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
@@ -84,12 +87,15 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 						continue selectBidTxLoop
 					}
 
-					if _, err := h.PrepareProposalVerifyTx(cacheCtx, refTx); err != nil {
+					txBz, err := h.PrepareProposalVerifyTx(cacheCtx, refTx)
+					if err != nil {
 						// Invalid bundled transaction, so we remove the bid transaction
 						// and try the next top bid.
 						txsToRemove[tmpBidTx] = struct{}{}
 						continue selectBidTxLoop
 					}
+
+					sdkTxBytes[index] = txBz
 				}
 
 				// At this point, both the bid transaction itself and all the bundled
@@ -98,9 +104,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 				// update the total size selected thus far.
 				totalTxBytes += bidTxSize
 				selectedTxs = append(selectedTxs, bidTxBz)
-				selectedTxs = append(selectedTxs, bidMsg.Transactions...)
+				selectedTxs = append(selectedTxs, sdkTxBytes...)
 
-				for _, refTxRaw := range bidMsg.Transactions {
+				for _, refTxRaw := range sdkTxBytes {
 					hash := sha256.Sum256(refTxRaw)
 					txHash := hex.EncodeToString(hash[:])
 					seenTxs[txHash] = struct{}{}
@@ -183,24 +189,41 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 				return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 			}
 
-			msgAuctionBid, err := mempool.GetMsgAuctionBidFromTx(tx)
+			isAuctionTx, err := h.mempool.IsAuctionTx(tx)
 			if err != nil {
 				return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 			}
 
-			if msgAuctionBid != nil {
+			if isAuctionTx {
 				// Only the first transaction can be an auction bid tx
 				if index != 0 {
 					return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 				}
 
-				// The order of transactions in the block proposal must follow the order of transactions in the bid.
-				if len(req.Txs) < len(msgAuctionBid.Transactions)+1 {
+				bundledTransactions, err := h.mempool.GetBundledTransactions(tx)
+				if err != nil {
 					return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 				}
 
-				for i, refTxRaw := range msgAuctionBid.Transactions {
-					if !bytes.Equal(refTxRaw, req.Txs[i+1]) {
+				// The order of transactions in the block proposal must follow the order of transactions in the bid.
+				if len(req.Txs) < len(bundledTransactions)+1 {
+					return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+				}
+
+				for i, refTxRaw := range bundledTransactions {
+					// Wrap and then encode the bundled transaction to ensure that the underlying
+					// reference transaction can be processed as an sdk.Tx.
+					wrappedTx, err := h.mempool.WrapBundleTransaction(refTxRaw)
+					if err != nil {
+						return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+					}
+
+					refTxBz, err := h.txEncoder(wrappedTx)
+					if err != nil {
+						return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+					}
+
+					if !bytes.Equal(refTxBz, req.Txs[i+1]) {
 						return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 					}
 				}
