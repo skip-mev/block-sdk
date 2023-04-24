@@ -44,15 +44,15 @@ type AuctionMempool struct {
 
 // AuctionTxPriority returns a TxPriority over auction bid transactions only. It
 // is to be used in the auction index only.
-func AuctionTxPriority() TxPriority[string] {
+func AuctionTxPriority(config Config) TxPriority[string] {
 	return TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
-			msgAuctionBid, err := GetMsgAuctionBidFromTx(tx)
+			bid, err := config.GetBid(tx)
 			if err != nil {
 				panic(err)
 			}
 
-			return msgAuctionBid.Bid.String()
+			return bid.String()
 		},
 		Compare: func(a, b string) int {
 			aCoins, _ := sdk.ParseCoinsNormalized(a)
@@ -95,7 +95,7 @@ func NewAuctionMempool(txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, maxTx i
 		),
 		auctionIndex: NewPriorityMempool(
 			PriorityNonceMempoolConfig[string]{
-				TxPriority: AuctionTxPriority(),
+				TxPriority: AuctionTxPriority(config),
 				MaxTx:      maxTx,
 			},
 		),

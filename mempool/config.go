@@ -12,6 +12,7 @@ type (
 		Bidder       sdk.AccAddress
 		Bid          sdk.Coin
 		Transactions [][]byte
+		Timeout      uint64
 	}
 
 	// Config defines the configuration for processing auction transactions. It is
@@ -38,11 +39,22 @@ type (
 		// GetBundledTransactions defines a function that returns the bundled transactions
 		// that the user wants to execute at the top of the block given an auction transaction.
 		GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
+
+		// GetTimeout defines a function that returns the timeout of an auction transaction.
+		GetTimeout(tx sdk.Tx) (uint64, error)
 	}
 
 	// DefaultConfig defines a default configuration for processing auction transactions.
 	DefaultConfig struct {
 		txDecoder sdk.TxDecoder
+	}
+
+	// TxWithTimeoutHeight is used to extract timeouts from sdk.Tx transactions. In the case where,
+	// timeouts are explicitly set on the sdk.Tx, we can use this interface to extract the timeout.
+	TxWithTimeoutHeight interface {
+		sdk.Tx
+
+		GetTimeoutHeight() uint64
 	}
 )
 
@@ -132,4 +144,14 @@ func (config *DefaultConfig) GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
 	}
 
 	return msg.Transactions, nil
+}
+
+// GetTimeout defines a default function that returns the timeout of an auction transaction.
+func (config *DefaultConfig) GetTimeout(tx sdk.Tx) (uint64, error) {
+	timeoutTx, ok := tx.(TxWithTimeoutHeight)
+	if !ok {
+		return 0, fmt.Errorf("transaction does not implement TxWithTimeoutHeight")
+	}
+
+	return timeoutTx.GetTimeoutHeight(), nil
 }

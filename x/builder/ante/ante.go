@@ -12,20 +12,12 @@ import (
 
 var _ sdk.AnteDecorator = BuilderDecorator{}
 
-type (
-	BuilderDecorator struct {
-		builderKeeper keeper.Keeper
-		txDecoder     sdk.TxDecoder
-		txEncoder     sdk.TxEncoder
-		mempool       *mempool.AuctionMempool
-	}
-
-	TxWithTimeoutHeight interface {
-		sdk.Tx
-
-		GetTimeoutHeight() uint64
-	}
-)
+type BuilderDecorator struct {
+	builderKeeper keeper.Keeper
+	txDecoder     sdk.TxDecoder
+	txEncoder     sdk.TxEncoder
+	mempool       *mempool.AuctionMempool
+}
 
 func NewBuilderDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, mempool *mempool.AuctionMempool) BuilderDecorator {
 	return BuilderDecorator{
@@ -134,12 +126,11 @@ func (ad BuilderDecorator) IsTopBidTx(ctx sdk.Context, tx sdk.Tx) (bool, error) 
 
 // HasValidTimeout returns true if the transaction has a valid timeout height.
 func (ad BuilderDecorator) HasValidTimeout(ctx sdk.Context, tx sdk.Tx) error {
-	auctionTx, ok := tx.(TxWithTimeoutHeight)
-	if !ok {
-		return fmt.Errorf("transaction does not implement TxWithTimeoutHeight")
+	timeout, err := ad.mempool.GetTimeout(tx)
+	if err != nil {
+		return err
 	}
 
-	timeout := auctionTx.GetTimeoutHeight()
 	if timeout == 0 {
 		return fmt.Errorf("timeout height cannot be zero")
 	}

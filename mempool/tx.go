@@ -73,6 +73,15 @@ func (am *AuctionMempool) GetBundledTransactions(tx sdk.Tx) ([][]byte, error) {
 	return am.config.GetBundledTransactions(tx)
 }
 
+// GetTimeout returns the timeout of an auction transaction.
+func (am *AuctionMempool) GetTimeout(tx sdk.Tx) (uint64, error) {
+	if isAuctionTx, err := am.IsAuctionTx(tx); err != nil || !isAuctionTx {
+		return 0, fmt.Errorf("transaction is not an auction transaction")
+	}
+
+	return am.config.GetTimeout(tx)
+}
+
 // GetBundleSigners returns all of the signers for each transaction in the bundle.
 func (am *AuctionMempool) GetBundleSigners(txs [][]byte) ([]map[string]struct{}, error) {
 	signers := make([]map[string]struct{}, len(txs))
