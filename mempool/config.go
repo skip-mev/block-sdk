@@ -27,6 +27,9 @@ type (
 		// bundle transaction i.e. transaction that was included in the auction transaction's bundle.
 		GetTransactionSigners(tx []byte) (map[string]struct{}, error)
 
+		// GetBundleSigners defines a function that returns the signers of every transaction in a bundle.
+		GetBundleSigners(tx [][]byte) ([]map[string]struct{}, error)
+
 		// WrapBundleTransaction defines a function that wraps a bundle transaction into a sdk.Tx.
 		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
 
@@ -42,6 +45,9 @@ type (
 
 		// GetTimeout defines a function that returns the timeout of an auction transaction.
 		GetTimeout(tx sdk.Tx) (uint64, error)
+
+		// GetAuctionBidInfo defines a function that returns the bid info from an auction transaction.
+		GetAuctionBidInfo(tx sdk.Tx) (AuctionBidInfo, error)
 	}
 
 	// DefaultConfig defines a default configuration for processing auction transactions.
@@ -98,6 +104,24 @@ func (config *DefaultConfig) GetTransactionSigners(tx []byte) (map[string]struct
 	return signers, nil
 }
 
+// GetBundleSigners defines a default function that returns the signers of every transaction
+// in a bundle. In the default case, each bundle transaction will be an sdk.Tx and the
+// signers are the signers of each sdk.Msg in the transaction.
+func (config *DefaultConfig) GetBundleSigners(txs [][]byte) ([]map[string]struct{}, error) {
+	signers := make([]map[string]struct{}, len(txs))
+
+	for index, tx := range txs {
+		txSigners, err := config.GetTransactionSigners(tx)
+		if err != nil {
+			return nil, err
+		}
+
+		signers[index] = txSigners
+	}
+
+	return signers, nil
+}
+
 // WrapBundleTransaction defines a default function that wraps a transaction
 // that is included in the bundle into a sdk.Tx. In the default case, the transaction
 // that is included in the bundle will be the raw bytes of an sdk.Tx so we can just
@@ -109,6 +133,15 @@ func (config *DefaultConfig) WrapBundleTransaction(tx []byte) (sdk.Tx, error) {
 // GetBidder defines a default function that returns the bidder of an auction transaction.
 // In the default case, the bidder is the address defined in MsgAuctionBid.
 func (config *DefaultConfig) GetBidder(tx sdk.Tx) (sdk.AccAddress, error) {
+	isAuctionTx, err := config.IsAuctionTx(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isAuctionTx {
+		return nil, fmt.Errorf("transaction is not an auction transaction")
+	}
+
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return nil, err
@@ -125,6 +158,15 @@ func (config *DefaultConfig) GetBidder(tx sdk.Tx) (sdk.AccAddress, error) {
 // GetBid defines a default function that returns the bid of an auction transaction.
 // In the default case, the bid is the amount defined in MsgAuctionBid.
 func (config *DefaultConfig) GetBid(tx sdk.Tx) (sdk.Coin, error) {
+	isAuctionTx, err := config.IsAuctionTx(tx)
+	if err != nil {
+		return sdk.Coin{}, err
+	}
+
+	if !isAuctionTx {
+		return sdk.Coin{}, fmt.Errorf("transaction is not an auction transaction")
+	}
+
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return sdk.Coin{}, err
@@ -138,6 +180,15 @@ func (config *DefaultConfig) GetBid(tx sdk.Tx) (sdk.Coin, error) {
 // the bundled transactions will be the raw bytes of sdk.Tx's that are included in the
 // MsgAuctionBid.
 func (config *DefaultConfig) GetBundledTransactions(tx sdk.Tx) ([][]byte, error) {
+	isAuctionTx, err := config.IsAuctionTx(tx)
+	if err != nil {
+		return nil, err
+	}
+
+	if !isAuctionTx {
+		return nil, fmt.Errorf("transaction is not an auction transaction")
+	}
+
 	msg, err := GetMsgAuctionBidFromTx(tx)
 	if err != nil {
 		return nil, err
@@ -154,4 +205,34 @@ func (config *DefaultConfig) GetTimeout(tx sdk.Tx) (uint64, error) {
 	}
 
 	return timeoutTx.GetTimeoutHeight(), nil
+}
+
+// GetAuctionBidInfo returns the auction bid info from an auction transaction.
+func (config *DefaultConfig) GetAuctionBidInfo(tx sdk.Tx) (AuctionBidInfo, error) {
+	bid, err := config.GetBid(tx)
+	if err != nil {
+		return AuctionBidInfo{}, err
+	}
+
+	bidder, err := config.GetBidder(tx)
+	if err != nil {
+		return AuctionBidInfo{}, err
+	}
+
+	bundle, err := config.GetBundledTransactions(tx)
+	if err != nil {
+		return AuctionBidInfo{}, err
+	}
+
+	timeout, err := config.GetTimeout(tx)
+	if err != nil {
+		return AuctionBidInfo{}, err
+	}
+
+	return AuctionBidInfo{
+		Bid:          bid,
+		Bidder:       bidder,
+		Transactions: bundle,
+		Timeout:      timeout,
+	}, nil
 }
