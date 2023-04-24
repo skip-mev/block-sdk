@@ -2,6 +2,7 @@ package ante
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 
 	"cosmossdk.io/errors"
@@ -12,14 +13,25 @@ import (
 
 var _ sdk.AnteDecorator = BuilderDecorator{}
 
-type BuilderDecorator struct {
-	builderKeeper keeper.Keeper
-	txDecoder     sdk.TxDecoder
-	txEncoder     sdk.TxEncoder
-	mempool       *mempool.AuctionMempool
-}
+type (
+	Mempool interface {
+		Contains(tx sdk.Tx) (bool, error)
+		IsAuctionTx(tx sdk.Tx) (bool, error)
+		GetAuctionBidInfo(tx sdk.Tx) (mempool.AuctionBidInfo, error)
+		GetBundleSigners(txs [][]byte) ([]map[string]struct{}, error)
+		GetTopAuctionTx(ctx context.Context) sdk.Tx
+		GetTimeout(tx sdk.Tx) (uint64, error)
+	}
 
-func NewBuilderDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, mempool *mempool.AuctionMempool) BuilderDecorator {
+	BuilderDecorator struct {
+		builderKeeper keeper.Keeper
+		txDecoder     sdk.TxDecoder
+		txEncoder     sdk.TxEncoder
+		mempool       Mempool
+	}
+)
+
+func NewBuilderDecorator(ak keeper.Keeper, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, mempool Mempool) BuilderDecorator {
 	return BuilderDecorator{
 		builderKeeper: ak,
 		txDecoder:     txDecoder,
@@ -96,12 +108,12 @@ func (ad BuilderDecorator) GetTopAuctionBid(ctx sdk.Context) (sdk.Coin, error) {
 		return sdk.Coin{}, nil
 	}
 
-	bid, err := ad.mempool.GetBid(auctionTx)
+	auctionBidInfo, err := ad.mempool.GetAuctionBidInfo(auctionTx)
 	if err != nil {
 		return sdk.Coin{}, err
 	}
 
-	return bid, nil
+	return auctionBidInfo.Bid, nil
 }
 
 // IsTopBidTx returns true if the transaction inputted is the highest bidding auction transaction in the mempool.

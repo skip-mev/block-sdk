@@ -2,6 +2,7 @@ package abci
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -11,19 +12,29 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/skip-mev/pob/mempool"
 )
 
-type ProposalHandler struct {
-	mempool     *mempool.AuctionMempool
-	logger      log.Logger
-	anteHandler sdk.AnteHandler
-	txEncoder   sdk.TxEncoder
-	txDecoder   sdk.TxDecoder
-}
+type (
+	Mempool interface {
+		sdkmempool.Mempool
+		AuctionBidSelect(ctx context.Context) sdkmempool.Iterator
+		GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
+		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
+		IsAuctionTx(tx sdk.Tx) (bool, error)
+		RemoveWithoutRefTx(tx sdk.Tx) error
+	}
+
+	ProposalHandler struct {
+		mempool     Mempool
+		logger      log.Logger
+		anteHandler sdk.AnteHandler
+		txEncoder   sdk.TxEncoder
+		txDecoder   sdk.TxDecoder
+	}
+)
 
 func NewProposalHandler(
-	mp *mempool.AuctionMempool,
+	mp Mempool,
 	logger log.Logger,
 	anteHandler sdk.AnteHandler,
 	txEncoder sdk.TxEncoder,
