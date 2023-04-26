@@ -1,6 +1,7 @@
 package mempool_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 	"time"
@@ -134,9 +135,9 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolRemove() {
 	suite.Require().NotNil(auctionIterator)
 	tx := auctionIterator.Tx()
 	suite.Require().Len(tx.GetMsgs(), 1)
-	suite.Require().NoError(suite.mempool.RemoveWithoutRefTx(tx))
+	suite.Require().NoError(suite.mempool.Remove(tx))
 
-	// Ensure that the auction tx was removed from the auction and global mempool
+	// Ensure that the auction tx was removed from the auction mempool only
 	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
 	suite.Require().Equal(numMempoolTxs, suite.mempool.CountTx())
 	contains, err := suite.mempool.Contains(tx)
@@ -144,22 +145,54 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolRemove() {
 	suite.Require().False(contains)
 
 	// Attempt to remove again and ensure that the tx is not found
-	suite.Require().NoError(suite.mempool.RemoveWithoutRefTx(tx))
+	suite.Require().NoError(suite.mempool.Remove(tx))
 	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
 	suite.Require().Equal(numMempoolTxs, suite.mempool.CountTx())
 
-	// Attempt to remove with the bundled txs
-	suite.Require().NoError(suite.mempool.Remove(tx))
-	suite.Require().Equal(numberAuctionTxs-1, suite.mempool.CountAuctionTx())
-	suite.Require().Equal(numMempoolTxs-numberBundledTxs, suite.mempool.CountTx())
-
+	// Bundled txs should be in the global mempool
 	auctionMsg, err := mempool.GetMsgAuctionBidFromTx(tx)
 	suite.Require().NoError(err)
 	for _, refTx := range auctionMsg.GetTransactions() {
 		tx, err := suite.encCfg.TxConfig.TxDecoder()(refTx)
 		suite.Require().NoError(err)
-		suite.Require().False(suite.mempool.Contains(tx))
+		contains, err = suite.mempool.Contains(tx)
+		suite.Require().NoError(err)
+		suite.Require().True(contains)
 	}
+
+	// Attempt to remove a global tx
+	iterator := suite.mempool.Select(context.Background(), nil)
+	tx = iterator.Tx()
+	size := suite.mempool.CountTx()
+	suite.mempool.Remove(tx)
+	suite.Require().Equal(size-1, suite.mempool.CountTx())
+
+	// Remove the rest of the global transactions
+	iterator = suite.mempool.Select(context.Background(), nil)
+	suite.Require().NotNil(iterator)
+	for iterator != nil {
+		tx = iterator.Tx()
+		suite.Require().NoError(suite.mempool.Remove(tx))
+		iterator = suite.mempool.Select(context.Background(), nil)
+	}
+	suite.Require().Equal(0, suite.mempool.CountTx())
+
+	// Remove the rest of the auction transactions
+	auctionIterator = suite.mempool.AuctionBidSelect(suite.ctx)
+	for auctionIterator != nil {
+		tx = auctionIterator.Tx()
+		suite.Require().NoError(suite.mempool.Remove(tx))
+		auctionIterator = suite.mempool.AuctionBidSelect(suite.ctx)
+	}
+	suite.Require().Equal(0, suite.mempool.CountAuctionTx())
+
+	// Ensure that the mempool is empty
+	iterator = suite.mempool.Select(context.Background(), nil)
+	suite.Require().Nil(iterator)
+	auctionIterator = suite.mempool.AuctionBidSelect(suite.ctx)
+	suite.Require().Nil(auctionIterator)
+	suite.Require().Equal(0, suite.mempool.CountTx())
+	suite.Require().Equal(0, suite.mempool.CountAuctionTx())
 }
 
 func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
@@ -167,7 +200,7 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
 	numberAuctionTxs := 10
 	numberBundledTxs := 5
 	insertRefTxs := true
-	suite.CreateFilledMempool(numberTotalTxs, numberAuctionTxs, numberBundledTxs, insertRefTxs)
+	totalTxs := suite.CreateFilledMempool(numberTotalTxs, numberAuctionTxs, numberBundledTxs, insertRefTxs)
 
 	// iterate through the entire auction mempool and ensure the bids are in order
 	var highestBid sdk.Coin
@@ -195,4 +228,12 @@ func (suite *IntegrationTestSuite) TestAuctionMempoolSelect() {
 	}
 
 	suite.Require().Equal(numberAuctionTxs, numberTxsSeen)
+
+	iterator := suite.mempool.Select(context.Background(), nil)
+	numberTxsSeen = 0
+	for iterator != nil {
+		iterator = iterator.Next()
+		numberTxsSeen++
+	}
+	suite.Require().Equal(totalTxs, numberTxsSeen)
 }

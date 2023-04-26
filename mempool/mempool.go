@@ -106,9 +106,7 @@ func NewAuctionMempool(txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder, maxTx i
 	}
 }
 
-// Insert inserts a transaction into the mempool. If the transaction is a special
-// auction tx (tx that contains a single MsgAuctionBid), it will also insert the
-// transaction into the auction index.
+// Insert inserts a transaction into the mempool based on the transaction type (normal or auction).
 func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 	isAuctionTx, err := am.IsAuctionTx(tx)
 	if err != nil {
@@ -137,9 +135,7 @@ func (am *AuctionMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 	return nil
 }
 
-// Remove removes a transaction from the mempool. If the transaction is a special
-// auction tx (tx that contains a single MsgAuctionBid), it will also remove all
-// referenced transactions from the global mempool.
+// Remove removes a transaction from the mempool based on the transaction type (normal or auction).
 func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 	isAuctionTx, err := am.IsAuctionTx(tx)
 	if err != nil {
@@ -151,39 +147,6 @@ func (am *AuctionMempool) Remove(tx sdk.Tx) error {
 	case !isAuctionTx:
 		am.removeTx(am.globalIndex, tx)
 	case isAuctionTx:
-		am.removeTx(am.auctionIndex, tx)
-
-		// Remove all referenced transactions from the global mempool.
-		bundleTxs, err := am.GetBundledTransactions(tx)
-		if err != nil {
-			return err
-		}
-
-		for _, refTx := range bundleTxs {
-			wrappedRefTx, err := am.WrapBundleTransaction(refTx)
-			if err != nil {
-				return err
-			}
-
-			am.removeTx(am.globalIndex, wrappedRefTx)
-		}
-	}
-
-	return nil
-}
-
-// RemoveWithoutRefTx removes a transaction from the mempool without removing
-// any referenced transactions. Referenced transactions only exist in special
-// auction transactions (txs that only include a single MsgAuctionBid). This
-// API is used to ensure that searchers are unable to remove valid transactions
-// from the global mempool.
-func (am *AuctionMempool) RemoveWithoutRefTx(tx sdk.Tx) error {
-	isAuctionTx, err := am.IsAuctionTx(tx)
-	if err != nil {
-		return err
-	}
-
-	if isAuctionTx {
 		am.removeTx(am.auctionIndex, tx)
 	}
 

@@ -21,7 +21,6 @@ type (
 		GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
 		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
 		IsAuctionTx(tx sdk.Tx) (bool, error)
-		RemoveWithoutRefTx(tx sdk.Tx) error
 	}
 
 	ProposalHandler struct {
@@ -277,7 +276,7 @@ func (h *ProposalHandler) verifyTx(ctx sdk.Context, tx sdk.Tx) error {
 }
 
 func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
-	if err := h.mempool.RemoveWithoutRefTx(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
+	if err := h.mempool.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}
 }
