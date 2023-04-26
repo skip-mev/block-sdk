@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 )
 
 type (
@@ -94,11 +95,14 @@ func (config *DefaultConfig) GetTransactionSigners(tx []byte) (map[string]struct
 		return nil, err
 	}
 
+	sigTx, ok := sdkTx.(signing.SigVerifiableTx)
+	if !ok {
+		return nil, fmt.Errorf("transaction is not valid")
+	}
+
 	signers := make(map[string]struct{})
-	for _, msg := range sdkTx.GetMsgs() {
-		for _, signer := range msg.GetSigners() {
-			signers[signer.String()] = struct{}{}
-		}
+	for _, signer := range sigTx.GetSigners() {
+		signers[signer.String()] = struct{}{}
 	}
 
 	return signers, nil

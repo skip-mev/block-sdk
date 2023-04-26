@@ -125,6 +125,36 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, t
 	return txBuilder.GetTx(), nil
 }
 
+func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers []Account) (authsigning.Tx, error) {
+	msgs := []sdk.Msg{}
+	for _, signer := range signers {
+		msg := CreateRandomMsgs(signer.Address, 1)
+		msgs = append(msgs, msg...)
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+
+	sigV2 := signing.SignatureV2{
+		PubKey: signers[0].PrivKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			Signature: nil,
+		},
+		Sequence: nonce,
+	}
+
+	if err := txBuilder.SetSignatures(sigV2); err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetTimeoutHeight(timeout)
+
+	return txBuilder.GetTx(), nil
+}
+
 func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) (authsigning.Tx, error) {
 	bidMsg := &buildertypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),

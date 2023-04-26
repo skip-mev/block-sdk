@@ -19,6 +19,7 @@ type IntegrationTestSuite struct {
 	suite.Suite
 
 	encCfg   testutils.EncodingConfig
+	config   mempool.Config
 	mempool  *mempool.AuctionMempool
 	ctx      sdk.Context
 	random   *rand.Rand
@@ -33,13 +34,13 @@ func TestMempoolTestSuite(t *testing.T) {
 func (suite *IntegrationTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
-	config := mempool.NewDefaultConfig(suite.encCfg.TxConfig.TxDecoder())
-	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), suite.encCfg.TxConfig.TxEncoder(), 0, config)
+	suite.config = mempool.NewDefaultConfig(suite.encCfg.TxConfig.TxDecoder())
+	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), suite.encCfg.TxConfig.TxEncoder(), 0, suite.config)
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
 
 	// Init accounts
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	suite.accounts = testutils.RandomAccounts(suite.random, 5)
+	suite.accounts = testutils.RandomAccounts(suite.random, 10)
 
 	suite.nonces = make(map[string]uint64)
 	for _, acc := range suite.accounts {
