@@ -15,7 +15,9 @@ import (
 )
 
 type (
-	Mempool interface {
+	// ProposalMempool contains the methods required by the ProposalHandler
+	// to interact with the local mempool.
+	ProposalMempool interface {
 		sdkmempool.Mempool
 		AuctionBidSelect(ctx context.Context) sdkmempool.Iterator
 		GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
@@ -23,8 +25,10 @@ type (
 		IsAuctionTx(tx sdk.Tx) (bool, error)
 	}
 
+	// ProposalHandler contains the functionality and handlers required to\
+	// process, validate and build blocks.
 	ProposalHandler struct {
-		mempool     Mempool
+		mempool     ProposalMempool
 		logger      log.Logger
 		anteHandler sdk.AnteHandler
 		txEncoder   sdk.TxEncoder
@@ -32,8 +36,10 @@ type (
 	}
 )
 
+// NewProposalHandler returns a ProposalHandler that contains the functionality and handlers
+// required to process, validate and build blocks.
 func NewProposalHandler(
-	mp Mempool,
+	mp ProposalMempool,
 	logger log.Logger,
 	anteHandler sdk.AnteHandler,
 	txEncoder sdk.TxEncoder,
@@ -265,6 +271,13 @@ func (h *ProposalHandler) ProcessProposalVerifyTx(ctx sdk.Context, txBz []byte) 
 	return tx, h.verifyTx(ctx, tx)
 }
 
+// RemoveTx removes a transaction from the application-side mempool.
+func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
+	if err := h.mempool.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
+		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
+	}
+}
+
 // VerifyTx verifies a transaction against the application's state.
 func (h *ProposalHandler) verifyTx(ctx sdk.Context, tx sdk.Tx) error {
 	if h.anteHandler != nil {
@@ -273,10 +286,4 @@ func (h *ProposalHandler) verifyTx(ctx sdk.Context, tx sdk.Tx) error {
 	}
 
 	return nil
-}
-
-func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
-	if err := h.mempool.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
-		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
-	}
 }
