@@ -74,16 +74,23 @@ func (ad BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 		// If the current transaction is the highest bidding transaction, then the highest bid is empty.
 		topBid := sdk.Coin{}
-		isTopBidTx, err := ad.IsTopBidTx(ctx, tx)
-		if err != nil {
-			return ctx, errors.Wrap(err, "failed to check if current transaction is highest bidding transaction")
-		}
 
-		if !isTopBidTx {
-			// Set the top bid to the highest bidding transaction.
-			topBid, err = ad.GetTopAuctionBid(ctx)
+		// We only need to verify the auction bid relative to the local validator's mempool if the mode
+		// is checkTx or recheckTx. Otherwise, the ABCI handlers (VerifyVoteExtension, ExtendVoteExtension, etc.)
+		// will always compare the auction bid to the highest bidding transaction in the mempool leading to
+		// poor liveness guarantees.
+		if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+			isTopBidTx, err := ad.IsTopBidTx(ctx, tx)
 			if err != nil {
-				return ctx, errors.Wrap(err, "failed to get highest auction bid")
+				return ctx, errors.Wrap(err, "failed to check if current transaction is highest bidding transaction")
+			}
+
+			if !isTopBidTx {
+				// Set the top bid to the highest bidding transaction.
+				topBid, err = ad.GetTopAuctionBid(ctx)
+				if err != nil {
+					return ctx, errors.Wrap(err, "failed to get highest auction bid")
+				}
 			}
 		}
 

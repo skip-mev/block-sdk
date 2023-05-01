@@ -47,6 +47,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.key = storetypes.NewKVStoreKey(buildertypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
+	suite.ctx = suite.ctx.WithIsCheckTx(true)
 
 	// Keepers set up
 	ctrl := gomock.NewController(suite.T())
