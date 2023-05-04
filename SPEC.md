@@ -120,6 +120,36 @@ the sender's sequence number. The global index prioritizes transactions based on
 `ctx.Priority()` and the auction index prioritizes transactions based on the
 bid.
 
+### Configuration
+
+The `AuctionMempool` mempool implementation accepts a `AuctionFactory` 
+interface that allows the mempool to be generic across many Cosmos SDK 
+applications, such that it allows the ability for the application developer to 
+define their business logic in terms of how to perform things such as the following:
+
+* Getting tx signers
+* Getting bundled tx signers
+* Retrieving bid information
+
+
+```go
+// AuctionFactory defines the interface for processing auction transactions. 
+// It is a wrapper around all of the functionality that each application chain
+// must implement in order for auction processing to work.
+type AuctionFactory interface {
+  // WrapBundleTransaction defines a function that wraps a bundle transaction 
+  // into a sdk.Tx. Since this is a potentially expensive operation, we allow
+  // each application chain to define how they want to wrap the transaction
+  // such that it is only called when necessary (i.e. when the transaction is
+  // being considered in the proposal handlers).
+  WrapBundleTransaction(tx []byte) (sdk.Tx, error)
+
+  // GetAuctionBidInfo defines a function that returns the bid info from an 
+  // auction transaction.
+  GetAuctionBidInfo(tx sdk.Tx) (*AuctionBidInfo, error)
+}
+```
+
 ### PrepareProposal
 
 After the proposer of the next block has been selected, the CometBFT client will
