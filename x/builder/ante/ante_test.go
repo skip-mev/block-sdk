@@ -46,8 +46,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
 	suite.key = storetypes.NewKVStoreKey(buildertypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
-	suite.ctx = testCtx.Ctx
-	suite.ctx = suite.ctx.WithIsCheckTx(true)
+	suite.ctx = testCtx.Ctx.WithIsCheckTx(true)
 
 	// Keepers set up
 	ctrl := gomock.NewController(suite.T())
@@ -234,6 +233,8 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			suite.SetupTest()
 			tc.malleate()
 
+			suite.ctx = suite.ctx.WithBlockHeight(1)
+
 			// Set the auction params
 			err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
@@ -245,7 +246,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			suite.Require().NoError(err)
 
 			// Insert the top bid into the mempool
-			config := mempool.NewDefaultConfig(suite.encodingConfig.TxConfig.TxDecoder())
+			config := mempool.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder())
 			mempool := mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, config)
 			if insertTopBid {
 				topAuctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, timeout, []testutils.Account{})

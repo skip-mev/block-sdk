@@ -8,6 +8,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/skip-mev/pob/mempool"
 )
 
 type (
@@ -16,8 +17,7 @@ type (
 	VoteExtensionMempool interface {
 		Remove(tx sdk.Tx) error
 		AuctionBidSelect(ctx context.Context) sdkmempool.Iterator
-		IsAuctionTx(tx sdk.Tx) (bool, error)
-		GetBundledTransactions(tx sdk.Tx) ([][]byte, error)
+		GetAuctionBidInfo(tx sdk.Tx) (*mempool.AuctionBidInfo, error)
 		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
 	}
 
@@ -140,12 +140,12 @@ func (h *VoteExtensionHandler) resetCache(blockHeight int64) {
 // verifyAuctionTx verifies a transaction against the application's state.
 func (h *VoteExtensionHandler) verifyAuctionTx(ctx sdk.Context, bidTx sdk.Tx) error {
 	// Verify the vote extension is a auction transaction
-	isAuctionTx, err := h.mempool.IsAuctionTx(bidTx)
+	bidInfo, err := h.mempool.GetAuctionBidInfo(bidTx)
 	if err != nil {
 		return err
 	}
 
-	if !isAuctionTx {
+	if bidInfo == nil {
 		return fmt.Errorf("vote extension is not a valid auction transaction")
 	}
 
@@ -159,13 +159,8 @@ func (h *VoteExtensionHandler) verifyAuctionTx(ctx sdk.Context, bidTx sdk.Tx) er
 		return err
 	}
 
-	bundledTxs, err := h.mempool.GetBundledTransactions(bidTx)
-	if err != nil {
-		return err
-	}
-
 	// Verify all bundled transactions
-	for _, tx := range bundledTxs {
+	for _, tx := range bidInfo.Transactions {
 		wrappedTx, err := h.mempool.WrapBundleTransaction(tx)
 		if err != nil {
 			return err

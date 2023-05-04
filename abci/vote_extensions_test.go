@@ -80,31 +80,6 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 			},
 		},
 		{
-			"mempool contains bid that has bundled txs that are invalid",
-			func() []byte {
-				params.ReserveFee = sdk.NewCoin("foo", sdk.NewInt(10))
-				err := suite.builderKeeper.SetParams(suite.ctx, params)
-				suite.Require().NoError(err)
-
-				bidder := suite.accounts[0]
-				bid := params.ReserveFee.Sub(sdk.NewCoin("foo", sdk.NewInt(1)))
-
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encodingConfig.TxConfig, bidder, bid, 0, 0)
-				suite.Require().NoError(err)
-				msgAuctionBid.Transactions = [][]byte{[]byte("invalid tx")}
-
-				bidTx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, bidder, 0, 10, []sdk.Msg{msgAuctionBid})
-				suite.Require().NoError(err)
-
-				suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, suite.config)
-				err = suite.mempool.Insert(suite.ctx, bidTx)
-				suite.Require().NoError(err)
-
-				// this should return nothing since the top bid is not valid
-				return nil
-			},
-		},
-		{
 			"mempool contains bid that has an invalid timeout",
 			func() []byte {
 				bidder := suite.accounts[0]
@@ -126,6 +101,10 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 		{
 			"top bid is invalid but next best is valid",
 			func() []byte {
+				params.ReserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
+				err := suite.builderKeeper.SetParams(suite.ctx, params)
+				suite.Require().NoError(err)
+
 				bidder := suite.accounts[0]
 				bid := suite.auctionBidAmount.Add(suite.minBidIncrement)
 				signers := []testutils.Account{bidder}

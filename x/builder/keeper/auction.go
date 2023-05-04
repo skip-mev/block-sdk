@@ -8,7 +8,7 @@ import (
 )
 
 // ValidateBidInfo validates that the bid can be included in the auction.
-func (k Keeper) ValidateBidInfo(ctx sdk.Context, highestBid sdk.Coin, bidInfo mempool.AuctionBidInfo, signers []map[string]struct{}) error {
+func (k Keeper) ValidateBidInfo(ctx sdk.Context, highestBid sdk.Coin, bidInfo *mempool.AuctionBidInfo) error {
 	// Validate the bundle size.
 	maxBundleSize, err := k.GetMaxBundleSize(ctx)
 	if err != nil {
@@ -31,7 +31,7 @@ func (k Keeper) ValidateBidInfo(ctx sdk.Context, highestBid sdk.Coin, bidInfo me
 	}
 
 	if protectionEnabled {
-		if err := k.ValidateAuctionBundle(bidInfo.Bidder, signers); err != nil {
+		if err := k.ValidateAuctionBundle(bidInfo.Bidder, bidInfo.Signers); err != nil {
 			return err
 		}
 	}

@@ -64,7 +64,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	err := suite.builderKeeper.SetParams(suite.ctx, types.DefaultParams())
 	suite.Require().NoError(err)
 
-	config := mempool.NewDefaultConfig(suite.encCfg.TxConfig.TxDecoder())
+	config := mempool.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
 	suite.mempool = mempool.NewAuctionMempool(suite.encCfg.TxConfig.TxDecoder(), suite.encCfg.TxConfig.TxEncoder(), 0, config)
 	suite.msgServer = keeper.NewMsgServerImpl(suite.builderKeeper)
 }

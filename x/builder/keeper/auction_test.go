@@ -11,7 +11,7 @@ import (
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
-func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
+func (suite *KeeperTestSuite) TestValidateBidInfo() {
 	var (
 		// Tx building variables
 		accounts = []testutils.Account{} // tracks the order of signers in the bundle
@@ -192,16 +192,23 @@ func (suite *KeeperTestSuite) TestValidateAuctionMsg() {
 				bundle = append(bundle, txBz)
 			}
 
-			bidInfo := mempool.AuctionBidInfo{
+			signers := make([]map[string]struct{}, len(accounts))
+			for index, acc := range accounts {
+				txSigners := map[string]struct{}{
+					acc.Address.String(): {},
+				}
+
+				signers[index] = txSigners
+			}
+
+			bidInfo := &mempool.AuctionBidInfo{
 				Bidder:       bidder.Address,
 				Bid:          bid,
 				Transactions: bundle,
+				Signers:      signers,
 			}
 
-			signers, err := suite.mempool.GetBundleSigners(bundle)
-			suite.Require().NoError(err)
-
-			err = suite.builderKeeper.ValidateBidInfo(suite.ctx, highestBid, bidInfo, signers)
+			err := suite.builderKeeper.ValidateBidInfo(suite.ctx, highestBid, bidInfo)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {
@@ -302,23 +309,17 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			// Malleate the test case
 			tc.malleate()
 
-			// Create the bundle of transactions ordered by accounts
-			bundle := make([][]byte, 0)
-			for _, acc := range accounts {
-				// Create a random tx
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 1000)
-				suite.Require().NoError(err)
+			signers := make([]map[string]struct{}, len(accounts))
+			for index, acc := range accounts {
+				txSigners := map[string]struct{}{
+					acc.Address.String(): {},
+				}
 
-				txBz, err := suite.encCfg.TxConfig.TxEncoder()(tx)
-				suite.Require().NoError(err)
-				bundle = append(bundle, txBz)
+				signers[index] = txSigners
 			}
 
-			signers, err := suite.mempool.GetBundleSigners(bundle)
-			suite.Require().NoError(err)
-
 			// Validate the bundle
-			err = suite.builderKeeper.ValidateAuctionBundle(bidder.Address, signers)
+			err := suite.builderKeeper.ValidateAuctionBundle(bidder.Address, signers)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {
