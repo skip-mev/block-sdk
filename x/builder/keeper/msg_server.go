@@ -2,7 +2,10 @@ package keeper
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
+	"strings"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/x/builder/types"
@@ -51,6 +54,7 @@ func (m MsgServer) AuctionBid(goCtx context.Context, msg *types.MsgAuctionBid) (
 		return nil, err
 	}
 
+	var proposerReward sdk.Coins
 	if proposerFee.IsZero() {
 		// send the entire bid to the escrow account when no proposer fee is set
 		if err := m.bankKeeper.SendCoins(ctx, bidder, escrow, sdk.NewCoins(msg.Bid)); err != nil {
@@ -62,7 +66,7 @@ func (m MsgServer) AuctionBid(goCtx context.Context, msg *types.MsgAuctionBid) (
 
 		// determine the amount of the bid that goes to the (previous) proposer
 		bid := sdk.NewDecCoinsFromCoins(msg.Bid)
-		proposerReward, _ := bid.MulDecTruncate(proposerFee).TruncateDecimal()
+		proposerReward, _ = bid.MulDecTruncate(proposerFee).TruncateDecimal()
 
 		if err := m.bankKeeper.SendCoins(ctx, bidder, sdk.AccAddress(prevProposer.GetOperator()), proposerReward); err != nil {
 			return nil, err
@@ -77,6 +81,22 @@ func (m MsgServer) AuctionBid(goCtx context.Context, msg *types.MsgAuctionBid) (
 			return nil, err
 		}
 	}
+
+	bundledTxHashes := make([]string, len(msg.Transactions))
+	for i, refTxRaw := range msg.Transactions {
+		hash := sha256.Sum256(refTxRaw)
+		bundledTxHashes[i] = hex.EncodeToString(hash[:])
+	}
+
+	ctx.EventManager().EmitEvent(
+		sdk.NewEvent(
+			types.EventTypeAuctionBid,
+			sdk.NewAttribute(types.EventAttrBidder, msg.Bidder),
+			sdk.NewAttribute(types.EventAttrBid, msg.Bid.String()),
+			sdk.NewAttribute(types.EventAttrProposerReward, proposerReward.String()),
+			sdk.NewAttribute(types.EventAttrBundledTxs, strings.Join(bundledTxHashes, ",")),
+		),
+	)
 
 	return &types.MsgAuctionBidResponse{}, nil
 }
