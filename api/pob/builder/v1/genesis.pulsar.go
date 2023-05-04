@@ -112,13 +112,13 @@ func (x *fastReflection_GenesisState) Range(f func(protoreflect.FieldDescriptor,
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		return x.Params != nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -130,13 +130,13 @@ func (x *fastReflection_GenesisState) Has(fd protoreflect.FieldDescriptor) bool 
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		x.Params = nil
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -148,14 +148,14 @@ func (x *fastReflection_GenesisState) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		value := x.Params
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -171,13 +171,13 @@ func (x *fastReflection_GenesisState) Get(descriptor protoreflect.FieldDescripto
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		x.Params = value.Message().Interface().(*Params)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -193,16 +193,16 @@ func (x *fastReflection_GenesisState) Set(fd protoreflect.FieldDescriptor, value
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		if x.Params == nil {
 			x.Params = new(Params)
 		}
 		return protoreflect.ValueOfMessage(x.Params.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -211,14 +211,14 @@ func (x *fastReflection_GenesisState) Mutable(fd protoreflect.FieldDescriptor) p
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.GenesisState.params":
+	case "pob.builder.v1.GenesisState.params":
 		m := new(Params)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.GenesisState"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.GenesisState"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.GenesisState does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -228,7 +228,7 @@ func (x *fastReflection_GenesisState) NewField(fd protoreflect.FieldDescriptor) 
 func (x *fastReflection_GenesisState) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in skipmev.pob.builder.v1.GenesisState", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in pob.builder.v1.GenesisState", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -595,25 +595,25 @@ func (x *fastReflection_Params) Range(f func(protoreflect.FieldDescriptor, proto
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
+	case "pob.builder.v1.Params.max_bundle_size":
 		return x.MaxBundleSize != uint32(0)
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
+	case "pob.builder.v1.Params.escrow_account_address":
 		return x.EscrowAccountAddress != ""
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		return x.ReserveFee != nil
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		return x.MinBuyInFee != nil
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		return x.MinBidIncrement != nil
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
+	case "pob.builder.v1.Params.front_running_protection":
 		return x.FrontRunningProtection != false
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
+	case "pob.builder.v1.Params.proposer_fee":
 		return x.ProposerFee != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -625,25 +625,25 @@ func (x *fastReflection_Params) Has(fd protoreflect.FieldDescriptor) bool {
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
+	case "pob.builder.v1.Params.max_bundle_size":
 		x.MaxBundleSize = uint32(0)
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
+	case "pob.builder.v1.Params.escrow_account_address":
 		x.EscrowAccountAddress = ""
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		x.ReserveFee = nil
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		x.MinBuyInFee = nil
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		x.MinBidIncrement = nil
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
+	case "pob.builder.v1.Params.front_running_protection":
 		x.FrontRunningProtection = false
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
+	case "pob.builder.v1.Params.proposer_fee":
 		x.ProposerFee = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -655,32 +655,32 @@ func (x *fastReflection_Params) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
+	case "pob.builder.v1.Params.max_bundle_size":
 		value := x.MaxBundleSize
 		return protoreflect.ValueOfUint32(value)
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
+	case "pob.builder.v1.Params.escrow_account_address":
 		value := x.EscrowAccountAddress
 		return protoreflect.ValueOfString(value)
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		value := x.ReserveFee
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		value := x.MinBuyInFee
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		value := x.MinBidIncrement
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
+	case "pob.builder.v1.Params.front_running_protection":
 		value := x.FrontRunningProtection
 		return protoreflect.ValueOfBool(value)
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
+	case "pob.builder.v1.Params.proposer_fee":
 		value := x.ProposerFee
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -696,25 +696,25 @@ func (x *fastReflection_Params) Get(descriptor protoreflect.FieldDescriptor) pro
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
+	case "pob.builder.v1.Params.max_bundle_size":
 		x.MaxBundleSize = uint32(value.Uint())
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
+	case "pob.builder.v1.Params.escrow_account_address":
 		x.EscrowAccountAddress = value.Interface().(string)
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		x.ReserveFee = value.Message().Interface().(*v1beta1.Coin)
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		x.MinBuyInFee = value.Message().Interface().(*v1beta1.Coin)
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		x.MinBidIncrement = value.Message().Interface().(*v1beta1.Coin)
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
+	case "pob.builder.v1.Params.front_running_protection":
 		x.FrontRunningProtection = value.Bool()
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
+	case "pob.builder.v1.Params.proposer_fee":
 		x.ProposerFee = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -730,34 +730,34 @@ func (x *fastReflection_Params) Set(fd protoreflect.FieldDescriptor, value proto
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		if x.ReserveFee == nil {
 			x.ReserveFee = new(v1beta1.Coin)
 		}
 		return protoreflect.ValueOfMessage(x.ReserveFee.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		if x.MinBuyInFee == nil {
 			x.MinBuyInFee = new(v1beta1.Coin)
 		}
 		return protoreflect.ValueOfMessage(x.MinBuyInFee.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		if x.MinBidIncrement == nil {
 			x.MinBidIncrement = new(v1beta1.Coin)
 		}
 		return protoreflect.ValueOfMessage(x.MinBidIncrement.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
-		panic(fmt.Errorf("field max_bundle_size of message skipmev.pob.builder.v1.Params is not mutable"))
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
-		panic(fmt.Errorf("field escrow_account_address of message skipmev.pob.builder.v1.Params is not mutable"))
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
-		panic(fmt.Errorf("field front_running_protection of message skipmev.pob.builder.v1.Params is not mutable"))
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
-		panic(fmt.Errorf("field proposer_fee of message skipmev.pob.builder.v1.Params is not mutable"))
+	case "pob.builder.v1.Params.max_bundle_size":
+		panic(fmt.Errorf("field max_bundle_size of message pob.builder.v1.Params is not mutable"))
+	case "pob.builder.v1.Params.escrow_account_address":
+		panic(fmt.Errorf("field escrow_account_address of message pob.builder.v1.Params is not mutable"))
+	case "pob.builder.v1.Params.front_running_protection":
+		panic(fmt.Errorf("field front_running_protection of message pob.builder.v1.Params is not mutable"))
+	case "pob.builder.v1.Params.proposer_fee":
+		panic(fmt.Errorf("field proposer_fee of message pob.builder.v1.Params is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -766,28 +766,28 @@ func (x *fastReflection_Params) Mutable(fd protoreflect.FieldDescriptor) protore
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_Params) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "skipmev.pob.builder.v1.Params.max_bundle_size":
+	case "pob.builder.v1.Params.max_bundle_size":
 		return protoreflect.ValueOfUint32(uint32(0))
-	case "skipmev.pob.builder.v1.Params.escrow_account_address":
+	case "pob.builder.v1.Params.escrow_account_address":
 		return protoreflect.ValueOfString("")
-	case "skipmev.pob.builder.v1.Params.reserve_fee":
+	case "pob.builder.v1.Params.reserve_fee":
 		m := new(v1beta1.Coin)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_buy_in_fee":
+	case "pob.builder.v1.Params.min_buy_in_fee":
 		m := new(v1beta1.Coin)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.min_bid_increment":
+	case "pob.builder.v1.Params.min_bid_increment":
 		m := new(v1beta1.Coin)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
-	case "skipmev.pob.builder.v1.Params.front_running_protection":
+	case "pob.builder.v1.Params.front_running_protection":
 		return protoreflect.ValueOfBool(false)
-	case "skipmev.pob.builder.v1.Params.proposer_fee":
+	case "pob.builder.v1.Params.proposer_fee":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: skipmev.pob.builder.v1.Params"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.Params"))
 		}
-		panic(fmt.Errorf("message skipmev.pob.builder.v1.Params does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message pob.builder.v1.Params does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -797,7 +797,7 @@ func (x *fastReflection_Params) NewField(fd protoreflect.FieldDescriptor) protor
 func (x *fastReflection_Params) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in skipmev.pob.builder.v1.Params", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in pob.builder.v1.Params", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -1423,16 +1423,15 @@ var File_pob_builder_v1_genesis_proto protoreflect.FileDescriptor
 
 var file_pob_builder_v1_genesis_proto_rawDesc = []byte{
 	0x0a, 0x1c, 0x70, 0x6f, 0x62, 0x2f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2f, 0x76, 0x31,
-	0x2f, 0x67, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x16,
-	0x73, 0x6b, 0x69, 0x70, 0x6d, 0x65, 0x76, 0x2e, 0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75, 0x69, 0x6c,
-	0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x1a, 0x14, 0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x63, 0x6f,
-	0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x62, 0x61, 0x73, 0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61,
-	0x31, 0x2f, 0x63, 0x6f, 0x69, 0x6e, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x11, 0x61, 0x6d,
-	0x69, 0x6e, 0x6f, 0x2f, 0x61, 0x6d, 0x69, 0x6e, 0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22,
-	0x4c, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12,
-	0x3c, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1e, 0x2e, 0x73, 0x6b, 0x69, 0x70, 0x6d, 0x65, 0x76, 0x2e, 0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75,
+	0x2f, 0x67, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x12, 0x0e,
+	0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x1a, 0x14,
+	0x67, 0x6f, 0x67, 0x6f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x67, 0x6f, 0x67, 0x6f, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x1e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2f, 0x62, 0x61, 0x73,
+	0x65, 0x2f, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2f, 0x63, 0x6f, 0x69, 0x6e, 0x2e, 0x70,
+	0x72, 0x6f, 0x74, 0x6f, 0x1a, 0x11, 0x61, 0x6d, 0x69, 0x6e, 0x6f, 0x2f, 0x61, 0x6d, 0x69, 0x6e,
+	0x6f, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x44, 0x0a, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73,
+	0x69, 0x73, 0x53, 0x74, 0x61, 0x74, 0x65, 0x12, 0x34, 0x0a, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d,
+	0x73, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x16, 0x2e, 0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75,
 	0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42,
 	0x04, 0xc8, 0xde, 0x1f, 0x00, 0x52, 0x06, 0x70, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x22, 0xf9, 0x03,
 	0x0a, 0x06, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x12, 0x26, 0x0a, 0x0f, 0x6d, 0x61, 0x78, 0x5f,
@@ -1466,21 +1465,18 @@ var file_pob_builder_v1_genesis_proto_rawDesc = []byte{
 	0x2f, 0x74, 0x79, 0x70, 0x65, 0x73, 0x2e, 0x44, 0x65, 0x63, 0x52, 0x0b, 0x70, 0x72, 0x6f, 0x70,
 	0x6f, 0x73, 0x65, 0x72, 0x46, 0x65, 0x65, 0x3a, 0x20, 0x8a, 0xe7, 0xb0, 0x2a, 0x1b, 0x63, 0x6f,
 	0x73, 0x6d, 0x6f, 0x73, 0x2d, 0x73, 0x64, 0x6b, 0x2f, 0x78, 0x2f, 0x62, 0x75, 0x69, 0x6c, 0x64,
-	0x65, 0x72, 0x2f, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0xd0, 0x01, 0x0a, 0x1a, 0x63, 0x6f,
-	0x6d, 0x2e, 0x73, 0x6b, 0x69, 0x70, 0x6d, 0x65, 0x76, 0x2e, 0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75,
-	0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69,
-	0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01, 0x5a, 0x29, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
-	0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x70, 0x6f, 0x62, 0x2f, 0x62,
-	0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2f, 0x76, 0x31, 0x3b, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65,
-	0x72, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x53, 0x50, 0x42, 0xaa, 0x02, 0x16, 0x53, 0x6b, 0x69, 0x70,
-	0x6d, 0x65, 0x76, 0x2e, 0x50, 0x6f, 0x62, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e,
-	0x56, 0x31, 0xca, 0x02, 0x16, 0x53, 0x6b, 0x69, 0x70, 0x6d, 0x65, 0x76, 0x5c, 0x50, 0x6f, 0x62,
-	0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x22, 0x53, 0x6b,
-	0x69, 0x70, 0x6d, 0x65, 0x76, 0x5c, 0x50, 0x6f, 0x62, 0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65,
+	0x65, 0x72, 0x2f, 0x50, 0x61, 0x72, 0x61, 0x6d, 0x73, 0x42, 0xa7, 0x01, 0x0a, 0x12, 0x63, 0x6f,
+	0x6d, 0x2e, 0x70, 0x6f, 0x62, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x76, 0x31,
+	0x42, 0x0c, 0x47, 0x65, 0x6e, 0x65, 0x73, 0x69, 0x73, 0x50, 0x72, 0x6f, 0x74, 0x6f, 0x50, 0x01,
+	0x5a, 0x29, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69, 0x6f, 0x2f, 0x61,
+	0x70, 0x69, 0x2f, 0x70, 0x6f, 0x62, 0x2f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2f, 0x76,
+	0x31, 0x3b, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x50, 0x42,
+	0x58, 0xaa, 0x02, 0x0e, 0x50, 0x6f, 0x62, 0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e,
+	0x56, 0x31, 0xca, 0x02, 0x0e, 0x50, 0x6f, 0x62, 0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72,
+	0x5c, 0x56, 0x31, 0xe2, 0x02, 0x1a, 0x50, 0x6f, 0x62, 0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65,
 	0x72, 0x5c, 0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
-	0xea, 0x02, 0x19, 0x53, 0x6b, 0x69, 0x70, 0x6d, 0x65, 0x76, 0x3a, 0x3a, 0x50, 0x6f, 0x62, 0x3a,
-	0x3a, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x33,
+	0xea, 0x02, 0x10, 0x50, 0x6f, 0x62, 0x3a, 0x3a, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x3a,
+	0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1497,15 +1493,15 @@ func file_pob_builder_v1_genesis_proto_rawDescGZIP() []byte {
 
 var file_pob_builder_v1_genesis_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
 var file_pob_builder_v1_genesis_proto_goTypes = []interface{}{
-	(*GenesisState)(nil), // 0: skipmev.pob.builder.v1.GenesisState
-	(*Params)(nil),       // 1: skipmev.pob.builder.v1.Params
+	(*GenesisState)(nil), // 0: pob.builder.v1.GenesisState
+	(*Params)(nil),       // 1: pob.builder.v1.Params
 	(*v1beta1.Coin)(nil), // 2: cosmos.base.v1beta1.Coin
 }
 var file_pob_builder_v1_genesis_proto_depIdxs = []int32{
-	1, // 0: skipmev.pob.builder.v1.GenesisState.params:type_name -> skipmev.pob.builder.v1.Params
-	2, // 1: skipmev.pob.builder.v1.Params.reserve_fee:type_name -> cosmos.base.v1beta1.Coin
-	2, // 2: skipmev.pob.builder.v1.Params.min_buy_in_fee:type_name -> cosmos.base.v1beta1.Coin
-	2, // 3: skipmev.pob.builder.v1.Params.min_bid_increment:type_name -> cosmos.base.v1beta1.Coin
+	1, // 0: pob.builder.v1.GenesisState.params:type_name -> pob.builder.v1.Params
+	2, // 1: pob.builder.v1.Params.reserve_fee:type_name -> cosmos.base.v1beta1.Coin
+	2, // 2: pob.builder.v1.Params.min_buy_in_fee:type_name -> cosmos.base.v1beta1.Coin
+	2, // 3: pob.builder.v1.Params.min_bid_increment:type_name -> cosmos.base.v1beta1.Coin
 	4, // [4:4] is the sub-list for method output_type
 	4, // [4:4] is the sub-list for method input_type
 	4, // [4:4] is the sub-list for extension type_name
