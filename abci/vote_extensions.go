@@ -79,7 +79,7 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() ExtendVoteHandler {
 			}
 		}
 
-		return &ResponseExtendVote{VoteExtension: nil}, nil
+		return &ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 }
 

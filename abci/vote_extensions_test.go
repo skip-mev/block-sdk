@@ -28,21 +28,21 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 			"empty mempool",
 			func() []byte {
 				suite.createFilledMempool(0, 0, 0, false)
-				return nil
+				return []byte{}
 			},
 		},
 		{
 			"filled mempool with no auction transactions",
 			func() []byte {
 				suite.createFilledMempool(100, 0, 0, false)
-				return nil
+				return []byte{}
 			},
 		},
 		{
 			"mempool with invalid auction transaction (too many bundled transactions)",
 			func() []byte {
 				suite.createFilledMempool(0, 1, int(params.MaxBundleSize)+1, true)
-				return nil
+				return []byte{}
 			},
 		},
 		{
@@ -61,7 +61,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 				suite.Require().NoError(err)
 
 				// this should return nothing since the top bid is not valid
-				return nil
+				return []byte{}
 			},
 		},
 		{
@@ -76,7 +76,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 
 				suite.createFilledMempool(100, 100, 2, true)
 
-				return nil
+				return []byte{}
 			},
 		},
 		{
@@ -95,7 +95,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 				suite.Require().NoError(err)
 
 				// this should return nothing since the top bid is not valid
-				return nil
+				return []byte{}
 			},
 		},
 		{
