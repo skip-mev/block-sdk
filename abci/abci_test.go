@@ -1,13 +1,11 @@
 package abci_test
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
-	"fmt"
 	"math/rand"
 	"testing"
 	"time"
 
+	comettypes "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -99,7 +97,7 @@ func (suite *ABCITestSuite) SetupTest() {
 	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 	// Accounts set up
-	suite.accounts = testutils.RandomAccounts(suite.random, 1)
+	suite.accounts = testutils.RandomAccounts(suite.random, 10)
 	suite.balances = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000000000000000000)))
 	suite.nonces = make(map[string]uint64)
 	for _, acc := range suite.accounts {
@@ -123,20 +121,6 @@ func (suite *ABCITestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, simulate boo
 	ctx, err := suite.builderDecorator.AnteHandle(ctx, tx, false, next)
 	if err != nil {
 		return ctx, err
-	}
-
-	bz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
-	if err != nil {
-		return ctx, err
-	}
-
-	if !simulate {
-		hash := sha256.Sum256(bz)
-		txHash := hex.EncodeToString(hash[:])
-		if _, ok := suite.txs[txHash]; ok {
-			return ctx, fmt.Errorf("tx already in mempool")
-		}
-		suite.txs[txHash] = struct{}{}
 	}
 
 	return ctx, nil
@@ -228,27 +212,9 @@ func (suite *ABCITestSuite) createFilledMempool(numNormalTxs, numAuctionTxs, num
 	return totalNumTxs
 }
 
-func (suite *ABCITestSuite) exportMempool(exportRefTxs bool) [][]byte {
+func (suite *ABCITestSuite) exportMempool() [][]byte {
 	txs := make([][]byte, 0)
 	seenTxs := make(map[string]bool)
-
-	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
-	for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
-		auctionTx := auctionIterator.Tx()
-		txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(auctionTx)
-		suite.Require().NoError(err)
-
-		txs = append(txs, txBz)
-
-		if exportRefTxs {
-			for _, refRawTx := range auctionTx.GetMsgs()[0].(*buildertypes.MsgAuctionBid).GetTransactions() {
-				txs = append(txs, refRawTx)
-				seenTxs[string(refRawTx)] = true
-			}
-		}
-
-		seenTxs[string(txBz)] = true
-	}
 
 	iterator := suite.mempool.Select(suite.ctx, nil)
 	for ; iterator != nil; iterator = iterator.Next() {
@@ -261,4 +227,109 @@ func (suite *ABCITestSuite) exportMempool(exportRefTxs bool) [][]byte {
 	}
 
 	return txs
+}
+
+func (suite *ABCITestSuite) createPrepareProposalRequest(maxBytes int64) comettypes.RequestPrepareProposal {
+	voteExtensions := make([]comettypes.ExtendedVoteInfo, 0)
+
+	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
+	for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
+		tx := auctionIterator.Tx()
+
+		txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
+		suite.Require().NoError(err)
+
+		voteExtensions = append(voteExtensions, comettypes.ExtendedVoteInfo{
+			VoteExtension: txBz,
+		})
+	}
+
+	return comettypes.RequestPrepareProposal{
+		MaxTxBytes: maxBytes,
+		LocalLastCommit: comettypes.ExtendedCommitInfo{
+			Votes: voteExtensions,
+		},
+	}
+}
+
+func (suite *ABCITestSuite) createExtendedCommitInfoFromTxBzs(txs [][]byte) []byte {
+	voteExtensions := make([]comettypes.ExtendedVoteInfo, 0)
+
+	for _, txBz := range txs {
+		voteExtensions = append(voteExtensions, comettypes.ExtendedVoteInfo{
+			VoteExtension: txBz,
+		})
+	}
+
+	commitInfo := comettypes.ExtendedCommitInfo{
+		Votes: voteExtensions,
+	}
+
+	commitInfoBz, err := commitInfo.Marshal()
+	suite.Require().NoError(err)
+
+	return commitInfoBz
+}
+
+func (suite *ABCITestSuite) createAuctionInfoFromTxBzs(txs [][]byte, numTxs uint64) []byte {
+	auctionInfo := abci.AuctionInfo{
+		ExtendedCommitInfo: suite.createExtendedCommitInfoFromTxBzs(txs),
+		NumTxs:             numTxs,
+		MaxTxBytes:         int64(len(txs[0])),
+	}
+
+	auctionInfoBz, err := auctionInfo.Marshal()
+	suite.Require().NoError(err)
+
+	return auctionInfoBz
+}
+
+func (suite *ABCITestSuite) getAllAuctionTxs() ([]sdk.Tx, [][]byte) {
+	auctionIterator := suite.mempool.AuctionBidSelect(suite.ctx)
+	txs := make([]sdk.Tx, 0)
+	txBzs := make([][]byte, 0)
+
+	for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
+		txs = append(txs, auctionIterator.Tx())
+
+		bz, err := suite.encodingConfig.TxConfig.TxEncoder()(auctionIterator.Tx())
+		suite.Require().NoError(err)
+
+		txBzs = append(txBzs, bz)
+	}
+
+	return txs, txBzs
+}
+
+func (suite *ABCITestSuite) createExtendedCommitInfoFromTxs(txs []sdk.Tx) comettypes.ExtendedCommitInfo {
+	voteExtensions := make([][]byte, 0)
+	for _, tx := range txs {
+		bz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
+		suite.Require().NoError(err)
+
+		voteExtensions = append(voteExtensions, bz)
+	}
+
+	return suite.createExtendedCommitInfo(voteExtensions)
+}
+
+func (suite *ABCITestSuite) createExtendedVoteInfo(voteExtensions [][]byte) []comettypes.ExtendedVoteInfo {
+	commitInfo := make([]comettypes.ExtendedVoteInfo, 0)
+	for _, voteExtension := range voteExtensions {
+		info := comettypes.ExtendedVoteInfo{
+			VoteExtension: voteExtension,
+		}
+
+		commitInfo = append(commitInfo, info)
+	}
+
+	return commitInfo
+}
+
+func (suite *ABCITestSuite) createExtendedCommitInfo(voteExtensions [][]byte) comettypes.ExtendedCommitInfo {
+	commitInfo := comettypes.ExtendedCommitInfo{
+		Votes: suite.createExtendedVoteInfo(voteExtensions),
+	}
+
+	return commitInfo
 }

@@ -125,6 +125,15 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, t
 	return txBuilder.GetTx(), nil
 }
 
+func CreateRandomTxBz(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64) ([]byte, error) {
+	tx, err := CreateRandomTx(txCfg, account, nonce, numberMsgs, timeout)
+	if err != nil {
+		return nil, err
+	}
+
+	return txCfg.TxEncoder()(tx)
+}
+
 func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers []Account) (authsigning.Tx, error) {
 	msgs := []sdk.Msg{}
 	for _, signer := range signers {
@@ -197,6 +206,20 @@ func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.C
 	txBuilder.SetTimeoutHeight(timeout)
 
 	return txBuilder.GetTx(), nil
+}
+
+func CreateAuctionTxWithSignerBz(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) ([]byte, error) {
+	bidTx, err := CreateAuctionTxWithSigners(txCfg, bidder, bid, nonce, timeout, signers)
+	if err != nil {
+		return nil, err
+	}
+
+	bz, err := txCfg.TxEncoder()(bidTx)
+	if err != nil {
+		return nil, err
+	}
+
+	return bz, nil
 }
 
 func CreateRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
