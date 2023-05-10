@@ -73,7 +73,7 @@ func (suite *AnteTestSuite) executeAnteHandler(tx sdk.Tx, balance sdk.Coins) (sd
 	signer := tx.GetMsgs()[0].GetSigners()[0]
 	suite.bankKeeper.EXPECT().GetAllBalances(suite.ctx, signer).AnyTimes().Return(balance)
 
-	next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+	next := func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
 		return ctx, nil
 	}
 
