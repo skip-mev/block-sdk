@@ -43,6 +43,8 @@ import (
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+	buildermodulev1 "github.com/skip-mev/pob/api/pob/builder/module/v1"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"google.golang.org/protobuf/types/known/durationpb"
 )
 
@@ -59,7 +61,7 @@ var (
 		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
 		minttypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, group.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
-		vestingtypes.ModuleName, consensustypes.ModuleName,
+		vestingtypes.ModuleName, consensustypes.ModuleName, buildertypes.ModuleName,
 	}
 
 	// module account permissions
@@ -70,6 +72,7 @@ var (
 		{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
+		{Account: buildertypes.ModuleName, Permissions: []string{}},
 	}
 
 	// blocked account addresses
@@ -113,6 +116,7 @@ var (
 						group.ModuleName,
 						paramstypes.ModuleName,
 						vestingtypes.ModuleName,
+						buildertypes.ModuleName,
 						consensustypes.ModuleName,
 					},
 					EndBlockers: []string{
@@ -134,6 +138,7 @@ var (
 						consensustypes.ModuleName,
 						upgradetypes.ModuleName,
 						vestingtypes.ModuleName,
+						buildertypes.ModuleName,
 					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
 						{
@@ -237,6 +242,10 @@ var (
 			{
 				Name:   consensustypes.ModuleName,
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
+			},
+			{
+				Name:   buildertypes.ModuleName,
+				Config: appconfig.WrapAny(&buildermodulev1.Module{}),
 			},
 		},
 	})

@@ -12,6 +12,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	"github.com/skip-mev/pob/x/builder/types"
 )
 
 func getGenDoc(path string) (*comettypes.GenesisDoc, error) {
@@ -38,7 +39,7 @@ func getGenDoc(path string) (*comettypes.GenesisDoc, error) {
 	return doc, nil
 }
 
-func addGenesisAccount(path, moniker, amountStr string, accAddr sdk.AccAddress) error {
+func initGenesisFile(path, moniker, amountStr string, accAddr sdk.AccAddress, params types.Params) error {
 	serverCtx := server.NewDefaultContext()
 	config := serverCtx.Config
 
@@ -99,6 +100,16 @@ func addGenesisAccount(path, moniker, amountStr string, accAddr sdk.AccAddress) 
 	}
 
 	appState[banktypes.ModuleName] = bankGenStateBz
+
+	builderGenState := types.GetGenesisStateFromAppState(cdc, appState)
+	builderGenState.Params = params
+
+	builderGenStateBz, err := cdc.MarshalJSON(&builderGenState)
+	if err != nil {
+		return fmt.Errorf("failed to marshal builder genesis state: %w", err)
+	}
+
+	appState[types.ModuleName] = builderGenStateBz
 
 	appStateJSON, err := json.Marshal(appState)
 	if err != nil {

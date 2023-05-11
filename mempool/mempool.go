@@ -11,36 +11,59 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
 
-var _ sdkmempool.Mempool = (*AuctionMempool)(nil)
+var _ Mempool = (*AuctionMempool)(nil)
 
-// AuctionMempool defines an auction mempool. It can be seen as an extension of
-// an SDK PriorityNonceMempool, i.e. a mempool that supports <sender, nonce>
-// two-dimensional priority ordering, with the additional support of prioritizing
-// and indexing auction bids.
-type AuctionMempool struct {
-	// globalIndex defines the index of all transactions in the mempool. It uses
-	// the SDK's builtin PriorityNonceMempool. Once a bid is selected for top-of-block,
-	// all subsequent transactions in the mempool will be selected from this index.
-	globalIndex sdkmempool.Mempool
+type (
+	// Mempool defines the interface for a POB mempool.
+	Mempool interface {
+		// Inherit the methods of the SDK's Mempool interface.
+		sdkmempool.Mempool
 
-	// auctionIndex defines an index of auction bids.
-	auctionIndex sdkmempool.Mempool
+		// GetTopAuctionTx returns the top auction bid transaction in the mempool.
+		GetTopAuctionTx(ctx context.Context) sdk.Tx
 
-	// txDecoder defines the sdk.Tx decoder that allows us to decode transactions
-	// and construct sdk.Txs from the bundled transactions.
-	txDecoder sdk.TxDecoder
+		// CoutnAuctionTx returns the number of auction bid transactions in the mempool.
+		CountAuctionTx() int
 
-	// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
-	// to bytes.
-	txEncoder sdk.TxEncoder
+		// AuctionBidSelect returns an iterator over the auction bid transactions in the mempool.
+		AuctionBidSelect(ctx context.Context) sdkmempool.Iterator
 
-	// txIndex is a map of all transactions in the mempool. It is used
-	// to quickly check if a transaction is already in the mempool.
-	txIndex map[string]struct{}
+		// Contains returns true if the mempool contains the given transaction.
+		Contains(tx sdk.Tx) (bool, error)
 
-	// AuctionFactory implements the functionality required to process auction transactions.
-	AuctionFactory
-}
+		// AuctionFactory implements the functionality required to process auction transactions.
+		AuctionFactory
+	}
+
+	// AuctionMempool defines an auction mempool. It can be seen as an extension of
+	// an SDK PriorityNonceMempool, i.e. a mempool that supports <sender, nonce>
+	// two-dimensional priority ordering, with the additional support of prioritizing
+	// and indexing auction bids.
+	AuctionMempool struct {
+		// globalIndex defines the index of all transactions in the mempool. It uses
+		// the SDK's builtin PriorityNonceMempool. Once a bid is selected for top-of-block,
+		// all subsequent transactions in the mempool will be selected from this index.
+		globalIndex sdkmempool.Mempool
+
+		// auctionIndex defines an index of auction bids.
+		auctionIndex sdkmempool.Mempool
+
+		// txDecoder defines the sdk.Tx decoder that allows us to decode transactions
+		// and construct sdk.Txs from the bundled transactions.
+		txDecoder sdk.TxDecoder
+
+		// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
+		// to bytes.
+		txEncoder sdk.TxEncoder
+
+		// txIndex is a map of all transactions in the mempool. It is used
+		// to quickly check if a transaction is already in the mempool.
+		txIndex map[string]struct{}
+
+		// AuctionFactory implements the functionality required to process auction transactions.
+		AuctionFactory
+	}
+)
 
 // AuctionTxPriority returns a TxPriority over auction bid transactions only. It
 // is to be used in the auction index only.

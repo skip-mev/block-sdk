@@ -25,6 +25,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
+	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
 	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
@@ -65,6 +66,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+	"github.com/skip-mev/pob/abci"
+	"github.com/skip-mev/pob/mempool"
+	buildermodule "github.com/skip-mev/pob/x/builder"
+	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
 
 var (
@@ -102,6 +107,7 @@ var (
 		vesting.AppModuleBasic{},
 		nftmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
+		buildermodule.AppModuleBasic{},
 	)
 )
 
@@ -135,6 +141,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
+	BuilderKeeper         builderkeeper.Keeper
 }
 
 func init() {
@@ -212,6 +219,7 @@ func New(
 		&app.EvidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
+		&app.BuilderKeeper,
 		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
@@ -244,6 +252,39 @@ func New(
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+
+	// Set POB's mempool into the app.
+	mempool := mempool.NewAuctionMempool(app.txConfig.TxDecoder(), app.txConfig.TxEncoder(), 0, mempool.NewDefaultAuctionFactory(app.txConfig.TxDecoder()))
+	app.App.SetMempool(mempool)
+
+	// Create a global ante handler that will be called on each transaction when
+	// proposals are being built and verified.
+	handlerOptions := ante.HandlerOptions{
+		AccountKeeper:   app.AccountKeeper,
+		BankKeeper:      app.BankKeeper,
+		FeegrantKeeper:  app.FeeGrantKeeper,
+		SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
+		SignModeHandler: app.txConfig.SignModeHandler(),
+	}
+	options := POBHandlerOptions{
+		BaseOptions:   handlerOptions,
+		BuilderKeeper: app.BuilderKeeper,
+		Mempool:       mempool,
+		TxDecoder:     app.txConfig.TxDecoder(),
+		TxEncoder:     app.txConfig.TxEncoder(),
+	}
+	anteHandler := NewPOBAnteHandler(options)
+
+	// Set the proposal handlers on the BaseApp.
+	proposalHandlers := abci.NewProposalHandler(
+		mempool,
+		app.App.Logger(),
+		anteHandler,
+		options.TxEncoder,
+		options.TxDecoder,
+	)
+	app.App.SetPrepareProposal(proposalHandlers.PrepareProposalHandler())
+	app.App.SetProcessProposal(proposalHandlers.ProcessProposalHandler())
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
