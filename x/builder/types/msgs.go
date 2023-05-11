@@ -33,6 +33,14 @@ func (m MsgUpdateParams) ValidateBasic() error {
 	return m.Params.Validate()
 }
 
+func NewMsgAuctionBid(bidder sdk.AccAddress, bid sdk.Coin, transactions [][]byte) *MsgAuctionBid {
+	return &MsgAuctionBid{
+		Bidder:       bidder.String(),
+		Bid:          bid,
+		Transactions: transactions,
+	}
+}
+
 // GetSignBytes implements the LegacyMsg interface.
 func (m MsgAuctionBid) GetSignBytes() []byte {
 	return sdk.MustSortJSON(ModuleCdc.MustMarshalJSON(&m))
