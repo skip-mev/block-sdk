@@ -21,7 +21,6 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 		// Auction params
 		maxBundleSize          uint32 = 10
 		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(1000))
-		minBuyInFee                   = sdk.NewCoin("foo", sdk.NewInt(1000))
 		minBidIncrement               = sdk.NewCoin("foo", sdk.NewInt(1000))
 		escrowAddress                 = sdk.AccAddress([]byte("escrow"))
 		frontRunningProtection        = true
@@ -50,14 +49,6 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			func() {
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				balance = sdk.NewCoins()
-			},
-			false,
-		},
-		{
-			"bid amount equals the balance (not accounting for the reserve fee)",
-			func() {
-				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(2000)))
-				bid = sdk.NewCoin("foo", sdk.NewInt(2000))
 			},
 			false,
 		},
@@ -174,7 +165,6 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			params := buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
-				MinBuyInFee:            minBuyInFee,
 				EscrowAccountAddress:   escrowAddress.String(),
 				FrontRunningProtection: frontRunningProtection,
 				MinBidIncrement:        minBidIncrement,

@@ -244,7 +244,6 @@ func (suite *ABCITestSuite) TestGetBidsFromVoteExtensions() {
 func (suite *ABCITestSuite) TestBuildTOB() {
 	params := buildertypes.Params{
 		MaxBundleSize:          4,
-		MinBuyInFee:            sdk.NewCoin("foo", sdk.NewInt(100)),
 		ReserveFee:             sdk.NewCoin("foo", sdk.NewInt(100)),
 		MinBidIncrement:        sdk.NewCoin("foo", sdk.NewInt(100)),
 		FrontRunningProtection: true,

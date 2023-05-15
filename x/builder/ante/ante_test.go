@@ -97,7 +97,6 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 		// Auction setup
 		maxBundleSize          uint32 = 5
 		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(100))
-		minBuyInFee                   = sdk.NewCoin("foo", sdk.NewInt(100))
 		minBidIncrement               = sdk.NewCoin("foo", sdk.NewInt(100))
 		frontRunningProtection        = true
 	)
@@ -140,22 +139,11 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			false,
 		},
 		{
-			"bid is greater than reserve fee but has insufficient balance to pay the buy in fee",
-			func() {
-				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000)))
-				bid = sdk.NewCoin("foo", sdk.NewInt(101))
-				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
-				minBuyInFee = sdk.NewCoin("foo", sdk.NewInt(1000))
-			},
-			false,
-		},
-		{
 			"valid auction bid tx",
 			func() {
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
-				minBuyInFee = sdk.NewCoin("foo", sdk.NewInt(100))
 			},
 			true,
 		},
@@ -173,7 +161,6 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
 				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
-				minBuyInFee = sdk.NewCoin("foo", sdk.NewInt(100))
 
 				insertTopBid = true
 				topBidder = bidder
@@ -239,7 +226,6 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
-				MinBuyInFee:            minBuyInFee,
 				MinBidIncrement:        minBidIncrement,
 				FrontRunningProtection: frontRunningProtection,
 			})

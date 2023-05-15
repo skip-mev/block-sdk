@@ -131,16 +131,6 @@ func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coin, error) {
 	return params.ReserveFee, nil
 }
 
-// GetMinBuyInFee returns the fee that the bidder must pay to enter the builder.
-func (k Keeper) GetMinBuyInFee(ctx sdk.Context) (sdk.Coin, error) {
-	params, err := k.GetParams(ctx)
-	if err != nil {
-		return sdk.Coin{}, err
-	}
-
-	return params.MinBuyInFee, nil
-}
-
 // GetMinBidIncrement returns the minimum bid increment for the builder.
 func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)

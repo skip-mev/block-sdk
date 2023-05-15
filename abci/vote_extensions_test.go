@@ -12,7 +12,6 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 	params := types.Params{
 		MaxBundleSize:          5,
 		ReserveFee:             sdk.NewCoin("foo", sdk.NewInt(10)),
-		MinBuyInFee:            sdk.NewCoin("foo", sdk.NewInt(10)),
 		FrontRunningProtection: true,
 		MinBidIncrement:        suite.minBidIncrement,
 	}
@@ -148,7 +147,6 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 	params := types.Params{
 		MaxBundleSize:          5,
 		ReserveFee:             sdk.NewCoin("foo", sdk.NewInt(100)),
-		MinBuyInFee:            sdk.NewCoin("foo", sdk.NewInt(100)),
 		FrontRunningProtection: true,
 		MinBidIncrement:        sdk.NewCoin("foo", sdk.NewInt(10)), // can't be tested atm
 	}

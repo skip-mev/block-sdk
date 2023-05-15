@@ -24,7 +24,6 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 		// auction configuration
 		maxBundleSize          uint32 = 10
 		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(1000))
-		minBuyInFee                   = sdk.NewCoin("foo", sdk.NewInt(1000))
 		frontRunningProtection        = true
 	)
 
@@ -292,7 +291,6 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 			params := buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
-				MinBuyInFee:            minBuyInFee,
 				FrontRunningProtection: frontRunningProtection,
 				MinBidIncrement:        suite.minBidIncrement,
 			}
@@ -362,7 +360,6 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 		// auction set up
 		maxBundleSize uint32 = 10
 		reserveFee           = sdk.NewCoin("foo", sdk.NewInt(1000))
-		minBuyInFee          = sdk.NewCoin("foo", sdk.NewInt(1000))
 	)
 
 	cases := []struct {
@@ -747,7 +744,6 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 			params := buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
-				MinBuyInFee:            minBuyInFee,
 				FrontRunningProtection: true,
 				MinBidIncrement:        suite.minBidIncrement,
 			}

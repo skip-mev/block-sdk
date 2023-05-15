@@ -112,7 +112,6 @@ func (s *IntegrationTestSuite) initNodes() {
 		MaxBundleSize:        5,
 		EscrowAccountAddress: "cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk",
 		ReserveFee:           sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
-		MinBuyInFee:          sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
 		MinBidIncrement:      sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
 		ProposerFee:          sdk.NewDecWithPrec(1, 2),
 	}

@@ -164,7 +164,6 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 					ProposerFee:          sdk.MustNewDecFromStr("0.1"),
 					MaxBundleSize:        2,
 					EscrowAccountAddress: suite.authorityAccount.String(),
-					MinBuyInFee:          sdk.NewInt64Coin("foo", 100),
 					MinBidIncrement:      sdk.NewInt64Coin("foo", 100),
 					ReserveFee:           sdk.NewInt64Coin("foo", 100),
 				},

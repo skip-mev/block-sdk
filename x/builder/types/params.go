@@ -11,7 +11,6 @@ var (
 	DefaultMaxBundleSize          uint32 = 2
 	DefaultEscrowAccountAddress   string
 	DefaultReserveFee             = sdk.Coin{}
-	DefaultMinBuyInFee            = sdk.Coin{}
 	DefaultMinBidIncrement        = sdk.Coin{}
 	DefaultFrontRunningProtection = true
 	DefaultProposerFee            = sdk.ZeroDec()
@@ -21,7 +20,7 @@ var (
 func NewParams(
 	maxBundleSize uint32,
 	escrowAccountAddress string,
-	reserveFee, minBuyInFee, minBidIncrement sdk.Coin,
+	reserveFee, minBidIncrement sdk.Coin,
 	frontRunningProtection bool,
 	proposerFee sdk.Dec,
 ) Params {
@@ -29,7 +28,6 @@ func NewParams(
 		MaxBundleSize:          maxBundleSize,
 		EscrowAccountAddress:   escrowAccountAddress,
 		ReserveFee:             reserveFee,
-		MinBuyInFee:            minBuyInFee,
 		MinBidIncrement:        minBidIncrement,
 		FrontRunningProtection: frontRunningProtection,
 		ProposerFee:            proposerFee,
@@ -42,7 +40,6 @@ func DefaultParams() Params {
 		DefaultMaxBundleSize,
 		DefaultEscrowAccountAddress,
 		DefaultReserveFee,
-		DefaultMinBuyInFee,
 		DefaultMinBidIncrement,
 		DefaultFrontRunningProtection,
 		DefaultProposerFee,
@@ -54,27 +51,20 @@ func (p Params) Validate() error {
 	if err := validateEscrowAccountAddress(p.EscrowAccountAddress); err != nil {
 		return err
 	}
-
 	if err := validateFee(p.ReserveFee); err != nil {
 		return fmt.Errorf("invalid reserve fee (%s)", err)
 	}
-
-	if err := validateFee(p.MinBuyInFee); err != nil {
-		return fmt.Errorf("invalid minimum buy-in fee (%s)", err)
-	}
-
 	if err := validateFee(p.MinBidIncrement); err != nil {
 		return fmt.Errorf("invalid minimum bid increment (%s)", err)
 	}
 
 	denoms := map[string]struct{}{
 		p.ReserveFee.Denom:      {},
-		p.MinBuyInFee.Denom:     {},
 		p.MinBidIncrement.Denom: {},
 	}
 
 	if len(denoms) != 1 {
-		return fmt.Errorf("mismatched auction fee denoms: minimum bid increment (%s), minimum buy-in fee (%s), reserve fee (%s)", p.MinBidIncrement, p.MinBuyInFee, p.ReserveFee)
+		return fmt.Errorf("mismatched auction fee denoms: minimum bid increment (%s), reserve fee (%s)", p.MinBidIncrement, p.ReserveFee)
 	}
 
 	return validateProposerFee(p.ProposerFee)

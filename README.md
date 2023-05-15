@@ -186,6 +186,8 @@ $ go install github.com/skip-mev/pob
     }
     ```
 
+## Params
+
 Note, before building or upgrading the application, make sure to initialize the
 escrow address for POB in the parameters of the module. The default parameters
 do not initialize an escrow address as that should be determined by governance.
