@@ -14,6 +14,7 @@ import (
 	cometcfg "github.com/cometbft/cometbft/config"
 	cometjson "github.com/cometbft/cometbft/libs/json"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
+	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	"github.com/cosmos/cosmos-sdk/server"
 	srvconfig "github.com/cosmos/cosmos-sdk/server/config"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -29,22 +30,29 @@ import (
 )
 
 var (
-	numValidators   = 3
+	numValidators   = 4
 	minGasPrice     = sdk.NewDecCoinFromDec(app.BondDenom, sdk.MustNewDecFromStr("0.02")).String()
-	initBalanceStr  = sdk.NewInt64Coin(app.BondDenom, 510000000000).String()
+	initBalanceStr  = sdk.NewInt64Coin(app.BondDenom, 1000000000000000000).String()
 	stakeAmount, _  = sdk.NewIntFromString("100000000000")
 	stakeAmountCoin = sdk.NewCoin(app.BondDenom, stakeAmount)
 )
 
-type IntegrationTestSuite struct {
-	suite.Suite
+type (
+	TestAccount struct {
+		PrivateKey *secp256k1.PrivKey
+		Address    sdk.AccAddress
+	}
 
-	tmpDirs      []string
-	chain        *chain
-	dkrPool      *dockertest.Pool
-	dkrNet       *dockertest.Network
-	valResources []*dockertest.Resource
-}
+	IntegrationTestSuite struct {
+		suite.Suite
+
+		tmpDirs      []string
+		chain        *chain
+		dkrPool      *dockertest.Pool
+		dkrNet       *dockertest.Network
+		valResources []*dockertest.Resource
+	}
+)
 
 func TestIntegrationTestSuite(t *testing.T) {
 	suite.Run(t, new(IntegrationTestSuite))
@@ -109,11 +117,12 @@ func (s *IntegrationTestSuite) initNodes() {
 
 	// Define the builder module parameters
 	params := types.Params{
-		MaxBundleSize:        5,
-		EscrowAccountAddress: "cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk",
-		ReserveFee:           sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
-		MinBidIncrement:      sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
-		ProposerFee:          sdk.NewDecWithPrec(1, 2),
+		MaxBundleSize:          5,
+		EscrowAccountAddress:   "cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk",
+		ReserveFee:             sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
+		MinBidIncrement:        sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
+		ProposerFee:            sdk.NewDecWithPrec(1, 2),
+		FrontRunningProtection: true,
 	}
 
 	for _, val := range s.chain.validators {
@@ -232,6 +241,8 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		appConfig := srvconfig.DefaultConfig()
 		appConfig.API.Enable = true
 		appConfig.MinGasPrices = minGasPrice
+		appConfig.API.Address = "tcp://0.0.0.0:1317"
+		appConfig.GRPC.Address = "0.0.0.0:9090"
 
 		srvconfig.WriteConfigFile(appCfgPath, appConfig)
 	}
