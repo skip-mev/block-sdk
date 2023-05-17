@@ -1,9 +1,10 @@
-package abci_test
+package v2_test
 
 import (
 	comettypes "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/abci"
+	v2 "github.com/skip-mev/pob/abci/v2"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
@@ -298,7 +299,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 			// Reset the proposal handler with the new mempool.
-			suite.proposalHandler = abci.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
+			suite.proposalHandler = v2.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
 
 			// Create a prepare proposal request based on the current state of the mempool.
 			handler := suite.proposalHandler.PrepareProposalHandler()
@@ -308,12 +309,12 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 			// -------------------- Check Invariants -------------------- //
 			// The first slot in the proposal must be the auction info
 			auctionInfo := abci.AuctionInfo{}
-			err := auctionInfo.Unmarshal(res.Txs[abci.AuctionInfoIndex])
+			err := auctionInfo.Unmarshal(res.Txs[v2.AuctionInfoIndex])
 			suite.Require().NoError(err)
 
 			// Total bytes must be less than or equal to maxTxBytes
 			totalBytes := int64(0)
-			for _, tx := range res.Txs[abci.NumInjectedTxs:] {
+			for _, tx := range res.Txs[v2.NumInjectedTxs:] {
 				totalBytes += int64(len(tx))
 			}
 			suite.Require().LessOrEqual(totalBytes, maxTxBytes)
@@ -331,13 +332,13 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				suite.Require().NoError(err)
 
 				for index, tx := range bidInfo.Transactions {
-					suite.Require().Equal(tx, res.Txs[abci.NumInjectedTxs+index+1])
+					suite.Require().Equal(tx, res.Txs[v2.NumInjectedTxs+index+1])
 				}
 			}
 
 			// 5. All of the transactions must be unique
 			uniqueTxs := make(map[string]bool)
-			for _, tx := range res.Txs[abci.NumInjectedTxs:] {
+			for _, tx := range res.Txs[v2.NumInjectedTxs:] {
 				suite.Require().False(uniqueTxs[string(tx)])
 				uniqueTxs[string(tx)] = true
 			}
@@ -751,7 +752,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 			// reset the proposal handler with the new mempool
-			suite.proposalHandler = abci.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
+			suite.proposalHandler = v2.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
 
 			handler := suite.proposalHandler.ProcessProposalHandler()
 			res := handler(suite.ctx, comettypes.RequestProcessProposal{

@@ -12,13 +12,14 @@ func (s *IntegrationTestSuite) TestGetBuilderParams() {
 	s.Require().NotNil(params)
 }
 
-// TestBundles tests the execution of various auction bids. There are a few invarients that are
-// tested:
+// TestBundles tests the execution of various auction bids. There are a few
+// invariants that are tested:
+//
 //  1. The order of transactions in a bundle is preserved when bids are valid.
 //  2. All transactions execute as expected.
 //  3. The balance of the escrow account should be updated correctly.
-//  4. Top of block bids will be included in block proposals before other transactions that are
-//     included in the same block.
+//  4. Top of block bids will be included in block proposals before other transactions
+//     that are included in the same block.
 func (s *IntegrationTestSuite) TestBundles() {
 	// Create the accounts that will create transactions to be included in bundles
 	initBalance := sdk.NewInt64Coin(app.BondDenom, 10000000000)

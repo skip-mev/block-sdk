@@ -1,10 +1,10 @@
 /*
-NOTE: These types are TEMPORARY and will be removed once the Cosmos SDK v0.38
+NOTE: These types are TEMPORARY and will be removed once the Cosmos SDK v0.48
 alpha/RC tag is released. These types are simply used to prototype and develop
 against.
 */
 //nolint
-package abci
+package v2
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,4 +1,4 @@
-package abci
+package v2
 
 import (
 	"crypto/sha256"
@@ -9,6 +9,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	pobabci "github.com/skip-mev/pob/abci"
 )
 
 // TopOfBlock contains information about how the top of block should be built.
@@ -30,8 +31,9 @@ func NewTopOfBlock() TopOfBlock {
 	}
 }
 
-// BuildTOB inputs all of the vote extensions and outputs a top of block proposal that includes
-// the highest bidding valid transaction along with all the bundled transactions.
+// BuildTOB inputs all of the vote extensions and outputs a top of block proposal
+// that includes the highest bidding valid transaction along with all the bundled
+// transactions.
 func (h *ProposalHandler) BuildTOB(ctx sdk.Context, voteExtensionInfo abci.ExtendedCommitInfo, maxBytes int64) TopOfBlock {
 	// Get the bid transactions from the vote extensions.
 	sortedBidTxs := h.GetBidsFromVoteExtensions(voteExtensionInfo.Votes)
@@ -86,14 +88,14 @@ func (h *ProposalHandler) BuildTOB(ctx sdk.Context, voteExtensionInfo abci.Exten
 
 // VerifyTOB verifies that the set of vote extensions used in prepare proposal deterministically
 // produce the same top of block proposal.
-func (h *ProposalHandler) VerifyTOB(ctx sdk.Context, proposalTxs [][]byte) (*AuctionInfo, error) {
+func (h *ProposalHandler) VerifyTOB(ctx sdk.Context, proposalTxs [][]byte) (*pobabci.AuctionInfo, error) {
 	// Proposal must include at least the auction info.
 	if len(proposalTxs) < NumInjectedTxs {
 		return nil, fmt.Errorf("proposal is too small; expected at least %d slots", NumInjectedTxs)
 	}
 
 	// Extract the auction info from the proposal.
-	auctionInfo := &AuctionInfo{}
+	auctionInfo := &pobabci.AuctionInfo{}
 	if err := auctionInfo.Unmarshal(proposalTxs[AuctionInfoIndex]); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal auction info: %w", err)
 	}
@@ -103,7 +105,7 @@ func (h *ProposalHandler) VerifyTOB(ctx sdk.Context, proposalTxs [][]byte) (*Auc
 		return nil, fmt.Errorf("number of txs in proposal do not match expected in auction info; expected at least %d slots", auctionInfo.NumTxs+NumInjectedTxs)
 	}
 
-	// Unmarshall the vote extension information from the auction info.
+	// unmarshal the vote extension information from the auction info
 	lastCommitInfo := abci.ExtendedCommitInfo{}
 	if err := lastCommitInfo.Unmarshal(auctionInfo.ExtendedCommitInfo); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal last commit info from auction info: %w", err)
@@ -155,9 +157,10 @@ func (h *ProposalHandler) GetBidsFromVoteExtensions(voteExtensions []abci.Extend
 	return bidTxs
 }
 
-// buildTOB verifies that the auction and bundled transactions are valid and returns the transactions that
-// should be included in the top of block, size of the auction transaction and bundle, and a cache
-// of all transactions that should be ignored.
+// buildTOB verifies that the auction and bundled transactions are valid and
+// returns the transactions that should be included in the top of block, size
+// of the auction transaction and bundle, and a cache of all transactions that
+// should be ignored.
 func (h *ProposalHandler) buildTOB(ctx sdk.Context, bidTx sdk.Tx) (TopOfBlock, error) {
 	proposal := NewTopOfBlock()
 
@@ -210,7 +213,8 @@ func (h *ProposalHandler) buildTOB(ctx sdk.Context, bidTx sdk.Tx) (TopOfBlock, e
 	return proposal, nil
 }
 
-// getAuctionTxFromVoteExtension extracts the auction transaction from the vote extension.
+// getAuctionTxFromVoteExtension extracts the auction transaction from the vote
+// extension.
 func (h *ProposalHandler) getAuctionTxFromVoteExtension(voteExtension []byte) (sdk.Tx, error) {
 	if len(voteExtension) == 0 {
 		return nil, fmt.Errorf("vote extension is empty")
