@@ -95,7 +95,7 @@ func (suite *ABCITestSuite) SetupTest() {
 	)
 	err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.DefaultParams())
 	suite.Require().NoError(err)
-	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)

@@ -296,7 +296,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				MinBidIncrement:        suite.minBidIncrement,
 			}
 			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 			// Reset the proposal handler with the new mempool.
 			suite.proposalHandler = v2.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())
@@ -749,7 +749,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				MinBidIncrement:        suite.minBidIncrement,
 			}
 			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 			// reset the proposal handler with the new mempool
 			suite.proposalHandler = v2.NewProposalHandler(suite.mempool, suite.logger, suite.anteHandler, suite.encodingConfig.TxConfig.TxEncoder(), suite.encodingConfig.TxConfig.TxDecoder())

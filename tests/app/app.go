@@ -9,6 +9,7 @@ import (
 
 	"cosmossdk.io/depinject"
 	dbm "github.com/cometbft/cometbft-db"
+	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -70,6 +71,10 @@ import (
 	"github.com/skip-mev/pob/mempool"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
+)
+
+const (
+	ChainID = "chain-id-0"
 )
 
 var (
@@ -142,6 +147,9 @@ type TestApp struct {
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	BuilderKeeper         builderkeeper.Keeper
+
+	// custom checkTx handler
+	checkTxHandler abci.CheckTx
 }
 
 func init() {
@@ -275,7 +283,7 @@ func New(
 	}
 	anteHandler := NewPOBAnteHandler(options)
 
-	// Set the proposal handlers on the BaseApp.
+	// Set the proposal handlers on the BaseApp along with the custom antehandler.
 	proposalHandlers := abci.NewProposalHandler(
 		mempool,
 		app.App.Logger(),
@@ -285,6 +293,17 @@ func New(
 	)
 	app.App.SetPrepareProposal(proposalHandlers.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandlers.ProcessProposalHandler())
+	app.App.SetAnteHandler(anteHandler)
+
+	// Set the custom CheckTx handler on BaseApp.
+	checkTxHandler := abci.NewCheckTxHandler(
+		app.App,
+		app.txConfig.TxDecoder(),
+		mempool,
+		anteHandler,
+		ChainID,
+	)
+	app.SetCheckTx(checkTxHandler.CheckTx())
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
@@ -318,6 +337,19 @@ func New(
 	}
 
 	return app
+}
+
+// CheckTx will check the transaction with the provided checkTxHandler. We override the default
+// handler so that we can verify bid transactions before they are inserted into the mempool.
+// With the POB CheckTx, we can verify the bid transaction and all of the bundled transactions
+// before inserting the bid transaction into the mempool.
+func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
+	return app.checkTxHandler(req)
+}
+
+// SetCheckTx sets the checkTxHandler for the app.
+func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
+	app.checkTxHandler = handler
 }
 
 // Name returns the name of the App

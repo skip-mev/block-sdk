@@ -90,8 +90,12 @@ $ go install github.com/skip-mev/pob
 
       ```go
       type App struct {
-        BuilderKeeper builderkeeper.Keeper
         ...
+        // BuilderKeeper is the keeper that handles processing auction transactions
+        BuilderKeeper         builderkeeper.Keeper
+
+        // Custom checkTx handler
+        checkTxHandler abci.CheckTx
       }
       ```
 
@@ -133,7 +137,7 @@ $ go install github.com/skip-mev/pob
       ```
 
     d. Searchers bid to have their bundles executed at the top of the block
-    using `MsgAuctionBid` messages. While the builder `Keeper` is capable of
+    using `MsgAuctionBid` messages (by default). While the builder `Keeper` is capable of
     tracking valid bids, it is unable to correctly sequence the auction
     transactions alongside the normal transactions without having access to the
     application’s mempool. As such, we have to instantiate POB’s custom
@@ -141,8 +145,17 @@ $ go install github.com/skip-mev/pob
     mempool - into the application. Note, this should be done after `BaseApp` is
     instantiated.
 
+    d.1. Application developers can choose to implement their own `AuctionFactory` implementation
+    or use the default implementation provided by POB. The `AuctionFactory` is responsible
+    for determining what is an auction bid transaction and how to extract the bid information
+    from the transaction. The default implementation provided by POB is `DefaultAuctionFactory`
+    which uses the `MsgAuctionBid` message to determine if a transaction is an auction bid
+    transaction and extracts the bid information from the message. 
+
     ```go
-    mempool := mempool.NewAuctionMempool(txConfig.TxDecoder(), GetMaxMempoolSize())
+    config := mempool.NewDefaultAuctionFactory(txDecoder)
+
+    mempool := mempool.NewAuctionMempool(txDecoder, txEncoder, maxTx, config)
     bApp.SetMempool(mempool)
     ```
 
@@ -153,18 +166,68 @@ $ go install github.com/skip-mev/pob
     will verify the contents of the block proposal by all validators. The
     combination of the `AuctionMempool`, `PrepareProposal` and `ProcessProposal`
     handlers allows the application to verifiably build valid blocks with
-    top-of-block block space reserved for auctions.
+    top-of-block block space reserved for auctions. Additionally, we override the 
+    `BaseApp`'s `CheckTx` handler with our own custom `CheckTx` handler that will 
+    be responsible for checking the validity of transactions. We override the
+    `CheckTx` handler so that we can verify auction transactions before they are
+    inserted into the mempool. With the POB `CheckTx`, we can verify the auction
+    transaction and all of the bundled transactions before inserting the auction
+    transaction into the mempool. This is important because we otherwise there may be
+    discrepencies between the auction transaction and the bundled transactions
+    are validated in `CheckTx` and `PrepareProposal` such that the auction can be 
+    griefed. All other transactions will be executed with base app's `CheckTx`.
 
     ```go
+    // Create the entire chain of AnteDecorators for the application.
+    anteDecorators := []sdk.AnteDecorator{
+      auction.NewAuctionDecorator(
+        app.BuilderKeeper,
+        txConfig.TxEncoder(),
+        mempool,
+      ),
+      ...,
+    }
+
+    // Create the antehandler that will be used to check transactions throughout the lifecycle
+    // of the application.
+    anteHandler := sdk.ChainAnteDecorators(anteDecorators...)
+    app.SetAnteHandler(anteHandler)
+
+    // Create the proposal handler that will be used to build and validate blocks.
     handler := proposalhandler.NewProposalHandler(
       mempool, 
       bApp.Logger(), 
-      bApp,
+      anteHandler,
       txConfig.TxEncoder(),
       txConfig.TxDecoder(),
     )
-    bApp.SetPrepareProposal(handler.PrepareProposalHandler())
-    bApp.SetProcessProposal(handler.ProcessProposalHandler())
+    app.SetPrepareProposal(handler.PrepareProposalHandler())
+    app.SetProcessProposal(handler.ProcessProposalHandler())
+
+    // Set the custom CheckTx handler on BaseApp.
+    checkTxHandler := pobabci.CheckTxHandler(
+      app.App,
+      app.TxDecoder,
+      mempool,
+      anteHandler,
+      chainID,
+    )
+    app.SetCheckTx(checkTxHandler)
+
+    ...
+
+    // CheckTx will check the transaction with the provided checkTxHandler. We override the default
+    // handler so that we can verify bid transactions before they are inserted into the mempool.
+    // With the POB CheckTx, we can verify the bid transaction and all of the bundled transactions
+    // before inserting the bid transaction into the mempool.
+    func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
+      return app.checkTxHandler(req)
+    }
+
+    // SetCheckTx sets the checkTxHandler for the app.
+    func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
+      app.checkTxHandler = handler
+    }
     ```
 
     f. Finally, update the app's `InitGenesis` order and ante-handler chain.
@@ -172,16 +235,6 @@ $ go install github.com/skip-mev/pob
     ```go
     genesisModuleOrder := []string{
       buildertypes.ModuleName,
-      ...,
-    }
-
-    anteDecorators := []sdk.AnteDecorator{
-      auction.NewAuctionDecorator(
-        app.BuilderKeeper,
-        txConfig.TxDecoder(),
-        txConfig.TxEncoder(),
-        mempool,
-      ),
       ...,
     }
     ```

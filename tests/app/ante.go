@@ -48,7 +48,7 @@ func NewPOBAnteHandler(options POBHandlerOptions) sdk.AnteHandler {
 		ante.NewSigGasConsumeDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.BaseOptions.AccountKeeper),
-		builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxDecoder, options.TxEncoder, options.Mempool),
+		builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.Mempool),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...)

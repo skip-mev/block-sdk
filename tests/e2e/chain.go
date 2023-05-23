@@ -6,7 +6,6 @@ import (
 
 	dbm "github.com/cometbft/cometbft-db"
 	"github.com/cometbft/cometbft/libs/log"
-	cometrand "github.com/cometbft/cometbft/libs/rand"
 	"github.com/cosmos/cosmos-sdk/codec"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/skip-mev/pob/tests/app"
@@ -47,7 +46,7 @@ func newChain() (*chain, error) {
 	}
 
 	return &chain{
-		id:      "chain-" + cometrand.NewRand().Str(6),
+		id:      app.ChainID,
 		dataDir: tmpDir,
 	}, nil
 }

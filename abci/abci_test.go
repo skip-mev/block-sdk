@@ -97,7 +97,7 @@ func (suite *ABCITestSuite) SetupTest() {
 	)
 	err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.DefaultParams())
 	suite.Require().NoError(err)
-	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 1)
@@ -487,7 +487,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				MinBidIncrement:        suite.minBidIncrement,
 			}
 			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 
 			handler := suite.proposalHandler.PrepareProposalHandler()
 			res := handler(suite.ctx, abcitypes.RequestPrepareProposal{
@@ -733,7 +733,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				MinBidIncrement:        suite.minBidIncrement,
 			}
 			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mempool)
 			suite.Require().Equal(tc.isTopBidValid, suite.isTopBidValid())
 
 			txs := suite.exportMempool(exportRefTxs)

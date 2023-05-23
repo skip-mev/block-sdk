@@ -116,15 +116,29 @@ func (s *IntegrationTestSuite) waitForABlock() {
 }
 
 // bundleToTxHashes converts a bundle to a slice of transaction hashes.
-func (s *IntegrationTestSuite) bundleToTxHashes(bundle []string) []string {
-	hashes := make([]string, len(bundle))
+func (s *IntegrationTestSuite) bundleToTxHashes(bidTx []byte, bundle [][]byte) []string {
+	hashes := make([]string, len(bundle)+1)
 
-	for i, tx := range bundle {
-		hashBz, err := hex.DecodeString(tx)
-		s.Require().NoError(err)
+	// encode the bid transaction into a hash
+	hashBz := sha256.Sum256(bidTx)
+	hash := hex.EncodeToString(hashBz[:])
+	hashes[0] = hash
 
-		shaBz := sha256.Sum256(hashBz)
-		hashes[i] = hex.EncodeToString(shaBz[:])
+	for i, hash := range s.normalTxsToTxHashes(bundle) {
+		hashes[i+1] = hash
+	}
+
+	return hashes
+}
+
+// normalTxsToTxHashes converts a slice of normal transactions to a slice of transaction hashes.
+func (s *IntegrationTestSuite) normalTxsToTxHashes(txs [][]byte) []string {
+	hashes := make([]string, len(txs))
+
+	for i, tx := range txs {
+		hashBz := sha256.Sum256(tx)
+		hash := hex.EncodeToString(hashBz[:])
+		hashes[i] = hash
 	}
 
 	return hashes
@@ -132,13 +146,13 @@ func (s *IntegrationTestSuite) bundleToTxHashes(bundle []string) []string {
 
 // verifyBlock verifies that the transactions in the block at the given height were seen
 // and executed in the order they were submitted i.e. how they are broadcasted in the bundle.
-func (s *IntegrationTestSuite) verifyBlock(height int64, bidTx string, bundle []string, expectedExecution map[string]bool) {
+func (s *IntegrationTestSuite) verifyBlock(height uint64, bundle []string, expectedExecution map[string]bool) {
 	s.waitForABlock()
 	s.T().Logf("Verifying block %d", height)
 
 	// Get the block's transactions and display the expected and actual block for debugging.
 	txs := s.queryBlockTxs(height)
-	s.displayBlock(txs, bidTx, bundle)
+	s.displayBlock(txs, bundle)
 
 	// Ensure that all transactions executed as expected (i.e. landed or failed to land).
 	for tx, landed := range expectedExecution {
@@ -149,28 +163,32 @@ func (s *IntegrationTestSuite) verifyBlock(height int64, bidTx string, bundle []
 
 	// Check that the block contains the expected transactions in the expected order
 	// iff the bid transaction was expected to execute.
-	if expectedExecution[bidTx] {
-		hashBz := sha256.Sum256(txs[0])
-		hash := hex.EncodeToString(hashBz[:])
-		s.Require().Equal(strings.ToUpper(bidTx), strings.ToUpper(hash))
+	if len(bundle) > 0 && expectedExecution[bundle[0]] {
+		if expectedExecution[bundle[0]] {
+			hashBz := sha256.Sum256(txs[0])
+			hash := hex.EncodeToString(hashBz[:])
+			s.Require().Equal(strings.ToUpper(bundle[0]), strings.ToUpper(hash))
 
-		for index, bundleTx := range bundle {
-			hashBz := sha256.Sum256(txs[index+1])
-			txHash := hex.EncodeToString(hashBz[:])
+			for index, bundleTx := range bundle[1:] {
+				hashBz := sha256.Sum256(txs[index+1])
+				txHash := hex.EncodeToString(hashBz[:])
 
-			s.Require().Equal(strings.ToUpper(bundleTx), strings.ToUpper(txHash))
+				s.Require().Equal(strings.ToUpper(bundleTx), strings.ToUpper(txHash))
+			}
 		}
 	}
 }
 
 // displayExpectedBlock displays the expected and actual blocks.
-func (s *IntegrationTestSuite) displayBlock(txs [][]byte, bidTx string, bundle []string) {
-	expectedBlock := fmt.Sprintf("Expected block:\n\t(%d, %s)\n", 0, bidTx)
-	for index, bundleTx := range bundle {
-		expectedBlock += fmt.Sprintf("\t(%d, %s)\n", index+1, bundleTx)
-	}
+func (s *IntegrationTestSuite) displayBlock(txs [][]byte, bundle []string) {
+	if len(bundle) != 0 {
+		expectedBlock := fmt.Sprintf("Expected block:\n\t(%d, %s)\n", 0, bundle[0])
+		for index, bundleTx := range bundle[1:] {
+			expectedBlock += fmt.Sprintf("\t(%d, %s)\n", index+1, bundleTx)
+		}
 
-	s.T().Logf(expectedBlock)
+		s.T().Logf(expectedBlock)
+	}
 
 	// Display the actual block.
 	if len(txs) == 0 {
@@ -192,13 +210,33 @@ func (s *IntegrationTestSuite) displayBlock(txs [][]byte, bidTx string, bundle [
 }
 
 // displayExpectedBundle displays the expected order of the bid and bundled transactions.
-func (s *IntegrationTestSuite) displayExpectedBundle(prefix, bidTx string, bundle []string) {
-	expectedBundle := fmt.Sprintf("%s expected bundle:\n\t(%d, %s)\n", prefix, 0, bidTx)
-	for index, bundleTx := range s.bundleToTxHashes(bundle) {
+func (s *IntegrationTestSuite) displayExpectedBundle(prefix string, bidTx []byte, bundle [][]byte) {
+	// encode the bid transaction into a hash
+	hashes := s.bundleToTxHashes(bidTx, bundle)
+
+	expectedBundle := fmt.Sprintf("%s expected bundle:\n\t(%d, %s)\n", prefix, 0, hashes[0])
+	for index, bundleTx := range hashes[1:] {
 		expectedBundle += fmt.Sprintf("\t(%d, %s)\n", index+1, bundleTx)
 	}
 
 	s.T().Logf(expectedBundle)
+}
+
+// broadcastTx broadcasts a transaction to the network using the given validator.
+func (s *IntegrationTestSuite) broadcastTx(tx []byte, valIdx int) {
+	node := s.valResources[valIdx]
+	gRPCURI := node.GetHostPort("9090/tcp")
+
+	grpcConn, err := grpc.Dial(
+		gRPCURI,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+	)
+
+	client := txtypes.NewServiceClient(grpcConn)
+
+	req := &txtypes.BroadcastTxRequest{TxBytes: tx, Mode: txtypes.BroadcastMode_BROADCAST_MODE_SYNC}
+	_, err = client.BroadcastTx(context.Background(), req)
+	s.Require().NoError(err)
 }
 
 // queryTx queries a transaction by its hash and returns whether there was an
@@ -268,21 +306,21 @@ func (s *IntegrationTestSuite) queryAccount(address sdk.AccAddress) *authtypes.B
 }
 
 // queryCurrentHeight returns the current block height.
-func (s *IntegrationTestSuite) queryCurrentHeight() int64 {
+func (s *IntegrationTestSuite) queryCurrentHeight() uint64 {
 	queryClient := tmclient.NewServiceClient(s.createClientContext())
 
 	req := &tmclient.GetLatestBlockRequest{}
 	resp, err := queryClient.GetLatestBlock(context.Background(), req)
 	s.Require().NoError(err)
 
-	return resp.SdkBlock.Header.Height
+	return uint64(resp.SdkBlock.Header.Height)
 }
 
 // queryBlockTxs returns the txs of the block at the given height.
-func (s *IntegrationTestSuite) queryBlockTxs(height int64) [][]byte {
+func (s *IntegrationTestSuite) queryBlockTxs(height uint64) [][]byte {
 	queryClient := tmclient.NewServiceClient(s.createClientContext())
 
-	req := &tmclient.GetBlockByHeightRequest{Height: height}
+	req := &tmclient.GetBlockByHeightRequest{Height: int64(height)}
 	resp, err := queryClient.GetBlockByHeight(context.Background(), req)
 	s.Require().NoError(err)
 
