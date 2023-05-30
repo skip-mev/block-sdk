@@ -242,7 +242,6 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 					}
 				}
 			}
-
 		}
 
 		return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}

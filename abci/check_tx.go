@@ -163,12 +163,8 @@ func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidI
 			return gasInfo, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 		}
 
-		bidInfo, err := handler.mempool.GetAuctionBidInfo(bundledTx)
-		if err != nil {
-			return gasInfo, fmt.Errorf("invalid bid tx; failed to get auction bid info: %w", err)
-		}
-
-		// Bid txs cannot be included in bundled txs.
+		// bid txs cannot be included in bundled txs
+		bidInfo, _ := handler.mempool.GetAuctionBidInfo(bundledTx)
 		if bidInfo != nil {
 			return gasInfo, fmt.Errorf("invalid bid tx; bundled tx cannot be a bid tx")
 		}

@@ -22,7 +22,7 @@ type (
 		// GetTopAuctionTx returns the top auction bid transaction in the mempool.
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 
-		// CoutnAuctionTx returns the number of auction bid transactions in the mempool.
+		// CountAuctionTx returns the number of auction bid transactions in the mempool.
 		CountAuctionTx() int
 
 		// AuctionBidSelect returns an iterator over the auction bid transactions in the mempool.
