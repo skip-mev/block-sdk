@@ -2,7 +2,6 @@ package blockbuster
 
 import (
 	"context"
-	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -11,11 +10,15 @@ import (
 var _ Mempool = (*BBMempool)(nil)
 
 type (
+	// Mempool defines the Blockbuster mempool interface.
 	Mempool interface {
 		sdkmempool.Mempool
 
 		// Registry returns the mempool's lane registry.
 		Registry() []Lane
+
+		// Contains returns true if the transaction is contained in the mempool.
+		Contains(tx sdk.Tx) (bool, error)
 	}
 
 	// Mempool defines the Blockbuster mempool implement. It contains a registry
@@ -52,16 +55,13 @@ func (m *BBMempool) CountTx() int {
 // Insert inserts a transaction into every lane that it matches. Insertion will
 // be attempted on all lanes, even if an error is encountered.
 func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
-	errs := make([]error, 0, len(m.registry))
-
 	for _, lane := range m.registry {
 		if lane.Match(tx) {
-			err := lane.Insert(ctx, tx)
-			errs = append(errs, err)
+			return lane.Insert(ctx, tx)
 		}
 	}
 
-	return errors.Join(errs...)
+	return nil
 }
 
 // Insert returns a nil iterator.
@@ -77,16 +77,24 @@ func (m *BBMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
 // Remove removes a transaction from every lane that it matches. Removal will be
 // attempted on all lanes, even if an error is encountered.
 func (m *BBMempool) Remove(tx sdk.Tx) error {
-	errs := make([]error, 0, len(m.registry))
-
 	for _, lane := range m.registry {
 		if lane.Match(tx) {
-			err := lane.Remove(tx)
-			errs = append(errs, err)
+			return lane.Remove(tx)
 		}
 	}
 
-	return errors.Join(errs...)
+	return nil
+}
+
+// Contains returns true if the transaction is contained in the mempool.
+func (m *BBMempool) Contains(tx sdk.Tx) (bool, error) {
+	for _, lane := range m.registry {
+		if lane.Match(tx) {
+			return lane.Contains(tx)
+		}
+	}
+
+	return false, nil
 }
 
 // Registry returns the mempool's lane registry.
