@@ -7,6 +7,12 @@ import (
 )
 
 type (
+
+	// ProcessLanesHandler wraps all of the lanes Process functions into a single chained
+	// function. You can think of it like an AnteHandler, but for processing proposals in the
+	// context of lanes instead of modules.
+	ProcessLanesHandler func(ctx sdk.Context, proposalTxs [][]byte) (sdk.Context, error)
+
 	// BaseLaneConfig defines the basic functionality needed for a lane.
 	BaseLaneConfig struct {
 		Logger      log.Logger
@@ -37,8 +43,8 @@ type (
 		// the raw transaction.
 		PrepareLane(ctx sdk.Context, maxTxBytes int64, selectedTxs map[string][]byte) ([][]byte, error)
 
-		// ProcessLane which verifies the lane's portion of a proposed block.
-		ProcessLane(ctx sdk.Context, proposalTxs [][]byte) error
+		// ProcessLane verifies this lane's portion of a proposed block.
+		ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next ProcessLanesHandler) (sdk.Context, error)
 	}
 )
 

@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
 
 // GetTxHashStr returns the hex-encoded hash of the transaction.
@@ -19,4 +20,15 @@ func GetTxHashStr(txEncoder sdk.TxEncoder, tx sdk.Tx) (string, error) {
 	txHashStr := hex.EncodeToString(txHash[:])
 
 	return txHashStr, nil
+}
+
+// RemoveTxsFromLane removes the transactions from the given lane's mempool.
+func RemoveTxsFromLane(txs map[sdk.Tx]struct{}, mempool sdkmempool.Mempool) error {
+	for tx := range txs {
+		if err := mempool.Remove(tx); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
