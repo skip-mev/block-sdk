@@ -67,8 +67,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/upgrade"
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
-	"github.com/skip-mev/pob/abci"
-	"github.com/skip-mev/pob/mempool"
+	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/abci"
+	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -261,8 +263,38 @@ func New(
 
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
+	// ---------------------------------------------------------------------------- //
+	// ------------------------- Begin Custom Code -------------------------------- //
+	// ---------------------------------------------------------------------------- //
+
 	// Set POB's mempool into the app.
-	mempool := mempool.NewAuctionMempool(app.txConfig.TxDecoder(), app.txConfig.TxEncoder(), 0, mempool.NewDefaultAuctionFactory(app.txConfig.TxDecoder()))
+	config := blockbuster.BaseLaneConfig{
+		Logger:        app.Logger(),
+		TxEncoder:     app.txConfig.TxEncoder(),
+		TxDecoder:     app.txConfig.TxDecoder(),
+		MaxBlockSpace: sdk.ZeroDec(),
+	}
+
+	// Create the lanes.
+	//
+	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
+	// lane and the last lane is the lowest priority lane.
+
+	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
+	tobLane := auction.NewTOBLane(
+		config,
+		0,
+		auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
+	)
+
+	// Default lane accepts all other transactions.
+	defaultLane := base.NewDefaultLane(config)
+	lanes := []blockbuster.Lane{
+		tobLane,
+		defaultLane,
+	}
+
+	mempool := blockbuster.NewMempool(lanes...)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when
@@ -277,19 +309,22 @@ func New(
 	options := POBHandlerOptions{
 		BaseOptions:   handlerOptions,
 		BuilderKeeper: app.BuilderKeeper,
-		Mempool:       mempool,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
+		TOBLane:       tobLane,
+		Mempool:       mempool,
 	}
 	anteHandler := NewPOBAnteHandler(options)
 
+	// Set the lane config on the lanes.
+	for _, lane := range lanes {
+		lane.SetAnteHandler(anteHandler)
+	}
+
 	// Set the proposal handlers on the BaseApp along with the custom antehandler.
 	proposalHandlers := abci.NewProposalHandler(
+		app.Logger(),
 		mempool,
-		app.App.Logger(),
-		anteHandler,
-		options.TxEncoder,
-		options.TxDecoder,
 	)
 	app.App.SetPrepareProposal(proposalHandlers.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandlers.ProcessProposalHandler())
@@ -299,11 +334,15 @@ func New(
 	checkTxHandler := abci.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
-		mempool,
+		tobLane,
 		anteHandler,
 		ChainID,
 	)
 	app.SetCheckTx(checkTxHandler.CheckTx())
+
+	// ---------------------------------------------------------------------------- //
+	// ------------------------- End Custom Code ---------------------------------- //
+	// ---------------------------------------------------------------------------- //
 
 	// load state streaming if enabled
 	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {

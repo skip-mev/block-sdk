@@ -19,6 +19,9 @@ type (
 
 		// Contains returns true if the transaction is contained in the mempool.
 		Contains(tx sdk.Tx) (bool, error)
+
+		// GetTxDistribution returns the number of transactions in each lane.
+		GetTxDistribution() map[string]int
 	}
 
 	// Mempool defines the Blockbuster mempool implement. It contains a registry
@@ -34,22 +37,25 @@ func NewMempool(lanes ...Lane) *BBMempool {
 	}
 }
 
-// TODO: Consider using a tx cache in Mempool and returning the length of that
-// cache instead of relying on lane count tracking.
+// CountTx returns the total number of transactions in the mempool.
 func (m *BBMempool) CountTx() int {
 	var total int
 	for _, lane := range m.registry {
-		// TODO: If a global lane exists, we assume that lane has all transactions
-		// and we return the total.
-		//
-		// if lane.Name() == LaneNameGlobal {
-		// 	return lane.CountTx()
-		// }
-
 		total += lane.CountTx()
 	}
 
 	return total
+}
+
+// GetTxDistribution returns the number of transactions in each lane.
+func (m *BBMempool) GetTxDistribution() map[string]int {
+	counts := make(map[string]int, len(m.registry))
+
+	for _, lane := range m.registry {
+		counts[lane.Name()] = lane.CountTx()
+	}
+
+	return counts
 }
 
 // Insert inserts a transaction into every lane that it matches. Insertion will
@@ -74,8 +80,8 @@ func (m *BBMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
 	return nil
 }
 
-// Remove removes a transaction from every lane that it matches. Removal will be
-// attempted on all lanes, even if an error is encountered.
+// Remove removes a transaction from the mempool. It removes the transaction
+// from the first lane that it matches.
 func (m *BBMempool) Remove(tx sdk.Tx) error {
 	for _, lane := range m.registry {
 		if lane.Match(tx) {

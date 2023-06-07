@@ -1,17 +1,20 @@
 package auction
 
 import (
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/lanes/base"
 )
 
 const (
 	// LaneName defines the name of the top-of-block auction lane.
-	LaneName = "tob"
+	LaneName = "top-of-block"
 )
 
-var _ blockbuster.Lane = (*TOBLane)(nil)
+var (
+	_ blockbuster.Lane = (*TOBLane)(nil)
+	_ Factory          = (*TOBLane)(nil)
+)
 
 // TOBLane defines a top-of-block auction lane. The top of block auction lane
 // hosts transactions that want to bid for inclusion at the top of the next block.
@@ -24,7 +27,7 @@ type TOBLane struct {
 	Mempool
 
 	// LaneConfig defines the base lane configuration.
-	cfg blockbuster.BaseLaneConfig
+	*base.DefaultLane
 
 	// Factory defines the API/functionality which is responsible for determining
 	// if a transaction is a bid transaction and how to extract relevant
@@ -34,18 +37,18 @@ type TOBLane struct {
 
 // NewTOBLane returns a new TOB lane.
 func NewTOBLane(
-	logger log.Logger,
-	txDecoder sdk.TxDecoder,
-	txEncoder sdk.TxEncoder,
+	cfg blockbuster.BaseLaneConfig,
 	maxTx int,
-	anteHandler sdk.AnteHandler,
 	af Factory,
-	maxBlockSpace sdk.Dec,
 ) *TOBLane {
+	if err := cfg.ValidateBasic(); err != nil {
+		panic(err)
+	}
+
 	return &TOBLane{
-		Mempool: NewMempool(txEncoder, maxTx, af),
-		cfg:     blockbuster.NewBaseLaneConfig(logger, txEncoder, txDecoder, anteHandler, maxBlockSpace),
-		Factory: af,
+		Mempool:     NewMempool(cfg.TxEncoder, maxTx, af),
+		DefaultLane: base.NewDefaultLane(cfg),
+		Factory:     af,
 	}
 }
 

@@ -3,6 +3,7 @@ package blockbuster
 import (
 	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -15,8 +16,8 @@ type (
 		// Txs is the list of transactions in the proposal.
 		Txs [][]byte
 
-		// SelectedTxs is a cache of the selected transactions in the proposal.
-		SelectedTxs map[string]struct{}
+		// Cache is a cache of the selected transactions in the proposal.
+		Cache map[string]struct{}
 
 		// TotalTxBytes is the total number of bytes currently included in the proposal.
 		TotalTxBytes int64
@@ -65,14 +66,29 @@ type (
 		// Contains returns true if the mempool contains the given transaction.
 		Contains(tx sdk.Tx) (bool, error)
 
-		// PrepareLane which builds a portion of the block. Inputs include the max
-		// number of bytes that can be included in the block and the selected transactions
-		// thus from from previous lane(s) as mapping from their HEX-encoded hash to
-		// the raw transaction.
-		PrepareLane(ctx sdk.Context, proposal *Proposal, next PrepareLanesHandler) *Proposal
+		// PrepareLane builds a portion of the block. It inputs the maxTxBytes that can be
+		// included in the proposal for the given lane, the partial proposal, and a function
+		// to call the next lane in the chain. The next lane in the chain will be called with
+		// the updated proposal and context.
+		PrepareLane(ctx sdk.Context, proposal *Proposal, maxTxBytes int64, next PrepareLanesHandler) *Proposal
 
-		// ProcessLane verifies this lane's portion of a proposed block.
+		// ProcessLaneBasic validates that transactions belonging to this lane are not misplaced
+		// in the block proposal.
+		ProcessLaneBasic(txs [][]byte) error
+
+		// ProcessLane verifies this lane's portion of a proposed block. It inputs the transactions
+		// that may belong to this lane and a function to call the next lane in the chain. The next
+		// lane in the chain will be called with the updated context and filtered down transactions.
 		ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next ProcessLanesHandler) (sdk.Context, error)
+
+		// SetAnteHandler sets the lane's antehandler.
+		SetAnteHandler(antehander sdk.AnteHandler)
+
+		// Logger returns the lane's logger.
+		Logger() log.Logger
+
+		// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
+		GetMaxBlockSpace() sdk.Dec
 	}
 )
 
@@ -87,11 +103,33 @@ func NewBaseLaneConfig(logger log.Logger, txEncoder sdk.TxEncoder, txDecoder sdk
 	}
 }
 
+// ValidateBasic validates the lane configuration.
+func (c *BaseLaneConfig) ValidateBasic() error {
+	if c.Logger == nil {
+		return fmt.Errorf("logger cannot be nil")
+	}
+
+	if c.TxEncoder == nil {
+		return fmt.Errorf("tx encoder cannot be nil")
+	}
+
+	if c.TxDecoder == nil {
+		return fmt.Errorf("tx decoder cannot be nil")
+	}
+
+	if c.MaxBlockSpace.IsNil() || c.MaxBlockSpace.IsNegative() || c.MaxBlockSpace.GT(sdk.OneDec()) {
+		return fmt.Errorf("max block space must be set to a value between 0 and 1")
+	}
+
+	return nil
+}
+
+// NewProposal returns a new empty proposal.
 func NewProposal(maxTxBytes int64) *Proposal {
 	return &Proposal{
-		Txs:         make([][]byte, 0),
-		SelectedTxs: make(map[string]struct{}),
-		MaxTxBytes:  maxTxBytes,
+		Txs:        make([][]byte, 0),
+		Cache:      make(map[string]struct{}),
+		MaxTxBytes: maxTxBytes,
 	}
 }
 
@@ -104,7 +142,7 @@ func (p *Proposal) UpdateProposal(txs [][]byte, totalSize int64) *Proposal {
 		txHash := sha256.Sum256(tx)
 		txHashStr := hex.EncodeToString(txHash[:])
 
-		p.SelectedTxs[txHashStr] = struct{}{}
+		p.Cache[txHashStr] = struct{}{}
 	}
 
 	return p

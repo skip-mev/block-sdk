@@ -5,10 +5,9 @@ import (
 	"time"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/mempool"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/keeper"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/pob/x/builder/types"
 )
 
 func (suite *KeeperTestSuite) TestValidateBidInfo() {
@@ -162,7 +161,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 				suite.stakingKeeper,
 				suite.authorityAccount.String(),
 			)
-			params := buildertypes.Params{
+			params := types.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
 				EscrowAccountAddress:   escrowAddress.String(),
@@ -191,7 +190,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 				signers[index] = txSigners
 			}
 
-			bidInfo := &mempool.AuctionBidInfo{
+			bidInfo := &types.BidInfo{
 				Bidder:       bidder.Address,
 				Bid:          bid,
 				Transactions: bundle,

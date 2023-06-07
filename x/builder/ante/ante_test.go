@@ -9,7 +9,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
-	"github.com/skip-mev/pob/mempool"
+	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -21,7 +23,6 @@ type AnteTestSuite struct {
 	suite.Suite
 	ctx sdk.Context
 
-	// mempool setup
 	encodingConfig testutils.EncodingConfig
 	random         *rand.Rand
 
@@ -34,6 +35,15 @@ type AnteTestSuite struct {
 	builderDecorator ante.BuilderDecorator
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
+
+	// mempool and lane set up
+	mempool  blockbuster.Mempool
+	tobLane  *auction.TOBLane
+	baseLane *base.DefaultLane
+	lanes    []blockbuster.Lane
+
+	// Account set up
+	balance sdk.Coins
 }
 
 func TestAnteTestSuite(t *testing.T) {
@@ -67,17 +77,40 @@ func (suite *AnteTestSuite) SetupTest() {
 	)
 	err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.DefaultParams())
 	suite.Require().NoError(err)
+
+	// Lanes configuration
+	//
+	// TOB lane set up
+	config := blockbuster.BaseLaneConfig{
+		Logger:        suite.ctx.Logger(),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   suite.anteHandler,
+		MaxBlockSpace: sdk.ZeroDec(),
+	}
+	suite.tobLane = auction.NewTOBLane(
+		config,
+		0, // No bound on the number of transactions in the lane
+		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+	)
+
+	// Base lane set up
+	suite.baseLane = base.NewDefaultLane(config)
+
+	// Mempool set up
+	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.baseLane}
+	suite.mempool = blockbuster.NewMempool(suite.lanes...)
 }
 
-func (suite *AnteTestSuite) executeAnteHandler(tx sdk.Tx, balance sdk.Coins) (sdk.Context, error) {
+func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
 	signer := tx.GetMsgs()[0].GetSigners()[0]
-	suite.bankKeeper.EXPECT().GetAllBalances(suite.ctx, signer).AnyTimes().Return(balance)
+	suite.bankKeeper.EXPECT().GetAllBalances(ctx, signer).AnyTimes().Return(suite.balance)
 
-	next := func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
+	next := func(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
 		return ctx, nil
 	}
 
-	return suite.builderDecorator.AnteHandle(suite.ctx, tx, false, next)
+	return suite.builderDecorator.AnteHandle(ctx, tx, false, next)
 }
 
 func (suite *AnteTestSuite) TestAnteHandler() {
@@ -232,15 +265,19 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			suite.Require().NoError(err)
 
 			// Insert the top bid into the mempool
-			config := mempool.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder())
-			mempool := mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, config)
 			if insertTopBid {
 				topAuctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, topBidder, topBid, 0, timeout, []testutils.Account{})
 				suite.Require().NoError(err)
-				suite.Require().Equal(0, mempool.CountTx())
-				suite.Require().Equal(0, mempool.CountAuctionTx())
-				suite.Require().NoError(mempool.Insert(suite.ctx, topAuctionTx))
-				suite.Require().Equal(1, mempool.CountAuctionTx())
+
+				distribution := suite.mempool.GetTxDistribution()
+				suite.Require().Equal(0, distribution[auction.LaneName])
+				suite.Require().Equal(0, distribution[base.LaneName])
+
+				suite.Require().NoError(suite.mempool.Insert(suite.ctx, topAuctionTx))
+
+				distribution = suite.mempool.GetTxDistribution()
+				suite.Require().Equal(1, distribution[auction.LaneName])
+				suite.Require().Equal(0, distribution[base.LaneName])
 			}
 
 			// Create the actual auction tx and insert into the mempool
@@ -248,8 +285,9 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			suite.Require().NoError(err)
 
 			// Execute the ante handler
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), mempool)
-			_, err = suite.executeAnteHandler(auctionTx, balance)
+			suite.balance = balance
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.tobLane, suite.mempool)
+			_, err = suite.anteHandler(suite.ctx, auctionTx, false)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {

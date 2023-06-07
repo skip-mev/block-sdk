@@ -1,4 +1,4 @@
-package blockbuster
+package utils
 
 import (
 	"crypto/sha256"
@@ -7,19 +7,21 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/skip-mev/pob/blockbuster"
 )
 
-// GetTxHashStr returns the hex-encoded hash of the transaction.
-func GetTxHashStr(txEncoder sdk.TxEncoder, tx sdk.Tx) (string, error) {
+// GetTxHashStr returns the hex-encoded hash of the transaction alongside the
+// transaction bytes.
+func GetTxHashStr(txEncoder sdk.TxEncoder, tx sdk.Tx) ([]byte, string, error) {
 	txBz, err := txEncoder(tx)
 	if err != nil {
-		return "", fmt.Errorf("failed to encode transaction: %w", err)
+		return nil, "", fmt.Errorf("failed to encode transaction: %w", err)
 	}
 
 	txHash := sha256.Sum256(txBz)
 	txHashStr := hex.EncodeToString(txHash[:])
 
-	return txHashStr, nil
+	return txBz, txHashStr, nil
 }
 
 // RemoveTxsFromLane removes the transactions from the given lane's mempool.
@@ -35,7 +37,7 @@ func RemoveTxsFromLane(txs map[sdk.Tx]struct{}, mempool sdkmempool.Mempool) erro
 
 // GetMaxTxBytesForLane returns the maximum number of bytes that can be included in the proposal
 // for the given lane.
-func GetMaxTxBytesForLane(proposal *Proposal, ratio sdk.Dec) int64 {
+func GetMaxTxBytesForLane(proposal *blockbuster.Proposal, ratio sdk.Dec) int64 {
 	// In the case where the ratio is zero, we return the max tx bytes remaining. Note, the only
 	// lane that should have a ratio of zero is the default lane. This means the default lane
 	// will have no limit on the number of transactions it can include in a block and is only

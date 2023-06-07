@@ -1,4 +1,4 @@
-package mempool_test
+package auction_test
 
 import (
 	"crypto/rand"

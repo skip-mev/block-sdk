@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/mempool"
+	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
 var _ Mempool = (*TOBMempool)(nil)
@@ -48,8 +48,8 @@ type (
 
 // TxPriority returns a TxPriority over auction bid transactions only. It
 // is to be used in the auction index only.
-func TxPriority(config Factory) mempool.TxPriority[string] {
-	return mempool.TxPriority[string]{
+func TxPriority(config Factory) blockbuster.TxPriority[string] {
+	return blockbuster.TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
 			bidInfo, err := config.GetAuctionBidInfo(tx)
 			if err != nil {
@@ -92,8 +92,8 @@ func TxPriority(config Factory) mempool.TxPriority[string] {
 // NewMempool returns a new auction mempool.
 func NewMempool(txEncoder sdk.TxEncoder, maxTx int, config Factory) *TOBMempool {
 	return &TOBMempool{
-		index: mempool.NewPriorityMempool(
-			mempool.PriorityNonceMempoolConfig[string]{
+		index: blockbuster.NewPriorityMempool(
+			blockbuster.PriorityNonceMempoolConfig[string]{
 				TxPriority: TxPriority(config),
 				MaxTx:      maxTx,
 			},
@@ -120,7 +120,7 @@ func (am *TOBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
 
-	txHashStr, err := blockbuster.GetTxHashStr(am.txEncoder, tx)
+	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
 		return err
 	}
@@ -167,7 +167,7 @@ func (am *TOBMempool) CountTx() int {
 
 // Contains returns true if the transaction is contained in the mempool.
 func (am *TOBMempool) Contains(tx sdk.Tx) (bool, error) {
-	txHashStr, err := blockbuster.GetTxHashStr(am.txEncoder, tx)
+	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
 		return false, fmt.Errorf("failed to get tx hash string: %w", err)
 	}
@@ -181,7 +181,7 @@ func (am *TOBMempool) removeTx(mp sdkmempool.Mempool, tx sdk.Tx) {
 		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}
 
-	txHashStr, err := blockbuster.GetTxHashStr(am.txEncoder, tx)
+	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
 		panic(fmt.Errorf("failed to get tx hash string: %w", err))
 	}

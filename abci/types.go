@@ -4,7 +4,7 @@ alpha/RC tag is released. These types are simply used to prototype and develop
 against.
 */
 //nolint
-package v2
+package abci
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"

@@ -1,9 +1,8 @@
-package v2_test
+package abci_test
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	v2 "github.com/skip-mev/pob/abci/v2"
-	"github.com/skip-mev/pob/mempool"
+	"github.com/skip-mev/pob/abci"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/types"
 )
@@ -13,11 +12,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 		MaxBundleSize:          5,
 		ReserveFee:             sdk.NewCoin("foo", sdk.NewInt(10)),
 		FrontRunningProtection: true,
-		MinBidIncrement:        suite.minBidIncrement,
 	}
-
-	err := suite.builderKeeper.SetParams(suite.ctx, params)
-	suite.Require().NoError(err)
 
 	testCases := []struct {
 		name          string
@@ -26,21 +21,20 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 		{
 			"empty mempool",
 			func() []byte {
-				suite.createFilledMempool(0, 0, 0, false)
 				return []byte{}
 			},
 		},
 		{
 			"filled mempool with no auction transactions",
 			func() []byte {
-				suite.createFilledMempool(100, 0, 0, false)
+				suite.fillBaseLane(10)
 				return []byte{}
 			},
 		},
 		{
 			"mempool with invalid auction transaction (too many bundled transactions)",
 			func() []byte {
-				suite.createFilledMempool(0, 1, int(params.MaxBundleSize)+1, true)
+				suite.fillTOBLane(3, int(params.MaxBundleSize)+1)
 				return []byte{}
 			},
 		},
@@ -55,9 +49,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, uint64(timeout), signers)
 				suite.Require().NoError(err)
 
-				suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, suite.config)
-				err = suite.mempool.Insert(suite.ctx, bidTx)
-				suite.Require().NoError(err)
+				suite.Require().NoError(suite.mempool.Insert(suite.ctx, bidTx))
 
 				// this should return nothing since the top bid is not valid
 				return []byte{}
@@ -66,14 +58,12 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 		{
 			"mempool contains only invalid auction bids (bid is too low)",
 			func() []byte {
-				params.ReserveFee = suite.auctionBidAmount
+				params.ReserveFee = sdk.NewCoin("foo", sdk.NewInt(10000000000000000))
 				err := suite.builderKeeper.SetParams(suite.ctx, params)
 				suite.Require().NoError(err)
 
 				// this way all of the bids will be too small
-				suite.auctionBidAmount = params.ReserveFee.Sub(sdk.NewCoin("foo", sdk.NewInt(1)))
-
-				suite.createFilledMempool(100, 100, 2, true)
+				suite.fillTOBLane(4, 1)
 
 				return []byte{}
 			},
@@ -88,10 +78,7 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 
 				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, uint64(timeout), signers)
 				suite.Require().NoError(err)
-
-				suite.mempool = mempool.NewAuctionMempool(suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), 0, suite.config)
-				err = suite.mempool.Insert(suite.ctx, bidTx)
-				suite.Require().NoError(err)
+				suite.Require().NoError(suite.tobLane.Insert(suite.ctx, bidTx))
 
 				// this should return nothing since the top bid is not valid
 				return []byte{}
@@ -100,26 +87,26 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 		{
 			"top bid is invalid but next best is valid",
 			func() []byte {
-				params.ReserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
-				err := suite.builderKeeper.SetParams(suite.ctx, params)
-				suite.Require().NoError(err)
+				params.ReserveFee = sdk.NewCoin("foo", sdk.NewInt(10))
 
 				bidder := suite.accounts[0]
-				bid := suite.auctionBidAmount.Add(suite.minBidIncrement)
+				bid := params.ReserveFee.Add(params.ReserveFee)
 				signers := []testutils.Account{bidder}
 				timeout := 0
 
 				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, uint64(timeout), signers)
 				suite.Require().NoError(err)
+				suite.Require().NoError(suite.mempool.Insert(suite.ctx, bidTx))
 
-				suite.createFilledMempool(100, 100, 2, true)
-
-				topBidTx := suite.mempool.GetTopAuctionTx(suite.ctx)
-
-				err = suite.mempool.Insert(suite.ctx, bidTx)
+				bidder = suite.accounts[1]
+				bid = params.ReserveFee
+				signers = []testutils.Account{bidder}
+				timeout = 100
+				bidTx2, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, uint64(timeout), signers)
 				suite.Require().NoError(err)
+				suite.Require().NoError(suite.mempool.Insert(suite.ctx, bidTx2))
 
-				bz, err := suite.encodingConfig.TxConfig.TxEncoder()(topBidTx)
+				bz, err := suite.encodingConfig.TxConfig.TxEncoder()(bidTx2)
 				suite.Require().NoError(err)
 
 				return bz
@@ -129,10 +116,14 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 
 	for _, tc := range testCases {
 		suite.Run(tc.name, func() {
+			suite.SetupTest() // reset
 			expectedVE := tc.getExpectedVE()
 
+			err := suite.builderKeeper.SetParams(suite.ctx, params)
+			suite.Require().NoError(err)
+
 			// Reset the handler with the new mempool
-			suite.voteExtensionHandler = v2.NewVoteExtensionHandler(suite.mempool, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder(), suite.anteHandler)
+			suite.voteExtensionHandler = abci.NewVoteExtensionHandler(suite.tobLane, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder())
 
 			handler := suite.voteExtensionHandler.ExtendVoteHandler()
 			resp, err := handler(suite.ctx, nil)
@@ -148,7 +139,6 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		MaxBundleSize:          5,
 		ReserveFee:             sdk.NewCoin("foo", sdk.NewInt(100)),
 		FrontRunningProtection: true,
-		MinBidIncrement:        sdk.NewCoin("foo", sdk.NewInt(10)), // can't be tested atm
 	}
 
 	err := suite.builderKeeper.SetParams(suite.ctx, params)
@@ -156,13 +146,13 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 
 	testCases := []struct {
 		name        string
-		req         func() *v2.RequestVerifyVoteExtension
+		req         func() *abci.RequestVerifyVoteExtension
 		expectedErr bool
 	}{
 		{
 			"invalid vote extension bytes",
-			func() *v2.RequestVerifyVoteExtension {
-				return &v2.RequestVerifyVoteExtension{
+			func() *abci.RequestVerifyVoteExtension {
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: []byte("invalid vote extension"),
 				}
 			},
@@ -170,8 +160,8 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"empty vote extension bytes",
-			func() *v2.RequestVerifyVoteExtension {
-				return &v2.RequestVerifyVoteExtension{
+			func() *abci.RequestVerifyVoteExtension {
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: []byte{},
 				}
 			},
@@ -179,8 +169,8 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"nil vote extension bytes",
-			func() *v2.RequestVerifyVoteExtension {
-				return &v2.RequestVerifyVoteExtension{
+			func() *abci.RequestVerifyVoteExtension {
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: nil,
 				}
 			},
@@ -188,14 +178,14 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"invalid extension with bid tx with bad timeout",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoin("foo", sdk.NewInt(10))
 				signers := []testutils.Account{bidder}
 				timeout := 0
 
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -203,14 +193,14 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"invalid vote extension with bid tx with bad bid",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := sdk.NewCoin("foo", sdk.NewInt(0))
 				signers := []testutils.Account{bidder}
 				timeout := 10
 
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -218,14 +208,14 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"valid vote extension",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := params.ReserveFee
 				signers := []testutils.Account{bidder}
 				timeout := 10
 
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -233,7 +223,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"invalid vote extension with front running bid tx",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := params.ReserveFee
 				timeout := 10
@@ -242,7 +232,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 				signers := []testutils.Account{bidder, bundlee}
 
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -250,7 +240,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"invalid vote extension with too many bundle txs",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				// disable front running protection
 				params.FrontRunningProtection = false
 				err := suite.builderKeeper.SetParams(suite.ctx, params)
@@ -262,7 +252,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 				timeout := 10
 
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -270,7 +260,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"invalid vote extension with a failing bundle tx",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := params.ReserveFee
 
@@ -286,7 +276,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 				bz, err := suite.encodingConfig.TxConfig.TxEncoder()(bidTx)
 				suite.Require().NoError(err)
 
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},
@@ -294,7 +284,7 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 		},
 		{
 			"valid vote extension + no comparison to local mempool",
-			func() *v2.RequestVerifyVoteExtension {
+			func() *abci.RequestVerifyVoteExtension {
 				bidder := suite.accounts[0]
 				bid := params.ReserveFee
 				signers := []testutils.Account{bidder}
@@ -303,17 +293,17 @@ func (suite *ABCITestSuite) TestVerifyVoteExtensionHandler() {
 				bz := suite.createAuctionTxBz(bidder, bid, signers, timeout)
 
 				// Add a bid to the mempool that is greater than the one in the vote extension
-				bid = bid.Add(params.MinBidIncrement)
+				bid = bid.Add(params.ReserveFee)
 				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 10, 1, signers)
 				suite.Require().NoError(err)
 
 				err = suite.mempool.Insert(suite.ctx, bidTx)
 				suite.Require().NoError(err)
 
-				tx := suite.mempool.GetTopAuctionTx(suite.ctx)
+				tx := suite.tobLane.GetTopAuctionTx(suite.ctx)
 				suite.Require().NotNil(tx)
 
-				return &v2.RequestVerifyVoteExtension{
+				return &abci.RequestVerifyVoteExtension{
 					VoteExtension: bz,
 				}
 			},

@@ -1,39 +1,40 @@
-package v2
+package abci
 
 import (
-	"context"
 	"crypto/sha256"
 	"encoding/hex"
-	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/skip-mev/pob/mempool"
+	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 )
 
 type (
-	// VoteExtensionMempool contains the methods required by the VoteExtensionHandler
-	// to interact with the local mempool.
-	VoteExtensionMempool interface {
-		Remove(tx sdk.Tx) error
-		AuctionBidSelect(ctx context.Context) sdkmempool.Iterator
-		GetAuctionBidInfo(tx sdk.Tx) (*mempool.AuctionBidInfo, error)
-		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
+	// TOBLaneVE contains the methods required by the VoteExtensionHandler
+	// to interact with the local mempool i.e. the top of block lane.
+	TOBLaneVE interface {
+		sdkmempool.Mempool
+
+		// Factory defines the API/functionality which is responsible for determining
+		// if a transaction is a bid transaction and how to extract relevant
+		// information from the transaction (bid, timeout, bidder, etc.).
+		auction.Factory
+
+		// VerifyTx is utilized to verify a bid transaction according to the preferences
+		// of the top of block lane.
+		VerifyTx(ctx sdk.Context, tx sdk.Tx) error
 	}
 
 	// VoteExtensionHandler contains the functionality and handlers required to
 	// process, validate and build vote extensions.
 	VoteExtensionHandler struct {
-		mempool VoteExtensionMempool
+		tobLane TOBLaneVE
 
 		// txDecoder is used to decode the top bidding auction transaction
 		txDecoder sdk.TxDecoder
 
 		// txEncoder is used to encode the top bidding auction transaction
 		txEncoder sdk.TxEncoder
-
-		// anteHandler is used to validate the vote extension
-		anteHandler sdk.AnteHandler
 
 		// cache is used to store the results of the vote extension verification
 		// for a given block height.
@@ -46,14 +47,11 @@ type (
 
 // NewVoteExtensionHandler returns an VoteExtensionHandler that contains the functionality and handlers
 // required to inject, process, and validate vote extensions.
-func NewVoteExtensionHandler(mp VoteExtensionMempool, txDecoder sdk.TxDecoder,
-	txEncoder sdk.TxEncoder, ah sdk.AnteHandler,
-) *VoteExtensionHandler {
+func NewVoteExtensionHandler(lane TOBLaneVE, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder) *VoteExtensionHandler {
 	return &VoteExtensionHandler{
-		mempool:       mp,
+		tobLane:       lane,
 		txDecoder:     txDecoder,
 		txEncoder:     txEncoder,
-		anteHandler:   ah,
 		cache:         make(map[string]error),
 		currentHeight: 0,
 	}
@@ -65,15 +63,17 @@ func NewVoteExtensionHandler(mp VoteExtensionMempool, txDecoder sdk.TxDecoder,
 func (h *VoteExtensionHandler) ExtendVoteHandler() ExtendVoteHandler {
 	return func(ctx sdk.Context, req *RequestExtendVote) (*ResponseExtendVote, error) {
 		// Iterate through auction bids until we find a valid one
-		auctionIterator := h.mempool.AuctionBidSelect(ctx)
+		auctionIterator := h.tobLane.Select(ctx, nil)
 
 		for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
 			bidTx := auctionIterator.Tx()
 
 			// Verify the bid tx can be encoded and included in vote extension
 			if bidBz, err := h.txEncoder(bidTx); err == nil {
-				// Validate the auction transaction
-				if err := h.verifyAuctionTx(ctx, bidTx); err == nil {
+				// Validate the auction transaction against a cache state
+				cacheCtx, _ := ctx.CacheContext()
+
+				if err := h.tobLane.VerifyTx(cacheCtx, bidTx); err == nil {
 					return &ResponseExtendVote{VoteExtension: bidBz}, nil
 				}
 			}
@@ -116,7 +116,7 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 		}
 
 		// Verify the auction transaction and cache the result
-		if err = h.verifyAuctionTx(ctx, bidTx); err != nil {
+		if err = h.tobLane.VerifyTx(ctx, bidTx); err != nil {
 			h.cache[hash] = err
 			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
 		}
@@ -135,41 +135,4 @@ func (h *VoteExtensionHandler) resetCache(blockHeight int64) {
 		h.cache = make(map[string]error)
 		h.currentHeight = blockHeight
 	}
-}
-
-// verifyAuctionTx verifies a transaction against the application's state.
-func (h *VoteExtensionHandler) verifyAuctionTx(ctx sdk.Context, bidTx sdk.Tx) error {
-	// Verify the vote extension is a auction transaction
-	bidInfo, err := h.mempool.GetAuctionBidInfo(bidTx)
-	if err != nil {
-		return err
-	}
-
-	if bidInfo == nil {
-		return fmt.Errorf("vote extension is not a valid auction transaction")
-	}
-
-	if h.anteHandler == nil {
-		return nil
-	}
-
-	// Cache context is used to avoid state changes
-	cache, _ := ctx.CacheContext()
-	if _, err := h.anteHandler(cache, bidTx, false); err != nil {
-		return err
-	}
-
-	// Verify all bundled transactions
-	for _, tx := range bidInfo.Transactions {
-		wrappedTx, err := h.mempool.WrapBundleTransaction(tx)
-		if err != nil {
-			return err
-		}
-
-		if _, err := h.anteHandler(cache, wrappedTx, false); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }

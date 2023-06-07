@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/blockbuster"
@@ -34,7 +35,7 @@ type Terminator struct{}
 var _ blockbuster.Lane = (*Terminator)(nil)
 
 // PrepareLane is a no-op
-func (t Terminator) PrepareLane(_ sdk.Context, proposal *blockbuster.Proposal, _ blockbuster.PrepareLanesHandler) *blockbuster.Proposal {
+func (t Terminator) PrepareLane(_ sdk.Context, proposal *blockbuster.Proposal, _ int64, _ blockbuster.PrepareLanesHandler) *blockbuster.Proposal {
 	return proposal
 }
 
@@ -81,4 +82,22 @@ func (t Terminator) Remove(sdk.Tx) error {
 // Select is a no-op
 func (t Terminator) Select(context.Context, [][]byte) sdkmempool.Iterator {
 	return nil
+}
+
+// ValidateLaneBasic is a no-op
+func (t Terminator) ProcessLaneBasic([][]byte) error {
+	return nil
+}
+
+// SetLaneConfig is a no-op
+func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
+
+// Logger is a no-op
+func (t Terminator) Logger() log.Logger {
+	return log.NewNopLogger()
+}
+
+// GetMaxBlockSpace is a no-op
+func (t Terminator) GetMaxBlockSpace() sdk.Dec {
+	return sdk.ZeroDec()
 }
