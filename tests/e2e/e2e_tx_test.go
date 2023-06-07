@@ -13,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/ory/dockertest/v3/docker"
 	"github.com/skip-mev/pob/tests/app"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
@@ -97,6 +98,20 @@ func (s *IntegrationTestSuite) createMsgSendTx(account TestAccount, toAddress st
 			FromAddress: account.Address.String(),
 			ToAddress:   toAddress,
 			Amount:      amount,
+		},
+	}
+
+	return s.createTx(account, msgs, sequenceOffset, height)
+}
+
+// createMsgDelegateTx creates a delegate transaction given the provided signer, validator, amount, sequence number offset
+// and block height timeout.
+func (s *IntegrationTestSuite) createMsgDelegateTx(account TestAccount, validator string, amount sdk.Coin, sequenceOffset, height uint64) []byte {
+	msgs := []sdk.Msg{
+		&stakingtypes.MsgDelegate{
+			DelegatorAddress: account.Address.String(),
+			ValidatorAddress: validator,
+			Amount:           amount,
 		},
 	}
 

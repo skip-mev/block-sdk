@@ -68,7 +68,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 					bundleHashes[0]: true,
 					bundleHashes[1]: true,
 				}
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -124,7 +124,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -183,7 +183,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+1, bundleHashes3, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes3, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid3)
@@ -243,7 +243,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -302,7 +302,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -405,7 +405,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 				}
 
 				// Pass in nil since we don't know the order of transactions that ill be executed
-				s.verifyBlock(height+2, nil, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, nil, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance (both bids should have been extracted by this point)
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid).Add(s.calculateProposerEscrowSplit(bid2))
@@ -459,7 +459,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+1, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes2, expectedExecution)
 
 				// Wait for a block to be created
 				s.waitForABlock()
@@ -473,7 +473,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					expectedExecution[hash] = true
 				}
 
-				s.verifyBlock(height+2, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance (both bids should have been extracted by this point)
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid).Add(s.calculateProposerEscrowSplit(bid2))
@@ -515,7 +515,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundleHashes[1]:  true,
 					bundleHashes2[0]: false,
 				}
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -523,7 +523,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 				// Wait another block to make sure the second bid is not executed
 				s.waitForABlock()
-				s.verifyBlock(height+2, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes2, expectedExecution)
 			},
 		},
 		{
@@ -561,7 +561,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundleHashes[1]:  true,
 					bundleHashes2[0]: false,
 				}
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid)
@@ -569,7 +569,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 				// Wait another block to make sure the second bid is not executed
 				s.waitForABlock()
-				s.verifyBlock(height+2, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes2, expectedExecution)
 			},
 		},
 		{
@@ -607,7 +607,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundleHashes2[0]: true,
 					bundleHashes2[1]: true,
 				}
-				s.verifyBlock(height+1, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes2, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid2)
@@ -615,7 +615,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 				// Wait for a block to be created and ensure that the first bid was not executed
 				s.waitForABlock()
-				s.verifyBlock(height+2, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -653,7 +653,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundleHashes2[0]: true,
 					bundleHashes2[1]: true,
 				}
-				s.verifyBlock(height+1, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes2, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid2)
@@ -661,7 +661,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 				// Wait for a block to be created and ensure that the first bid was not executed
 				s.waitForABlock()
-				s.verifyBlock(height+2, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -705,7 +705,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundleHashes2[0]: true,
 					bundleHashes2[1]: true,
 				}
-				s.verifyBlock(height+1, bundleHashes2, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes2, expectedExecution)
 
 				// Ensure that the escrow account has the correct balance
 				expectedEscrowFee := s.calculateProposerEscrowSplit(bid2)
@@ -713,7 +713,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 				// Wait for a block to be created and ensure that the second bid is executed
 				s.waitForABlock()
-				s.verifyBlock(height+2, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+2, bundleHashes, expectedExecution)
 			},
 		},
 	}
@@ -771,7 +771,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 					bundleHashes[1]: false,
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -799,7 +799,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 				}
 
 				// Ensure that the block was built correctly and that the bid was not executed
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -831,7 +831,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 				}
 
 				// Ensure that the block was built correctly and that the bid was not executed
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -859,7 +859,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 				}
 
 				// Ensure that the block was built correctly and that the bid was not executed
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -887,7 +887,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 					bundleHashes[1]: false,
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -916,7 +916,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 				for _, hash := range bundleHashes {
 					expectedExecution[hash] = false
 				}
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -944,7 +944,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 					bundleHashes[1]: false,
 				}
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 		{
@@ -986,7 +986,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 				expectedExecution[bundleHashes[0]] = false
 
-				s.verifyBlock(height+1, bundleHashes, expectedExecution)
+				s.verifyTopOfBlockAuction(height+1, bundleHashes, expectedExecution)
 			},
 		},
 	}
@@ -1000,5 +1000,198 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// Get escrow account balance to ensure that it is not changed
 		s.Require().Equal(escrowBalance, s.queryBalanceOf(escrowAddress, app.BondDenom))
+	}
+}
+
+// TestFreeLane tests that the application correctly handles free lanes. There are a few invariants that are tested:
+//
+// 1. Transactions that qualify as free should not be deducted any fees.
+// 2. Transactions that do not qualify as free should be deducted the correct fees.
+func (s *IntegrationTestSuite) TestFreeLane() {
+	// Create the accounts that will create transactions to be included in bundles
+	initBalance := sdk.NewInt64Coin(app.BondDenom, 10000000000)
+	numAccounts := 4
+	accounts := s.createTestAccounts(numAccounts, initBalance)
+
+	defaultSendAmount := sdk.NewCoin(app.BondDenom, sdk.NewInt(10))
+	defaultStakeAmount := sdk.NewCoin(app.BondDenom, sdk.NewInt(10))
+	defaultSendAmountCoins := sdk.NewCoins(defaultSendAmount)
+
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "valid free lane transaction",
+			test: func() {
+				balanceBeforeFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+
+				// basic stake amount
+				validators := s.queryValidators()
+				validator := validators[0]
+				tx := s.createMsgDelegateTx(accounts[0], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
+
+				// Broadcast the transaction
+				s.broadcastTx(tx, 0)
+
+				// Wait for a block to be created
+				s.waitForABlock()
+				s.waitForABlock()
+
+				// Ensure that the transaction was executed correctly
+				balanceAfterFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterFreeTx.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx))
+			},
+		},
+		{
+			name: "normal tx with free tx in same block",
+			test: func() {
+				balanceBeforeFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				balanceBeforeNormalTx := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
+
+				// basic free transaction
+				validators := s.queryValidators()
+				validator := validators[0]
+				freeTx := s.createMsgDelegateTx(accounts[0], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
+
+				// other normal transaction
+				normalTx := s.createMsgSendTx(accounts[1], accounts[2].Address.String(), defaultSendAmountCoins, 0, 1000)
+
+				// Broadcast the transactions
+				s.broadcastTx(freeTx, 0)
+				s.broadcastTx(normalTx, 0)
+
+				// Wait for a block to be created
+				s.waitForABlock()
+				height := s.queryCurrentHeight()
+
+				// Ensure that the transaction was executed
+				balanceAfterFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterFreeTx.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx))
+
+				// The balance must be strictly less than to account for fees
+				balanceAfterNormalTx := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterNormalTx.IsLT((balanceBeforeNormalTx.Sub(defaultSendAmount))))
+
+				hashes := s.normalTxsToTxHashes([][]byte{freeTx, normalTx})
+				expectedExecution := map[string]bool{
+					hashes[0]: true,
+					hashes[1]: true,
+				}
+
+				// Ensure that the block was built correctly
+				s.verifyBlock(height, hashes, expectedExecution)
+			},
+		},
+		{
+			name: "multiple free transactions in same block",
+			test: func() {
+				balanceBeforeFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				balanceBeforeFreeTx2 := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
+
+				// basic free transaction
+				validators := s.queryValidators()
+				validator := validators[0]
+				freeTx := s.createMsgDelegateTx(accounts[0], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
+
+				// other normal transaction
+				freeTx2 := s.createMsgDelegateTx(accounts[1], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
+
+				// Broadcast the transactions
+				s.broadcastTx(freeTx, 0)
+				s.broadcastTx(freeTx2, 0)
+
+				// Wait for a block to be created
+				s.waitForABlock()
+
+				// Ensure that the transaction was executed
+				balanceAfterFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterFreeTx.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx))
+
+				balanceAfterFreeTx2 := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterFreeTx2.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx2))
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.waitForABlock()
+		s.Run(tc.name, tc.test)
+	}
+}
+
+// TestLanes tests that the application correctly handles lanes. The biggest invarient that is
+// test here is making sure that transactions are ordered in blocks respecting the lane order.
+func (s *IntegrationTestSuite) TestLanes() {
+	// Create the accounts that will create transactions to be included in bundles
+	initBalance := sdk.NewInt64Coin(app.BondDenom, 10000000000)
+	numAccounts := 4
+	accounts := s.createTestAccounts(numAccounts, initBalance)
+
+	defaultSendAmount := sdk.NewCoin(app.BondDenom, sdk.NewInt(10))
+	defaultStakeAmount := sdk.NewCoin(app.BondDenom, sdk.NewInt(10))
+	defaultSendAmountCoins := sdk.NewCoins(defaultSendAmount)
+
+	// auction parameters
+	params := s.queryBuilderParams()
+	reserveFee := params.ReserveFee
+
+	testCases := []struct {
+		name string
+		test func()
+	}{
+		{
+			name: "block with tob, free, and normal tx",
+			test: func() {
+				// basic free transaction
+				validators := s.queryValidators()
+				validator := validators[0]
+				freeTx := s.createMsgDelegateTx(accounts[0], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
+
+				// other normal transaction
+				normalTx := s.createMsgSendTx(accounts[1], accounts[2].Address.String(), defaultSendAmountCoins, 0, 1000)
+
+				// Create a bid transaction that includes the bundle and is valid
+				bundle := [][]byte{
+					s.createMsgSendTx(accounts[3], accounts[1].Address.String(), defaultSendAmountCoins, 0, 1000),
+				}
+				bid := reserveFee
+				height := s.queryCurrentHeight()
+				bidTx := s.createAuctionBidTx(accounts[2], bid, bundle, 0, height+5)
+				s.displayExpectedBundle("Valid auction bid", bidTx, bundle)
+
+				// Broadcast the transactions
+				s.waitForABlock()
+				s.broadcastTx(freeTx, 0)
+				s.broadcastTx(normalTx, 0)
+				s.broadcastTx(bidTx, 0)
+
+				// Wait for a block to be created
+				s.waitForABlock()
+				height = s.queryCurrentHeight()
+
+				// Ensure that the transaction was executed
+				hashes := s.normalTxsToTxHashes([][]byte{
+					bidTx,
+					bundle[0],
+					freeTx,
+					normalTx,
+				})
+				expectedExecution := map[string]bool{
+					hashes[0]: true,
+					hashes[1]: true,
+					hashes[2]: true,
+					hashes[3]: true,
+				}
+
+				// Ensure that the block was built correctly
+				s.verifyBlock(height, hashes, expectedExecution)
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		s.waitForABlock()
+		s.Run(tc.name, tc.test)
 	}
 }

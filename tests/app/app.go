@@ -71,6 +71,7 @@ import (
 	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
+	"github.com/skip-mev/pob/blockbuster/lanes/free"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -287,10 +288,17 @@ func New(
 		auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
 	)
 
+	// Free lane allows transactions to be included in the next block for free.
+	freeLane := free.NewFreeLane(
+		config,
+		free.NewDefaultFreeFactory(app.txConfig.TxDecoder()),
+	)
+
 	// Default lane accepts all other transactions.
 	defaultLane := base.NewDefaultLane(config)
 	lanes := []blockbuster.Lane{
 		tobLane,
+		freeLane,
 		defaultLane,
 	}
 
@@ -311,6 +319,7 @@ func New(
 		BuilderKeeper: app.BuilderKeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
+		FreeLane:      freeLane,
 		TOBLane:       tobLane,
 		Mempool:       mempool,
 	}

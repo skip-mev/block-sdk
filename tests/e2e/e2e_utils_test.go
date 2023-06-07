@@ -16,6 +16,7 @@ import (
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
@@ -144,9 +145,8 @@ func (s *IntegrationTestSuite) normalTxsToTxHashes(txs [][]byte) []string {
 	return hashes
 }
 
-// verifyBlock verifies that the transactions in the block at the given height were seen
-// and executed in the order they were submitted i.e. how they are broadcasted in the bundle.
-func (s *IntegrationTestSuite) verifyBlock(height uint64, bundle []string, expectedExecution map[string]bool) {
+// verifyTopOfBlockAuction verifies that blocks that include a bid transaction execute as expected.
+func (s *IntegrationTestSuite) verifyTopOfBlockAuction(height uint64, bundle []string, expectedExecution map[string]bool) {
 	s.waitForABlock()
 	s.T().Logf("Verifying block %d", height)
 
@@ -179,12 +179,40 @@ func (s *IntegrationTestSuite) verifyBlock(height uint64, bundle []string, expec
 	}
 }
 
+// verifyBlock verifies that the transactions in the block at the given height were seen
+// and executed in the order they were submitted.
+func (s *IntegrationTestSuite) verifyBlock(height uint64, txs []string, expectedExecution map[string]bool) {
+	s.waitForABlock()
+	s.T().Logf("Verifying block %d", height)
+
+	// Get the block's transactions and display the expected and actual block for debugging.
+	blockTxs := s.queryBlockTxs(height)
+	s.displayBlock(blockTxs, txs)
+
+	// Ensure that all transactions executed as expected (i.e. landed or failed to land).
+	for tx, landed := range expectedExecution {
+		s.T().Logf("Verifying tx %s executed as %t", tx, landed)
+		s.Require().Equal(landed, s.queryTxPassed(tx) == nil)
+	}
+	s.T().Logf("All txs executed as expected")
+
+	// Check that the block contains the expected transactions in the expected order.
+	s.Require().Equal(len(txs), len(blockTxs))
+
+	hashBlockTxs := s.normalTxsToTxHashes(blockTxs)
+	for index, tx := range txs {
+		s.Require().Equal(strings.ToUpper(tx), strings.ToUpper(hashBlockTxs[index]))
+	}
+
+	s.T().Logf("Block %d contains the expected transactions in the expected order", height)
+}
+
 // displayExpectedBlock displays the expected and actual blocks.
-func (s *IntegrationTestSuite) displayBlock(txs [][]byte, bundle []string) {
-	if len(bundle) != 0 {
-		expectedBlock := fmt.Sprintf("Expected block:\n\t(%d, %s)\n", 0, bundle[0])
-		for index, bundleTx := range bundle[1:] {
-			expectedBlock += fmt.Sprintf("\t(%d, %s)\n", index+1, bundleTx)
+func (s *IntegrationTestSuite) displayBlock(txs [][]byte, expectedTxs []string) {
+	if len(expectedTxs) != 0 {
+		expectedBlock := fmt.Sprintf("Expected block:\n\t(%d, %s)\n", 0, expectedTxs[0])
+		for index, expectedTx := range expectedTxs[1:] {
+			expectedBlock += fmt.Sprintf("\t(%d, %s)\n", index+1, expectedTx)
 		}
 
 		s.T().Logf(expectedBlock)
@@ -325,4 +353,15 @@ func (s *IntegrationTestSuite) queryBlockTxs(height uint64) [][]byte {
 	s.Require().NoError(err)
 
 	return resp.GetSdkBlock().Data.Txs
+}
+
+// queryValidators returns the validators of the network.
+func (s *IntegrationTestSuite) queryValidators() []stakingtypes.Validator {
+	queryClient := stakingtypes.NewQueryClient(s.createClientContext())
+
+	req := &stakingtypes.QueryValidatorsRequest{}
+	resp, err := queryClient.Validators(context.Background(), req)
+	s.Require().NoError(err)
+
+	return resp.Validators
 }
