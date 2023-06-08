@@ -24,6 +24,21 @@ func GetTxHashStr(txEncoder sdk.TxEncoder, tx sdk.Tx) ([]byte, string, error) {
 	return txBz, txHashStr, nil
 }
 
+// GetDecodedTxs returns the decoded transactions from the given bytes.
+func GetDecodedTxs(txDecoder sdk.TxDecoder, txs [][]byte) ([]sdk.Tx, error) {
+	var decodedTxs []sdk.Tx
+	for _, txBz := range txs {
+		tx, err := txDecoder(txBz)
+		if err != nil {
+			return nil, fmt.Errorf("failed to decode transaction: %w", err)
+		}
+
+		decodedTxs = append(decodedTxs, tx)
+	}
+
+	return decodedTxs, nil
+}
+
 // RemoveTxsFromLane removes the transactions from the given lane's mempool.
 func RemoveTxsFromLane(txs map[sdk.Tx]struct{}, mempool sdkmempool.Mempool) error {
 	for tx := range txs {

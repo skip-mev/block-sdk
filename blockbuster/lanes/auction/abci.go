@@ -123,26 +123,23 @@ selectBidTxLoop:
 
 // ProcessLane will ensure that block proposals that include transactions from
 // the top-of-block auction lane are valid.
-func (l *TOBLane) ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
-	tx, err := l.Cfg.TxDecoder(proposalTxs[0])
-	if err != nil {
-		return ctx, fmt.Errorf("failed to decode tx in lane %s: %w", l.Name(), err)
+func (l *TOBLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
+	bidTx := txs[0]
+
+	if !l.Match(bidTx) {
+		return next(ctx, txs)
 	}
 
-	if !l.Match(tx) {
-		return next(ctx, proposalTxs)
-	}
-
-	bidInfo, err := l.GetAuctionBidInfo(tx)
+	bidInfo, err := l.GetAuctionBidInfo(bidTx)
 	if err != nil {
 		return ctx, fmt.Errorf("failed to get bid info for lane %s: %w", l.Name(), err)
 	}
 
-	if err := l.VerifyTx(ctx, tx); err != nil {
+	if err := l.VerifyTx(ctx, bidTx); err != nil {
 		return ctx, fmt.Errorf("invalid bid tx: %w", err)
 	}
 
-	return next(ctx, proposalTxs[len(bidInfo.Transactions)+1:])
+	return next(ctx, txs[len(bidInfo.Transactions)+1:])
 }
 
 // ProcessLaneBasic ensures that if a bid transaction is present in a proposal,
@@ -150,20 +147,12 @@ func (l *TOBLane) ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next blockb
 //   - all of the bundled transactions are included after the bid transaction in the order
 //     they were included in the bid transaction.
 //   - there are no other bid transactions in the proposal
-func (l *TOBLane) ProcessLaneBasic(txs [][]byte) error {
-	tx, err := l.Cfg.TxDecoder(txs[0])
-	if err != nil {
-		return fmt.Errorf("failed to decode tx in lane %s: %w", l.Name(), err)
-	}
+func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
+	bidTx := txs[0]
 
 	// If there is a bid transaction, it must be the first transaction in the block proposal.
-	if !l.Match(tx) {
-		for _, txBz := range txs[1:] {
-			tx, err := l.Cfg.TxDecoder(txBz)
-			if err != nil {
-				return fmt.Errorf("failed to decode tx in lane %s: %w", l.Name(), err)
-			}
-
+	if !l.Match(bidTx) {
+		for _, tx := range txs[1:] {
 			if l.Match(tx) {
 				return fmt.Errorf("misplaced bid transactions in lane %s", l.Name())
 			}
@@ -172,7 +161,7 @@ func (l *TOBLane) ProcessLaneBasic(txs [][]byte) error {
 		return nil
 	}
 
-	bidInfo, err := l.GetAuctionBidInfo(tx)
+	bidInfo, err := l.GetAuctionBidInfo(bidTx)
 	if err != nil {
 		return fmt.Errorf("failed to get bid info for lane %s: %w", l.Name(), err)
 	}
@@ -182,17 +171,12 @@ func (l *TOBLane) ProcessLaneBasic(txs [][]byte) error {
 	}
 
 	// Ensure that the order of transactions in the bundle is preserved.
-	for i, bundleTxBz := range txs[1 : len(bidInfo.Transactions)+1] {
-		tx, err := l.WrapBundleTransaction(bundleTxBz)
-		if err != nil {
-			return fmt.Errorf("failed to decode bundled tx in lane %s: %w", l.Name(), err)
-		}
-
-		if l.Match(tx) {
+	for i, bundleTx := range txs[1 : len(bidInfo.Transactions)+1] {
+		if l.Match(bundleTx) {
 			return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
 		}
 
-		txBz, err := l.Cfg.TxEncoder(tx)
+		txBz, err := l.Cfg.TxEncoder(bundleTx)
 		if err != nil {
 			return fmt.Errorf("failed to encode bundled tx in lane %s: %w", l.Name(), err)
 		}
@@ -203,12 +187,7 @@ func (l *TOBLane) ProcessLaneBasic(txs [][]byte) error {
 	}
 
 	// Ensure that there are no more bid transactions in the block proposal.
-	for _, txBz := range txs[len(bidInfo.Transactions)+1:] {
-		tx, err := l.Cfg.TxDecoder(txBz)
-		if err != nil {
-			return fmt.Errorf("failed to decode tx in lane %s: %w", l.Name(), err)
-		}
-
+	for _, tx := range txs[len(bidInfo.Transactions)+1:] {
 		if l.Match(tx) {
 			return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
 		}

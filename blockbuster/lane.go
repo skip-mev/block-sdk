@@ -34,7 +34,7 @@ type (
 	// ProcessLanesHandler wraps all of the lanes Process functions into a single chained
 	// function. You can think of it like an AnteHandler, but for processing proposals in the
 	// context of lanes instead of modules.
-	ProcessLanesHandler func(ctx sdk.Context, proposalTxs [][]byte) (sdk.Context, error)
+	ProcessLanesHandler func(ctx sdk.Context, txs []sdk.Tx) (sdk.Context, error)
 
 	// BaseLaneConfig defines the basic functionality needed for a lane.
 	BaseLaneConfig struct {
@@ -48,6 +48,14 @@ type (
 		// on the number of transactions that can be included in the block for this
 		// lane (up to maxTxBytes as provided by the request). This is useful for the default lane.
 		MaxBlockSpace sdk.Dec
+
+		// IgnoreList defines the list of lanes to ignore when processing transactions. This
+		// is useful for when you want lanes to exist after the default lane. For example,
+		// say there are two lanes: default and free. The free lane should be processed after
+		// the default lane. In this case, the free lane should be added to the ignore list
+		// of the default lane. Otherwise, the transactions that belong to the free lane
+		// will be processed by the default lane.
+		IgnoreList []Lane
 	}
 
 	// Lane defines an interface used for block construction
@@ -74,12 +82,12 @@ type (
 
 		// ProcessLaneBasic validates that transactions belonging to this lane are not misplaced
 		// in the block proposal.
-		ProcessLaneBasic(txs [][]byte) error
+		ProcessLaneBasic(txs []sdk.Tx) error
 
 		// ProcessLane verifies this lane's portion of a proposed block. It inputs the transactions
 		// that may belong to this lane and a function to call the next lane in the chain. The next
 		// lane in the chain will be called with the updated context and filtered down transactions.
-		ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next ProcessLanesHandler) (sdk.Context, error)
+		ProcessLane(ctx sdk.Context, proposalTxs []sdk.Tx, next ProcessLanesHandler) (sdk.Context, error)
 
 		// SetAnteHandler sets the lane's antehandler.
 		SetAnteHandler(antehander sdk.AnteHandler)

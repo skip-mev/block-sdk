@@ -364,9 +364,6 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 					bundle2[i] = s.createMsgSendTx(accounts[1], accounts[0].Address.String(), defaultSendAmount, uint64(i), 1000)
 				}
 
-				// Wait for a block to ensure all transactions are included in the same block
-				s.waitForABlock()
-
 				// Create a bid transaction that includes the bundle and is valid
 				bid := reserveFee
 				height := s.queryCurrentHeight()
@@ -375,6 +372,9 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 				// Createa a second bid transaction that includes the bundle and is valid
 				bid2 := reserveFee.Add(sdk.NewCoin(app.BondDenom, sdk.NewInt(10)))
 				bidTx2 := s.createAuctionBidTx(accounts[3], bid2, bundle2, 0, height+5)
+
+				// Wait for a block to ensure all transactions are included in the same block
+				s.waitForABlock()
 
 				// Broadcast the transactions to different validators
 				s.broadcastTx(bidTx, 0)
@@ -1066,14 +1066,6 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				s.waitForABlock()
 				height := s.queryCurrentHeight()
 
-				// Ensure that the transaction was executed
-				balanceAfterFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
-				s.Require().True(balanceAfterFreeTx.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx))
-
-				// The balance must be strictly less than to account for fees
-				balanceAfterNormalTx := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
-				s.Require().True(balanceAfterNormalTx.IsLT((balanceBeforeNormalTx.Sub(defaultSendAmount))))
-
 				hashes := s.normalTxsToTxHashes([][]byte{freeTx, normalTx})
 				expectedExecution := map[string]bool{
 					hashes[0]: true,
@@ -1082,6 +1074,14 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 
 				// Ensure that the block was built correctly
 				s.verifyBlock(height, hashes, expectedExecution)
+
+				// Ensure that the transaction was executed
+				balanceAfterFreeTx := s.queryBalanceOf(accounts[0].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterFreeTx.Add(defaultStakeAmount).IsGTE(balanceBeforeFreeTx))
+
+				// The balance must be strictly less than to account for fees
+				balanceAfterNormalTx := s.queryBalanceOf(accounts[1].Address.String(), app.BondDenom)
+				s.Require().True(balanceAfterNormalTx.IsLT((balanceBeforeNormalTx.Sub(defaultSendAmount))))
 			},
 		},
 		{

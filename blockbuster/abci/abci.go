@@ -14,15 +14,17 @@ type (
 	// handlers.
 	ProposalHandler struct {
 		logger              log.Logger
+		txDecoder           sdk.TxDecoder
 		prepareLanesHandler blockbuster.PrepareLanesHandler
 		processLanesHandler blockbuster.ProcessLanesHandler
 	}
 )
 
 // NewProposalHandler returns a new abci++ proposal handler.
-func NewProposalHandler(logger log.Logger, mempool blockbuster.Mempool) *ProposalHandler {
+func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, mempool blockbuster.Mempool) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
+		txDecoder:           txDecoder,
 		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()...),
 		processLanesHandler: ChainProcessLanes(mempool.Registry()...),
 	}
@@ -67,8 +69,15 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
+		// Decode the transactions from the proposal.
+		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, req.Txs)
+		if err != nil {
+			h.logger.Error("failed to decode transactions", "err", err)
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+		}
+
 		// Verify the proposal using the verification logic from each lane.
-		if _, err := h.processLanesHandler(ctx, req.Txs); err != nil {
+		if _, err := h.processLanesHandler(ctx, decodedTxs); err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
@@ -163,7 +172,7 @@ func ChainProcessLanes(chain ...blockbuster.Lane) blockbuster.ProcessLanesHandle
 		chain = append(chain, terminator.Terminator{})
 	}
 
-	return func(ctx sdk.Context, proposalTxs [][]byte) (sdk.Context, error) {
+	return func(ctx sdk.Context, proposalTxs []sdk.Tx) (sdk.Context, error) {
 		// Short circuit if there are no transactions to process.
 		if len(proposalTxs) == 0 {
 			return ctx, nil

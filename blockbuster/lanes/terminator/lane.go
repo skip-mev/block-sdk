@@ -40,7 +40,7 @@ func (t Terminator) PrepareLane(_ sdk.Context, proposal *blockbuster.Proposal, _
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, _ [][]byte, _ blockbuster.ProcessLanesHandler) (sdk.Context, error) {
+func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ blockbuster.ProcessLanesHandler) (sdk.Context, error) {
 	return ctx, nil
 }
 
@@ -85,7 +85,7 @@ func (t Terminator) Select(context.Context, [][]byte) sdkmempool.Iterator {
 }
 
 // ValidateLaneBasic is a no-op
-func (t Terminator) ProcessLaneBasic([][]byte) error {
+func (t Terminator) ProcessLaneBasic([]sdk.Tx) error {
 	return nil
 }
 

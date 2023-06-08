@@ -295,7 +295,17 @@ func New(
 	)
 
 	// Default lane accepts all other transactions.
-	defaultLane := base.NewDefaultLane(config)
+	defaultConfig := blockbuster.BaseLaneConfig{
+		Logger:        app.Logger(),
+		TxEncoder:     app.txConfig.TxEncoder(),
+		TxDecoder:     app.txConfig.TxDecoder(),
+		MaxBlockSpace: sdk.ZeroDec(),
+		IgnoreList: []blockbuster.Lane{
+			tobLane,
+			freeLane,
+		},
+	}
+	defaultLane := base.NewDefaultLane(defaultConfig)
 	lanes := []blockbuster.Lane{
 		tobLane,
 		freeLane,
@@ -333,6 +343,7 @@ func New(
 	// Set the proposal handlers on the BaseApp along with the custom antehandler.
 	proposalHandlers := abci.NewProposalHandler(
 		app.Logger(),
+		app.txConfig.TxDecoder(),
 		mempool,
 	)
 	app.App.SetPrepareProposal(proposalHandlers.PrepareProposalHandler())

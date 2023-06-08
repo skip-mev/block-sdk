@@ -66,19 +66,14 @@ func (l *DefaultLane) PrepareLane(
 }
 
 // ProcessLane verifies the default lane's portion of a block proposal.
-func (l *DefaultLane) ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
-	for index, tx := range proposalTxs {
-		tx, err := l.Cfg.TxDecoder(tx)
-		if err != nil {
-			return ctx, fmt.Errorf("failed to decode tx: %w", err)
-		}
-
+func (l *DefaultLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
+	for index, tx := range txs {
 		if l.Match(tx) {
 			if err := l.VerifyTx(ctx, tx); err != nil {
 				return ctx, fmt.Errorf("failed to verify tx: %w", err)
 			}
 		} else {
-			return next(ctx, proposalTxs[index:])
+			return next(ctx, txs[index:])
 		}
 	}
 
@@ -88,16 +83,11 @@ func (l *DefaultLane) ProcessLane(ctx sdk.Context, proposalTxs [][]byte, next bl
 
 // ProcessLaneBasic does basic validation on the block proposal to ensure that
 // transactions that belong to this lane are not misplaced in the block proposal.
-func (l *DefaultLane) ProcessLaneBasic(txs [][]byte) error {
+func (l *DefaultLane) ProcessLaneBasic(txs []sdk.Tx) error {
 	seenOtherLaneTx := false
 	lastSeenIndex := 0
 
-	for _, txBz := range txs {
-		tx, err := l.Cfg.TxDecoder(txBz)
-		if err != nil {
-			return fmt.Errorf("failed to decode tx in lane %s: %w", l.Name(), err)
-		}
-
+	for _, tx := range txs {
 		if l.Match(tx) {
 			if seenOtherLaneTx {
 				return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())

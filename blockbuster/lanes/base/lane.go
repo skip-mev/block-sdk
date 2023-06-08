@@ -36,9 +36,15 @@ func NewDefaultLane(cfg blockbuster.BaseLaneConfig) *DefaultLane {
 }
 
 // Match returns true if the transaction belongs to this lane. Since
-// this is the default lane, it always returns true. This means that
-// any transaction can be included in this lane.
-func (l *DefaultLane) Match(sdk.Tx) bool {
+// this is the default lane, it always returns true except for transactions
+// that belong to lanes in the ignore list.
+func (l *DefaultLane) Match(tx sdk.Tx) bool {
+	for _, lane := range l.Cfg.IgnoreList {
+		if lane.Match(tx) {
+			return false
+		}
+	}
+
 	return true
 }
 
@@ -60,4 +66,9 @@ func (l *DefaultLane) SetAnteHandler(anteHandler sdk.AnteHandler) {
 // GetMaxBlockSpace returns the maximum block space for the lane as a relative percentage.
 func (l *DefaultLane) GetMaxBlockSpace() sdk.Dec {
 	return l.Cfg.MaxBlockSpace
+}
+
+// GetIgnoreList returns the lane's ignore list.
+func (l *DefaultLane) GetIgnoreList() []blockbuster.Lane {
+	return l.Cfg.IgnoreList
 }

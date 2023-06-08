@@ -11,6 +11,7 @@ import (
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
 const (
@@ -39,8 +40,8 @@ type (
 		VerifyTx(ctx sdk.Context, tx sdk.Tx) error
 
 		// ProcessLaneBasic is utilized to verify the rest of the proposal according to
-		// the preferences of the top of block lane. This is used to verify that no
-		ProcessLaneBasic(txs [][]byte) error
+		// the preferences of the top of block lane.
+		ProcessLaneBasic(txs []sdk.Tx) error
 	}
 
 	// ProposalHandler contains the functionality and handlers required to\
@@ -127,15 +128,22 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}
 		}
 
+		// Decode the transactions in the proposal.
+		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, proposal[NumInjectedTxs:])
+		if err != nil {
+			h.logger.Error("failed to decode transactions", "err", err)
+			return cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}
+		}
+
 		// Do a basic check of the rest of the proposal to make sure no auction transactions
 		// are included.
-		if err := h.tobLane.ProcessLaneBasic(proposal[NumInjectedTxs:]); err != nil {
+		if err := h.tobLane.ProcessLaneBasic(decodedTxs); err != nil {
 			h.logger.Error("failed to process proposal", "err", err)
 			return cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}
 		}
 
 		// Verify that the rest of the proposal is valid according to each lane's verification logic.
-		if _, err = h.processLanesHandler(ctx, proposal[auctionInfo.NumTxs:]); err != nil {
+		if _, err = h.processLanesHandler(ctx, decodedTxs[auctionInfo.NumTxs:]); err != nil {
 			h.logger.Error("failed to process proposal", "err", err)
 			return cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}
 		}
