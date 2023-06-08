@@ -132,8 +132,6 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 				// Write the cache to the context since we know that the lane successfully prepared
 				// the partial proposal.
 				write()
-
-				lane.Logger().Info("prepared lane", "lane", lane.Name())
 			}
 		}()
 

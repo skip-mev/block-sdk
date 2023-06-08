@@ -1032,10 +1032,10 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				tx := s.createMsgDelegateTx(accounts[0], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
 
 				// Broadcast the transaction
+				s.waitForABlock()
 				s.broadcastTx(tx, 0)
 
 				// Wait for a block to be created
-				s.waitForABlock()
 				s.waitForABlock()
 
 				// Ensure that the transaction was executed correctly
@@ -1058,6 +1058,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				normalTx := s.createMsgSendTx(accounts[1], accounts[2].Address.String(), defaultSendAmountCoins, 0, 1000)
 
 				// Broadcast the transactions
+				s.waitForABlock()
 				s.broadcastTx(freeTx, 0)
 				s.broadcastTx(normalTx, 0)
 
@@ -1098,6 +1099,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				freeTx2 := s.createMsgDelegateTx(accounts[1], validator.OperatorAddress, defaultStakeAmount, 0, 1000)
 
 				// Broadcast the transactions
+				s.waitForABlock()
 				s.broadcastTx(freeTx, 0)
 				s.broadcastTx(freeTx2, 0)
 

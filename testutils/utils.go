@@ -15,6 +15,7 @@ import (
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
@@ -32,6 +33,7 @@ func CreateTestEncodingConfig() EncodingConfig {
 	banktypes.RegisterInterfaces(interfaceRegistry)
 	cryptocodec.RegisterInterfaces(interfaceRegistry)
 	buildertypes.RegisterInterfaces(interfaceRegistry)
+	stakingtypes.RegisterInterfaces(interfaceRegistry)
 
 	codec := codec.NewProtoCodec(interfaceRegistry)
 
@@ -92,6 +94,18 @@ func CreateTx(txCfg client.TxConfig, account Account, nonce, timeout uint64, msg
 	txBuilder.SetTimeoutHeight(timeout)
 
 	return txBuilder.GetTx(), nil
+}
+
+func CreateFreeTx(txCfg client.TxConfig, account Account, nonce, timeout uint64, validator string, amount sdk.Coin) (authsigning.Tx, error) {
+	msgs := []sdk.Msg{
+		&stakingtypes.MsgDelegate{
+			DelegatorAddress: account.Address.String(),
+			ValidatorAddress: validator,
+			Amount:           amount,
+		},
+	}
+
+	return CreateTx(txCfg, account, nonce, timeout, msgs)
 }
 
 func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64) (authsigning.Tx, error) {
