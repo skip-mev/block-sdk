@@ -14,13 +14,12 @@ import (
 // will return an empty partial proposal if no valid bids are found.
 func (l *TOBLane) PrepareLane(
 	ctx sdk.Context,
-	proposal *blockbuster.Proposal,
+	proposal blockbuster.BlockProposal,
 	maxTxBytes int64,
 	next blockbuster.PrepareLanesHandler,
-) *blockbuster.Proposal {
+) (blockbuster.BlockProposal, error) {
 	// Define all of the info we need to select transactions for the partial proposal.
 	var (
-		totalSize   int64
 		txs         [][]byte
 		txsToRemove = make(map[sdk.Tx]struct{}, 0)
 	)
@@ -33,14 +32,14 @@ selectBidTxLoop:
 		cacheCtx, write := ctx.CacheContext()
 		tmpBidTx := bidTxIterator.Tx()
 
-		bidTxBz, txHash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tmpBidTx)
+		bidTxBz, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tmpBidTx)
 		if err != nil {
 			txsToRemove[tmpBidTx] = struct{}{}
-			continue
+			continue selectBidTxLoop
 		}
 
 		// if the transaction is already in the (partial) block proposal, we skip it.
-		if _, ok := proposal.Cache[txHash]; ok {
+		if proposal.Contains(bidTxBz) {
 			continue selectBidTxLoop
 		}
 
@@ -71,14 +70,14 @@ selectBidTxLoop:
 					continue selectBidTxLoop
 				}
 
-				sdkTxBz, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, sdkTx)
+				sdkTxBz, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, sdkTx)
 				if err != nil {
 					txsToRemove[tmpBidTx] = struct{}{}
 					continue selectBidTxLoop
 				}
 
 				// if the transaction is already in the (partial) block proposal, we skip it.
-				if _, ok := proposal.Cache[hash]; ok {
+				if proposal.Contains(sdkTxBz) {
 					continue selectBidTxLoop
 				}
 
@@ -93,7 +92,6 @@ selectBidTxLoop:
 			// update the total size selected thus far.
 			txs = append(txs, bidTxBz)
 			txs = append(txs, bundledTxBz...)
-			totalSize = bidTxSize
 
 			// Write the cache context to the original context when we know we have a
 			// valid top of block bundle.
@@ -111,12 +109,15 @@ selectBidTxLoop:
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
 	if err := utils.RemoveTxsFromLane(txsToRemove, l.Mempool); err != nil {
-		l.Cfg.Logger.Error("failed to remove txs from mempool", "lane", l.Name(), "err", err)
-		return proposal
+		return proposal, err
 	}
 
-	// Update the proposal with the selected transactions.
-	proposal.UpdateProposal(txs, totalSize)
+	// Update the proposal with the selected transactions. This will only return an error
+	// if the invarient checks are not passed. In the case when this errors, the original proposal
+	// will be returned (without the selected transactions from this lane).
+	if err := proposal.UpdateProposal(l, txs); err != nil {
+		return proposal, err
+	}
 
 	return next(ctx, proposal)
 }

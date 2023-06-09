@@ -13,6 +13,8 @@ import (
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
+// TODO:
+// - Add tests that can that trigger a panic for the tob of block lane
 func (suite *ABCITestSuite) TestPrepareProposal() {
 	var (
 		// the modified transactions cannot exceed this size
@@ -355,12 +357,15 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 	}
 }
 
+// TODO:
+// - Add tests that ensure that the top of block lane does not propose more transactions than it is allowed to
 func (suite *ABCITestSuite) TestProcessProposal() {
 	var (
 		// auction configuration
 		maxBundleSize          uint32 = 10
 		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(1000))
 		frontRunningProtection        = true
+		maxTxBytes             int64  = 1000000000000000000
 
 		// mempool configuration
 		proposal [][]byte
@@ -448,7 +453,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				normalTx, err := testutils.CreateRandomTxBz(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTx}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTx}, 2, maxTxBytes)
 
 				proposal = [][]byte{
 					auctionInfo,
@@ -470,7 +475,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 
@@ -496,7 +501,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 3)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 3, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 
@@ -521,7 +526,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 3)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 3, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 				proposal = append(
@@ -555,7 +560,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz2, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 3)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 3, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 
@@ -590,7 +595,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz2, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 2, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz2)
 
@@ -625,7 +630,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz2, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz, bidTxBz2}, 2, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz2)
 				bidInfo2 := suite.getAuctionBidInfoFromTxBz(bidTxBz)
@@ -655,7 +660,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 
@@ -683,7 +688,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2)
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, 2, maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 
@@ -717,7 +722,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				bidTxBz, err := testutils.CreateAuctionTxWithSignerBz(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
 				suite.Require().NoError(err)
 
-				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, uint64(len(signers)+1))
+				auctionInfo := suite.createAuctionInfoFromTxBzs([][]byte{bidTxBz}, uint64(len(signers)+1), maxTxBytes)
 
 				bidInfo := suite.getAuctionBidInfoFromTxBz(bidTxBz)
 

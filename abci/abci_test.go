@@ -272,11 +272,11 @@ func (suite *ABCITestSuite) createExtendedCommitInfoFromTxBzs(txs [][]byte) []by
 	return commitInfoBz
 }
 
-func (suite *ABCITestSuite) createAuctionInfoFromTxBzs(txs [][]byte, numTxs uint64) []byte {
+func (suite *ABCITestSuite) createAuctionInfoFromTxBzs(txs [][]byte, numTxs uint64, maxTxBytes int64) []byte {
 	auctionInfo := abci.AuctionInfo{
 		ExtendedCommitInfo: suite.createExtendedCommitInfoFromTxBzs(txs),
 		NumTxs:             numTxs,
-		MaxTxBytes:         int64(len(txs[0])),
+		MaxTxBytes:         maxTxBytes,
 	}
 
 	auctionInfoBz, err := auctionInfo.Marshal()

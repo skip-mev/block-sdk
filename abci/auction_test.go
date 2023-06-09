@@ -481,11 +481,11 @@ func (suite *ABCITestSuite) TestBuildTOB() {
 			proposal := suite.proposalHandler.BuildTOB(suite.ctx, commitInfo, tc.maxBytes)
 
 			// Size of the proposal should be less than or equal to the max bytes
-			suite.Require().LessOrEqual(proposal.TotalTxBytes, tc.maxBytes)
+			suite.Require().LessOrEqual(proposal.GetTotalTxBytes(), tc.maxBytes)
 
 			if winningBid == nil {
-				suite.Require().Len(proposal.Txs, 0)
-				suite.Require().Equal(proposal.TotalTxBytes, int64(0))
+				suite.Require().Len(proposal.GetTxs(), 0)
+				suite.Require().Equal(proposal.GetTotalTxBytes(), int64(0))
 			} else {
 				// Get info about the winning bid
 				winningBidBz, err := suite.encodingConfig.TxConfig.TxEncoder()(winningBid)
@@ -496,13 +496,13 @@ func (suite *ABCITestSuite) TestBuildTOB() {
 
 				// Verify that the size of the proposal is the size of the winning bid
 				// plus the size of the bundle
-				suite.Require().Equal(len(proposal.Txs), len(auctionBidInfo.Transactions)+1)
+				suite.Require().Equal(len(proposal.GetTxs()), len(auctionBidInfo.Transactions)+1)
 
 				// Verify that the winning bid is the first transaction in the proposal
-				suite.Require().Equal(proposal.Txs[0], winningBidBz)
+				suite.Require().Equal(proposal.GetTxs()[0], winningBidBz)
 
 				// Verify the ordering of transactions in the proposal
-				for index, tx := range proposal.Txs[1:] {
+				for index, tx := range proposal.GetTxs()[1:] {
 					suite.Equal(tx, auctionBidInfo.Transactions[index])
 				}
 			}

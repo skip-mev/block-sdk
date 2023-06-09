@@ -26,8 +26,7 @@ import (
 
 type ABCITestSuite struct {
 	suite.Suite
-	logger log.Logger
-	ctx    sdk.Context
+	ctx sdk.Context
 
 	// Define basic tx configuration
 	encodingConfig testutils.EncodingConfig
@@ -333,8 +332,9 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				suite.Require().NoError(err)
 				freeSize := int64(len(freeTxBytes))
 
-				maxTxBytes = tobSize + freeSize - 1
+				maxTxBytes = tobSize*2 + freeSize - 1
 				suite.tobConfig.MaxBlockSpace = sdk.ZeroDec()
+				suite.freeConfig.MaxBlockSpace = sdk.MustNewDecFromStr("0.1")
 
 				txs = []sdk.Tx{freeTx}
 				auctionTxs = []sdk.Tx{bidTx}
@@ -388,7 +388,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				suite.Require().NoError(err)
 				normalSize := int64(len(normalTxBytes))
 
-				maxTxBytes = tobSize + freeSize + normalSize + 1
+				maxTxBytes = tobSize*2 + freeSize + normalSize + 1
 
 				// Tob can take up as much space as it wants
 				suite.tobConfig.MaxBlockSpace = sdk.ZeroDec()
@@ -693,7 +693,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 			}
 
 			// Create a new proposal handler
-			suite.proposalHandler = abci.NewProposalHandler(suite.logger, suite.encodingConfig.TxConfig.TxDecoder(), suite.mempool)
+			suite.proposalHandler = abci.NewProposalHandler(log.NewNopLogger(), suite.encodingConfig.TxConfig.TxDecoder(), suite.mempool)
 			handler := suite.proposalHandler.PrepareProposalHandler()
 			res := handler(suite.ctx, abcitypes.RequestPrepareProposal{
 				MaxTxBytes: maxTxBytes,

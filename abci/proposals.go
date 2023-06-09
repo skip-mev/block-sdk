@@ -42,6 +42,16 @@ type (
 		// ProcessLaneBasic is utilized to verify the rest of the proposal according to
 		// the preferences of the top of block lane.
 		ProcessLaneBasic(txs []sdk.Tx) error
+
+		// GetMaxBlockSpace returns the maximum block space that can be used by the top of
+		// block lane as a percentage of the total block space.
+		GetMaxBlockSpace() sdk.Dec
+
+		// Logger returns the logger for the top of block lane.
+		Logger() log.Logger
+
+		// Name returns the name of the top of block lane.
+		Name() string
 	}
 
 	// ProposalHandler contains the functionality and handlers required to\
@@ -94,7 +104,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		auctionInfo := &AuctionInfo{
 			ExtendedCommitInfo: lastCommitInfo,
 			MaxTxBytes:         req.MaxTxBytes,
-			NumTxs:             uint64(len(topOfBlock.Txs)),
+			NumTxs:             uint64(topOfBlock.GetNumTxs()),
 		}
 
 		// Add the auction info and top of block transactions into the proposal.
@@ -104,13 +114,17 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			return cometabci.ResponsePrepareProposal{Txs: nil}
 		}
 
-		topOfBlock.Txs = append([][]byte{auctionInfoBz}, topOfBlock.Txs...)
+		topOfBlock.AddVoteExtension(auctionInfoBz)
 
 		// Prepare the proposal by selecting transactions from each lane according to
 		// each lane's selection logic.
-		proposal := h.prepareLanesHandler(ctx, topOfBlock)
+		proposal, err := h.prepareLanesHandler(ctx, topOfBlock)
+		if err != nil {
+			h.logger.Error("failed to prepare proposal", "err", err)
+			return cometabci.ResponsePrepareProposal{Txs: nil}
+		}
 
-		return cometabci.ResponsePrepareProposal{Txs: proposal.Txs}
+		return cometabci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
 	}
 }
 

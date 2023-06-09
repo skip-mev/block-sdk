@@ -8,13 +8,15 @@ import (
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
-// PrepareLane will prepare a partial proposal for the base lane.
+// PrepareLane will prepare a partial proposal for the default lane. It will select and include
+// all valid transactions in the mempool that are not already in the partial proposal.
+// The default lane orders transactions by the sdk.Context priority.
 func (l *DefaultLane) PrepareLane(
 	ctx sdk.Context,
-	proposal *blockbuster.Proposal,
+	proposal blockbuster.BlockProposal,
 	maxTxBytes int64,
 	next blockbuster.PrepareLanesHandler,
-) *blockbuster.Proposal {
+) (blockbuster.BlockProposal, error) {
 	// Define all of the info we need to select transactions for the partial proposal.
 	var (
 		totalSize   int64
@@ -27,14 +29,14 @@ func (l *DefaultLane) PrepareLane(
 	for iterator := l.Mempool.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 		tx := iterator.Tx()
 
-		txBytes, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tx)
+		txBytes, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tx)
 		if err != nil {
 			txsToRemove[tx] = struct{}{}
 			continue
 		}
 
 		// if the transaction is already in the (partial) block proposal, we skip it.
-		if _, ok := proposal.Cache[hash]; ok {
+		if proposal.Contains(txBytes) {
 			continue
 		}
 
@@ -56,16 +58,22 @@ func (l *DefaultLane) PrepareLane(
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
 	if err := utils.RemoveTxsFromLane(txsToRemove, l.Mempool); err != nil {
-		l.Cfg.Logger.Error("failed to remove txs from mempool", "lane", l.Name(), "err", err)
-		return proposal
+		return proposal, err
 	}
 
-	proposal.UpdateProposal(txs, totalSize)
+	// Update the partial proposal with the selected transactions. If the proposal is unable to
+	// be updated, we return an error. The proposal will only be modified if it passes all
+	// of the invarient checks.
+	if err := proposal.UpdateProposal(l, txs); err != nil {
+		return proposal, err
+	}
 
 	return next(ctx, proposal)
 }
 
-// ProcessLane verifies the default lane's portion of a block proposal.
+// ProcessLane verifies the default lane's portion of a block proposal. Since the default lane's
+// ProcessLaneBasic function ensures that all of the default transactions are in the correct order,
+// we only need to verify the contiguous set of transactions that match to the default lane.
 func (l *DefaultLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
 	for index, tx := range txs {
 		if l.Match(tx) {
@@ -81,8 +89,9 @@ func (l *DefaultLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuste
 	return ctx, nil
 }
 
-// ProcessLaneBasic does basic validation on the block proposal to ensure that
-// transactions that belong to this lane are not misplaced in the block proposal.
+// transactions that belong to this lane are not misplaced in the block proposal i.e.
+// the proposal only contains contiguous transactions that belong to this lane - there
+// can be no interleaving of transactions from other lanes.
 func (l *DefaultLane) ProcessLaneBasic(txs []sdk.Tx) error {
 	seenOtherLaneTx := false
 	lastSeenIndex := 0

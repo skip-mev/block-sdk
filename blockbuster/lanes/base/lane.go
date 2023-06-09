@@ -13,8 +13,12 @@ const (
 
 var _ blockbuster.Lane = (*DefaultLane)(nil)
 
-// DefaultLane defines a default lane implementation. It contains a priority-nonce
-// index along with core lane functionality.
+// DefaultLane defines a default lane implementation. The default lane orders
+// transactions by the sdk.Context priority. The default lane will accept any
+// transaction that is not a part of the lane's IgnoreList. By default, the IgnoreList
+// is empty and the default lane will accept any transaction. The default lane on its
+// own implements the same functionality as the pre v0.47.0 tendermint mempool and proposal
+// handlers.
 type DefaultLane struct {
 	// Mempool defines the mempool for the lane.
 	Mempool

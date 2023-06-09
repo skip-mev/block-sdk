@@ -1,8 +1,6 @@
 package blockbuster
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 
 	"github.com/cometbft/cometbft/libs/log"
@@ -11,25 +9,10 @@ import (
 )
 
 type (
-	// Proposal defines a block proposal type.
-	Proposal struct {
-		// Txs is the list of transactions in the proposal.
-		Txs [][]byte
-
-		// Cache is a cache of the selected transactions in the proposal.
-		Cache map[string]struct{}
-
-		// TotalTxBytes is the total number of bytes currently included in the proposal.
-		TotalTxBytes int64
-
-		// MaxTxBytes is the maximum number of bytes that can be included in the proposal.
-		MaxTxBytes int64
-	}
-
 	// PrepareLanesHandler wraps all of the lanes Prepare function into a single chained
 	// function. You can think of it like an AnteHandler, but for preparing proposals in the
 	// context of lanes instead of modules.
-	PrepareLanesHandler func(ctx sdk.Context, proposal *Proposal) *Proposal
+	PrepareLanesHandler func(ctx sdk.Context, proposal BlockProposal) (BlockProposal, error)
 
 	// ProcessLanesHandler wraps all of the lanes Process functions into a single chained
 	// function. You can think of it like an AnteHandler, but for processing proposals in the
@@ -78,7 +61,7 @@ type (
 		// included in the proposal for the given lane, the partial proposal, and a function
 		// to call the next lane in the chain. The next lane in the chain will be called with
 		// the updated proposal and context.
-		PrepareLane(ctx sdk.Context, proposal *Proposal, maxTxBytes int64, next PrepareLanesHandler) *Proposal
+		PrepareLane(ctx sdk.Context, proposal BlockProposal, maxTxBytes int64, next PrepareLanesHandler) (BlockProposal, error)
 
 		// ProcessLaneBasic validates that transactions belonging to this lane are not misplaced
 		// in the block proposal.
@@ -130,28 +113,4 @@ func (c *BaseLaneConfig) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// NewProposal returns a new empty proposal.
-func NewProposal(maxTxBytes int64) *Proposal {
-	return &Proposal{
-		Txs:        make([][]byte, 0),
-		Cache:      make(map[string]struct{}),
-		MaxTxBytes: maxTxBytes,
-	}
-}
-
-// UpdateProposal updates the proposal with the given transactions and total size.
-func (p *Proposal) UpdateProposal(txs [][]byte, totalSize int64) *Proposal {
-	p.TotalTxBytes += totalSize
-	p.Txs = append(p.Txs, txs...)
-
-	for _, tx := range txs {
-		txHash := sha256.Sum256(tx)
-		txHashStr := hex.EncodeToString(txHash[:])
-
-		p.Cache[txHashStr] = struct{}{}
-	}
-
-	return p
 }

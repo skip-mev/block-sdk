@@ -40,6 +40,8 @@ type (
 	}
 )
 
+// NewDefaultMempool returns a new default mempool instance. The default mempool
+// orders transactions by the sdk.Context priority.
 func NewDefaultMempool(txEncoder sdk.TxEncoder) *DefaultMempool {
 	return &DefaultMempool{
 		index: blockbuster.NewPriorityMempool(
