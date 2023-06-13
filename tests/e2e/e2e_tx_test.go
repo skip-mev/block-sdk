@@ -78,7 +78,7 @@ func (s *IntegrationTestSuite) execMsgSendTx(valIdx int, to sdk.AccAddress, amou
 }
 
 // createAuctionBidTx creates a transaction that bids on an auction given the provided bidder, bid, and transactions.
-func (s *IntegrationTestSuite) createAuctionBidTx(account TestAccount, bid sdk.Coin, transactions [][]byte, sequenceOffset, height uint64) []byte {
+func (s *IntegrationTestSuite) createAuctionBidTx(account TestAccount, bid sdk.Coin, transactions [][]byte, sequenceOffset, height, gasLimit uint64, fees sdk.Coins) []byte {
 	msgs := []sdk.Msg{
 		&buildertypes.MsgAuctionBid{
 			Bidder:       account.Address.String(),
@@ -87,12 +87,12 @@ func (s *IntegrationTestSuite) createAuctionBidTx(account TestAccount, bid sdk.C
 		},
 	}
 
-	return s.createTx(account, msgs, sequenceOffset, height)
+	return s.createTx(account, msgs, sequenceOffset, height, gasLimit, fees)
 }
 
 // createMsgSendTx creates a send transaction given the provided signer, recipient, amount, sequence number offset, and block height timeout.
 // This function is primarily used to create bundles of transactions.
-func (s *IntegrationTestSuite) createMsgSendTx(account TestAccount, toAddress string, amount sdk.Coins, sequenceOffset, height uint64) []byte {
+func (s *IntegrationTestSuite) createMsgSendTx(account TestAccount, toAddress string, amount sdk.Coins, sequenceOffset, height, gasLimit uint64, fees sdk.Coins) []byte {
 	msgs := []sdk.Msg{
 		&banktypes.MsgSend{
 			FromAddress: account.Address.String(),
@@ -101,12 +101,12 @@ func (s *IntegrationTestSuite) createMsgSendTx(account TestAccount, toAddress st
 		},
 	}
 
-	return s.createTx(account, msgs, sequenceOffset, height)
+	return s.createTx(account, msgs, sequenceOffset, height, gasLimit, fees)
 }
 
 // createMsgDelegateTx creates a delegate transaction given the provided signer, validator, amount, sequence number offset
 // and block height timeout.
-func (s *IntegrationTestSuite) createMsgDelegateTx(account TestAccount, validator string, amount sdk.Coin, sequenceOffset, height uint64) []byte {
+func (s *IntegrationTestSuite) createMsgDelegateTx(account TestAccount, validator string, amount sdk.Coin, sequenceOffset, height, gasLimit uint64, fees sdk.Coins) []byte {
 	msgs := []sdk.Msg{
 		&stakingtypes.MsgDelegate{
 			DelegatorAddress: account.Address.String(),
@@ -115,11 +115,11 @@ func (s *IntegrationTestSuite) createMsgDelegateTx(account TestAccount, validato
 		},
 	}
 
-	return s.createTx(account, msgs, sequenceOffset, height)
+	return s.createTx(account, msgs, sequenceOffset, height, gasLimit, fees)
 }
 
 // createTx creates a transaction given the provided messages, sequence number offset, and block height timeout.
-func (s *IntegrationTestSuite) createTx(account TestAccount, msgs []sdk.Msg, sequenceOffset, height uint64) []byte {
+func (s *IntegrationTestSuite) createTx(account TestAccount, msgs []sdk.Msg, sequenceOffset, height, gasLimit uint64, fees sdk.Coins) []byte {
 	txConfig := encodingConfig.TxConfig
 	txBuilder := txConfig.NewTxBuilder()
 

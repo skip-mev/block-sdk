@@ -32,7 +32,7 @@ selectBidTxLoop:
 		cacheCtx, write := ctx.CacheContext()
 		tmpBidTx := bidTxIterator.Tx()
 
-		bidTxBz, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tmpBidTx)
+		bidTxBz, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tmpBidTx)
 		if err != nil {
 			txsToRemove[tmpBidTx] = struct{}{}
 			continue selectBidTxLoop
@@ -47,6 +47,11 @@ selectBidTxLoop:
 		if bidTxSize <= maxTxBytes {
 			// Verify the bid transaction and all of its bundled transactions.
 			if err := l.VerifyTx(cacheCtx, tmpBidTx); err != nil {
+				l.Logger().Info(
+					"failed to verify auction bid tx",
+					"tx_hash", hash,
+					"err", err,
+				)
 				txsToRemove[tmpBidTx] = struct{}{}
 				continue selectBidTxLoop
 			}

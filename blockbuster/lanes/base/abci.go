@@ -29,7 +29,7 @@ func (l *DefaultLane) PrepareLane(
 	for iterator := l.Mempool.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 		tx := iterator.Tx()
 
-		txBytes, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tx)
+		txBytes, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tx)
 		if err != nil {
 			txsToRemove[tx] = struct{}{}
 			continue
@@ -48,6 +48,11 @@ func (l *DefaultLane) PrepareLane(
 
 		// Verify the transaction.
 		if err := l.VerifyTx(ctx, tx); err != nil {
+			l.Logger().Info(
+				"failed to verify tx",
+				"tx_hash", hash,
+				"err", err,
+			)
 			txsToRemove[tx] = struct{}{}
 			continue
 		}
