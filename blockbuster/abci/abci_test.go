@@ -147,10 +147,8 @@ func (suite *ABCITestSuite) SetupTest() {
 
 func (suite *ABCITestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
 	signer := tx.GetMsgs()[0].GetSigners()[0]
-	suite.bankKeeper.EXPECT().GetAllBalances(ctx, signer).AnyTimes().Return(
-		sdk.NewCoins(
-			sdk.NewCoin("foo", sdk.NewInt(100000000000000)),
-		),
+	suite.bankKeeper.EXPECT().GetBalance(ctx, signer, "foo").AnyTimes().Return(
+		sdk.NewCoin("foo", sdk.NewInt(100000000000000)),
 	)
 
 	next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {

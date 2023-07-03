@@ -38,11 +38,11 @@ message MsgAuctionBid {
   string bidder = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
   // bid is the amount of coins that the bidder is bidding to participate in the
   // auction.
-  cosmos.base.v1beta1.Coin bid = 3
+  cosmos.base.v1beta1.Coin bid = 2
       [ (gogoproto.nullable) = false, (amino.dont_omitempty) = true ];
   // transactions are the bytes of the transactions that the bidder wants to
   // bundle together.
-  repeated bytes transactions = 4;
+  repeated bytes transactions = 3;
 }
 
 // MsgAuctionBidResponse defines the Msg/AuctionBid response type.

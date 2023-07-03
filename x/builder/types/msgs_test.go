@@ -148,6 +148,19 @@ func TestMsgUpdateParams(t *testing.T) {
 			},
 			expectPass: false,
 		},
+		{
+			description: "invalid message with min bid increment equal to 0",
+			msg: types.MsgUpdateParams{
+				Authority: sdk.AccAddress([]byte("test")).String(),
+				Params: types.Params{
+					ProposerFee:          sdk.NewDec(1),
+					EscrowAccountAddress: sdk.AccAddress([]byte("test")).String(),
+					ReserveFee:           sdk.NewCoin("test", sdk.NewInt(100)),
+					MinBidIncrement:      sdk.NewCoin("test", sdk.NewInt(0)),
+				},
+			},
+			expectPass: false,
+		},
 	}
 
 	for _, tc := range cases {

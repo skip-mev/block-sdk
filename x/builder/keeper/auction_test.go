@@ -14,7 +14,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 	var (
 		// Tx building variables
 		accounts = []testutils.Account{} // tracks the order of signers in the bundle
-		balance  = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
+		balance  = sdk.NewCoin("foo", sdk.NewInt(10000))
 		bid      = sdk.NewCoin("foo", sdk.NewInt(1000))
 
 		// Auction params
@@ -47,7 +47,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			"insufficient balance",
 			func() {
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				balance = sdk.NewCoins()
+				balance = sdk.NewCoin("foo", sdk.NewInt(100))
 			},
 			false,
 		},
@@ -56,7 +56,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			func() {
 				// reset the balance and bid to their original values
 				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				balance = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(10000)))
+				balance = sdk.NewCoin("foo", sdk.NewInt(10000))
 				accounts = testutils.RandomAccounts(rnd, int(maxBundleSize+1))
 			},
 			false,
@@ -140,6 +140,15 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			},
 			false,
 		},
+		{
+			"min bid increment is different from bid denom", // THIS SHOULD NEVER HAPPEN
+			func() {
+				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
+				bid = sdk.NewCoin("foo", sdk.NewInt(1500))
+				minBidIncrement = sdk.NewCoin("foo2", sdk.NewInt(1000))
+			},
+			false,
+		},
 	}
 
 	for _, tc := range cases {
@@ -149,7 +158,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			tc.malleate()
 
 			// Set up the new builder keeper with mocks customized for this test case
-			suite.bankKeeper.EXPECT().GetAllBalances(suite.ctx, bidder.Address).Return(balance).AnyTimes()
+			suite.bankKeeper.EXPECT().GetBalance(suite.ctx, bidder.Address, minBidIncrement.Denom).Return(balance).AnyTimes()
 			suite.bankKeeper.EXPECT().SendCoins(suite.ctx, bidder.Address, escrowAddress, reserveFee).Return(nil).AnyTimes()
 
 			suite.builderKeeper = keeper.NewKeeper(

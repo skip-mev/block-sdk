@@ -48,7 +48,7 @@ type ABCITestSuite struct {
 
 	// account set up
 	accounts []testutils.Account
-	balances sdk.Coins
+	balance  sdk.Coin
 	random   *rand.Rand
 	nonces   map[string]uint64
 }
@@ -118,7 +118,7 @@ func (suite *ABCITestSuite) SetupTest() {
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
-	suite.balances = sdk.NewCoins(sdk.NewCoin("foo", sdk.NewInt(1000000000000000000)))
+	suite.balance = sdk.NewCoin("foo", sdk.NewInt(1000000000000000000))
 	suite.nonces = make(map[string]uint64)
 	for _, acc := range suite.accounts {
 		suite.nonces[acc.Address.String()] = 0
@@ -141,7 +141,7 @@ func (suite *ABCITestSuite) SetupTest() {
 
 func (suite *ABCITestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
 	signer := tx.GetMsgs()[0].GetSigners()[0]
-	suite.bankKeeper.EXPECT().GetAllBalances(ctx, signer).AnyTimes().Return(suite.balances)
+	suite.bankKeeper.EXPECT().GetBalance(ctx, signer, suite.balance.Denom).AnyTimes().Return(suite.balance)
 
 	next := func(ctx sdk.Context, _ sdk.Tx, _ bool) (sdk.Context, error) {
 		return ctx, nil

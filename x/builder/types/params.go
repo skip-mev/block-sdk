@@ -5,15 +5,16 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 )
 
 var (
 	DefaultMaxBundleSize          uint32 = 2
-	DefaultEscrowAccountAddress   string
-	DefaultReserveFee             = sdk.Coin{}
-	DefaultMinBidIncrement        = sdk.Coin{}
-	DefaultFrontRunningProtection = true
-	DefaultProposerFee            = sdk.ZeroDec()
+	DefaultEscrowAccountAddress   string = authtypes.NewModuleAddress(ModuleName).String()
+	DefaultReserveFee                    = sdk.NewCoin("stake", sdk.NewInt(1))
+	DefaultMinBidIncrement               = sdk.NewCoin("stake", sdk.NewInt(1))
+	DefaultFrontRunningProtection        = true
+	DefaultProposerFee                   = sdk.ZeroDec()
 )
 
 // NewParams returns a new Params instance with the provided values.
@@ -56,6 +57,11 @@ func (p Params) Validate() error {
 	}
 	if err := validateFee(p.MinBidIncrement); err != nil {
 		return fmt.Errorf("invalid minimum bid increment (%s)", err)
+	}
+
+	// Minimum bid increment must always be greater than 0.
+	if p.MinBidIncrement.IsLTE(sdk.NewCoin(p.MinBidIncrement.Denom, sdk.ZeroInt())) {
+		return fmt.Errorf("minimum bid increment cannot be zero")
 	}
 
 	denoms := map[string]struct{}{

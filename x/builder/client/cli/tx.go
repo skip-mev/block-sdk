@@ -42,7 +42,9 @@ where each transaction is a hex-encoded string of a signed transaction.
 		Args:    cobra.ExactArgs(3),
 		Example: "auction-bid cosmos1... 10000uatom 0xFF...,0xCC...,0xAA...",
 		RunE: func(cmd *cobra.Command, args []string) error {
-			cmd.Flags().Set(flags.FlagFrom, args[0])
+			if err := cmd.Flags().Set(flags.FlagFrom, args[0]); err != nil {
+				return err
+			}
 
 			clientCtx, err := client.GetClientTxContext(cmd)
 			if err != nil {

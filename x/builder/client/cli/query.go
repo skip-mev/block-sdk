@@ -34,7 +34,11 @@ func CmdQueryParams() *cobra.Command {
 		Short: "Query the current parameters of the builder module",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
-			clientCtx := client.GetClientContextFromCmd(cmd)
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
 			queryClient := types.NewQueryClient(clientCtx)
 
 			request := &types.QueryParamsRequest{}

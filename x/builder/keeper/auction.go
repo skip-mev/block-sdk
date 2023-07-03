@@ -69,15 +69,25 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 			return err
 		}
 
+		if minBidIncrement.Denom != bid.Denom {
+			return fmt.Errorf("min bid increment denom (%s) does not match the bid denom (%s)", minBidIncrement, bid)
+		}
+
 		minBid := highestBid.Add(minBidIncrement)
 		if !bid.IsGTE(minBid) {
-			return fmt.Errorf("bid amount (%s) is less than the highest bid (%s) + min bid increment (%s)", bid, highestBid, minBidIncrement)
+			return fmt.Errorf(
+				"bid amount (%s) is less than the highest bid (%s) + min bid increment (%s); smallest acceptable bid is (%s)",
+				bid,
+				highestBid,
+				minBidIncrement,
+				minBid,
+			)
 		}
 	}
 
 	// ensure the bidder has enough funds to cover all the inclusion fees
-	balances := k.bankKeeper.GetAllBalances(ctx, bidder)
-	if !balances.IsAllGTE(sdk.NewCoins(bid)) {
+	balances := k.bankKeeper.GetBalance(ctx, bidder, bid.Denom)
+	if !balances.IsGTE(bid) {
 		return fmt.Errorf("insufficient funds to bid %s with balance %s", bid, balances)
 	}
 
@@ -114,7 +124,7 @@ func (k Keeper) ValidateAuctionBundle(bidder sdk.AccAddress, bundleSigners []map
 		// as long as all subsequent transactions are signed by the bidder.
 		if len(prevSigners) == 0 {
 			if seenBidder {
-				return fmt.Errorf("bundle contains transactions signed by multiple parties; possible front-running or sandwich attack")
+				return NewFrontRunningError()
 			}
 
 			seenBidder = true
@@ -122,7 +132,7 @@ func (k Keeper) ValidateAuctionBundle(bidder sdk.AccAddress, bundleSigners []map
 			filterSigners(prevSigners, txSigners)
 
 			if len(prevSigners) == 0 {
-				return fmt.Errorf("bundle contains transactions signed by multiple parties; possible front-running or sandwich attack")
+				return NewFrontRunningError()
 			}
 		}
 	}
