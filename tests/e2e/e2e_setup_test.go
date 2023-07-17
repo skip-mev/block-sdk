@@ -116,9 +116,12 @@ func (s *IntegrationTestSuite) initNodes() {
 	val0ConfigDir := s.chain.validators[0].configDir()
 
 	// Define the builder module parameters
+	escrowAddress, err := sdk.AccAddressFromBech32("cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk")
+	s.Require().Nil(err, "Unexpected error decoding escrow address")
+
 	params := types.Params{
 		MaxBundleSize:          5,
-		EscrowAccountAddress:   "cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk",
+		EscrowAccountAddress:   escrowAddress,
 		ReserveFee:             sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
 		MinBidIncrement:        sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
 		ProposerFee:            sdk.NewDecWithPrec(1, 2),

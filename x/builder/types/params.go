@@ -10,7 +10,7 @@ import (
 
 var (
 	DefaultMaxBundleSize          uint32 = 2
-	DefaultEscrowAccountAddress   string = authtypes.NewModuleAddress(ModuleName).String()
+	DefaultEscrowAccountAddress          = authtypes.NewModuleAddress(ModuleName)
 	DefaultReserveFee                    = sdk.NewCoin("stake", sdk.NewInt(1))
 	DefaultMinBidIncrement               = sdk.NewCoin("stake", sdk.NewInt(1))
 	DefaultFrontRunningProtection        = true
@@ -20,7 +20,7 @@ var (
 // NewParams returns a new Params instance with the provided values.
 func NewParams(
 	maxBundleSize uint32,
-	escrowAccountAddress string,
+	escrowAccountAddress []byte,
 	reserveFee, minBidIncrement sdk.Coin,
 	frontRunningProtection bool,
 	proposerFee sdk.Dec,
@@ -49,9 +49,6 @@ func DefaultParams() Params {
 
 // Validate performs basic validation on the parameters.
 func (p Params) Validate() error {
-	if err := validateEscrowAccountAddress(p.EscrowAccountAddress); err != nil {
-		return err
-	}
 	if err := validateFee(p.ReserveFee); err != nil {
 		return fmt.Errorf("invalid reserve fee (%s)", err)
 	}
@@ -93,14 +90,6 @@ func validateProposerFee(v sdk.Dec) error {
 	}
 	if v.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("proposer fee too large: %s", v)
-	}
-
-	return nil
-}
-
-func validateEscrowAccountAddress(account string) error {
-	if _, err := sdk.AccAddressFromBech32(account); err != nil {
-		return fmt.Errorf("invalid escrow account address (%s)", err)
 	}
 
 	return nil

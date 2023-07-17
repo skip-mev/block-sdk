@@ -18,49 +18,49 @@ import (
 	sync "sync"
 )
 
-var _ protoreflect.List = (*_MsgAuctionBid_4_list)(nil)
+var _ protoreflect.List = (*_MsgAuctionBid_3_list)(nil)
 
-type _MsgAuctionBid_4_list struct {
+type _MsgAuctionBid_3_list struct {
 	list *[][]byte
 }
 
-func (x *_MsgAuctionBid_4_list) Len() int {
+func (x *_MsgAuctionBid_3_list) Len() int {
 	if x.list == nil {
 		return 0
 	}
 	return len(*x.list)
 }
 
-func (x *_MsgAuctionBid_4_list) Get(i int) protoreflect.Value {
+func (x *_MsgAuctionBid_3_list) Get(i int) protoreflect.Value {
 	return protoreflect.ValueOfBytes((*x.list)[i])
 }
 
-func (x *_MsgAuctionBid_4_list) Set(i int, value protoreflect.Value) {
+func (x *_MsgAuctionBid_3_list) Set(i int, value protoreflect.Value) {
 	valueUnwrapped := value.Bytes()
 	concreteValue := valueUnwrapped
 	(*x.list)[i] = concreteValue
 }
 
-func (x *_MsgAuctionBid_4_list) Append(value protoreflect.Value) {
+func (x *_MsgAuctionBid_3_list) Append(value protoreflect.Value) {
 	valueUnwrapped := value.Bytes()
 	concreteValue := valueUnwrapped
 	*x.list = append(*x.list, concreteValue)
 }
 
-func (x *_MsgAuctionBid_4_list) AppendMutable() protoreflect.Value {
+func (x *_MsgAuctionBid_3_list) AppendMutable() protoreflect.Value {
 	panic(fmt.Errorf("AppendMutable can not be called on message MsgAuctionBid at list field Transactions as it is not of Message kind"))
 }
 
-func (x *_MsgAuctionBid_4_list) Truncate(n int) {
+func (x *_MsgAuctionBid_3_list) Truncate(n int) {
 	*x.list = (*x.list)[:n]
 }
 
-func (x *_MsgAuctionBid_4_list) NewElement() protoreflect.Value {
+func (x *_MsgAuctionBid_3_list) NewElement() protoreflect.Value {
 	var v []byte
 	return protoreflect.ValueOfBytes(v)
 }
 
-func (x *_MsgAuctionBid_4_list) IsValid() bool {
+func (x *_MsgAuctionBid_3_list) IsValid() bool {
 	return x.list != nil
 }
 
@@ -157,7 +157,7 @@ func (x *fastReflection_MsgAuctionBid) Range(f func(protoreflect.FieldDescriptor
 		}
 	}
 	if len(x.Transactions) != 0 {
-		value := protoreflect.ValueOfList(&_MsgAuctionBid_4_list{list: &x.Transactions})
+		value := protoreflect.ValueOfList(&_MsgAuctionBid_3_list{list: &x.Transactions})
 		if !f(fd_MsgAuctionBid_transactions, value) {
 			return
 		}
@@ -229,9 +229,9 @@ func (x *fastReflection_MsgAuctionBid) Get(descriptor protoreflect.FieldDescript
 		return protoreflect.ValueOfMessage(value.ProtoReflect())
 	case "pob.builder.v1.MsgAuctionBid.transactions":
 		if len(x.Transactions) == 0 {
-			return protoreflect.ValueOfList(&_MsgAuctionBid_4_list{})
+			return protoreflect.ValueOfList(&_MsgAuctionBid_3_list{})
 		}
-		listValue := &_MsgAuctionBid_4_list{list: &x.Transactions}
+		listValue := &_MsgAuctionBid_3_list{list: &x.Transactions}
 		return protoreflect.ValueOfList(listValue)
 	default:
 		if descriptor.IsExtension() {
@@ -259,7 +259,7 @@ func (x *fastReflection_MsgAuctionBid) Set(fd protoreflect.FieldDescriptor, valu
 		x.Bid = value.Message().Interface().(*v1beta1.Coin)
 	case "pob.builder.v1.MsgAuctionBid.transactions":
 		lv := value.List()
-		clv := lv.(*_MsgAuctionBid_4_list)
+		clv := lv.(*_MsgAuctionBid_3_list)
 		x.Transactions = *clv.list
 	default:
 		if fd.IsExtension() {
@@ -290,7 +290,7 @@ func (x *fastReflection_MsgAuctionBid) Mutable(fd protoreflect.FieldDescriptor) 
 		if x.Transactions == nil {
 			x.Transactions = [][]byte{}
 		}
-		value := &_MsgAuctionBid_4_list{list: &x.Transactions}
+		value := &_MsgAuctionBid_3_list{list: &x.Transactions}
 		return protoreflect.ValueOfList(value)
 	case "pob.builder.v1.MsgAuctionBid.bidder":
 		panic(fmt.Errorf("field bidder of message pob.builder.v1.MsgAuctionBid is not mutable"))
@@ -314,7 +314,7 @@ func (x *fastReflection_MsgAuctionBid) NewField(fd protoreflect.FieldDescriptor)
 		return protoreflect.ValueOfMessage(m.ProtoReflect())
 	case "pob.builder.v1.MsgAuctionBid.transactions":
 		list := [][]byte{}
-		return protoreflect.ValueOfList(&_MsgAuctionBid_4_list{list: &list})
+		return protoreflect.ValueOfList(&_MsgAuctionBid_3_list{list: &list})
 	default:
 		if fd.IsExtension() {
 			panic(fmt.Errorf("proto3 declared messages do not support extensions: pob.builder.v1.MsgAuctionBid"))
@@ -433,7 +433,7 @@ func (x *fastReflection_MsgAuctionBid) ProtoMethods() *protoiface.Methods {
 				copy(dAtA[i:], x.Transactions[iNdEx])
 				i = runtime.EncodeVarint(dAtA, i, uint64(len(x.Transactions[iNdEx])))
 				i--
-				dAtA[i] = 0x22
+				dAtA[i] = 0x1a
 			}
 		}
 		if x.Bid != nil {
@@ -448,7 +448,7 @@ func (x *fastReflection_MsgAuctionBid) ProtoMethods() *protoiface.Methods {
 			copy(dAtA[i:], encoded)
 			i = runtime.EncodeVarint(dAtA, i, uint64(len(encoded)))
 			i--
-			dAtA[i] = 0x1a
+			dAtA[i] = 0x12
 		}
 		if len(x.Bidder) > 0 {
 			i -= len(x.Bidder)
@@ -538,7 +538,7 @@ func (x *fastReflection_MsgAuctionBid) ProtoMethods() *protoiface.Methods {
 				}
 				x.Bidder = string(dAtA[iNdEx:postIndex])
 				iNdEx = postIndex
-			case 3:
+			case 2:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Bid", wireType)
 				}
@@ -574,7 +574,7 @@ func (x *fastReflection_MsgAuctionBid) ProtoMethods() *protoiface.Methods {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, err
 				}
 				iNdEx = postIndex
-			case 4:
+			case 3:
 				if wireType != 2 {
 					return protoiface.UnmarshalOutput{NoUnkeyedLiterals: input.NoUnkeyedLiterals, Flags: input.Flags}, fmt.Errorf("proto: wrong wireType = %d for field Transactions", wireType)
 				}
@@ -1877,10 +1877,10 @@ type MsgAuctionBid struct {
 	Bidder string `protobuf:"bytes,1,opt,name=bidder,proto3" json:"bidder,omitempty"`
 	// bid is the amount of coins that the bidder is bidding to participate in the
 	// auction.
-	Bid *v1beta1.Coin `protobuf:"bytes,3,opt,name=bid,proto3" json:"bid,omitempty"`
+	Bid *v1beta1.Coin `protobuf:"bytes,2,opt,name=bid,proto3" json:"bid,omitempty"`
 	// transactions are the bytes of the transactions that the bidder wants to
 	// bundle together.
-	Transactions [][]byte `protobuf:"bytes,4,rep,name=transactions,proto3" json:"transactions,omitempty"`
+	Transactions [][]byte `protobuf:"bytes,3,rep,name=transactions,proto3" json:"transactions,omitempty"`
 }
 
 func (x *MsgAuctionBid) Reset() {
@@ -2047,11 +2047,11 @@ var file_pob_builder_v1_tx_proto_rawDesc = []byte{
 	0x6e, 0x42, 0x69, 0x64, 0x12, 0x30, 0x0a, 0x06, 0x62, 0x69, 0x64, 0x64, 0x65, 0x72, 0x18, 0x01,
 	0x20, 0x01, 0x28, 0x09, 0x42, 0x18, 0xd2, 0xb4, 0x2d, 0x14, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73,
 	0x2e, 0x41, 0x64, 0x64, 0x72, 0x65, 0x73, 0x73, 0x53, 0x74, 0x72, 0x69, 0x6e, 0x67, 0x52, 0x06,
-	0x62, 0x69, 0x64, 0x64, 0x65, 0x72, 0x12, 0x36, 0x0a, 0x03, 0x62, 0x69, 0x64, 0x18, 0x03, 0x20,
+	0x62, 0x69, 0x64, 0x64, 0x65, 0x72, 0x12, 0x36, 0x0a, 0x03, 0x62, 0x69, 0x64, 0x18, 0x02, 0x20,
 	0x01, 0x28, 0x0b, 0x32, 0x19, 0x2e, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x2e, 0x62, 0x61, 0x73,
 	0x65, 0x2e, 0x76, 0x31, 0x62, 0x65, 0x74, 0x61, 0x31, 0x2e, 0x43, 0x6f, 0x69, 0x6e, 0x42, 0x09,
 	0xc8, 0xde, 0x1f, 0x00, 0xa8, 0xe7, 0xb0, 0x2a, 0x01, 0x52, 0x03, 0x62, 0x69, 0x64, 0x12, 0x22,
-	0x0a, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x04,
+	0x0a, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x73, 0x18, 0x03,
 	0x20, 0x03, 0x28, 0x0c, 0x52, 0x0c, 0x74, 0x72, 0x61, 0x6e, 0x73, 0x61, 0x63, 0x74, 0x69, 0x6f,
 	0x6e, 0x73, 0x3a, 0x2f, 0xe8, 0xa0, 0x1f, 0x00, 0x82, 0xe7, 0xb0, 0x2a, 0x06, 0x62, 0x69, 0x64,
 	0x64, 0x65, 0x72, 0x8a, 0xe7, 0xb0, 0x2a, 0x1b, 0x70, 0x6f, 0x62, 0x2f, 0x78, 0x2f, 0x62, 0x75,
