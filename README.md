@@ -243,6 +243,5 @@ $ go install github.com/skip-mev/pob
 
 Note, before building or upgrading the application, make sure to initialize the
 escrow address for POB in the parameters of the module. The default parameters
-do not initialize an escrow address as that should be determined by governance.
-The escrow address will be the address that is receiving a portion of auction
-house revenue alongside the proposer (if enabled).
+initialize the escrow address to be the module account address. The escrow address 
+will be the address that is receiving a portion of auction house revenue alongside the proposer (or custom rewards providers).
