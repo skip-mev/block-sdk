@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	sdklogger "cosmossdk.io/log"
 	comettypes "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
@@ -131,8 +132,10 @@ func (suite *ABCITestSuite) SetupTest() {
 		suite.logger,
 		suite.encodingConfig.TxConfig.TxEncoder(),
 		suite.encodingConfig.TxConfig.TxDecoder(),
+		abci.NoOpValidateVoteExtensionsFn(),
 	)
 	suite.voteExtensionHandler = abci.NewVoteExtensionHandler(
+		sdklogger.NewTestLogger(suite.T()),
 		suite.tobLane,
 		suite.encodingConfig.TxConfig.TxDecoder(),
 		suite.encodingConfig.TxConfig.TxEncoder(),

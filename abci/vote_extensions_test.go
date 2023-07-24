@@ -1,6 +1,7 @@
 package abci_test
 
 import (
+	"cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/abci"
 	testutils "github.com/skip-mev/pob/testutils"
@@ -123,7 +124,12 @@ func (suite *ABCITestSuite) TestExtendVoteExtensionHandler() {
 			suite.Require().NoError(err)
 
 			// Reset the handler with the new mempool
-			suite.voteExtensionHandler = abci.NewVoteExtensionHandler(suite.tobLane, suite.encodingConfig.TxConfig.TxDecoder(), suite.encodingConfig.TxConfig.TxEncoder())
+			suite.voteExtensionHandler = abci.NewVoteExtensionHandler(
+				log.NewTestLogger(suite.T()),
+				suite.tobLane,
+				suite.encodingConfig.TxConfig.TxDecoder(),
+				suite.encodingConfig.TxConfig.TxEncoder(),
+			)
 
 			handler := suite.voteExtensionHandler.ExtendVoteHandler()
 			resp, err := handler(suite.ctx, nil)

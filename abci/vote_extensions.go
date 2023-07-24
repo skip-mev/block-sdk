@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 
+	"cosmossdk.io/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
@@ -28,6 +29,10 @@ type (
 	// VoteExtensionHandler contains the functionality and handlers required to
 	// process, validate and build vote extensions.
 	VoteExtensionHandler struct {
+		logger log.Logger
+
+		// tobLane is the top of block lane which is used to extract the top bidding
+		// auction transaction from the local mempool.
 		tobLane TOBLaneVE
 
 		// txDecoder is used to decode the top bidding auction transaction
@@ -47,8 +52,9 @@ type (
 
 // NewVoteExtensionHandler returns an VoteExtensionHandler that contains the functionality and handlers
 // required to inject, process, and validate vote extensions.
-func NewVoteExtensionHandler(lane TOBLaneVE, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder) *VoteExtensionHandler {
+func NewVoteExtensionHandler(logger log.Logger, lane TOBLaneVE, txDecoder sdk.TxDecoder, txEncoder sdk.TxEncoder) *VoteExtensionHandler {
 	return &VoteExtensionHandler{
+		logger:        logger,
 		tobLane:       lane,
 		txDecoder:     txDecoder,
 		txEncoder:     txEncoder,
@@ -74,10 +80,24 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() ExtendVoteHandler {
 				cacheCtx, _ := ctx.CacheContext()
 
 				if err := h.tobLane.VerifyTx(cacheCtx, bidTx); err == nil {
+					hash := sha256.Sum256(bidBz)
+					hashStr := hex.EncodeToString(hash[:])
+
+					h.logger.Info(
+						"extending vote with auction transaction",
+						"tx_hash", hashStr,
+						"height", ctx.BlockHeight(),
+					)
+
 					return &ResponseExtendVote{VoteExtension: bidBz}, nil
 				}
 			}
 		}
+
+		h.logger.Info(
+			"extending vote with no auction transaction",
+			"height", ctx.BlockHeight(),
+		)
 
 		return &ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
@@ -90,6 +110,11 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 	return func(ctx sdk.Context, req *RequestVerifyVoteExtension) (*ResponseVerifyVoteExtension, error) {
 		txBz := req.VoteExtension
 		if len(txBz) == 0 {
+			h.logger.Info(
+				"verifyed vote extension with no auction transaction",
+				"height", ctx.BlockHeight(),
+			)
+
 			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
 		}
 
@@ -102,8 +127,20 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 		// Short circuit if we have already verified this vote extension
 		if err, ok := h.cache[hash]; ok {
 			if err != nil {
+				h.logger.Info(
+					"rejected vote extension",
+					"tx_hash", hash,
+					"height", ctx.BlockHeight(),
+				)
+
 				return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
 			}
+
+			h.logger.Info(
+				"verified vote extension",
+				"tx_hash", hash,
+				"height", ctx.BlockHeight(),
+			)
 
 			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
 		}
@@ -111,17 +148,37 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 		// Decode the vote extension which should be a valid auction transaction
 		bidTx, err := h.txDecoder(txBz)
 		if err != nil {
+			h.logger.Info(
+				"rejected vote extension",
+				"tx_hash", hash,
+				"height", ctx.BlockHeight(),
+				"err", err,
+			)
+
 			h.cache[hash] = err
 			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		// Verify the auction transaction and cache the result
 		if err = h.tobLane.VerifyTx(ctx, bidTx); err != nil {
+			h.logger.Info(
+				"rejected vote extension",
+				"tx_hash", hash,
+				"height", ctx.BlockHeight(),
+				"err", err,
+			)
+
 			h.cache[hash] = err
 			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		h.cache[hash] = nil
+
+		h.logger.Info(
+			"verified vote extension",
+			"tx_hash", hash,
+			"height", ctx.BlockHeight(),
+		)
 
 		return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
 	}

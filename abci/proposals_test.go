@@ -299,6 +299,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				suite.logger,
 				suite.encodingConfig.TxConfig.TxEncoder(),
 				suite.encodingConfig.TxConfig.TxDecoder(),
+				abci.NoOpValidateVoteExtensionsFn(),
 			)
 			handler := suite.proposalHandler.PrepareProposalHandler()
 			req := suite.createPrepareProposalRequest(maxTxBytes)
@@ -765,6 +766,7 @@ func (suite *ABCITestSuite) TestProcessProposal() {
 				suite.tobLane, log.NewNopLogger(),
 				suite.encodingConfig.TxConfig.TxEncoder(),
 				suite.encodingConfig.TxConfig.TxDecoder(),
+				abci.NoOpValidateVoteExtensionsFn(),
 			)
 
 			tc.createTxs()

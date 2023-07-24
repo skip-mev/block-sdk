@@ -86,6 +86,12 @@ func (h *ProposalHandler) VerifyTOB(ctx sdk.Context, proposalTxs [][]byte) (*Auc
 		return nil, fmt.Errorf("failed to unmarshal last commit info from auction info: %w", err)
 	}
 
+	// verify that the included vote extensions are valid in accordance with the
+	// the preferences of the application
+	if err := h.validateVoteExtensionsFn(ctx, ctx.BlockHeight(), lastCommitInfo); err != nil {
+		return nil, fmt.Errorf("failed to validate vote extensions: %w", err)
+	}
+
 	// Build the top of block proposal from the auction info.
 	expectedTOB := h.BuildTOB(ctx, lastCommitInfo, auctionInfo.MaxTxBytes)
 

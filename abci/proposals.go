@@ -1,9 +1,6 @@
 package abci
 
 import (
-	"errors"
-	"fmt"
-
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -57,12 +54,24 @@ type (
 	// ProposalHandler contains the functionality and handlers required to\
 	// process, validate and build blocks.
 	ProposalHandler struct {
+		logger    log.Logger
+		txEncoder sdk.TxEncoder
+		txDecoder sdk.TxDecoder
+
+		// prepareLanesHandler is responsible for preparing the proposal by selecting
+		// transactions from each lane according to each lane's selection logic.
 		prepareLanesHandler blockbuster.PrepareLanesHandler
+
+		// processLanesHandler is responsible for verifying that the proposal is valid
+		// according to each lane's verification logic.
 		processLanesHandler blockbuster.ProcessLanesHandler
-		tobLane             TOBLaneProposal
-		logger              log.Logger
-		txEncoder           sdk.TxEncoder
-		txDecoder           sdk.TxDecoder
+
+		// tobLane is the top of block lane which is utilized to verify transactions that
+		// should be included in the top of block.
+		tobLane TOBLaneProposal
+
+		// validateVoteExtensionsFn is the function responsible for validating vote extensions.
+		validateVoteExtensionsFn ValidateVoteExtensionsFn
 	}
 )
 
@@ -74,14 +83,16 @@ func NewProposalHandler(
 	logger log.Logger,
 	txEncoder sdk.TxEncoder,
 	txDecoder sdk.TxDecoder,
+	validateVeFN ValidateVoteExtensionsFn,
 ) *ProposalHandler {
 	return &ProposalHandler{
-		prepareLanesHandler: abci.ChainPrepareLanes(lanes...),
-		processLanesHandler: abci.ChainProcessLanes(lanes...),
-		tobLane:             tobLane,
-		logger:              logger,
-		txEncoder:           txEncoder,
-		txDecoder:           txDecoder,
+		prepareLanesHandler:      abci.ChainPrepareLanes(lanes...),
+		processLanesHandler:      abci.ChainProcessLanes(lanes...),
+		tobLane:                  tobLane,
+		logger:                   logger,
+		txEncoder:                txEncoder,
+		txDecoder:                txDecoder,
+		validateVoteExtensionsFn: validateVeFN,
 	}
 }
 
@@ -163,12 +174,5 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}
 
 		return cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}
-	}
-}
-
-// RemoveTx removes a transaction from the application-side mempool.
-func (h *ProposalHandler) RemoveTx(tx sdk.Tx) {
-	if err := h.tobLane.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
-		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
 	}
 }
