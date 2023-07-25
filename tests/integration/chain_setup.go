@@ -4,14 +4,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/cosmos/cosmos-sdk/client/tx"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/require"
 	"go.uber.org/zap/zaptest"
-	"github.com/cosmos/cosmos-sdk/client/tx"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
 // ChainBuilderFromChainSpec creates an interchaintest chain builder factory given a ChainSpec
@@ -27,7 +27,7 @@ func ChainBuilderFromChainSpec(t *testing.T, spec *interchaintest.ChainSpec) ibc
 	require.NoError(t, err)
 
 	require.Len(t, chains, 1)
-	
+
 	return chains[0]
 }
 
@@ -42,9 +42,9 @@ func BuildPOBInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *int
 	// build the interchain
 	err := ic.Build(ctx, nil, interchaintest.InterchainBuildOptions{
 		SkipPathCreation: true,
-		Client: 		 client,
-		NetworkID: 		 networkID,
-		TestName: 		 t.Name(),
+		Client:           client,
+		NetworkID:        networkID,
+		TestName:         t.Name(),
 	})
 	require.NoError(t, err)
 
@@ -65,7 +65,7 @@ func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user
 
 	txf, err = txf.Prepare(cc)
 	require.NoError(t, err)
-	
+
 	// get gas for tx
 	_, gas, err := tx.CalculateGas(cc, txf, msgs...)
 	require.NoError(t, err)
@@ -110,7 +110,7 @@ func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User
 
 // BroadcastMsg broadcasts the given messages as a tx signed by the given sender, it blocks until a response from the chain is received
 // and fails if a timeout occurs
-func BroadcastMsg(t *testing.T, ctx context.Context, sender cosmos.User, chain *cosmos.CosmosChain, msgs ...sdk.Msg) (sdk.TxResponse) {
+func BroadcastMsg(t *testing.T, ctx context.Context, sender cosmos.User, chain *cosmos.CosmosChain, msgs ...sdk.Msg) sdk.TxResponse {
 	// create a broadcaster
 	broadcaster := cosmos.NewBroadcaster(t, chain)
 
