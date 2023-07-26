@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
@@ -20,7 +20,7 @@ type (
 		Logger() log.Logger
 
 		// GetMaxBlockSpace returns the maximum block space for the lane as a relative percentage.
-		GetMaxBlockSpace() sdk.Dec
+		GetMaxBlockSpace() math.LegacyDec
 
 		// Name returns the name of the lane.
 		Name() string

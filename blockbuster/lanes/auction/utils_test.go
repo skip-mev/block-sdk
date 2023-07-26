@@ -5,13 +5,13 @@ import (
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
-	pobcodec "github.com/skip-mev/pob/codec"
+	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/require"
 )
 
 func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {
-	encCfg := pobcodec.CreateEncodingConfig()
+	encCfg := testutils.CreateTestEncodingConfig()
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
@@ -22,7 +22,7 @@ func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {
 }
 
 func TestGetMsgAuctionBidFromTx_MultiMsgBid(t *testing.T) {
-	encCfg := pobcodec.CreateEncodingConfig()
+	encCfg := testutils.CreateTestEncodingConfig()
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(
@@ -37,7 +37,7 @@ func TestGetMsgAuctionBidFromTx_MultiMsgBid(t *testing.T) {
 }
 
 func TestGetMsgAuctionBidFromTx_NoBid(t *testing.T) {
-	encCfg := pobcodec.CreateEncodingConfig()
+	encCfg := testutils.CreateTestEncodingConfig()
 
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(&banktypes.MsgSend{})

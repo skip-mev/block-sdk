@@ -1,6 +1,8 @@
 package types
 
 import (
+	context "context"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
@@ -12,22 +14,22 @@ type AccountKeeper interface {
 
 // BankKeeper defines the expected API contract for the x/bank module.
 type BankKeeper interface {
-	SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error
-	GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin
+	SendCoins(ctx context.Context, fromAddr, toAddr sdk.AccAddress, amt sdk.Coins) error
+	GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin
 }
 
 // DistributionKeeper defines the expected API contract for the x/distribution
 // module.
 type DistributionKeeper interface {
-	GetPreviousProposerConsAddr(ctx sdk.Context) sdk.ConsAddress
+	GetPreviousProposerConsAddr(ctx context.Context) (sdk.ConsAddress, error)
 }
 
 // StakingKeeper defines the expected API contract for the x/staking module.
 type StakingKeeper interface {
-	ValidatorByConsAddr(sdk.Context, sdk.ConsAddress) stakingtypes.ValidatorI
+	GetValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.Validator, error)
 }
 
-// RewardsAddressProvider is an interface that provides an address where auction profits are sent.
+// RewardsAddressProvider is an interface that provides an address where proposer/subset of auction profits are sent.
 type RewardsAddressProvider interface {
-	GetRewardsAddress(context sdk.Context) sdk.AccAddress
+	GetRewardsAddress(context sdk.Context) (sdk.AccAddress, error)
 }

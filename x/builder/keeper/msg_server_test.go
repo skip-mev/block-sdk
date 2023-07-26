@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	testutils "github.com/skip-mev/pob/testutils"
@@ -32,7 +33,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 		{
 			name: "invalid bidder address",
 			msg: &types.MsgAuctionBid{
-				Bidder: "foo",
+				Bidder: "stake",
 			},
 			malleate:  func() {},
 			expectErr: true,
@@ -54,12 +55,12 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			name: "valid bundle with no proposer fee",
 			msg: &types.MsgAuctionBid{
 				Bidder:       bidder.Address.String(),
-				Bid:          sdk.NewInt64Coin("foo", 1024),
+				Bid:          sdk.NewInt64Coin("stake", 1024),
 				Transactions: [][]byte{{0xFF}, {0xFF}},
 			},
 			malleate: func() {
 				params := types.DefaultParams()
-				params.ProposerFee = sdk.ZeroDec()
+				params.ProposerFee = math.LegacyZeroDec()
 				params.EscrowAccountAddress = escrow.Address
 				suite.builderKeeper.SetParams(suite.ctx, params)
 
@@ -68,7 +69,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 						suite.ctx,
 						bidder.Address,
 						escrow.Address,
-						sdk.NewCoins(sdk.NewInt64Coin("foo", 1024)),
+						sdk.NewCoins(sdk.NewInt64Coin("stake", 1024)),
 					).
 					Return(nil).
 					AnyTimes()
@@ -79,30 +80,30 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			name: "valid bundle with proposer fee",
 			msg: &types.MsgAuctionBid{
 				Bidder:       bidder.Address.String(),
-				Bid:          sdk.NewInt64Coin("foo", 3416),
+				Bid:          sdk.NewInt64Coin("stake", 3416),
 				Transactions: [][]byte{{0xFF}, {0xFF}},
 			},
 			malleate: func() {
 				params := types.DefaultParams()
-				params.ProposerFee = sdk.MustNewDecFromStr("0.30")
+				params.ProposerFee = math.LegacyMustNewDecFromStr("0.30")
 				params.EscrowAccountAddress = escrow.Address
 				suite.builderKeeper.SetParams(suite.ctx, params)
 
 				suite.distrKeeper.EXPECT().
 					GetPreviousProposerConsAddr(suite.ctx).
-					Return(proposerCons.ConsKey.PubKey().Address().Bytes())
+					Return(proposerCons.ConsKey.PubKey().Address().Bytes(), nil)
 
 				suite.stakingKeeper.EXPECT().
-					ValidatorByConsAddr(suite.ctx, sdk.ConsAddress(proposerCons.ConsKey.PubKey().Address().Bytes())).
-					Return(proposer).
+					GetValidatorByConsAddr(suite.ctx, sdk.ConsAddress(proposerCons.ConsKey.PubKey().Address().Bytes())).
+					Return(proposer, nil).
 					AnyTimes()
 
 				suite.bankKeeper.EXPECT().
-					SendCoins(suite.ctx, bidder.Address, proposerOperator.Address, sdk.NewCoins(sdk.NewInt64Coin("foo", 1024))).
+					SendCoins(suite.ctx, bidder.Address, proposerOperator.Address, sdk.NewCoins(sdk.NewInt64Coin("stake", 1024))).
 					Return(nil)
 
 				suite.bankKeeper.EXPECT().
-					SendCoins(suite.ctx, bidder.Address, escrow.Address, sdk.NewCoins(sdk.NewInt64Coin("foo", 2392))).
+					SendCoins(suite.ctx, bidder.Address, escrow.Address, sdk.NewCoins(sdk.NewInt64Coin("stake", 2392))).
 					Return(nil)
 			},
 			expectErr: false,
@@ -139,7 +140,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: suite.authorityAccount.String(),
 				Params: types.Params{
-					ProposerFee: sdk.MustNewDecFromStr("1.1"),
+					ProposerFee: math.LegacyMustNewDecFromStr("1.1"),
 				},
 			},
 			passBasic: false,
@@ -150,7 +151,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: suite.authorityAccount.String(),
 				Params: types.Params{
-					ProposerFee: sdk.MustNewDecFromStr("0.1"),
+					ProposerFee: math.LegacyMustNewDecFromStr("0.1"),
 				},
 			},
 			passBasic: false,
@@ -161,11 +162,11 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: account.Address.String(),
 				Params: types.Params{
-					ProposerFee:          sdk.MustNewDecFromStr("0.1"),
+					ProposerFee:          math.LegacyMustNewDecFromStr("0.1"),
 					MaxBundleSize:        2,
 					EscrowAccountAddress: suite.authorityAccount,
-					MinBidIncrement:      sdk.NewInt64Coin("foo", 100),
-					ReserveFee:           sdk.NewInt64Coin("foo", 100),
+					MinBidIncrement:      sdk.NewInt64Coin("stake", 100),
+					ReserveFee:           sdk.NewInt64Coin("stake", 100),
 				},
 			},
 			passBasic: true,

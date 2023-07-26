@@ -70,7 +70,20 @@ $(BUILD_TARGETS): $(BUILD_DIR)/
 $(BUILD_DIR)/:
 	mkdir -p $(BUILD_DIR)/
 
-.PHONY: build-test-app
+# build-and-start-app builds a POB simulation application binary in the build folder
+# and initializes a single validator configuration. If desired, users can suppliment
+# other addresses using "genesis add-genesis-account address 10000000000000000000000000stake".
+# This will allow users to bootstrap their wallet with a balance.
+build-and-start-app: build-test-app
+	./build/testappd init validator1 --chain-id chain-id-0
+	./build/testappd keys add validator1
+	./build/testappd genesis add-genesis-account validator1 10000000000000000000000000stake
+	./build/testappd genesis add-genesis-account cosmos1see0htr47uapjvcvh0hu6385rp8lw3em24hysg 10000000000000000000000000stake
+	./build/testappd genesis gentx validator1 1000000000stake --chain-id chain-id-0
+	./build/testappd genesis collect-gentxs
+	./build/testappd start --api.enable true --api.enabled-unsafe-cors true --log_level info
+
+.PHONY: build-test-app build-and-start-app
 
 ###############################################################################
 ##                                  Docker                                   ##
@@ -92,7 +105,7 @@ test-e2e: $(TEST_E2E_DEPS)
 	@go test ./tests/e2e/... -mod=readonly -timeout 30m -race -v -tags='$(TEST_E2E_TAGS)'
 
 test:
-	@go test -v ./...
+	@go test -v -race $(shell go list ./... | grep -v tests/)
 
 .PHONY: test test-e2e
 
@@ -100,7 +113,7 @@ test:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.11.6
+protoVer=0.13.5
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
 protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
 

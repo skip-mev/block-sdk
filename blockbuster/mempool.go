@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
@@ -142,7 +143,7 @@ func (m *BBMempool) Registry() []Lane {
 
 // ValidateBasic validates the mempools configuration.
 func (m *BBMempool) ValidateBasic() error {
-	sum := sdk.ZeroDec()
+	sum := math.LegacyZeroDec()
 	seenZeroMaxBlockSpace := false
 
 	for _, lane := range m.registry {
@@ -157,10 +158,10 @@ func (m *BBMempool) ValidateBasic() error {
 	switch {
 	// Ensure that the sum of the lane max block space percentages is less than
 	// or equal to 1.
-	case sum.GT(sdk.OneDec()):
+	case sum.GT(math.LegacyOneDec()):
 		return fmt.Errorf("sum of lane max block space percentages must be less than or equal to 1, got %s", sum)
 	// Ensure that there is no unused block space.
-	case sum.LT(sdk.OneDec()) && !seenZeroMaxBlockSpace:
+	case sum.LT(math.LegacyOneDec()) && !seenZeroMaxBlockSpace:
 		return fmt.Errorf("sum of total block space percentages will be less than 1")
 	}
 

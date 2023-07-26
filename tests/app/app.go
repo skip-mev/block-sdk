@@ -1,16 +1,24 @@
 package app
 
-//nolint:revive
 import (
-	_ "embed"
 	"io"
 	"os"
 	"path/filepath"
 
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	dbm "github.com/cosmos/cosmos-db"
+
 	"cosmossdk.io/depinject"
-	dbm "github.com/cometbft/cometbft-db"
+	storetypes "cosmossdk.io/store/types"
+	circuitkeeper "cosmossdk.io/x/circuit/keeper"
+	"cosmossdk.io/x/upgrade"
+	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
+
+	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
+	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	cometabci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
+	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -20,31 +28,22 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	"github.com/cosmos/cosmos-sdk/store/streaming"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
-	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/capability"
-	capabilitykeeper "github.com/cosmos/cosmos-sdk/x/capability/keeper"
-	consensus "github.com/cosmos/cosmos-sdk/x/consensus"
+	"github.com/cosmos/cosmos-sdk/x/consensus"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
-	"github.com/cosmos/cosmos-sdk/x/evidence"
-	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
-	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
-	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -54,7 +53,6 @@ import (
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
-	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -63,9 +61,8 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
-	"github.com/cosmos/cosmos-sdk/x/upgrade"
-	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
-	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
+
+	veabci "github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
@@ -92,29 +89,24 @@ var (
 		auth.AppModuleBasic{},
 		genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
 		bank.AppModuleBasic{},
-		capability.AppModuleBasic{},
 		staking.AppModuleBasic{},
 		mint.AppModuleBasic{},
 		distr.AppModuleBasic{},
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
 				paramsclient.ProposalHandler,
-				upgradeclient.LegacyProposalHandler,
-				upgradeclient.LegacyCancelProposalHandler,
 			},
 		),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
-		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		groupmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
-		nftmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		buildermodule.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
 	)
 )
 
@@ -125,7 +117,6 @@ var (
 
 type TestApp struct {
 	*runtime.App
-
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
 	txConfig          client.TxConfig
@@ -134,7 +125,6 @@ type TestApp struct {
 	// keepers
 	AccountKeeper         authkeeper.AccountKeeper
 	BankKeeper            bankkeeper.Keeper
-	CapabilityKeeper      *capabilitykeeper.Keeper
 	StakingKeeper         *stakingkeeper.Keeper
 	SlashingKeeper        slashingkeeper.Keeper
 	MintKeeper            mintkeeper.Keeper
@@ -144,11 +134,11 @@ type TestApp struct {
 	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
-	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
+	CircuitBreakerKeeper  circuitkeeper.Keeper
 	BuilderKeeper         builderkeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
 	checkTxHandler abci.CheckTx
@@ -181,6 +171,8 @@ func New(
 			depinject.Supply(
 				// supply the application options
 				appOpts,
+
+				logger,
 
 				// ADVANCED CONFIGURATION
 
@@ -216,7 +208,6 @@ func New(
 		&app.interfaceRegistry,
 		&app.AccountKeeper,
 		&app.BankKeeper,
-		&app.CapabilityKeeper,
 		&app.StakingKeeper,
 		&app.SlashingKeeper,
 		&app.MintKeeper,
@@ -226,11 +217,11 @@ func New(
 		&app.UpgradeKeeper,
 		&app.ParamsKeeper,
 		&app.AuthzKeeper,
-		&app.EvidenceKeeper,
-		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
 		&app.BuilderKeeper,
 		&app.ConsensusParamsKeeper,
+		&app.FeeGrantKeeper,
+		&app.CircuitBreakerKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -261,35 +252,42 @@ func New(
 	// }
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
-	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
+	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
 
 	// ---------------------------------------------------------------------------- //
 	// ------------------------- Begin Custom Code -------------------------------- //
 	// ---------------------------------------------------------------------------- //
 
 	// Set POB's mempool into the app.
-	config := blockbuster.BaseLaneConfig{
-		Logger:        app.Logger(),
-		TxEncoder:     app.txConfig.TxEncoder(),
-		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: sdk.ZeroDec(),
-	}
-
 	// Create the lanes.
 	//
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
-
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
+	tobConfig := blockbuster.BaseLaneConfig{
+		Logger:        app.Logger(),
+		TxEncoder:     app.txConfig.TxEncoder(),
+		TxDecoder:     app.txConfig.TxDecoder(),
+		MaxBlockSpace: math.LegacyZeroDec(),
+	}
 	tobLane := auction.NewTOBLane(
-		config,
+		tobConfig,
 		0,
 		auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
+	freeConfig := blockbuster.BaseLaneConfig{
+		Logger:        app.Logger(),
+		TxEncoder:     app.txConfig.TxEncoder(),
+		TxDecoder:     app.txConfig.TxDecoder(),
+		MaxBlockSpace: math.LegacyZeroDec(),
+		IgnoreList: []blockbuster.Lane{
+			tobLane,
+		},
+	}
 	freeLane := free.NewFreeLane(
-		config,
+		freeConfig,
 		free.NewDefaultFreeFactory(app.txConfig.TxDecoder()),
 	)
 
@@ -298,19 +296,20 @@ func New(
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: sdk.ZeroDec(),
+		MaxBlockSpace: math.LegacyZeroDec(),
 		IgnoreList: []blockbuster.Lane{
 			tobLane,
 			freeLane,
 		},
 	}
 	defaultLane := base.NewDefaultLane(defaultConfig)
+
+	// Set the lanes into the mempool.
 	lanes := []blockbuster.Lane{
 		tobLane,
 		freeLane,
 		defaultLane,
 	}
-
 	mempool := blockbuster.NewMempool(lanes...)
 	app.App.SetMempool(mempool)
 
@@ -338,16 +337,29 @@ func New(
 	for _, lane := range lanes {
 		lane.SetAnteHandler(anteHandler)
 	}
-
-	// Set the proposal handlers on the BaseApp along with the custom antehandler.
-	proposalHandlers := abci.NewProposalHandler(
-		app.Logger(),
-		app.txConfig.TxDecoder(),
-		mempool,
-	)
-	app.App.SetPrepareProposal(proposalHandlers.PrepareProposalHandler())
-	app.App.SetProcessProposal(proposalHandlers.ProcessProposalHandler())
 	app.App.SetAnteHandler(anteHandler)
+
+	// Set the proposal handlers on base app
+	proposalHandler := veabci.NewProposalHandler(
+		lanes,
+		tobLane,
+		app.Logger(),
+		app.txConfig.TxEncoder(),
+		app.txConfig.TxDecoder(),
+		veabci.NoOpValidateVoteExtensionsFn(),
+	)
+	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
+	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
+
+	// Set the vote extension handler on the app.
+	voteExtensionHandler := veabci.NewVoteExtensionHandler(
+		app.Logger(),
+		tobLane,
+		app.txConfig.TxDecoder(),
+		app.txConfig.TxEncoder(),
+	)
+	app.App.SetExtendVoteHandler(voteExtensionHandler.ExtendVoteHandler())
+	app.App.SetVerifyVoteExtensionHandler(voteExtensionHandler.VerifyVoteExtensionHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
 	checkTxHandler := abci.NewCheckTxHandler(
@@ -355,19 +367,12 @@ func New(
 		app.txConfig.TxDecoder(),
 		tobLane,
 		anteHandler,
-		ChainID,
 	)
 	app.SetCheckTx(checkTxHandler.CheckTx())
 
 	// ---------------------------------------------------------------------------- //
 	// ------------------------- End Custom Code ---------------------------------- //
 	// ---------------------------------------------------------------------------- //
-
-	// load state streaming if enabled
-	if _, _, err := streaming.LoadStreamingServices(app.App.BaseApp, appOpts, app.appCodec, logger, app.kvStoreKeys()); err != nil {
-		logger.Error("failed to load state streaming", "err", err)
-		os.Exit(1)
-	}
 
 	/****  Module Options ****/
 
@@ -401,13 +406,38 @@ func New(
 // handler so that we can verify bid transactions before they are inserted into the mempool.
 // With the POB CheckTx, we can verify the bid transaction and all of the bundled transactions
 // before inserting the bid transaction into the mempool.
-func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
+func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
 	return app.checkTxHandler(req)
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
 func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
 	app.checkTxHandler = handler
+}
+
+// TODO: remove this once we have a proper config file
+func (app *TestApp) InitChain(req *cometabci.RequestInitChain) (*cometabci.ResponseInitChain, error) {
+	req.ConsensusParams.Abci.VoteExtensionsEnableHeight = 2
+	resp, err := app.App.InitChain(req)
+	if resp == nil {
+		resp = &cometabci.ResponseInitChain{}
+	}
+	resp.ConsensusParams = &tmtypes.ConsensusParams{
+		Abci: &tmtypes.ABCIParams{
+			VoteExtensionsEnableHeight: 2,
+		},
+	}
+
+	return resp, err
+}
+
+// TODO: remove this once we have a proper config file
+func (app *TestApp) FinalizeBlock(req *cometabci.RequestFinalizeBlock) (*cometabci.ResponseFinalizeBlock, error) {
+	resp, err := app.App.FinalizeBlock(req)
+	if resp != nil {
+		resp.ConsensusParamUpdates = nil
+	}
+	return resp, err
 }
 
 // Name returns the name of the App
@@ -449,17 +479,6 @@ func (app *TestApp) GetKey(storeKey string) *storetypes.KVStoreKey {
 		return nil
 	}
 	return kvStoreKey
-}
-
-func (app *TestApp) kvStoreKeys() map[string]*storetypes.KVStoreKey {
-	keys := make(map[string]*storetypes.KVStoreKey)
-	for _, k := range app.GetStoreKeys() {
-		if kv, ok := k.(*storetypes.KVStoreKey); ok {
-			keys[kv.Name()] = kv
-		}
-	}
-
-	return keys
 }
 
 // GetSubspace returns a param subspace for a given module name.

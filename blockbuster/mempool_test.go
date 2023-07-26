@@ -5,8 +5,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
@@ -47,7 +48,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// General config for transactions and randomness for the test suite
 	suite.encodingConfig = testutils.CreateTestEncodingConfig()
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	key := sdk.NewKVStoreKey(buildertypes.StoreKey)
+	key := storetypes.NewKVStoreKey(buildertypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(suite.T(), key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx.WithBlockHeight(1)
 
@@ -59,7 +60,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
-		MaxBlockSpace: sdk.ZeroDec(),
+		MaxBlockSpace: math.LegacyZeroDec(),
 	}
 
 	// Top of block lane set up
@@ -331,8 +332,8 @@ func (suite *BlockBusterTestSuite) fillTOBLane(numTxs int) {
 
 		// create a randomized auction transaction
 		nonce := suite.nonces[acc.Address.String()]
-		bidAmount := sdk.NewInt(int64(suite.random.Intn(1000) + 1))
-		bid := sdk.NewCoin("foo", bidAmount)
+		bidAmount := math.NewInt(int64(suite.random.Intn(1000) + 1))
+		bid := sdk.NewCoin("stake", bidAmount)
 		tx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, acc, bid, nonce, 1000, nil)
 		suite.Require().NoError(err)
 
@@ -351,7 +352,7 @@ func (suite *BlockBusterTestSuite) fillFreeLane(numTxs int) {
 
 		// create a few random msgs and construct the tx
 		nonce := suite.nonces[acc.Address.String()]
-		tx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, "val1", sdk.NewCoin("foo", sdk.NewInt(100)))
+		tx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, "val1", sdk.NewCoin("stake", math.NewInt(100)))
 		suite.Require().NoError(err)
 
 		// insert the tx into the lane and update the account

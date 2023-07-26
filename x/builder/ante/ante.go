@@ -123,7 +123,11 @@ func (bd BuilderDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error
 	}
 
 	if timeout < currentBlockHeight {
-		return fmt.Errorf("timeout height cannot be less than the current block height")
+		return fmt.Errorf(
+			"timeout height cannot be less than the current block height (timeout: %d, current block height: %d)",
+			timeout,
+			currentBlockHeight,
+		)
 	}
 
 	return nil

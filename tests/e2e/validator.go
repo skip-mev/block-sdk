@@ -1,12 +1,14 @@
 package e2e
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"os"
 	"path"
 	"path/filepath"
 
+	"cosmossdk.io/math"
 	cometcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/p2p"
 	"github.com/cometbft/cometbft/privval"
@@ -18,9 +20,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/server"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdktx "github.com/cosmos/cosmos-sdk/types/tx"
-	txsigning "github.com/cosmos/cosmos-sdk/types/tx/signing"
+	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
+	genutilstypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/skip-mev/pob/tests/app"
 )
@@ -74,7 +77,16 @@ func (v *validator) init() error {
 	genDoc.Validators = nil
 	genDoc.AppState = appState
 
-	if err = genutil.ExportGenesisFile(genDoc, config.GenesisFile()); err != nil {
+	if err := genDoc.SaveAs(config.GenesisFile()); err != nil {
+		return err
+	}
+
+	genAppState, err := genutilstypes.AppGenesisFromFile(config.GenesisFile())
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal genesis state: %w", err)
+	}
+
+	if err = genutil.ExportGenesisFile(genAppState, config.GenesisFile()); err != nil {
 		return fmt.Errorf("failed to export app genesis state: %w", err)
 	}
 
@@ -167,15 +179,15 @@ func (v *validator) createKey(name string) error {
 func (v *validator) buildCreateValidatorMsg(amount sdk.Coin) (sdk.Msg, error) {
 	description := stakingtypes.NewDescription(v.moniker, "", "", "", "")
 	commissionRates := stakingtypes.CommissionRates{
-		Rate:          sdk.MustNewDecFromStr("0.1"),
-		MaxRate:       sdk.MustNewDecFromStr("0.2"),
-		MaxChangeRate: sdk.MustNewDecFromStr("0.01"),
+		Rate:          math.LegacyMustNewDecFromStr("0.1"),
+		MaxRate:       math.LegacyMustNewDecFromStr("0.2"),
+		MaxChangeRate: math.LegacyMustNewDecFromStr("0.01"),
 	}
 
 	// get the initial validator min self delegation
-	minSelfDelegation, _ := sdk.NewIntFromString("1")
+	minSelfDelegation := math.NewInt(1)
 
-	valPubKey, err := cryptocodec.FromTmPubKeyInterface(v.consensusKey.PubKey)
+	valPubKey, err := cryptocodec.FromCmtPubKeyInterface(v.consensusKey.PubKey)
 	if err != nil {
 		return nil, err
 	}
@@ -205,10 +217,16 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	txBuilder.SetFeeAmount(sdk.NewCoins())
 	txBuilder.SetGasLimit(200_000)
 
+	pubKey, err := v.keyInfo.GetPubKey()
+	if err != nil {
+		return nil, err
+	}
+
 	signerData := authsigning.SignerData{
 		ChainID:       v.chain.id,
 		AccountNumber: 0,
 		Sequence:      0,
+		PubKey:        pubKey,
 	}
 
 	// For SIGN_MODE_DIRECT, calling SetSignatures calls setSignerInfos on
@@ -219,14 +237,14 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 	// Note: This line is not needed for SIGN_MODE_LEGACY_AMINO, but putting it
 	// also doesn't affect its generated sign bytes, so for code's simplicity
 	// sake, we put it here.
-	pubKey, err := v.keyInfo.GetPubKey()
 	if err != nil {
 		return nil, err
 	}
-	sig := txsigning.SignatureV2{
+
+	sig := signing.SignatureV2{
 		PubKey: pubKey,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
+		Data: &signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: 0,
@@ -236,8 +254,10 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	bytesToSign, err := encodingConfig.TxConfig.SignModeHandler().GetSignBytes(
-		txsigning.SignMode_SIGN_MODE_DIRECT,
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		context.Background(),
+		encodingConfig.TxConfig.SignModeHandler(),
+		signing.SignMode_SIGN_MODE_DIRECT,
 		signerData,
 		txBuilder.GetTx(),
 	)
@@ -250,10 +270,10 @@ func (v *validator) signMsg(msgs ...sdk.Msg) (*sdktx.Tx, error) {
 		return nil, err
 	}
 
-	sig = txsigning.SignatureV2{
+	sig = signing.SignatureV2{
 		PubKey: pubKey,
-		Data: &txsigning.SingleSignatureData{
-			SignMode:  txsigning.SignMode_SIGN_MODE_DIRECT,
+		Data: &signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: sigBytes,
 		},
 		Sequence: 0,

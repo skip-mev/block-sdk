@@ -11,6 +11,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	cometcfg "github.com/cometbft/cometbft/config"
 	cometjson "github.com/cometbft/cometbft/libs/json"
 	rpchttp "github.com/cometbft/cometbft/rpc/client/http"
@@ -31,9 +32,9 @@ import (
 
 var (
 	numValidators   = 4
-	minGasPrice     = sdk.NewDecCoinFromDec(app.BondDenom, sdk.MustNewDecFromStr("0.02")).String()
+	minGasPrice     = sdk.NewDecCoinFromDec(app.BondDenom, math.LegacyMustNewDecFromStr("0.02")).String()
 	initBalanceStr  = sdk.NewInt64Coin(app.BondDenom, 1000000000000000000).String()
-	stakeAmount, _  = sdk.NewIntFromString("100000000000")
+	stakeAmount     = math.NewInt(100000000000)
 	stakeAmountCoin = sdk.NewCoin(app.BondDenom, stakeAmount)
 )
 
@@ -116,15 +117,12 @@ func (s *IntegrationTestSuite) initNodes() {
 	val0ConfigDir := s.chain.validators[0].configDir()
 
 	// Define the builder module parameters
-	escrowAddress, err := sdk.AccAddressFromBech32("cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk")
-	s.Require().Nil(err, "Unexpected error decoding escrow address")
-
 	params := types.Params{
 		MaxBundleSize:          5,
-		EscrowAccountAddress:   escrowAddress,
-		ReserveFee:             sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
-		MinBidIncrement:        sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000)),
-		ProposerFee:            sdk.NewDecWithPrec(1, 2),
+		EscrowAccountAddress:   sdk.MustAccAddressFromBech32("cosmos14j5j2lsx7629590jvpk3vj0xe9w8203jf4yknk").Bytes(),
+		ReserveFee:             sdk.NewCoin(app.BondDenom, math.NewInt(1000000)),
+		MinBidIncrement:        sdk.NewCoin(app.BondDenom, math.NewInt(1000000)),
+		ProposerFee:            math.LegacyMustNewDecFromStr("0.1"),
 		FrontRunningProtection: true,
 	}
 
@@ -162,7 +160,7 @@ func (s *IntegrationTestSuite) initGenesis() {
 
 	votingPeriod := 5 * time.Second
 	govGenState.Params.VotingPeriod = &votingPeriod
-	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(app.BondDenom, sdk.NewInt(100)))
+	govGenState.Params.MinDeposit = sdk.NewCoins(sdk.NewCoin(app.BondDenom, math.NewInt(100)))
 
 	bz, err := cdc.MarshalJSON(&govGenState)
 	s.Require().NoError(err)
@@ -223,6 +221,9 @@ func (s *IntegrationTestSuite) initValidatorConfigs() {
 		valConfig.RPC.ListenAddress = "tcp://0.0.0.0:26657"
 		valConfig.StateSync.Enable = false
 		valConfig.LogLevel = "info"
+		valConfig.BaseConfig.Genesis = filepath.Join("config", "genesis.json")
+		valConfig.RootDir = filepath.Join("root", ".simapp")
+		valConfig.Consensus.TimeoutCommit = 2 * time.Second
 
 		var peers []string
 

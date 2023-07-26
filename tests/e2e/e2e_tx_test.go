@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
+	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	clienttx "github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
 	authsigning "github.com/cosmos/cosmos-sdk/x/auth/signing"
@@ -49,7 +49,7 @@ func (s *IntegrationTestSuite) execMsgSendTx(valIdx int, to sdk.AccAddress, amou
 			amount.String(),  // amount
 			fmt.Sprintf("--%s=%s", flags.FlagFrom, s.chain.validators[valIdx].keyInfo.Name),
 			fmt.Sprintf("--%s=%s", flags.FlagChainID, s.chain.id),
-			fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoin(app.BondDenom, sdk.NewInt(1000000000)).String()),
+			fmt.Sprintf("--%s=%s", flags.FlagFees, sdk.NewCoin(app.BondDenom, math.NewInt(1000000000)).String()),
 			"--keyring-backend=test",
 			"--broadcast-mode=sync",
 			"-y",
@@ -127,41 +127,53 @@ func (s *IntegrationTestSuite) createTx(account TestAccount, msgs []sdk.Msg, seq
 	baseAccount := s.queryAccount(account.Address)
 	sequenceNumber := baseAccount.Sequence + sequenceOffset
 
-	// Set the messages, fees, and timeout.
-	txBuilder.SetMsgs(msgs...)
-	txBuilder.SetGasLimit(5000000)
-	txBuilder.SetFeeAmount(sdk.NewCoins(sdk.NewCoin("stake", sdk.NewInt(150000))))
+	s.Require().NoError(txBuilder.SetMsgs(msgs...))
+	txBuilder.SetFeeAmount(fees)
+	txBuilder.SetGasLimit(gasLimit)
 	txBuilder.SetTimeoutHeight(height)
 
-	sigV2 := signing.SignatureV2{
+	signerData := authsigning.SignerData{
+		ChainID:       app.ChainID,
+		AccountNumber: baseAccount.AccountNumber,
+		Sequence:      sequenceNumber,
+		PubKey:        account.PrivateKey.PubKey(),
+	}
+
+	sig := signing.SignatureV2{
 		PubKey: account.PrivateKey.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  txConfig.SignModeHandler().DefaultMode(),
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: sequenceNumber,
 	}
 
-	s.Require().NoError(txBuilder.SetSignatures(sigV2))
+	s.Require().NoError(txBuilder.SetSignatures(sig))
 
-	signerData := authsigning.SignerData{
-		ChainID:       s.chain.id,
-		AccountNumber: baseAccount.AccountNumber,
-		Sequence:      sequenceNumber,
-	}
-
-	sigV2, err := clienttx.SignWithPrivKey(
-		txConfig.SignModeHandler().DefaultMode(),
+	bytesToSign, err := authsigning.GetSignBytesAdapter(
+		context.Background(),
+		encodingConfig.TxConfig.SignModeHandler(),
+		signing.SignMode_SIGN_MODE_DIRECT,
 		signerData,
-		txBuilder,
-		account.PrivateKey,
-		txConfig,
-		sequenceNumber,
+		txBuilder.GetTx(),
 	)
 	s.Require().NoError(err)
-	s.Require().NoError(txBuilder.SetSignatures(sigV2))
 
-	bz, err := txConfig.TxEncoder()(txBuilder.GetTx())
+	sigBytes, err := account.PrivateKey.Sign(bytesToSign)
+	s.Require().NoError(err)
+
+	sig = signing.SignatureV2{
+		PubKey: account.PrivateKey.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+			Signature: sigBytes,
+		},
+		Sequence: sequenceNumber,
+	}
+	s.Require().NoError(txBuilder.SetSignatures(sig))
+
+	signedTx := txBuilder.GetTx()
+	bz, err := encodingConfig.TxConfig.TxEncoder()(signedTx)
 	s.Require().NoError(err)
 
 	return bz

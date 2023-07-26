@@ -34,12 +34,19 @@ selectBidTxLoop:
 
 		bidTxBz, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tmpBidTx)
 		if err != nil {
+			l.Logger().Info("failed to get hash of auction bid tx", "err", err)
+
 			txsToRemove[tmpBidTx] = struct{}{}
 			continue selectBidTxLoop
 		}
 
 		// if the transaction is already in the (partial) block proposal, we skip it.
 		if proposal.Contains(bidTxBz) {
+			l.Logger().Info(
+				"failed to select auction bid tx for lane; tx is already in proposal",
+				"tx_hash", hash,
+			)
+
 			continue selectBidTxLoop
 		}
 
@@ -52,6 +59,7 @@ selectBidTxLoop:
 					"tx_hash", hash,
 					"err", err,
 				)
+
 				txsToRemove[tmpBidTx] = struct{}{}
 				continue selectBidTxLoop
 			}
@@ -60,6 +68,12 @@ selectBidTxLoop:
 			// its bundled transactions.
 			bidInfo, err := l.GetAuctionBidInfo(tmpBidTx)
 			if bidInfo == nil || err != nil {
+				l.Logger().Info(
+					"failed to get auction bid info",
+					"tx_hash", hash,
+					"err", err,
+				)
+
 				// Some transactions in the bundle may be malformed or invalid, so we
 				// remove the bid transaction and try the next top bid.
 				txsToRemove[tmpBidTx] = struct{}{}
@@ -71,18 +85,35 @@ selectBidTxLoop:
 			for index, rawRefTx := range bidInfo.Transactions {
 				sdkTx, err := l.WrapBundleTransaction(rawRefTx)
 				if err != nil {
+					l.Logger().Info(
+						"failed to wrap bundled tx",
+						"tx_hash", hash,
+						"err", err,
+					)
+
 					txsToRemove[tmpBidTx] = struct{}{}
 					continue selectBidTxLoop
 				}
 
 				sdkTxBz, _, err := utils.GetTxHashStr(l.Cfg.TxEncoder, sdkTx)
 				if err != nil {
+					l.Logger().Info(
+						"failed to get hash of bundled tx",
+						"tx_hash", hash,
+						"err", err,
+					)
+
 					txsToRemove[tmpBidTx] = struct{}{}
 					continue selectBidTxLoop
 				}
 
 				// if the transaction is already in the (partial) block proposal, we skip it.
 				if proposal.Contains(sdkTxBz) {
+					l.Logger().Info(
+						"failed to select auction bid tx for lane; tx is already in proposal",
+						"tx_hash", hash,
+					)
+
 					continue selectBidTxLoop
 				}
 
@@ -105,7 +136,7 @@ selectBidTxLoop:
 			break selectBidTxLoop
 		}
 
-		l.Cfg.Logger.Info(
+		l.Logger().Info(
 			"failed to select auction bid tx for lane; tx size is too large",
 			"tx_size", bidTxSize,
 			"max_size", maxTxBytes,
@@ -114,6 +145,12 @@ selectBidTxLoop:
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
 	if err := utils.RemoveTxsFromLane(txsToRemove, l.Mempool); err != nil {
+		l.Logger().Error(
+			"failed to remove transactions from lane",
+			"lane", l.Name(),
+			"err", err,
+		)
+
 		return proposal, err
 	}
 
@@ -130,8 +167,11 @@ selectBidTxLoop:
 // ProcessLane will ensure that block proposals that include transactions from
 // the top-of-block auction lane are valid.
 func (l *TOBLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
-	bidTx := txs[0]
+	if len(txs) == 0 {
+		return next(ctx, txs)
+	}
 
+	bidTx := txs[0]
 	if !l.Match(bidTx) {
 		return next(ctx, txs)
 	}
@@ -154,6 +194,10 @@ func (l *TOBLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.Pr
 //     they were included in the bid transaction.
 //   - there are no other bid transactions in the proposal
 func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
+	if len(txs) == 0 {
+		return nil
+	}
+
 	bidTx := txs[0]
 
 	// If there is a bid transaction, it must be the first transaction in the block proposal.

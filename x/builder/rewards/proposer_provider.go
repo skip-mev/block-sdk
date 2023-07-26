@@ -6,6 +6,8 @@ import (
 	"github.com/skip-mev/pob/x/builder/types"
 )
 
+var _ types.RewardsAddressProvider = (*ProposerRewardsAddressProvider)(nil)
+
 // ProposerRewardsAddressProvider provides a portion of
 // auction profits to the block proposer.
 type ProposerRewardsAddressProvider struct {
@@ -17,16 +19,23 @@ type ProposerRewardsAddressProvider struct {
 func NewProposerRewardsAddressProvider(
 	distrKeeper types.DistributionKeeper,
 	stakingKeeper types.StakingKeeper,
-) types.RewardsAddressProvider {
+) *ProposerRewardsAddressProvider {
 	return &ProposerRewardsAddressProvider{
 		distrKeeper:   distrKeeper,
 		stakingKeeper: stakingKeeper,
 	}
 }
 
-func (p *ProposerRewardsAddressProvider) GetRewardsAddress(ctx sdk.Context) sdk.AccAddress {
-	prevPropConsAddr := p.distrKeeper.GetPreviousProposerConsAddr(ctx)
-	prevProposer := p.stakingKeeper.ValidatorByConsAddr(ctx, prevPropConsAddr)
+func (p *ProposerRewardsAddressProvider) GetRewardsAddress(ctx sdk.Context) (sdk.AccAddress, error) {
+	prevPropConsAddr, err := p.distrKeeper.GetPreviousProposerConsAddr(ctx)
+	if err != nil {
+		return nil, err
+	}
 
-	return sdk.AccAddress(prevProposer.GetOperator())
+	prevProposer, err := p.stakingKeeper.GetValidatorByConsAddr(ctx, prevPropConsAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	return sdk.AccAddress(prevProposer.GetOperator()), nil
 }

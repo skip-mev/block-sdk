@@ -95,7 +95,7 @@ func (config *DefaultAuctionFactory) GetAuctionBidInfo(tx sdk.Tx) (*types.BidInf
 // a bundle. In the default case, each bundle transaction will be an sdk.Tx and the
 // signers are the signers of each sdk.Msg in the transaction.
 func (config *DefaultAuctionFactory) getBundleSigners(bundle [][]byte) ([]map[string]struct{}, error) {
-	signers := make([]map[string]struct{}, 0)
+	bundleSigners := make([]map[string]struct{}, 0)
 
 	for _, tx := range bundle {
 		sdkTx, err := config.txDecoder(tx)
@@ -109,12 +109,18 @@ func (config *DefaultAuctionFactory) getBundleSigners(bundle [][]byte) ([]map[st
 		}
 
 		txSigners := make(map[string]struct{})
-		for _, signer := range sigTx.GetSigners() {
-			txSigners[signer.String()] = struct{}{}
+
+		signers, err := sigTx.GetSigners()
+		if err != nil {
+			return nil, err
 		}
 
-		signers = append(signers, txSigners)
+		for _, signer := range signers {
+			txSigners[sdk.AccAddress(signer).String()] = struct{}{}
+		}
+
+		bundleSigners = append(bundleSigners, txSigners)
 	}
 
-	return signers, nil
+	return bundleSigners, nil
 }

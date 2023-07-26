@@ -1,9 +1,13 @@
 package rewards
 
 import (
+	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/x/builder/types"
 )
+
+var _ types.RewardsAddressProvider = (*FixedAddressRewardsAddressProvider)(nil)
 
 // FixedAddressRewardsAddressProvider provides a portion of
 // auction profits to a fixed address (i.e. the proposer portion).
@@ -15,12 +19,16 @@ type FixedAddressRewardsAddressProvider struct {
 // NewFixedAddressRewardsAddressProvider creates a reward provider for a fixed address.
 func NewFixedAddressRewardsAddressProvider(
 	rewardsAddress sdk.AccAddress,
-) types.RewardsAddressProvider {
+) *FixedAddressRewardsAddressProvider {
 	return &FixedAddressRewardsAddressProvider{
 		rewardsAddress: rewardsAddress,
 	}
 }
 
-func (p *FixedAddressRewardsAddressProvider) GetRewardsAddress(_ sdk.Context) sdk.AccAddress {
-	return p.rewardsAddress
+func (p *FixedAddressRewardsAddressProvider) GetRewardsAddress(_ sdk.Context) (sdk.AccAddress, error) {
+	if p.rewardsAddress.Empty() {
+		return nil, fmt.Errorf("rewards address is empty")
+	}
+
+	return p.rewardsAddress, nil
 }

@@ -1,7 +1,8 @@
 package base
 
 import (
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
 )
@@ -25,6 +26,9 @@ type DefaultLane struct {
 
 	// LaneConfig defines the base lane configuration.
 	Cfg blockbuster.BaseLaneConfig
+
+	// Name defines the name of the lane.
+	laneName string
 }
 
 // NewDefaultLane returns a new default lane.
@@ -33,10 +37,19 @@ func NewDefaultLane(cfg blockbuster.BaseLaneConfig) *DefaultLane {
 		panic(err)
 	}
 
-	return &DefaultLane{
-		Mempool: NewDefaultMempool(cfg.TxEncoder),
-		Cfg:     cfg,
+	lane := &DefaultLane{
+		Mempool:  NewDefaultMempool(cfg.TxEncoder),
+		Cfg:      cfg,
+		laneName: LaneName,
 	}
+
+	return lane
+}
+
+// WithName returns a lane option that sets the lane's name.
+func (l *DefaultLane) WithName(name string) *DefaultLane {
+	l.laneName = name
+	return l
 }
 
 // Match returns true if the transaction belongs to this lane. Since
@@ -54,7 +67,7 @@ func (l *DefaultLane) Match(tx sdk.Tx) bool {
 
 // Name returns the name of the lane.
 func (l *DefaultLane) Name() string {
-	return LaneName
+	return l.laneName
 }
 
 // Logger returns the lane's logger.
@@ -68,7 +81,7 @@ func (l *DefaultLane) SetAnteHandler(anteHandler sdk.AnteHandler) {
 }
 
 // GetMaxBlockSpace returns the maximum block space for the lane as a relative percentage.
-func (l *DefaultLane) GetMaxBlockSpace() sdk.Dec {
+func (l *DefaultLane) GetMaxBlockSpace() math.LegacyDec {
 	return l.Cfg.MaxBlockSpace
 }
 

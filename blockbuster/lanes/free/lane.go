@@ -26,7 +26,7 @@ func NewFreeLane(cfg blockbuster.BaseLaneConfig, factory Factory) *Lane {
 	}
 
 	return &Lane{
-		DefaultLane: base.NewDefaultLane(cfg),
+		DefaultLane: base.NewDefaultLane(cfg).WithName(LaneName),
 		Factory:     factory,
 	}
 }

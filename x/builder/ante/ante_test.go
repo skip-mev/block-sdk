@@ -5,7 +5,8 @@ import (
 	"testing"
 	"time"
 
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+	"cosmossdk.io/math"
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -86,7 +87,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: sdk.ZeroDec(),
+		MaxBlockSpace: math.LegacyZeroDec(),
 	}
 	suite.tobLane = auction.NewTOBLane(
 		config,
@@ -103,8 +104,7 @@ func (suite *AnteTestSuite) SetupTest() {
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
-	signer := tx.GetMsgs()[0].GetSigners()[0]
-	suite.bankKeeper.EXPECT().GetBalance(ctx, signer, suite.balance.Denom).AnyTimes().Return(suite.balance)
+	suite.bankKeeper.EXPECT().GetBalance(ctx, gomock.Any(), suite.balance.Denom).AnyTimes().Return(suite.balance)
 
 	next := func(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
 		return ctx, nil
@@ -117,20 +117,20 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 	var (
 		// Bid set up
 		bidder  = testutils.RandomAccounts(suite.random, 1)[0]
-		bid     = sdk.NewCoin("foo", sdk.NewInt(1000))
-		balance = sdk.NewCoin("foo", sdk.NewInt(10000))
+		bid     = sdk.NewCoin("stake", math.NewInt(1000))
+		balance = sdk.NewCoin("stake", math.NewInt(10000))
 		signers = []testutils.Account{bidder}
 
 		// Top bidding auction tx set up
 		topBidder    = testutils.RandomAccounts(suite.random, 1)[0]
-		topBid       = sdk.NewCoin("foo", sdk.NewInt(100))
+		topBid       = sdk.NewCoin("stake", math.NewInt(100))
 		insertTopBid = true
 		timeout      = uint64(1000)
 
 		// Auction setup
 		maxBundleSize          uint32 = 5
-		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(100))
-		minBidIncrement               = sdk.NewCoin("foo", sdk.NewInt(100))
+		reserveFee                    = sdk.NewCoin("stake", math.NewInt(100))
+		minBidIncrement               = sdk.NewCoin("stake", math.NewInt(100))
 		frontRunningProtection        = true
 	)
 
@@ -150,7 +150,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			"smaller bid than winning bid, invalid auction tx",
 			func() {
 				insertTopBid = true
-				topBid = sdk.NewCoin("foo", sdk.NewInt(100000))
+				topBid = sdk.NewCoin("stake", math.NewInt(100000))
 			},
 			false,
 		},
@@ -158,25 +158,25 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			"bidder has insufficient balance, invalid auction tx",
 			func() {
 				insertTopBid = false
-				balance = sdk.NewCoin("foo", sdk.NewInt(10))
+				balance = sdk.NewCoin("stake", math.NewInt(10))
 			},
 			false,
 		},
 		{
 			"bid is smaller than reserve fee, invalid auction tx",
 			func() {
-				balance = sdk.NewCoin("foo", sdk.NewInt(10000))
-				bid = sdk.NewCoin("foo", sdk.NewInt(101))
-				reserveFee = sdk.NewCoin("foo", sdk.NewInt(1000))
+				balance = sdk.NewCoin("stake", math.NewInt(10000))
+				bid = sdk.NewCoin("stake", math.NewInt(101))
+				reserveFee = sdk.NewCoin("stake", math.NewInt(1000))
 			},
 			false,
 		},
 		{
 			"valid auction bid tx",
 			func() {
-				balance = sdk.NewCoin("foo", sdk.NewInt(10000))
-				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
+				balance = sdk.NewCoin("stake", math.NewInt(10000))
+				bid = sdk.NewCoin("stake", math.NewInt(1000))
+				reserveFee = sdk.NewCoin("stake", math.NewInt(100))
 			},
 			true,
 		},
@@ -191,9 +191,9 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			"auction tx is the top bidding tx",
 			func() {
 				timeout = 1000
-				balance = sdk.NewCoin("foo", sdk.NewInt(10000))
-				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				reserveFee = sdk.NewCoin("foo", sdk.NewInt(100))
+				balance = sdk.NewCoin("stake", math.NewInt(10000))
+				bid = sdk.NewCoin("stake", math.NewInt(1000))
+				reserveFee = sdk.NewCoin("stake", math.NewInt(100))
 
 				insertTopBid = true
 				topBidder = bidder

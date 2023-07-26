@@ -31,12 +31,20 @@ func (l *DefaultLane) PrepareLane(
 
 		txBytes, hash, err := utils.GetTxHashStr(l.Cfg.TxEncoder, tx)
 		if err != nil {
+			l.Logger().Info("failed to get hash of tx", "err", err)
+
 			txsToRemove[tx] = struct{}{}
 			continue
 		}
 
 		// if the transaction is already in the (partial) block proposal, we skip it.
 		if proposal.Contains(txBytes) {
+			l.Logger().Info(
+				"failed to select tx for lane; tx is already in proposal",
+				"tx_hash", hash,
+				"lane", l.Name(),
+			)
+
 			continue
 		}
 
@@ -53,6 +61,7 @@ func (l *DefaultLane) PrepareLane(
 				"tx_hash", hash,
 				"err", err,
 			)
+
 			txsToRemove[tx] = struct{}{}
 			continue
 		}
@@ -63,6 +72,11 @@ func (l *DefaultLane) PrepareLane(
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
 	if err := utils.RemoveTxsFromLane(txsToRemove, l.Mempool); err != nil {
+		l.Logger().Error(
+			"failed to remove transactions from lane",
+			"err", err,
+		)
+
 		return proposal, err
 	}
 

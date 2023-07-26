@@ -4,7 +4,8 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/blockbuster"
@@ -98,6 +99,6 @@ func (t Terminator) Logger() log.Logger {
 }
 
 // GetMaxBlockSpace is a no-op
-func (t Terminator) GetMaxBlockSpace() sdk.Dec {
-	return sdk.ZeroDec()
+func (t Terminator) GetMaxBlockSpace() math.LegacyDec {
+	return math.LegacyZeroDec()
 }

@@ -4,6 +4,7 @@ package pob.builder.v1;
 import "gogoproto/gogo.proto";
 import "cosmos/base/v1beta1/coin.proto";
 import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
 
 option go_package = "github.com/skip-mev/pob/x/builder/types";
 
@@ -38,7 +39,9 @@ message Params {
   // proposer_fee defines the portion of the winning bid that goes to the block
   // proposer that proposed the block.
   string proposer_fee = 6 [
-    (gogoproto.nullable) = false,
-    (gogoproto.customtype) = "github.com/cosmos/cosmos-sdk/types.Dec"
+    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
+    (gogoproto.nullable)   = false,
+    (amino.dont_omitempty) = true
   ];
 }

@@ -10,7 +10,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	tmclient "github.com/cosmos/cosmos-sdk/client/grpc/tmservice"
+	cmtclient "github.com/cosmos/cosmos-sdk/client/grpc/cmtservice"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	txtypes "github.com/cosmos/cosmos-sdk/types/tx"
@@ -116,6 +116,18 @@ func (s *IntegrationTestSuite) waitForABlock() {
 	)
 }
 
+// waitForNBlocks will wait until the current block height has increased by n blocks.
+func (s *IntegrationTestSuite) waitForNBlocks(n int) {
+	height := s.queryCurrentHeight()
+	s.Require().Eventually(
+		func() bool {
+			return s.queryCurrentHeight() >= height+uint64(n)
+		},
+		10*time.Second,
+		50*time.Millisecond,
+	)
+}
+
 // bundleToTxHashes converts a bundle to a slice of transaction hashes.
 func (s *IntegrationTestSuite) bundleToTxHashes(bidTx []byte, bundle [][]byte) []string {
 	hashes := make([]string, len(bundle)+1)
@@ -163,7 +175,7 @@ func (s *IntegrationTestSuite) verifyTopOfBlockAuction(height uint64, bundle []s
 
 	// Check that the block contains the expected transactions in the expected order
 	// iff the bid transaction was expected to execute.
-	if len(bundle) > 0 && expectedExecution[bundle[0]] {
+	if len(bundle) > 0 && len(expectedExecution) > 0 && expectedExecution[bundle[0]] && len(txs) > 0 {
 		if expectedExecution[bundle[0]] {
 			hashBz := sha256.Sum256(txs[0])
 			hash := hex.EncodeToString(hashBz[:])
@@ -259,12 +271,12 @@ func (s *IntegrationTestSuite) broadcastTx(tx []byte, valIdx int) {
 		gRPCURI,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
+	s.Require().NoError(err)
 
 	client := txtypes.NewServiceClient(grpcConn)
 
 	req := &txtypes.BroadcastTxRequest{TxBytes: tx, Mode: txtypes.BroadcastMode_BROADCAST_MODE_SYNC}
-	_, err = client.BroadcastTx(context.Background(), req)
-	s.Require().NoError(err)
+	client.BroadcastTx(context.Background(), req)
 }
 
 // queryTx queries a transaction by its hash and returns whether there was an
@@ -335,9 +347,9 @@ func (s *IntegrationTestSuite) queryAccount(address sdk.AccAddress) *authtypes.B
 
 // queryCurrentHeight returns the current block height.
 func (s *IntegrationTestSuite) queryCurrentHeight() uint64 {
-	queryClient := tmclient.NewServiceClient(s.createClientContext())
+	queryClient := cmtclient.NewServiceClient(s.createClientContext())
 
-	req := &tmclient.GetLatestBlockRequest{}
+	req := &cmtclient.GetLatestBlockRequest{}
 	resp, err := queryClient.GetLatestBlock(context.Background(), req)
 	s.Require().NoError(err)
 
@@ -346,13 +358,35 @@ func (s *IntegrationTestSuite) queryCurrentHeight() uint64 {
 
 // queryBlockTxs returns the txs of the block at the given height.
 func (s *IntegrationTestSuite) queryBlockTxs(height uint64) [][]byte {
-	queryClient := tmclient.NewServiceClient(s.createClientContext())
+	queryClient := cmtclient.NewServiceClient(s.createClientContext())
 
-	req := &tmclient.GetBlockByHeightRequest{Height: int64(height)}
+	req := &cmtclient.GetBlockByHeightRequest{Height: int64(height)}
 	resp, err := queryClient.GetBlockByHeight(context.Background(), req)
 	s.Require().NoError(err)
 
-	return resp.GetSdkBlock().Data.Txs
+	txs := resp.GetSdkBlock().Data.Txs
+
+	// The first transaction is the vote extension.
+	s.Require().Greater(len(txs), 0)
+
+	return txs[1:]
+}
+
+// queryTx returns information about a transaction.
+func (s *IntegrationTestSuite) queryTx(txHash string) *txtypes.GetTxResponse {
+	queryClient := txtypes.NewServiceClient(s.createClientContext())
+
+	req := &txtypes.GetTxRequest{Hash: txHash}
+	resp, err := queryClient.GetTx(context.Background(), req)
+	s.Require().NoError(err)
+
+	return resp
+}
+
+// queryTxExecutionHeight returns the block height at which a transaction was executed.
+func (s *IntegrationTestSuite) queryTxExecutionHeight(txHash string) uint64 {
+	txResp := s.queryTx(txHash)
+	return uint64(txResp.TxResponse.Height)
 }
 
 // queryValidators returns the validators of the network.

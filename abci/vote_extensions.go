@@ -5,9 +5,11 @@ import (
 	"encoding/hex"
 
 	"cosmossdk.io/log"
+	cometabci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
 type (
@@ -66,32 +68,51 @@ func NewVoteExtensionHandler(logger log.Logger, lane TOBLaneVE, txDecoder sdk.Tx
 // ExtendVoteHandler returns the ExtendVoteHandler ABCI handler that extracts
 // the top bidding valid auction transaction from a validator's local mempool and
 // returns it in its vote extension.
-func (h *VoteExtensionHandler) ExtendVoteHandler() ExtendVoteHandler {
-	return func(ctx sdk.Context, req *RequestExtendVote) (*ResponseExtendVote, error) {
+func (h *VoteExtensionHandler) ExtendVoteHandler() sdk.ExtendVoteHandler {
+	return func(ctx sdk.Context, req *cometabci.RequestExtendVote) (*cometabci.ResponseExtendVote, error) {
 		// Iterate through auction bids until we find a valid one
 		auctionIterator := h.tobLane.Select(ctx, nil)
+		txsToRemove := make(map[sdk.Tx]struct{}, 0)
+
+		defer func() {
+			if err := utils.RemoveTxsFromLane(txsToRemove, h.tobLane); err != nil {
+				h.logger.Info(
+					"failed to remove transactions from lane",
+					"err", err,
+				)
+			}
+		}()
 
 		for ; auctionIterator != nil; auctionIterator = auctionIterator.Next() {
 			bidTx := auctionIterator.Tx()
 
 			// Verify the bid tx can be encoded and included in vote extension
-			if bidBz, err := h.txEncoder(bidTx); err == nil {
-				// Validate the auction transaction against a cache state
-				cacheCtx, _ := ctx.CacheContext()
+			bidTxBz, hash, err := utils.GetTxHashStr(h.txEncoder, bidTx)
+			if err != nil {
+				h.logger.Info(
+					"failed to get hash of auction bid tx",
+					"err", err,
+				)
+				txsToRemove[bidTx] = struct{}{}
 
-				if err := h.tobLane.VerifyTx(cacheCtx, bidTx); err == nil {
-					hash := sha256.Sum256(bidBz)
-					hashStr := hex.EncodeToString(hash[:])
-
-					h.logger.Info(
-						"extending vote with auction transaction",
-						"tx_hash", hashStr,
-						"height", ctx.BlockHeight(),
-					)
-
-					return &ResponseExtendVote{VoteExtension: bidBz}, nil
-				}
+				continue
 			}
+
+			// Validate the auction transaction against a cache state
+			cacheCtx, _ := ctx.CacheContext()
+			if err := h.tobLane.VerifyTx(cacheCtx, bidTx); err != nil {
+				h.logger.Info(
+					"failed to verify auction bid tx",
+					"tx_hash", hash,
+					"err", err,
+				)
+				txsToRemove[bidTx] = struct{}{}
+
+				continue
+			}
+
+			h.logger.Info("extending vote with auction transaction", "tx_hash", hash)
+			return &cometabci.ResponseExtendVote{VoteExtension: bidTxBz}, nil
 		}
 
 		h.logger.Info(
@@ -99,23 +120,23 @@ func (h *VoteExtensionHandler) ExtendVoteHandler() ExtendVoteHandler {
 			"height", ctx.BlockHeight(),
 		)
 
-		return &ResponseExtendVote{VoteExtension: []byte{}}, nil
+		return &cometabci.ResponseExtendVote{VoteExtension: []byte{}}, nil
 	}
 }
 
 // VerifyVoteExtensionHandler returns the VerifyVoteExtensionHandler ABCI handler
 // that verifies the vote extension included in RequestVerifyVoteExtension.
 // In particular, it verifies that the vote extension is a valid auction transaction.
-func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionHandler {
-	return func(ctx sdk.Context, req *RequestVerifyVoteExtension) (*ResponseVerifyVoteExtension, error) {
+func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() sdk.VerifyVoteExtensionHandler {
+	return func(ctx sdk.Context, req *cometabci.RequestVerifyVoteExtension) (*cometabci.ResponseVerifyVoteExtension, error) {
 		txBz := req.VoteExtension
 		if len(txBz) == 0 {
 			h.logger.Info(
-				"verifyed vote extension with no auction transaction",
+				"verified vote extension with no auction transaction",
 				"height", ctx.BlockHeight(),
 			)
 
-			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_ACCEPT}, nil
 		}
 
 		// Reset the cache if necessary
@@ -133,7 +154,7 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 					"height", ctx.BlockHeight(),
 				)
 
-				return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
+				return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
 			}
 
 			h.logger.Info(
@@ -142,7 +163,7 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 				"height", ctx.BlockHeight(),
 			)
 
-			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_ACCEPT}, nil
 		}
 
 		// Decode the vote extension which should be a valid auction transaction
@@ -156,7 +177,7 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 			)
 
 			h.cache[hash] = err
-			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		// Verify the auction transaction and cache the result
@@ -168,8 +189,17 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 				"err", err,
 			)
 
+			if err := h.tobLane.Remove(bidTx); err != nil {
+				h.logger.Info(
+					"failed to remove auction transaction from lane",
+					"tx_hash", hash,
+					"height", ctx.BlockHeight(),
+					"err", err,
+				)
+			}
+
 			h.cache[hash] = err
-			return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_REJECT}, err
+			return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_REJECT}, err
 		}
 
 		h.cache[hash] = nil
@@ -180,7 +210,7 @@ func (h *VoteExtensionHandler) VerifyVoteExtensionHandler() VerifyVoteExtensionH
 			"height", ctx.BlockHeight(),
 		)
 
-		return &ResponseVerifyVoteExtension{Status: ResponseVerifyVoteExtension_ACCEPT}, nil
+		return &cometabci.ResponseVerifyVoteExtension{Status: cometabci.ResponseVerifyVoteExtension_ACCEPT}, nil
 	}
 }
 

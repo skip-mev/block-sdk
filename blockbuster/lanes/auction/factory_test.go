@@ -3,6 +3,7 @@ package auction_test
 import (
 	"crypto/rand"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	testutils "github.com/skip-mev/pob/testutils"
 )
@@ -27,7 +28,7 @@ func (suite *IntegrationTestSuite) TestIsAuctionTx() {
 		{
 			"malformed auction bid tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := testutils.CreateRandomMsgs(suite.accounts[0].Address, 2)
@@ -43,7 +44,7 @@ func (suite *IntegrationTestSuite) TestIsAuctionTx() {
 		{
 			"valid auction bid tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
@@ -58,10 +59,10 @@ func (suite *IntegrationTestSuite) TestIsAuctionTx() {
 		{
 			"tx with multiple MsgAuctionBid messages",
 			func() sdk.Tx {
-				bid1, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				bid1, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
-				bid2, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 1, 2)
+				bid2, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 1, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{bid1, bid2}
@@ -104,7 +105,7 @@ func (suite *IntegrationTestSuite) TestGetTransactionSigners() {
 				tx, err := testutils.CreateAuctionTxWithSigners(
 					suite.encCfg.TxConfig,
 					suite.accounts[0],
-					sdk.NewCoin("foo", sdk.NewInt(100)),
+					sdk.NewCoin("stake", math.NewInt(100)),
 					1,
 					0,
 					suite.accounts[0:1],
@@ -137,7 +138,7 @@ func (suite *IntegrationTestSuite) TestGetTransactionSigners() {
 				tx, err := testutils.CreateAuctionTxWithSigners(
 					suite.encCfg.TxConfig,
 					suite.accounts[0],
-					sdk.NewCoin("foo", sdk.NewInt(100)),
+					sdk.NewCoin("stake", math.NewInt(100)),
 					1,
 					0,
 					suite.accounts[0:3],
@@ -251,7 +252,7 @@ func (suite *IntegrationTestSuite) TestGetBidder() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
@@ -267,7 +268,7 @@ func (suite *IntegrationTestSuite) TestGetBidder() {
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				randomMsg := testutils.CreateRandomMsgs(suite.accounts[0].Address, 1)[0]
@@ -326,7 +327,7 @@ func (suite *IntegrationTestSuite) TestGetBid() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
@@ -335,14 +336,14 @@ func (suite *IntegrationTestSuite) TestGetBid() {
 				suite.Require().NoError(err)
 				return tx
 			},
-			sdk.NewInt64Coin("foo", 100),
+			sdk.NewInt64Coin("stake", 100),
 			false,
 			true,
 		},
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				randomMsg := testutils.CreateRandomMsgs(suite.accounts[0].Address, 1)[0]
@@ -399,7 +400,7 @@ func (suite *IntegrationTestSuite) TestGetBundledTransactions() {
 		{
 			"valid auction tx",
 			func() (sdk.Tx, [][]byte) {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
@@ -414,7 +415,7 @@ func (suite *IntegrationTestSuite) TestGetBundledTransactions() {
 		{
 			"invalid auction tx",
 			func() (sdk.Tx, [][]byte) {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				randomMsg := testutils.CreateRandomMsgs(suite.accounts[0].Address, 1)[0]
@@ -472,7 +473,7 @@ func (suite *IntegrationTestSuite) TestGetTimeout() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
@@ -488,7 +489,7 @@ func (suite *IntegrationTestSuite) TestGetTimeout() {
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("foo", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(suite.encCfg.TxConfig, suite.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				suite.Require().NoError(err)
 
 				randomMsg := testutils.CreateRandomMsgs(suite.accounts[0].Address, 1)[0]

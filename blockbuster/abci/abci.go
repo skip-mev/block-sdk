@@ -1,8 +1,8 @@
 package abci
 
 import (
+	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/lanes/terminator"
@@ -36,19 +36,19 @@ func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, mempool bloc
 // the default lane will not have a boundary on the number of bytes that can be included in the proposal and
 // will include all valid transactions in the proposal (up to MaxTxBytes).
 func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
-	return func(ctx sdk.Context, req abci.RequestPrepareProposal) (resp abci.ResponsePrepareProposal) {
+	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (resp *abci.ResponsePrepareProposal, err error) {
 		// In the case where there is a panic, we recover here and return an empty proposal.
 		defer func() {
 			if err := recover(); err != nil {
 				h.logger.Error("failed to prepare proposal", "err", err)
-				resp = abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
+				resp = &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 			}
 		}()
 
 		proposal, err := h.prepareLanesHandler(ctx, blockbuster.NewProposal(req.MaxTxBytes))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
-			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
+			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
 		h.logger.Info(
@@ -57,9 +57,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"total_tx_bytes", proposal.GetTotalTxBytes(),
 		)
 
-		return abci.ResponsePrepareProposal{
+		return &abci.ResponsePrepareProposal{
 			Txs: proposal.GetProposal(),
-		}
+		}, nil
 	}
 }
 
@@ -68,37 +68,37 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // If a lane's portion of the proposal is invalid, we reject the proposal. After a lane's portion
 // of the proposal is verified, we pass the remaining transactions to the next lane in the chain.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
-	return func(ctx sdk.Context, req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
+	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		// In the case where any of the lanes panic, we recover here and return a reject status.
 		defer func() {
 			if err := recover(); err != nil {
 				h.logger.Error("failed to process proposal", "err", err)
-				resp = abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+				resp = &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 			}
 		}()
 
 		txs := req.Txs
 		if len(txs) == 0 {
 			h.logger.Info("accepted empty proposal")
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
 		}
 
 		// Decode the transactions from the proposal.
 		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, txs)
 		if err != nil {
 			h.logger.Error("failed to decode transactions", "err", err)
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		// Verify the proposal using the verification logic from each lane.
 		if _, err := h.processLanesHandler(ctx, decodedTxs); err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		h.logger.Info("validated proposal", "num_txs", len(txs))
 
-		return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
+		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
 	}
 }
 
@@ -197,7 +197,9 @@ func ChainProcessLanes(chain ...blockbuster.Lane) blockbuster.ProcessLanesHandle
 		}
 
 		chain[0].Logger().Info("processing lane", "lane", chain[0].Name())
+
 		if err := chain[0].ProcessLaneBasic(proposalTxs); err != nil {
+			chain[0].Logger().Error("failed to process lane", "lane", chain[0].Name(), "err", err)
 			return ctx, err
 		}
 

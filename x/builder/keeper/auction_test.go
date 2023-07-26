@@ -4,6 +4,7 @@ import (
 	"math/rand"
 	"time"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -14,13 +15,13 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 	var (
 		// Tx building variables
 		accounts = []testutils.Account{} // tracks the order of signers in the bundle
-		balance  = sdk.NewCoin("foo", sdk.NewInt(10000))
-		bid      = sdk.NewCoin("foo", sdk.NewInt(1000))
+		balance  = sdk.NewCoin("stake", math.NewInt(10000))
+		bid      = sdk.NewCoin("stake", math.NewInt(1000))
 
 		// Auction params
 		maxBundleSize          uint32 = 10
-		reserveFee                    = sdk.NewCoin("foo", sdk.NewInt(1000))
-		minBidIncrement               = sdk.NewCoin("foo", sdk.NewInt(1000))
+		reserveFee                    = sdk.NewCoin("stake", math.NewInt(1000))
+		minBidIncrement               = sdk.NewCoin("stake", math.NewInt(1000))
 		escrowAddress                 = sdk.AccAddress([]byte("escrow"))
 		frontRunningProtection        = true
 
@@ -46,8 +47,8 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 		{
 			"insufficient balance",
 			func() {
-				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				balance = sdk.NewCoin("foo", sdk.NewInt(100))
+				bid = sdk.NewCoin("stake", math.NewInt(1000))
+				balance = sdk.NewCoin("stake", math.NewInt(100))
 			},
 			false,
 		},
@@ -55,8 +56,8 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			"too many transactions in the bundle",
 			func() {
 				// reset the balance and bid to their original values
-				bid = sdk.NewCoin("foo", sdk.NewInt(1000))
-				balance = sdk.NewCoin("foo", sdk.NewInt(10000))
+				bid = sdk.NewCoin("stake", math.NewInt(1000))
+				balance = sdk.NewCoin("stake", math.NewInt(10000))
 				accounts = testutils.RandomAccounts(rnd, int(maxBundleSize+1))
 			},
 			false,
@@ -119,33 +120,33 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			"invalid bundle that does not outbid the highest bid",
 			func() {
 				accounts = []testutils.Account{bidder, bidder, bidder}
-				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
-				bid = sdk.NewCoin("foo", sdk.NewInt(500))
+				highestBid = sdk.NewCoin("stake", math.NewInt(500))
+				bid = sdk.NewCoin("stake", math.NewInt(500))
 			},
 			false,
 		},
 		{
 			"valid bundle that outbids the highest bid",
 			func() {
-				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
-				bid = sdk.NewCoin("foo", sdk.NewInt(1500))
+				highestBid = sdk.NewCoin("stake", math.NewInt(500))
+				bid = sdk.NewCoin("stake", math.NewInt(1500))
 			},
 			true,
 		},
 		{
 			"attempting to bid with a different denom",
 			func() {
-				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
-				bid = sdk.NewCoin("foo2", sdk.NewInt(1500))
+				highestBid = sdk.NewCoin("stake", math.NewInt(500))
+				bid = sdk.NewCoin("stake2", math.NewInt(1500))
 			},
 			false,
 		},
 		{
 			"min bid increment is different from bid denom", // THIS SHOULD NEVER HAPPEN
 			func() {
-				highestBid = sdk.NewCoin("foo", sdk.NewInt(500))
-				bid = sdk.NewCoin("foo", sdk.NewInt(1500))
-				minBidIncrement = sdk.NewCoin("foo2", sdk.NewInt(1000))
+				highestBid = sdk.NewCoin("stake", math.NewInt(500))
+				bid = sdk.NewCoin("stake", math.NewInt(1500))
+				minBidIncrement = sdk.NewCoin("stake2", math.NewInt(1000))
 			},
 			false,
 		},

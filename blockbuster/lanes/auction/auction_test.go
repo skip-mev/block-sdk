@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
@@ -34,7 +34,7 @@ func (suite *IntegrationTestSuite) SetupTest() {
 	suite.encCfg = testutils.CreateTestEncodingConfig()
 	suite.config = auction.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
 	suite.mempool = auction.NewMempool(suite.encCfg.TxConfig.TxEncoder(), 0, suite.config)
-	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
+	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewTestLogger(suite.T()))
 
 	// Init accounts
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))

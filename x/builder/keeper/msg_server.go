@@ -51,7 +51,12 @@ func (m MsgServer) AuctionBid(goCtx context.Context, msg *types.MsgAuctionBid) (
 			return nil, err
 		}
 	} else {
-		rewardsAddress := m.rewardsAddressProvider.GetRewardsAddress(ctx)
+		rewardsAddress, err := m.rewardsAddressProvider.GetRewardsAddress(ctx)
+		if err != nil {
+			// In the case where the rewards address provider returns an error, the
+			// escrow account will receive the entire bid.
+			rewardsAddress = escrowAddress
+		}
 
 		// determine the amount of the bid that goes to the (previous) proposer
 		bid := sdk.NewDecCoinsFromCoins(msg.Bid)

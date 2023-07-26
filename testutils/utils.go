@@ -3,8 +3,10 @@ package test
 import (
 	"math/rand"
 
+	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
+	addresscodec "github.com/cosmos/cosmos-sdk/codec/address"
 	"github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
@@ -16,6 +18,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/cosmos/gogoproto/proto"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 )
 
@@ -27,21 +30,29 @@ type EncodingConfig struct {
 }
 
 func CreateTestEncodingConfig() EncodingConfig {
-	cdc := codec.NewLegacyAmino()
-	interfaceRegistry := types.NewInterfaceRegistry()
+	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
+		ProtoFiles: proto.HybridResolver,
+		SigningOptions: txsigning.Options{
+			AddressCodec:          addresscodec.NewBech32Codec("cosmos"),
+			ValidatorAddressCodec: addresscodec.NewBech32Codec("cosmos"),
+		},
+	})
+	if err != nil {
+		panic(err)
+	}
 
 	banktypes.RegisterInterfaces(interfaceRegistry)
 	cryptocodec.RegisterInterfaces(interfaceRegistry)
 	buildertypes.RegisterInterfaces(interfaceRegistry)
 	stakingtypes.RegisterInterfaces(interfaceRegistry)
 
-	codec := codec.NewProtoCodec(interfaceRegistry)
+	protoCodec := codec.NewProtoCodec(interfaceRegistry)
 
 	return EncodingConfig{
 		InterfaceRegistry: interfaceRegistry,
-		Codec:             codec,
-		TxConfig:          tx.NewTxConfig(codec, tx.DefaultSignModes),
-		Amino:             cdc,
+		Codec:             protoCodec,
+		TxConfig:          tx.NewTxConfig(protoCodec, tx.DefaultSignModes),
+		Amino:             codec.NewLegacyAmino(),
 	}
 }
 
@@ -82,7 +93,7 @@ func CreateTx(txCfg client.TxConfig, account Account, nonce, timeout uint64, msg
 	sigV2 := signing.SignatureV2{
 		PubKey: account.PrivKey.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: nonce,
@@ -125,7 +136,7 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, t
 	sigV2 := signing.SignatureV2{
 		PubKey: account.PrivKey.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: nonce,
@@ -163,7 +174,7 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 	sigV2 := signing.SignatureV2{
 		PubKey: signers[0].PrivKey.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: nonce,
@@ -208,7 +219,7 @@ func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.C
 	sigV2 := signing.SignatureV2{
 		PubKey: bidder.PrivKey.PubKey(),
 		Data: &signing.SingleSignatureData{
-			SignMode:  txCfg.SignModeHandler().DefaultMode(),
+			SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 			Signature: nil,
 		},
 		Sequence: nonce,
@@ -271,7 +282,7 @@ func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coin, no
 		sigV2 := signing.SignatureV2{
 			PubKey: bidder.PrivKey.PubKey(),
 			Data: &signing.SingleSignatureData{
-				SignMode:  txCfg.SignModeHandler().DefaultMode(),
+				SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
 				Signature: nil,
 			},
 			Sequence: nonce + uint64(i),

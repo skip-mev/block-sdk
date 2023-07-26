@@ -3,7 +3,7 @@ package utils_test
 import (
 	"testing"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
+	"cosmossdk.io/math"
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
@@ -12,56 +12,56 @@ func TestGetMaxTxBytesForLane(t *testing.T) {
 		name         string
 		maxTxBytes   int64
 		totalTxBytes int64
-		ratio        sdk.Dec
+		ratio        math.LegacyDec
 		expected     int64
 	}{
 		{
 			"ratio is zero",
 			100,
 			50,
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 			50,
 		},
 		{
 			"ratio is zero",
 			100,
 			100,
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 			0,
 		},
 		{
 			"ratio is zero",
 			100,
 			150,
-			sdk.ZeroDec(),
+			math.LegacyZeroDec(),
 			0,
 		},
 		{
 			"ratio is 1",
 			100,
 			50,
-			sdk.OneDec(),
+			math.LegacyOneDec(),
 			100,
 		},
 		{
 			"ratio is 10%",
 			100,
 			50,
-			sdk.MustNewDecFromStr("0.1"),
+			math.LegacyMustNewDecFromStr("0.1"),
 			10,
 		},
 		{
 			"ratio is 25%",
 			100,
 			50,
-			sdk.MustNewDecFromStr("0.25"),
+			math.LegacyMustNewDecFromStr("0.25"),
 			25,
 		},
 		{
 			"ratio is 50%",
 			101,
 			50,
-			sdk.MustNewDecFromStr("0.5"),
+			math.LegacyMustNewDecFromStr("0.5"),
 			50,
 		},
 	}

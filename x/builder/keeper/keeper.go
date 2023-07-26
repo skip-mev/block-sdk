@@ -3,10 +3,11 @@ package keeper
 import (
 	"fmt"
 
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	"cosmossdk.io/math"
 
+	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/x/builder/rewards"
 	"github.com/skip-mev/pob/x/builder/types"
@@ -161,10 +162,10 @@ func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coin, error) {
 }
 
 // GetProposerFee returns the proposer fee for the builder module.
-func (k Keeper) GetProposerFee(ctx sdk.Context) (sdk.Dec, error) {
+func (k Keeper) GetProposerFee(ctx sdk.Context) (math.LegacyDec, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
-		return sdk.ZeroDec(), err
+		return math.LegacyZeroDec(), err
 	}
 
 	return params.ProposerFee, nil

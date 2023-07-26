@@ -3,16 +3,17 @@ package app
 import (
 	"time"
 
+	"google.golang.org/protobuf/types/known/durationpb"
+
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
 	authzmodulev1 "cosmossdk.io/api/cosmos/authz/module/v1"
 	bankmodulev1 "cosmossdk.io/api/cosmos/bank/module/v1"
-	capabilitymodulev1 "cosmossdk.io/api/cosmos/capability/module/v1"
+	circuitmodulev1 "cosmossdk.io/api/cosmos/circuit/module/v1"
 	consensusmodulev1 "cosmossdk.io/api/cosmos/consensus/module/v1"
 	crisismodulev1 "cosmossdk.io/api/cosmos/crisis/module/v1"
 	distrmodulev1 "cosmossdk.io/api/cosmos/distribution/module/v1"
-	evidencemodulev1 "cosmossdk.io/api/cosmos/evidence/module/v1"
 	feegrantmodulev1 "cosmossdk.io/api/cosmos/feegrant/module/v1"
 	genutilmodulev1 "cosmossdk.io/api/cosmos/genutil/module/v1"
 	govmodulev1 "cosmossdk.io/api/cosmos/gov/module/v1"
@@ -24,46 +25,54 @@ import (
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
 	upgrademodulev1 "cosmossdk.io/api/cosmos/upgrade/module/v1"
 	vestingmodulev1 "cosmossdk.io/api/cosmos/vesting/module/v1"
+	"cosmossdk.io/depinject"
+
+	_ "cosmossdk.io/x/circuit"                        // import for side-effects
+	_ "cosmossdk.io/x/upgrade"                        // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/auth/vesting"   // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/authz/module"   // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/bank"           // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/consensus"      // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/crisis"         // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/distribution"   // import for side-effects
+	"github.com/cosmos/cosmos-sdk/x/genutil"
+	"github.com/cosmos/cosmos-sdk/x/gov"
+	_ "github.com/cosmos/cosmos-sdk/x/group/module" // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/mint"         // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/params"       // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
+	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
+	_ "github.com/skip-mev/pob/x/builder"           // import for side-effects
+
 	"cosmossdk.io/core/appconfig"
+	circuittypes "cosmossdk.io/x/circuit/types"
+	"cosmossdk.io/x/feegrant"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+
+	"github.com/cosmos/cosmos-sdk/types/module"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
 	"github.com/cosmos/cosmos-sdk/x/authz"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	capabilitytypes "github.com/cosmos/cosmos-sdk/x/capability/types"
 	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
 	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
 	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	evidencetypes "github.com/cosmos/cosmos-sdk/x/evidence/types"
-	"github.com/cosmos/cosmos-sdk/x/feegrant"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/cosmos/cosmos-sdk/x/group"
 	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 	buildermodulev1 "github.com/skip-mev/pob/api/pob/builder/module/v1"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
-	"google.golang.org/protobuf/types/known/durationpb"
 )
 
 var (
-
-	// NOTE: The genutils module must occur after staking so that pools are
-	// properly initialized with tokens from genesis accounts.
-	// NOTE: The genutils module must also occur after auth so that it can access the params from auth.
-	// NOTE: Capability module must occur first so that it can initialize any capabilities
-	// so that other modules that want to create or claim capabilities afterwards in InitChain
-	// can do so safely.
-	genesisModuleOrder = []string{
-		capabilitytypes.ModuleName, authtypes.ModuleName, banktypes.ModuleName,
-		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
-		minttypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
-		feegrant.ModuleName, group.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
-		vestingtypes.ModuleName, consensustypes.ModuleName, buildertypes.ModuleName,
-	}
-
 	// module account permissions
 	moduleAccPerms = []*authmodulev1.ModuleAccountPermission{
 		{Account: authtypes.FeeCollectorName},
@@ -87,58 +96,35 @@ var (
 	}
 
 	// application configuration (used by depinject)
-	AppConfig = appconfig.Compose(&appv1alpha1.Config{
+	AppConfig = depinject.Configs(appconfig.Compose(&appv1alpha1.Config{
 		Modules: []*appv1alpha1.ModuleConfig{
 			{
-				Name: "runtime",
+				Name: runtime.ModuleName,
 				Config: appconfig.WrapAny(&runtimev1alpha1.Module{
 					AppName: "TestApp",
 					// During begin block slashing happens after distr.BeginBlocker so that
 					// there is nothing left over in the validator fee pool, so as to keep the
 					// CanWithdrawInvariant invariant.
 					// NOTE: staking module is required if HistoricalEntries param > 0
-					// NOTE: capability module's beginblocker must come before any modules using capabilities (e.g. IBC)
 					BeginBlockers: []string{
 						upgradetypes.ModuleName,
-						capabilitytypes.ModuleName,
 						minttypes.ModuleName,
 						distrtypes.ModuleName,
 						slashingtypes.ModuleName,
-						evidencetypes.ModuleName,
 						stakingtypes.ModuleName,
-						authtypes.ModuleName,
-						banktypes.ModuleName,
-						govtypes.ModuleName,
-						crisistypes.ModuleName,
 						genutiltypes.ModuleName,
 						authz.ModuleName,
-						feegrant.ModuleName,
-						group.ModuleName,
-						paramstypes.ModuleName,
-						vestingtypes.ModuleName,
 						buildertypes.ModuleName,
-						consensustypes.ModuleName,
+						feegrant.ModuleName,
 					},
 					EndBlockers: []string{
 						crisistypes.ModuleName,
 						govtypes.ModuleName,
 						stakingtypes.ModuleName,
-						capabilitytypes.ModuleName,
-						authtypes.ModuleName,
-						banktypes.ModuleName,
-						distrtypes.ModuleName,
-						slashingtypes.ModuleName,
-						minttypes.ModuleName,
 						genutiltypes.ModuleName,
-						evidencetypes.ModuleName,
-						authz.ModuleName,
-						feegrant.ModuleName,
 						group.ModuleName,
-						paramstypes.ModuleName,
-						consensustypes.ModuleName,
-						upgradetypes.ModuleName,
-						vestingtypes.ModuleName,
 						buildertypes.ModuleName,
+						feegrant.ModuleName,
 					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
 						{
@@ -146,12 +132,34 @@ var (
 							KvStoreKey: "acc",
 						},
 					},
-					InitGenesis: genesisModuleOrder,
+					// NOTE: The genutils module must occur after staking so that pools are
+					// properly initialized with tokens from genesis accounts.
+					// NOTE: The genutils module must also occur after auth so that it can access the params from auth.
+					InitGenesis: []string{
+						authtypes.ModuleName,
+						banktypes.ModuleName,
+						distrtypes.ModuleName,
+						stakingtypes.ModuleName,
+						slashingtypes.ModuleName,
+						govtypes.ModuleName,
+						minttypes.ModuleName,
+						crisistypes.ModuleName,
+						genutiltypes.ModuleName,
+						authz.ModuleName,
+						group.ModuleName,
+						paramstypes.ModuleName,
+						upgradetypes.ModuleName,
+						vestingtypes.ModuleName,
+						consensustypes.ModuleName,
+						circuittypes.ModuleName,
+						buildertypes.ModuleName,
+						feegrant.ModuleName,
+					},
 					// When ExportGenesis is not specified, the export genesis module order
 					// is equal to the init genesis order
-					// ExportGenesis: genesisModuleOrder,
+					// ExportGenesis: []string{},
 					// Uncomment if you want to set a custom migration order here.
-					// OrderMigrations: nil,
+					// OrderMigrations: []string{},
 				}),
 			},
 			{
@@ -167,6 +175,10 @@ var (
 			{
 				Name:   vestingtypes.ModuleName,
 				Config: appconfig.WrapAny(&vestingmodulev1.Module{}),
+			},
+			{
+				Name:   feegrant.ModuleName,
+				Config: appconfig.WrapAny(&feegrantmodulev1.Module{}),
 			},
 			{
 				Name: banktypes.ModuleName,
@@ -207,16 +219,6 @@ var (
 				Config: appconfig.WrapAny(&distrmodulev1.Module{}),
 			},
 			{
-				Name: capabilitytypes.ModuleName,
-				Config: appconfig.WrapAny(&capabilitymodulev1.Module{
-					SealKeeper: true,
-				}),
-			},
-			{
-				Name:   evidencetypes.ModuleName,
-				Config: appconfig.WrapAny(&evidencemodulev1.Module{}),
-			},
-			{
 				Name:   minttypes.ModuleName,
 				Config: appconfig.WrapAny(&mintmodulev1.Module{}),
 			},
@@ -226,10 +228,6 @@ var (
 					MaxExecutionPeriod: durationpb.New(time.Second * 1209600),
 					MaxMetadataLen:     255,
 				}),
-			},
-			{
-				Name:   feegrant.ModuleName,
-				Config: appconfig.WrapAny(&feegrantmodulev1.Module{}),
 			},
 			{
 				Name:   govtypes.ModuleName,
@@ -244,9 +242,24 @@ var (
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 			{
+				Name:   circuittypes.ModuleName,
+				Config: appconfig.WrapAny(&circuitmodulev1.Module{}),
+			},
+			{
 				Name:   buildertypes.ModuleName,
 				Config: appconfig.WrapAny(&buildermodulev1.Module{}),
 			},
 		},
-	})
+	}),
+		depinject.Supply(
+			// supply custom module basics
+			map[string]module.AppModuleBasic{
+				genutiltypes.ModuleName: genutil.NewAppModuleBasic(genutiltypes.DefaultMessageValidator),
+				govtypes.ModuleName: gov.NewAppModuleBasic(
+					[]govclient.ProposalHandler{
+						paramsclient.ProposalHandler,
+					},
+				),
+			},
+		))
 )

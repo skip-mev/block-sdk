@@ -4,8 +4,8 @@ import (
 	"fmt"
 	"os"
 
-	dbm "github.com/cometbft/cometbft-db"
-	"github.com/cometbft/cometbft/libs/log"
+	"cosmossdk.io/log"
+	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/codec"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/skip-mev/pob/tests/app"
@@ -40,7 +40,11 @@ type chain struct {
 }
 
 func newChain() (*chain, error) {
-	tmpDir, err := os.MkdirTemp("", "pob-e2e-testnet-")
+	pwd, err := os.Getwd()
+	if err != nil {
+		return nil, err
+	}
+	tmpDir, err := os.MkdirTemp(pwd, ".pob-e2e-testnet-")
 	if err != nil {
 		return nil, err
 	}
