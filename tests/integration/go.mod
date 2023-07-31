@@ -15,6 +15,7 @@ replace (
 )
 
 require (
+<<<<<<< HEAD
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.5.1 // indirect
 	cosmossdk.io/depinject v1.0.0-alpha.3 // indirect
@@ -22,11 +23,15 @@ require (
 	cosmossdk.io/log v1.1.1-0.20230704160919-88f2c830b0ca // indirect
 	cosmossdk.io/math v1.0.1 // indirect
 	cosmossdk.io/tools/rosetta v0.2.1 // indirect
+=======
+	github.com/cometbft/cometbft v0.37.2
+>>>>>>> c52a835 (move test into integration_test package)
 	github.com/cosmos/cosmos-sdk v0.47.4
 	github.com/skip-mev/pob v1.0.3
 	github.com/strangelove-ventures/interchaintest/v7 v7.0.0-20230721183422-fb937bb0e165
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0
+	golang.org/x/sync v0.3.0
 )
 
 require (
