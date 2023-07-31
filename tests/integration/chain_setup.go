@@ -52,6 +52,9 @@ func BuildPOBInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *int
 	// create docker network
 	client, networkID := interchaintest.DockerSetup(t)
 
+	ctx, cancel := context.WithTimeout(ctx, 2 * time.Minute)
+	defer cancel()
+
 	// build the interchain
 	err := ic.Build(ctx, nil, interchaintest.InterchainBuildOptions{
 		SkipPathCreation: true,
@@ -195,7 +198,6 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 		tx := tx // pin
 		eg.Go(func() error {
 			return testutil.WaitForCondition(4*time.Second, 500*time.Millisecond, func() (bool, error) {
-				// query tx
 				_, err := client.Tx(context.Background(), comettypes.Tx(tx).Hash(), false)
 				if err != nil {
 					return false, nil
