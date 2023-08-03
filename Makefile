@@ -176,7 +176,7 @@ lint:
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
 	@golangci-lint run
 
-lint-fix:
+lint-fix: use-main
 	@echo "--> Running linter"
 	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
 	@golangci-lint run --fix
