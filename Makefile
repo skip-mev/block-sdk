@@ -7,7 +7,7 @@ export COMETBFT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed
 BIN_DIR ?= $(GOPATH)/bin
 BUILD_DIR ?= $(CURDIR)/build
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
-HTTPS_GIT := https://github.com/skip-mev/pob.git
+HTTPS_GIT := https://github.com/skip-mev/pob.git/proto
 DOCKER := $(shell which docker)
 
 ###############################################################################
@@ -134,7 +134,8 @@ proto-lint:
 	@$(protoImage) buf lint --error-format=json
 
 proto-check-breaking:
-	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
+	@$(protoImage) buf breaking --against  https://github.com/skip-mev/pob.git:proto/#branch=main 
+# --against-config proto/buf.yaml
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
