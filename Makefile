@@ -135,14 +135,14 @@ proto-format:
 # @$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
-	@$(protoImage) sh -c "ls -l && pwd && whoami && buf lint --error-format=json"	
+	@$(protoImage) sh -c "ls -l && pwd && buf lint --error-format=json"	
 
 proto-check-breaking:
 	@$(protoImage) buf breaking --against  https://github.com/skip-mev/pob.git:proto/#branch=main 
 # --against-config proto/buf.yaml
 
 proto-update-deps:
-	@$(protoImage) sh -c "ls -l && pwd && whoami && buf mod update --debug"
+	@$(protoImage) sh -c "ls -l && pwd && buf mod update --debug"
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
 
