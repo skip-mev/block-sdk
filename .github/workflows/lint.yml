@@ -58,14 +58,21 @@ jobs:
           fi
       - name: lint protos
         run: make proto-lint   
-      - name: check generated protos
+      - name: Check proto dependencies are up to date
+        run: |
+          make proto-update-deps 
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto dependencies are not up to date. Please run `make proto-update-deps `"
+            exit 1
+          fi                
+      - name: check generated protos are up to date
         run: |
           make proto-gen
           if [[ `git status --porcelain` ]]; then
             echo "Proto files are not up to date. Please run `make proto-gen`"
             exit 1
           fi
-      - name: check generated dependency injection protos
+      - name: check generated dependency injection protos are up to date
         run: |
           make proto-pulsar-gen
           if [[ `git status --porcelain` ]]; then

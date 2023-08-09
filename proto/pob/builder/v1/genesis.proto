@@ -39,9 +39,9 @@ message Params {
   // proposer_fee defines the portion of the winning bid that goes to the block
   // proposer that proposed the block.
   string proposer_fee = 6 [
-    (cosmos_proto.scalar)  = "cosmos.Dec",
+    (cosmos_proto.scalar) = "cosmos.Dec",
     (gogoproto.customtype) = "cosmossdk.io/math.LegacyDec",
-    (gogoproto.nullable)   = false,
+    (gogoproto.nullable) = false,
     (amino.dont_omitempty) = true
   ];
 }

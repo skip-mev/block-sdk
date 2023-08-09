@@ -115,17 +115,17 @@ test:
 
 protoVer=0.13.5
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace/proto $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen.sh
+	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen.sh" 
 
 proto-pulsar-gen:
 	@echo "Generating Dep-Inj Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen-pulsar.sh
+	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen-pulsar.sh" 
 
 proto-format:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
@@ -138,7 +138,7 @@ proto-check-breaking:
 
 proto-update-deps:
 	@echo "Updating Protobuf dependencies"
-	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
+	@$(protoImage) buf mod update
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
 
