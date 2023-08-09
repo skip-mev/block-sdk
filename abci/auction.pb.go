@@ -25,9 +25,11 @@ const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 // AuctionInfo contains information about the top of block auction
 // that was run in PrepareProposal using vote extensions.
 type AuctionInfo struct {
-	// extended_commit_info contains the vote extensions that were used to run the auction.
+	// extended_commit_info contains the vote extensions that were used to run the
+	// auction.
 	ExtendedCommitInfo []byte `protobuf:"bytes,1,opt,name=extended_commit_info,json=extendedCommitInfo,proto3" json:"extended_commit_info,omitempty"`
-	// max_tx_bytes is the maximum number of bytes that were allowed for the proposal.
+	// max_tx_bytes is the maximum number of bytes that were allowed for the
+	// proposal.
 	MaxTxBytes int64 `protobuf:"varint,2,opt,name=max_tx_bytes,json=maxTxBytes,proto3" json:"max_tx_bytes,omitempty"`
 	// num_txs is the number of transactions that were included in the proposal.
 	NumTxs uint64 `protobuf:"varint,3,opt,name=num_txs,json=numTxs,proto3" json:"num_txs,omitempty"`
