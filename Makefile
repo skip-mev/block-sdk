@@ -113,35 +113,42 @@ test:
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.13.5
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(GITHUB_WORKSPACE):/workspace --user 1001 --workdir /workspace/proto $(protoImageName)
+# protoVer=0.13.5
+# protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
+protoImageName=proto-genc 
+protoImage=$(DOCKER) run --rm -v $(GITHUB_WORKSPACE):/workspace --workdir /workspace/proto $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 
 proto-gen:
 	@echo "Generating Protobuf files"
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen.sh" 
 
 proto-pulsar-gen:
 	@echo "Generating Dep-Inj Protobuf files"
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen-pulsar.sh" 
 
 proto-format:
 	pwd
 	ls
 	env
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) sh -c "ls"
 # @$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) sh -c "ls -l && pwd && buf lint --error-format=json"	
 
 proto-check-breaking:
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) buf breaking --against  https://github.com/skip-mev/pob.git:proto/#branch=main 
 # --against-config proto/buf.yaml
 
 proto-update-deps:
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
 	@$(protoImage) sh -c "ls -l && pwd && buf mod update --debug"
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
