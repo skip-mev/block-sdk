@@ -115,7 +115,7 @@ test:
 
 protoVer=0.13.5
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(GITHUB_WORKSPACE):/workspace --workdir /workspace/proto $(protoImageName)
+protoImage=$(DOCKER) run --rm -v $(GITHUB_WORKSPACE):/workspace --user 1001 --workdir /workspace/proto $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 
@@ -142,7 +142,7 @@ proto-check-breaking:
 # --against-config proto/buf.yaml
 
 proto-update-deps:
-	@$(protoImage) sh -c "ls -l && pwd && buf mod update --debug"
+	@$(protoImage) sh -c "ls -l && pwd && whoami && buf mod update --debug"
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
 
