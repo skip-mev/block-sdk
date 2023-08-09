@@ -138,8 +138,7 @@ proto-check-breaking:
 # --against-config proto/buf.yaml
 
 proto-update-deps:
-	@echo "Updating Protobuf dependencies"
-	@$(protoImage) buf mod update -v
+	@$(protoImage) buf mod update --debug
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
 
