@@ -1,21 +1,84 @@
 version: v1
 name: buf.build/skip-mev/pob
-
 deps:
   - buf.build/cosmos/cosmos-proto
   - buf.build/cosmos/cosmos-sdk:v0.47.0
   - buf.build/cosmos/gogo-proto
   - buf.build/googleapis/googleapis
-breaking:
-  use:
-    - FILE
+build:
 lint:
   use:
     - DEFAULT
-    - COMMENTS
-  except:
-    - SERVICE_SUFFIX
-    - RPC_REQUEST_STANDARD_NAME
-    - COMMENT_FIELD
-    - FIELD_LOWER_SNAKE_CASE
-    - PACKAGE_DIRECTORY_MATCH
+
+# breaking contains the options for breaking rules.
+breaking:
+
+  # use is the list of rule categories and ids to use for
+  # buf breaking.
+  #
+  # Categories are sets of rule ids.
+  # Run buf config ls-breaking-rules --all to get a list of all rules.
+  #
+  # The union of the categories and ids will be used.
+  #
+  # As opposed to lint, where you may want to do more customization, with
+  # breaking is is generally better to only choose one of the following
+  # options:
+  #
+  # - [FILE]
+  # - [PACKAGE]
+  # - [WIRE]
+  # - [WIRE_JSON]
+  #
+  # The default is [FILE], as done below.
+  use:
+    - FILE
+
+  # except is the list of rule ids or categories to remove from the use
+  # list.
+  #
+  # This allows removal of specific rules from the union of rules derived
+  # from the use list of categories and ids.
+  #
+  # As opposed to lint, we generally recommend using one of the preconfigured
+  # options. Removing specific rules from breaking change detection is an
+  # advanced option.
+  #except:
+  #  - FIELD_SAME_NAME
+
+  # ignore is the list of directories or files to ignore for all rules.
+  #
+  # All directories and file paths are specified relative to the root directory.
+  # The directory "." is not allowed - this is equivalent to ignoring
+  # everything.
+  #ignore:
+  #  - bat
+  #  - ban/ban.proto
+
+  # ignore_only is the map from rule id or category to file or directory to
+  # ignore.
+  #
+  # All directories and file paths are specified relative to a root directory.
+  # The directory "." is not allowed - this is equivalent to using the "except"
+  # option.
+  #ignore_only:
+  #  FIELD_NO_DELETE:
+  #    - foo/foo.proto
+  #    - bar
+  #  WIRE_JSON:
+  #    - foo
+
+  # ignore_unstable_packages results in ignoring packages with a last component
+  # that is one of the unstable forms recognized by the "PACKAGE_VERSION_SUFFIX"
+  # lint rule. The following forms will be ignored:
+  #
+  # - v\d+test.*
+  # - v\d+(alpha|beta)\d+
+  # - v\d+p\d+(alpha|beta)\d+
+  #
+  # For example, if this option is set, the following packages will be ignored:
+  #
+  # - foo.bar.v1alpha1
+  # - foo.bar.v1beta1
+  # - foo.bar.v1test
+  ignore_unstable_packages: false
