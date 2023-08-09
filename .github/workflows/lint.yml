@@ -37,3 +37,37 @@ jobs:
         uses: avto-dev/markdown-lint@v1
         with:
           args: "**/*.md"
+
+  check-protos:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.20'
+      - name: check for breaking proto changes
+        run: make proto-check-breaking      
+      - name: check proto formatting
+        run: |
+          make proto-format
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files are not formatted. Please run `make proto-format`"
+            exit 1
+          fi
+      - name: lint protos
+        run: make proto-lint   
+      - name: check generated protos
+        run: |
+          make proto-gen
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files are not up to date. Please run `make proto-gen`"
+            exit 1
+          fi
+      - name: check generated dependency injection protos
+        run: |
+          make proto-pulsar-gen
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files for dependency injection are not up to date. Please run `make proto-pulsar-gen`"
+            exit 1
+          fi
