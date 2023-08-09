@@ -9,6 +9,10 @@ build:
 lint:
   use:
     - DEFAULT
+  except:
+    - RPC_REQUEST_STANDARD_NAME
+    - SERVICE_SUFFIX
+
 
 # breaking contains the options for breaking rules.
 breaking:
