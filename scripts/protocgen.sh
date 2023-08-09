@@ -20,7 +20,7 @@ done
 cd ..
 
 # move proto files to the right places
-cp -r github.com/skip-mev/pob/* ./
-rm -rf github.com
+# cp -r github.com/skip-mev/pob/* ./
+# rm -rf github.com
 
 # go mod tidy --compat=1.20
