@@ -128,7 +128,7 @@ proto-pulsar-gen:
 	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen-pulsar.sh" 
 
 proto-format:
-	@$(protoImage) ls && touch test.txt && find ./ -name "*.proto" -exec clang-format -i {} \;
+	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
 proto-lint:
 	@$(protoImage) buf lint --error-format=json
