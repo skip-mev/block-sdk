@@ -115,7 +115,7 @@ test:
 
 protoVer=0.13.5
 protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(pwd):/workspace --workdir /workspace/proto $(protoImageName)
+protoImage=$(DOCKER) run --rm -v $(PWD):/workspace --workdir /workspace/proto $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 
