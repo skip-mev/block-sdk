@@ -128,6 +128,9 @@ proto-pulsar-gen:
 	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen-pulsar.sh" 
 
 proto-format:
+	pwd
+	ls
+	env
 	@$(protoImage) sh -c "ls"
 # @$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
 
