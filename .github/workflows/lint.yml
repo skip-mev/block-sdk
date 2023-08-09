@@ -38,7 +38,8 @@ jobs:
         with:
           args: "**/*.md"
 
-  check-protos:  
+  check-protos:
+    name: Lint Protocol Buffers
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -49,30 +50,30 @@ jobs:
         uses: actions/setup-go@v3
         with:
           go-version: '1.20'
-      - name: check proto formatting
+      - name: Check Protocol Buffer Formatting
         run: |
           make proto-format
           if [[ `git status --porcelain` ]]; then
             echo "Proto files are not formatted. Please run `make proto-format`"
             exit 1
           fi
-      - name: lint protos
+      - name: Lint Protocol Buffers
         run: make proto-lint   
-      - name: Check proto dependencies are up to date
+      - name: Check Protocol Buffer Dependencies Up to Date
         run: |
           make proto-update-deps 
           if [[ `git status --porcelain` ]]; then
             echo "Proto dependencies are not up to date. Please run `make proto-update-deps `"
             exit 1
           fi                
-      - name: check generated protos are up to date
+      - name: Check Generated Protos Up to Date
         run: |
           make proto-gen
           if [[ `git status --porcelain` ]]; then
             echo "Proto files are not up to date. Please run `make proto-gen`"
             exit 1
           fi
-      - name: check generated dependency injection protos are up to date
+      - name: Check Dependency Injected Generated Protos Up to Date
         run: |
           make proto-pulsar-gen
           if [[ `git status --porcelain` ]]; then
