@@ -9,19 +9,19 @@ import "pob/builder/v1/genesis.proto";
 option go_package = "github.com/skip-mev/pob/x/builder/types";
 
 // Query defines the x/builder querier service.
-service Query {
+service QueryService {
   // Params queries the parameters of the x/builder module.
-  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+  rpc Params(QueryServiceParamsRequest) returns (QueryServiceParamsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/pob/builder/v1/params";
   }
 }
 
 // QueryParamsRequest is the request type for the Query/Params RPC method.
-message QueryParamsRequest {}
+message QueryServiceParamsRequest {}
 
 // QueryParamsResponse is the response type for the Query/Params RPC method.
-message QueryParamsResponse {
+message QueryServiceParamsResponse {
   // params defines the parameters of the module.
-  Params params = 1 [ (gogoproto.nullable) = false ];
+  Params params = 1 [(gogoproto.nullable) = false];
 }
