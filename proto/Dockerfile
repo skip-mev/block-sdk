@@ -1,3 +1,9 @@
+# NOTE: This file is forked from the Cosmos SDK Proto Builder at tag v0.47.0. With a single change to not specify the user for the 
+#       container to make the Docker image compatible with the GitHub action CLI (see bullet #2 under 'Docker Container Filesystem') here:
+#       https://docs.github.com/en/actions/using-github-hosted-runners/about-github-hosted-runners#docker-container-filesystem
+#       
+# Permalink to source file: https://github.com/cosmos/cosmos-sdk/blob/9acdbb94da5a4687495466f88d66265c732dcdd5/contrib/devtools/Dockerfile
+
 ## To test locally:
 # docker build --pull --rm -f "contrib/devtools/Dockerfile" -t cosmossdk-proto:latest "contrib/devtools"
 # docker run --rm -v $(pwd):/workspace --workdir /workspace cosmossdk-proto sh ./scripts/protocgen.sh
