@@ -169,33 +169,33 @@ Lane interface {
     Name() string
 
     // Match determines if a transaction belongs to this lane.
-    Match(tx sdk.Tx) bool
+    Match(ctx sdk.Context, tx sdk.Tx) bool
 
     // VerifyTx verifies the transaction belonging to this lane.
     VerifyTx(ctx sdk.Context, tx sdk.Tx) error
 
-    // Contains returns true if the mempool contains the given transaction.
-    Contains(tx sdk.Tx) (bool, error)
+    // Contains returns true if the mempool/lane contains the given transaction.
+    Contains(tx sdk.Tx) bool
 
     // PrepareLane builds a portion of the block. It inputs the maxTxBytes that 
-    // can be included in the proposal for the given lane, the partial 
-    // proposal, and a function to call the next lane in the chain. The 
-    // next lane in the chain will be called with the updated proposal and context.
+    // can be included in the proposal for the given lane, the partial proposal,
+    // and a function to call the next lane in the chain. The next lane in the 
+    // chain will be called with the updated proposal and context.
     PrepareLane(
         ctx sdk.Context, 
         proposal BlockProposal, 
         maxTxBytes int64, 
-        next PrepareLanesHandler,
+        next PrepareLanesHandler
     ) (BlockProposal, error)
 
-    // ProcessLaneBasic validates that transactions belonging to this lane are 
-    // not misplaced in the block proposal.
-    ProcessLaneBasic(txs []sdk.Tx) error
+    // ProcessLaneBasic validates that transactions belonging to this lane 
+    // are not misplaced in the block proposal.
+    ProcessLaneBasic(ctx sdk.Context, txs []sdk.Tx) error
 
-    // ProcessLane verifies this lane's portion of a proposed block. It inputs 
-    // the transactions that may belong to this lane and a function to call 
-    // the next lane in the chain. The next lane in the chain will be
-    // called with the updated context and filtered down transactions.
+    // ProcessLane verifies this lane's portion of a proposed block. It inputs
+    // the transactions that may belong to this lane and a function to call the
+    // next lane in the chain. The next lane in the chain will be called with 
+    // the updated context and filtered down transactions.
     ProcessLane(
         ctx sdk.Context, 
         proposalTxs []sdk.Tx, 
@@ -209,7 +209,7 @@ Lane interface {
     Logger() log.Logger
 
     // GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
-    GetMaxBlockSpace() sdk.Dec
+    GetMaxBlockSpace() math.LegacyDec
 }
 ```
 

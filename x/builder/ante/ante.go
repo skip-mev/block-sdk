@@ -23,7 +23,7 @@ type (
 
 	// Mempool is an interface that defines the methods required to interact with the application-side mempool.
 	Mempool interface {
-		Contains(tx sdk.Tx) (bool, error)
+		Contains(tx sdk.Tx) bool
 	}
 
 	// BuilderDecorator is an AnteDecorator that validates the auction bid and bundled transactions.
@@ -49,12 +49,7 @@ func NewBuilderDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane TOBLane
 func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// If comet is re-checking a transaction, we only need to check if the transaction is in the application-side mempool.
 	if ctx.IsReCheckTx() {
-		contains, err := bd.mempool.Contains(tx)
-		if err != nil {
-			return ctx, err
-		}
-
-		if !contains {
+		if !bd.mempool.Contains(tx) {
 			return ctx, fmt.Errorf("transaction not found in application-side mempool")
 		}
 	}

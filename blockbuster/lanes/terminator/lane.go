@@ -51,7 +51,7 @@ func (t Terminator) Name() string {
 }
 
 // Match is a no-op
-func (t Terminator) Match(sdk.Tx) bool {
+func (t Terminator) Match(sdk.Context, sdk.Tx) bool {
 	return false
 }
 
@@ -61,8 +61,8 @@ func (t Terminator) VerifyTx(sdk.Context, sdk.Tx) error {
 }
 
 // Contains is a no-op
-func (t Terminator) Contains(sdk.Tx) (bool, error) {
-	return false, nil
+func (t Terminator) Contains(sdk.Tx) bool {
+	return false
 }
 
 // CountTx is a no-op
@@ -86,7 +86,7 @@ func (t Terminator) Select(context.Context, [][]byte) sdkmempool.Iterator {
 }
 
 // ValidateLaneBasic is a no-op
-func (t Terminator) ProcessLaneBasic([]sdk.Tx) error {
+func (t Terminator) ProcessLaneBasic(sdk.Context, []sdk.Tx) error {
 	return nil
 }
 

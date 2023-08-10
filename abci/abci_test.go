@@ -77,7 +77,7 @@ func (suite *ABCITestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	config := blockbuster.BaseLaneConfig{
+	tobConfig := blockbuster.BaseLaneConfig{
 		Logger:        suite.logger,
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -85,18 +85,27 @@ func (suite *ABCITestSuite) SetupTest() {
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
 	suite.tobLane = auction.NewTOBLane(
-		config,
+		tobConfig,
 		0, // No bound on the number of transactions in the lane
 		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
+	baseConfig := blockbuster.BaseLaneConfig{
+		Logger:        suite.logger,
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   suite.anteHandler,
+		MaxBlockSpace: math.LegacyZeroDec(),
+		IgnoreList:    []blockbuster.Lane{suite.tobLane},
+	}
 	suite.baseLane = base.NewDefaultLane(
-		config,
+		baseConfig,
 	)
 
 	// Mempool set up
 	suite.mempool = blockbuster.NewMempool(
+		suite.logger,
 		suite.tobLane,
 		suite.baseLane,
 	)

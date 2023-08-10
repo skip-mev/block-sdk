@@ -55,14 +55,20 @@ func (l *DefaultLane) WithName(name string) *DefaultLane {
 // Match returns true if the transaction belongs to this lane. Since
 // this is the default lane, it always returns true except for transactions
 // that belong to lanes in the ignore list.
-func (l *DefaultLane) Match(tx sdk.Tx) bool {
+func (l *DefaultLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
+	return !l.MatchIgnoreList(ctx, tx)
+}
+
+// MatchIgnoreList returns true if any of the lanes that are in the ignore list
+// match the current transaction.
+func (l *DefaultLane) MatchIgnoreList(ctx sdk.Context, tx sdk.Tx) bool {
 	for _, lane := range l.Cfg.IgnoreList {
-		if lane.Match(tx) {
-			return false
+		if lane.Match(ctx, tx) {
+			return true
 		}
 	}
 
-	return true
+	return false
 }
 
 // Name returns the name of the lane.

@@ -198,7 +198,7 @@ func ChainProcessLanes(chain ...blockbuster.Lane) blockbuster.ProcessLanesHandle
 
 		chain[0].Logger().Info("processing lane", "lane", chain[0].Name())
 
-		if err := chain[0].ProcessLaneBasic(proposalTxs); err != nil {
+		if err := chain[0].ProcessLaneBasic(ctx, proposalTxs); err != nil {
 			chain[0].Logger().Error("failed to process lane", "lane", chain[0].Name(), "err", err)
 			return ctx, err
 		}

@@ -8,7 +8,7 @@ type (
 	// Lane defines the required functionality for a lane. The ignore decorator
 	// will check if a transaction belongs to a lane by calling the Match function.
 	Lane interface {
-		Match(tx sdk.Tx) bool
+		Match(ctx sdk.Context, tx sdk.Tx) bool
 	}
 
 	// IgnoreDecorator is an AnteDecorator that wraps an existing AnteDecorator. It allows
@@ -34,7 +34,7 @@ func (sd IgnoreDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	for _, lane := range sd.lanes {
-		if lane.Match(tx) {
+		if lane.Match(ctx, tx) {
 			return next(ctx, tx, simulate)
 		}
 	}

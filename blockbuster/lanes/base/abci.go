@@ -95,7 +95,7 @@ func (l *DefaultLane) PrepareLane(
 // we only need to verify the contiguous set of transactions that match to the default lane.
 func (l *DefaultLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
 	for index, tx := range txs {
-		if l.Match(tx) {
+		if l.Match(ctx, tx) {
 			if err := l.VerifyTx(ctx, tx); err != nil {
 				return ctx, fmt.Errorf("failed to verify tx: %w", err)
 			}
@@ -111,12 +111,12 @@ func (l *DefaultLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuste
 // transactions that belong to this lane are not misplaced in the block proposal i.e.
 // the proposal only contains contiguous transactions that belong to this lane - there
 // can be no interleaving of transactions from other lanes.
-func (l *DefaultLane) ProcessLaneBasic(txs []sdk.Tx) error {
+func (l *DefaultLane) ProcessLaneBasic(ctx sdk.Context, txs []sdk.Tx) error {
 	seenOtherLaneTx := false
 	lastSeenIndex := 0
 
 	for _, tx := range txs {
-		if l.Match(tx) {
+		if l.Match(ctx, tx) {
 			if seenOtherLaneTx {
 				return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())
 			}

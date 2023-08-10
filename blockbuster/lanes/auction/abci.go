@@ -172,7 +172,7 @@ func (l *TOBLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.Pr
 	}
 
 	bidTx := txs[0]
-	if !l.Match(bidTx) {
+	if !l.Match(ctx, bidTx) {
 		return next(ctx, txs)
 	}
 
@@ -193,7 +193,7 @@ func (l *TOBLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.Pr
 //   - all of the bundled transactions are included after the bid transaction in the order
 //     they were included in the bid transaction.
 //   - there are no other bid transactions in the proposal
-func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
+func (l *TOBLane) ProcessLaneBasic(ctx sdk.Context, txs []sdk.Tx) error {
 	if len(txs) == 0 {
 		return nil
 	}
@@ -201,9 +201,9 @@ func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
 	bidTx := txs[0]
 
 	// If there is a bid transaction, it must be the first transaction in the block proposal.
-	if !l.Match(bidTx) {
+	if !l.Match(ctx, bidTx) {
 		for _, tx := range txs[1:] {
-			if l.Match(tx) {
+			if l.Match(ctx, tx) {
 				return fmt.Errorf("misplaced bid transactions in lane %s", l.Name())
 			}
 		}
@@ -222,7 +222,7 @@ func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
 
 	// Ensure that the order of transactions in the bundle is preserved.
 	for i, bundleTx := range txs[1 : len(bidInfo.Transactions)+1] {
-		if l.Match(bundleTx) {
+		if l.Match(ctx, bundleTx) {
 			return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
 		}
 
@@ -238,7 +238,7 @@ func (l *TOBLane) ProcessLaneBasic(txs []sdk.Tx) error {
 
 	// Ensure that there are no more bid transactions in the block proposal.
 	for _, tx := range txs[len(bidInfo.Transactions)+1:] {
-		if l.Match(tx) {
+		if l.Match(ctx, tx) {
 			return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
 		}
 	}

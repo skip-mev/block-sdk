@@ -3,7 +3,9 @@ package blockbuster
 import (
 	"context"
 	"fmt"
+	"strings"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -19,14 +21,11 @@ type (
 		// Registry returns the mempool's lane registry.
 		Registry() []Lane
 
-		// Contains returns true if the transaction is contained in the mempool.
-		Contains(tx sdk.Tx) (bool, error)
+		// Contains returns the any of the lanes currently contain the transaction.
+		Contains(tx sdk.Tx) bool
 
 		// GetTxDistribution returns the number of transactions in each lane.
 		GetTxDistribution() map[string]int
-
-		// Match will return the lane that the transaction belongs to.
-		Match(tx sdk.Tx) (Lane, error)
 
 		// GetLane returns the lane with the given name.
 		GetLane(name string) (Lane, error)
@@ -36,6 +35,7 @@ type (
 	// of lanes, which allows for customizable block proposal construction.
 	BBMempool struct {
 		registry []Lane
+		logger   log.Logger
 	}
 )
 
@@ -44,11 +44,13 @@ type (
 // transactions according to its own selection logic. The lanes are ordered
 // according to their priority. The first lane in the registry has the highest
 // priority. Proposals are verified according to the order of the lanes in the
-// registry. Basic mempool API, such as insertion, removal, and contains, are
-// delegated to the first lane that matches the transaction. Each transaction
-// should only belong in one lane.
-func NewMempool(lanes ...Lane) *BBMempool {
+// registry. Each transaction should only belong in one lane but this is NOT enforced.
+// To enforce that each transaction belong to a single lane, you must configure the
+// ignore list of each lane to include all preceding lanes. Basic mempool API will
+// attempt to insert, remove transactions from all lanes it belongs to.
+func NewMempool(logger log.Logger, lanes ...Lane) *BBMempool {
 	mempool := &BBMempool{
+		logger:   logger,
 		registry: lanes,
 	}
 
@@ -81,27 +83,28 @@ func (m *BBMempool) GetTxDistribution() map[string]int {
 	return counts
 }
 
-// Match will return the lane that the transaction belongs to. It matches to
-// the first lane where lane.Match(tx) is true.
-func (m *BBMempool) Match(tx sdk.Tx) (Lane, error) {
-	for _, lane := range m.registry {
-		if lane.Match(tx) {
-			return lane, nil
-		}
-	}
-
-	return nil, fmt.Errorf("no lane matched transaction")
-}
-
 // Insert will insert a transaction into the mempool. It inserts the transaction
 // into the first lane that it matches.
 func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
-	lane, err := m.Match(tx)
-	if err != nil {
-		return err
+	var errors []string
+
+	unwrappedCtx := sdk.UnwrapSDKContext(ctx)
+	for _, lane := range m.registry {
+		if !lane.Match(unwrappedCtx, tx) {
+			continue
+		}
+
+		if err := lane.Insert(ctx, tx); err != nil {
+			m.logger.Debug("failed to insert tx into lane", "lane", lane.Name(), "err", err)
+			errors = append(errors, fmt.Sprintf("failed to insert tx into lane %s: %s", lane.Name(), err.Error()))
+		}
 	}
 
-	return lane.Insert(ctx, tx)
+	if len(errors) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf(strings.Join(errors, ";"))
 }
 
 // Insert returns a nil iterator.
@@ -114,26 +117,46 @@ func (m *BBMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
 	return nil
 }
 
-// Remove removes a transaction from the mempool based on the first lane that
-// it matches.
+// Remove removes a transaction from all of the lanes it is currently in.
 func (m *BBMempool) Remove(tx sdk.Tx) error {
-	lane, err := m.Match(tx)
-	if err != nil {
-		return err
+	var errors []string
+
+	for _, lane := range m.registry {
+		if !lane.Contains(tx) {
+			continue
+		}
+
+		if err := lane.Remove(tx); err != nil {
+			m.logger.Debug("failed to remove tx from lane", "lane", lane.Name(), "err", err)
+
+			// We only care about errors that are not "tx not found" errors.
+			//
+			// TODO: Figure out whether we should be erroring in the mempool if
+			// the tx is not found in the lane. Downstream, if the removal fails runTx will
+			// error out and will NOT execute runMsgs (which is where the tx is actually
+			// executed).
+			if err != sdkmempool.ErrTxNotFound {
+				errors = append(errors, fmt.Sprintf("failed to remove tx from lane %s: %s;", lane.Name(), err.Error()))
+			}
+		}
 	}
 
-	return lane.Remove(tx)
+	if len(errors) == 0 {
+		return nil
+	}
+
+	return fmt.Errorf(strings.Join(errors, ";"))
 }
 
-// Contains returns true if the transaction is contained in the mempool. It
-// checks the first lane that it matches to.
-func (m *BBMempool) Contains(tx sdk.Tx) (bool, error) {
-	lane, err := m.Match(tx)
-	if err != nil {
-		return false, err
+// Contains returns true if the transaction is contained in any of the lanes.
+func (m *BBMempool) Contains(tx sdk.Tx) bool {
+	for _, lane := range m.registry {
+		if lane.Contains(tx) {
+			return true
+		}
 	}
 
-	return lane.Contains(tx)
+	return false
 }
 
 // Registry returns the mempool's lane registry.

@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
@@ -82,7 +83,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	config := blockbuster.BaseLaneConfig{
+	tobConfig := blockbuster.BaseLaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -90,17 +91,25 @@ func (suite *AnteTestSuite) SetupTest() {
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
 	suite.tobLane = auction.NewTOBLane(
-		config,
+		tobConfig,
 		0, // No bound on the number of transactions in the lane
 		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
-	suite.baseLane = base.NewDefaultLane(config)
+	baseConfig := blockbuster.BaseLaneConfig{
+		Logger:        suite.ctx.Logger(),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   suite.anteHandler,
+		MaxBlockSpace: math.LegacyZeroDec(),
+		IgnoreList:    []blockbuster.Lane{suite.tobLane},
+	}
+	suite.baseLane = base.NewDefaultLane(baseConfig)
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {

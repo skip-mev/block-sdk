@@ -55,35 +55,54 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	config := blockbuster.BaseLaneConfig{
+	tobConfig := blockbuster.BaseLaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
-
-	// Top of block lane set up
 	suite.tobLane = auction.NewTOBLane(
-		config,
+		tobConfig,
 		0, // No bound on the number of transactions in the lane
 		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Free lane set up
+	freeConfig := blockbuster.BaseLaneConfig{
+		Logger:        log.NewNopLogger(),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   nil,
+		MaxBlockSpace: math.LegacyZeroDec(),
+		IgnoreList: []blockbuster.Lane{
+			suite.tobLane,
+		},
+	}
 	suite.freeLane = free.NewFreeLane(
-		config,
+		freeConfig,
 		free.NewDefaultFreeFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
+	baseConfig := blockbuster.BaseLaneConfig{
+		Logger:        log.NewNopLogger(),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   nil,
+		MaxBlockSpace: math.LegacyZeroDec(),
+		IgnoreList: []blockbuster.Lane{
+			suite.tobLane,
+			suite.freeLane,
+		},
+	}
 	suite.baseLane = base.NewDefaultLane(
-		config,
+		baseConfig,
 	)
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
@@ -179,20 +198,20 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			}
 
 			// Validate the mempool
-			suite.Require().Equal(suite.mempool.CountTx(), sum)
+			suite.Require().Equal(sum, suite.mempool.CountTx())
 
 			// Validate the lanes
-			suite.Require().Equal(suite.baseLane.CountTx(), tc.insertDistribution[suite.baseLane.Name()])
-			suite.Require().Equal(suite.tobLane.CountTx(), tc.insertDistribution[suite.tobLane.Name()])
-			suite.Require().Equal(suite.freeLane.CountTx(), tc.insertDistribution[suite.freeLane.Name()])
+			suite.Require().Equal(tc.insertDistribution[suite.tobLane.Name()], suite.tobLane.CountTx())
+			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], suite.baseLane.CountTx())
+			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], suite.freeLane.CountTx())
 
 			// Validate the lane counts
 			laneCounts := suite.mempool.GetTxDistribution()
 
 			// Ensure that the lane counts are correct
-			suite.Require().Equal(laneCounts[suite.tobLane.Name()], tc.insertDistribution[suite.tobLane.Name()])
-			suite.Require().Equal(laneCounts[suite.baseLane.Name()], tc.insertDistribution[suite.baseLane.Name()])
-			suite.Require().Equal(laneCounts[suite.freeLane.Name()], tc.insertDistribution[suite.freeLane.Name()])
+			suite.Require().Equal(tc.insertDistribution[suite.tobLane.Name()], laneCounts[suite.tobLane.Name()])
+			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], laneCounts[suite.baseLane.Name()])
+			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], laneCounts[suite.freeLane.Name()])
 		})
 	}
 }
@@ -250,9 +269,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 				suite.Require().NoError(suite.mempool.Remove(tx))
 
 				// Ensure that the transaction is no longer in the mempool
-				contains, err := suite.mempool.Contains(tx)
-				suite.Require().NoError(err)
-				suite.Require().False(contains)
+				suite.Require().Equal(false, suite.mempool.Contains(tx))
 
 				// Ensure the number of transactions in the lane is correct
 				baseCount--
@@ -275,9 +292,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 				suite.Require().NoError(suite.mempool.Remove(tx))
 
 				// Ensure that the transaction is no longer in the mempool
-				contains, err := suite.mempool.Contains(tx)
-				suite.Require().NoError(err)
-				suite.Require().False(contains)
+				suite.Require().Equal(false, suite.mempool.Contains(tx))
 
 				// Ensure the number of transactions in the lane is correct
 				tobCount--

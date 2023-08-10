@@ -75,16 +75,14 @@ func (suite *ABCITestSuite) SetupTest() {
 	suite.ctx = testCtx.Ctx.WithBlockHeight(1)
 
 	// Lanes configuration
-	config := blockbuster.BaseLaneConfig{
+	// Top of block lane set up
+	suite.tobConfig = blockbuster.BaseLaneConfig{
 		Logger:        log.NewTestLogger(suite.T()),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
 		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
 	}
-
-	// Top of block lane set up
-	suite.tobConfig = config
 	suite.tobLane = auction.NewTOBLane(
 		suite.tobConfig,
 		0, // No bound on the number of transactions in the lane
@@ -92,21 +90,35 @@ func (suite *ABCITestSuite) SetupTest() {
 	)
 
 	// Free lane set up
-	suite.freeConfig = config
+	suite.freeConfig = blockbuster.BaseLaneConfig{
+		Logger:        log.NewTestLogger(suite.T()),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   suite.anteHandler,
+		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
+		IgnoreList:    []blockbuster.Lane{suite.tobLane},
+	}
 	suite.freeLane = free.NewFreeLane(
 		suite.freeConfig,
 		free.NewDefaultFreeFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
-	suite.baseConfig = config
+	suite.baseConfig = blockbuster.BaseLaneConfig{
+		Logger:        log.NewTestLogger(suite.T()),
+		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   suite.anteHandler,
+		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
+		IgnoreList:    []blockbuster.Lane{suite.tobLane, suite.freeLane},
+	}
 	suite.baseLane = base.NewDefaultLane(
 		suite.baseConfig,
 	)
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
@@ -179,7 +191,7 @@ func (suite *ABCITestSuite) resetLanesWithNewConfig() {
 
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
 
-	suite.mempool = blockbuster.NewMempool(suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
 }
 
 func (suite *ABCITestSuite) TestPrepareProposal() {
@@ -711,13 +723,12 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				tx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[txIndex])
 				suite.Require().NoError(err)
 
-				lane, err := suite.mempool.Match(tx)
-				suite.Require().NoError(err)
+				suite.Require().Equal(true, suite.mempool.Contains(tx))
 
 				// In the case where we have a tob tx, we skip the other transactions in the bundle
 				// in order to not double count
 				switch {
-				case lane.Name() == suite.tobLane.Name():
+				case suite.tobLane.Match(suite.ctx, tx):
 					bidInfo, err := suite.tobLane.GetAuctionBidInfo(tx)
 					suite.Require().NoError(err)
 
@@ -767,7 +778,7 @@ func (suite *ABCITestSuite) TestPrepareProposal() {
 				sdkTx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[txIndex])
 				suite.Require().NoError(err)
 
-				if suite.lanes[laneIndex].Match(sdkTx) {
+				if suite.lanes[laneIndex].Match(suite.ctx, sdkTx) {
 					switch suite.lanes[laneIndex].Name() {
 					case suite.tobLane.Name():
 						bidInfo, err := suite.tobLane.GetAuctionBidInfo(sdkTx)

@@ -32,11 +32,10 @@ func NewFreeLane(cfg blockbuster.BaseLaneConfig, factory Factory) *Lane {
 }
 
 // Match returns true if the transaction is a free transaction.
-func (l *Lane) Match(tx sdk.Tx) bool {
-	return l.IsFreeTx(tx)
-}
+func (l *Lane) Match(ctx sdk.Context, tx sdk.Tx) bool {
+	if l.MatchIgnoreList(ctx, tx) {
+		return false
+	}
 
-// Name returns the name of the free lane.
-func (l *Lane) Name() string {
-	return LaneName
+	return l.IsFreeTx(tx)
 }

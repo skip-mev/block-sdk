@@ -22,7 +22,7 @@ type (
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 
 		// Contains returns true if the transaction is contained in the mempool.
-		Contains(tx sdk.Tx) (bool, error)
+		Contains(tx sdk.Tx) bool
 	}
 
 	// TOBMempool defines an auction mempool. It can be seen as an extension of
@@ -106,16 +106,6 @@ func NewMempool(txEncoder sdk.TxEncoder, maxTx int, config Factory) *TOBMempool 
 
 // Insert inserts a transaction into the auction mempool.
 func (am *TOBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
-	bidInfo, err := am.GetAuctionBidInfo(tx)
-	if err != nil {
-		return err
-	}
-
-	// This mempool only supports auction bid transactions.
-	if bidInfo == nil {
-		return fmt.Errorf("invalid transaction type")
-	}
-
 	if err := am.index.Insert(ctx, tx); err != nil {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
@@ -132,17 +122,16 @@ func (am *TOBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 
 // Remove removes a transaction from the mempool based.
 func (am *TOBMempool) Remove(tx sdk.Tx) error {
-	bidInfo, err := am.GetAuctionBidInfo(tx)
+	if err := am.index.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
+		return fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err)
+	}
+
+	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
-		return err
+		return fmt.Errorf("failed to get tx hash string: %w", err)
 	}
 
-	// This mempool only supports auction bid transactions.
-	if bidInfo == nil {
-		return fmt.Errorf("invalid transaction type")
-	}
-
-	am.removeTx(am.index, tx)
+	delete(am.txIndex, txHashStr)
 
 	return nil
 }
@@ -166,25 +155,12 @@ func (am *TOBMempool) CountTx() int {
 }
 
 // Contains returns true if the transaction is contained in the mempool.
-func (am *TOBMempool) Contains(tx sdk.Tx) (bool, error) {
+func (am *TOBMempool) Contains(tx sdk.Tx) bool {
 	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
-		return false, fmt.Errorf("failed to get tx hash string: %w", err)
+		return false
 	}
 
 	_, ok := am.txIndex[txHashStr]
-	return ok, nil
-}
-
-func (am *TOBMempool) removeTx(mp sdkmempool.Mempool, tx sdk.Tx) {
-	if err := mp.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
-		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
-	}
-
-	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
-	if err != nil {
-		panic(fmt.Errorf("failed to get tx hash string: %w", err))
-	}
-
-	delete(am.txIndex, txHashStr)
+	return ok
 }

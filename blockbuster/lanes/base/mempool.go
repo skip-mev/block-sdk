@@ -19,7 +19,7 @@ type (
 		sdkmempool.Mempool
 
 		// Contains returns true if the transaction is contained in the mempool.
-		Contains(tx sdk.Tx) (bool, error)
+		Contains(tx sdk.Tx) bool
 	}
 
 	// DefaultMempool defines the most basic mempool. It can be seen as an extension of
@@ -60,6 +60,7 @@ func (am *DefaultMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 
 	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
+		am.Remove(tx)
 		return err
 	}
 
@@ -70,7 +71,17 @@ func (am *DefaultMempool) Insert(ctx context.Context, tx sdk.Tx) error {
 
 // Remove removes a transaction from the mempool based on the transaction type (normal or auction).
 func (am *DefaultMempool) Remove(tx sdk.Tx) error {
-	am.removeTx(am.index, tx)
+	if err := am.index.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
+		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
+	}
+
+	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
+	if err != nil {
+		return fmt.Errorf("failed to get tx hash string: %w", err)
+	}
+
+	delete(am.txIndex, txHashStr)
+
 	return nil
 }
 
@@ -83,26 +94,12 @@ func (am *DefaultMempool) CountTx() int {
 }
 
 // Contains returns true if the transaction is contained in the mempool.
-func (am *DefaultMempool) Contains(tx sdk.Tx) (bool, error) {
+func (am *DefaultMempool) Contains(tx sdk.Tx) bool {
 	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
 	if err != nil {
-		return false, fmt.Errorf("failed to get tx hash string: %w", err)
+		return false
 	}
 
 	_, ok := am.txIndex[txHashStr]
-	return ok, nil
-}
-
-func (am *DefaultMempool) removeTx(mp sdkmempool.Mempool, tx sdk.Tx) {
-	err := mp.Remove(tx)
-	if err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
-		panic(fmt.Errorf("failed to remove invalid transaction from the mempool: %w", err))
-	}
-
-	_, txHashStr, err := utils.GetTxHashStr(am.txEncoder, tx)
-	if err != nil {
-		panic(fmt.Errorf("failed to get tx hash string: %w", err))
-	}
-
-	delete(am.txIndex, txHashStr)
+	return ok
 }

@@ -47,19 +47,18 @@ func NewTOBLane(
 
 	return &TOBLane{
 		Mempool:     NewMempool(cfg.TxEncoder, maxTx, af),
-		DefaultLane: base.NewDefaultLane(cfg),
+		DefaultLane: base.NewDefaultLane(cfg).WithName(LaneName),
 		Factory:     af,
 	}
 }
 
 // Match returns true if the transaction is a bid transaction. This is determined
 // by the AuctionFactory.
-func (l *TOBLane) Match(tx sdk.Tx) bool {
+func (l *TOBLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
+	if l.MatchIgnoreList(ctx, tx) {
+		return false
+	}
+
 	bidInfo, err := l.GetAuctionBidInfo(tx)
 	return bidInfo != nil && err == nil
-}
-
-// Name returns the name of the lane.
-func (l *TOBLane) Name() string {
-	return LaneName
 }

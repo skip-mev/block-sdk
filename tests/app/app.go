@@ -310,7 +310,7 @@ func New(
 		freeLane,
 		defaultLane,
 	}
-	mempool := blockbuster.NewMempool(lanes...)
+	mempool := blockbuster.NewMempool(app.Logger(), lanes...)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when
