@@ -37,3 +37,13 @@ jobs:
         uses: avto-dev/markdown-lint@v1
         with:
           args: "**/*.md"
+  protos-check-breaking:
+    name: Check for Breaking Protocol Buffer Changes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: bufbuild/buf-setup-action@v1.26.0
+      - uses: bufbuild/buf-breaking-action@v1
+        with:
+          input: "proto"
+          against: "https://github.com/${{ github.repository }}.git#branch=${{ github.event.pull_request.base.ref }},ref=HEAD~1,subdir=proto"
