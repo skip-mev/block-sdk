@@ -18,7 +18,6 @@ import (
 	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
 	feegrantmodule "cosmossdk.io/x/feegrant/module"
 	cometabci "github.com/cometbft/cometbft/abci/types"
-	tmtypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -62,7 +61,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	veabci "github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
@@ -340,26 +338,13 @@ func New(
 	app.App.SetAnteHandler(anteHandler)
 
 	// Set the proposal handlers on base app
-	proposalHandler := veabci.NewProposalHandler(
-		lanes,
-		tobLane,
+	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
-		app.txConfig.TxEncoder(),
-		app.txConfig.TxDecoder(),
-		veabci.NoOpValidateVoteExtensionsFn(),
+		app.TxConfig().TxDecoder(),
+		mempool,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
-
-	// Set the vote extension handler on the app.
-	voteExtensionHandler := veabci.NewVoteExtensionHandler(
-		app.Logger(),
-		tobLane,
-		app.txConfig.TxDecoder(),
-		app.txConfig.TxEncoder(),
-	)
-	app.App.SetExtendVoteHandler(voteExtensionHandler.ExtendVoteHandler())
-	app.App.SetVerifyVoteExtensionHandler(voteExtensionHandler.VerifyVoteExtensionHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
 	checkTxHandler := abci.NewCheckTxHandler(
@@ -413,31 +398,6 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 // SetCheckTx sets the checkTxHandler for the app.
 func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
 	app.checkTxHandler = handler
-}
-
-// TODO: remove this once we have a proper config file
-func (app *TestApp) InitChain(req *cometabci.RequestInitChain) (*cometabci.ResponseInitChain, error) {
-	req.ConsensusParams.Abci.VoteExtensionsEnableHeight = 2
-	resp, err := app.App.InitChain(req)
-	if resp == nil {
-		resp = &cometabci.ResponseInitChain{}
-	}
-	resp.ConsensusParams = &tmtypes.ConsensusParams{
-		Abci: &tmtypes.ABCIParams{
-			VoteExtensionsEnableHeight: 2,
-		},
-	}
-
-	return resp, err
-}
-
-// TODO: remove this once we have a proper config file
-func (app *TestApp) FinalizeBlock(req *cometabci.RequestFinalizeBlock) (*cometabci.ResponseFinalizeBlock, error) {
-	resp, err := app.App.FinalizeBlock(req)
-	if resp != nil {
-		resp.ConsensusParamUpdates = nil
-	}
-	return resp, err
 }
 
 // Name returns the name of the App
