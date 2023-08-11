@@ -37,6 +37,49 @@ jobs:
         uses: avto-dev/markdown-lint@v1
         with:
           args: "**/*.md"
+
+  lint-protos:
+    name: Lint Protocol Buffers
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Setup Go
+        uses: actions/setup-go@v3
+        with:
+          go-version: '1.20'
+      - name: Build protocol buffer builder
+        run: make proto-build-docker
+      - name: Check Protocol Buffer Formatting
+        run: |
+          make proto-format
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files are not formatted. Please run `make proto-format`"
+            exit 1
+          fi
+      - name: Lint Protocol Buffers
+        run: make proto-lint   
+      - name: Check Protocol Buffer Dependencies Up to Date
+        run: |
+          make proto-update-deps 
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto dependencies are not up to date. Please run `make proto-update-deps `"
+            exit 1
+          fi                
+      - name: Check Generated Protos Up to Date
+        run: |
+          make proto-gen
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files are not up to date. Please run `make proto-gen`"
+            exit 1
+          fi
+      - name: Check Dependency Injected Generated Protos Up to Date
+        run: |
+          make proto-pulsar-gen
+          if [[ `git status --porcelain` ]]; then
+            echo "Proto files for dependency injection are not up to date. Please run `make proto-pulsar-gen`"
+            exit 1
+          fi
+
   protos-check-breaking:
     name: Check for Breaking Protocol Buffer Changes
     runs-on: ubuntu-latest

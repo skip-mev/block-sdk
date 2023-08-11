@@ -130,19 +130,22 @@ test: use-main
 ###                                Protobuf                                 ###
 ###############################################################################
 
-protoVer=0.13.5
-protoImageName=ghcr.io/cosmos/proto-builder:$(protoVer)
-protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace $(protoImageName)
+protoImageName=proto-genc 
+protoImage=$(DOCKER) run --rm -v $(CURDIR):/workspace --workdir /workspace/proto $(protoImageName)
 
 proto-all: proto-format proto-lint proto-gen
 
+proto-build-docker:
+	@echo "Building docker container '$(protoImageName)' for proto compilation"
+	@docker build -t $(protoImageName) -f ./proto/Dockerfile .
+
 proto-gen:
 	@echo "Generating Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen.sh
+	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen.sh" 
 
 proto-pulsar-gen:
 	@echo "Generating Dep-Inj Protobuf files"
-	@$(protoImage) sh ./scripts/protocgen-pulsar.sh
+	@$(protoImage) sh -c "cd .. && sh ./scripts/protocgen-pulsar.sh" 
 
 proto-format:
 	@$(protoImage) find ./ -name "*.proto" -exec clang-format -i {} \;
@@ -154,8 +157,8 @@ proto-check-breaking:
 	@$(protoImage) buf breaking --against $(HTTPS_GIT)#branch=main
 
 proto-update-deps:
-	@echo "Updating Protobuf dependencies"
-	$(DOCKER) run --rm -v $(CURDIR)/proto:/workspace --workdir /workspace $(protoImageName) buf mod update
+	@echo "Updating Protobuf dependencies"	
+	@$(protoImage) buf mod update
 
 .PHONY: proto-all proto-gen proto-format proto-lint proto-check-breaking proto-update-deps
 
