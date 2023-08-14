@@ -1,4 +1,4 @@
-package abci
+package proposals
 
 import (
 	"fmt"
@@ -23,7 +23,7 @@ type (
 )
 
 // NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
-// iteratively call each of the lanes in the chain to prepare and process a proposal.
+// iteratively call each of the lanes in the chain to prepare and process the proposal.
 func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []blockbuster.Lane) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
@@ -131,7 +131,7 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 		// Cache the context in the case where any of the lanes fail to prepare the proposal.
 		cacheCtx, write := ctx.CacheContext()
 
-		// We utilize a recover to handle any panics or errors that occur during the preparation
+		// We utilize a recover to handler any panics or errors that occur during the preparation
 		// of a lane's transactions. This defer will first check if there was a panic or error
 		// thrown from the lane's preparation logic. If there was, we log the error, skip the lane,
 		// and call the next lane in the chain to the prepare the proposal.
