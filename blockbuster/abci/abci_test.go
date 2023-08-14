@@ -1,4 +1,4 @@
-package proposals_test
+package abci_test
 
 import (
 	"math/rand"

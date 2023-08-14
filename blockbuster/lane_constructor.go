@@ -14,7 +14,7 @@ import (
 // and CheckOrderHandler. To extend this lane, you must either utilize the default
 // handlers or construct your own that you pass into the constructor/setters.
 type LaneConstructor[C comparable] struct {
-	// cfg stores functionality requred to encode/decode transactions, maintains how
+	// cfg stores functionality required to encode/decode transactions, maintains how
 	// many transactions are allowed in this lane's mempool, and the amount of block
 	// space this lane is allowed to consume.
 	cfg LaneConfig
