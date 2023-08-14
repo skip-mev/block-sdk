@@ -1,4 +1,4 @@
-package abci
+package proposals
 
 import (
 	"context"

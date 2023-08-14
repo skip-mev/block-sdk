@@ -40,8 +40,8 @@ func GetDecodedTxs(txDecoder sdk.TxDecoder, txs [][]byte) ([]sdk.Tx, error) {
 }
 
 // RemoveTxsFromLane removes the transactions from the given lane's mempool.
-func RemoveTxsFromLane(txs map[sdk.Tx]struct{}, mempool sdkmempool.Mempool) error {
-	for tx := range txs {
+func RemoveTxsFromLane(txs []sdk.Tx, mempool sdkmempool.Mempool) error {
+	for _, tx := range txs {
 		if err := mempool.Remove(tx); err != nil {
 			return err
 		}
