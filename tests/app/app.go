@@ -62,10 +62,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
-	"github.com/skip-mev/pob/blockbuster/proposals"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -139,7 +139,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
-	checkTxHandler proposals.CheckTx
+	checkTxHandler abci.CheckTx
 }
 
 func init() {
@@ -333,8 +333,8 @@ func New(
 	}
 	app.App.SetAnteHandler(anteHandler)
 
-	// Set the proposal handlers on base app
-	proposalHandler := proposals.NewProposalHandler(
+	// Set the abci handlers on base app
+	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
 		lanes,
@@ -343,7 +343,7 @@ func New(
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
-	checkTxHandler := proposals.NewCheckTxHandler(
+	checkTxHandler := abci.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
 		tobLane,
@@ -392,7 +392,7 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
-func (app *TestApp) SetCheckTx(handler proposals.CheckTx) {
+func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
 	app.checkTxHandler = handler
 }
 

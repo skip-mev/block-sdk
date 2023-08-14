@@ -14,10 +14,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
-	"github.com/skip-mev/pob/blockbuster/proposals"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/stretchr/testify/suite"
 )
@@ -449,7 +449,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		proposalHandler := proposals.NewProposalHandler(
+		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]blockbuster.Lane{panicLane, defaultLane},
@@ -482,7 +482,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		proposalHandler := proposals.NewProposalHandler(
+		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]blockbuster.Lane{defaultLane, panicLane},
@@ -516,7 +516,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		proposalHandler := proposals.NewProposalHandler(
+		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]blockbuster.Lane{panicLane, panicLane2, defaultLane},
@@ -550,7 +550,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		proposalHandler := proposals.NewProposalHandler(
+		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]blockbuster.Lane{defaultLane, panicLane, panicLane2},
@@ -780,10 +780,10 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *block
 	return lane
 }
 
-func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []blockbuster.Lane) *proposals.ProposalHandler {
+func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []blockbuster.Lane) *abci.ProposalHandler {
 	mempool := blockbuster.NewMempool(log.NewTestLogger(s.T()), true, lanes...)
 
-	return proposals.NewProposalHandler(
+	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		mempool.Registry(),
