@@ -1,4 +1,4 @@
-package proposals
+package abci
 
 import (
 	"fmt"
