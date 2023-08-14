@@ -83,7 +83,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	tobConfig := blockbuster.BaseLaneConfig{
+	tobConfig := blockbuster.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -92,12 +92,11 @@ func (suite *AnteTestSuite) SetupTest() {
 	}
 	suite.tobLane = auction.NewTOBLane(
 		tobConfig,
-		0, // No bound on the number of transactions in the lane
 		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
-	baseConfig := blockbuster.BaseLaneConfig{
+	baseConfig := blockbuster.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -109,7 +108,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {

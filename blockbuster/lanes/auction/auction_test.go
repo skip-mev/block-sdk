@@ -18,7 +18,6 @@ type IntegrationTestSuite struct {
 
 	encCfg   testutils.EncodingConfig
 	config   auction.Factory
-	mempool  auction.Mempool
 	ctx      sdk.Context
 	random   *rand.Rand
 	accounts []testutils.Account
@@ -33,7 +32,6 @@ func (suite *IntegrationTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
 	suite.config = auction.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
-	suite.mempool = auction.NewMempool(suite.encCfg.TxConfig.TxEncoder(), 0, suite.config)
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewTestLogger(suite.T()))
 
 	// Init accounts

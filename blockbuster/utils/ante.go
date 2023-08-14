@@ -5,7 +5,7 @@ import (
 )
 
 type (
-	// Lane defines the required functionality for a lane. The ignore decorator
+	// Lane defines the required API dependencies for the IgnoreDecorator. The ignore decorator
 	// will check if a transaction belongs to a lane by calling the Match function.
 	Lane interface {
 		Match(ctx sdk.Context, tx sdk.Tx) bool

@@ -62,10 +62,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
+	"github.com/skip-mev/pob/blockbuster/proposals"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -139,7 +139,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
-	checkTxHandler abci.CheckTx
+	checkTxHandler proposals.CheckTx
 }
 
 func init() {
@@ -262,43 +262,39 @@ func New(
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
-	tobConfig := blockbuster.BaseLaneConfig{
+	tobConfig := blockbuster.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: math.LegacyZeroDec(),
+		MaxBlockSpace: math.LegacyZeroDec(), // This means the lane has no limit on block space.
+		MaxTxs:        0,                    // This means the lane has no limit on the number of transactions it can store.
 	}
 	tobLane := auction.NewTOBLane(
 		tobConfig,
-		0,
 		auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
-	freeConfig := blockbuster.BaseLaneConfig{
+	freeConfig := blockbuster.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList: []blockbuster.Lane{
-			tobLane,
-		},
+		MaxTxs:        0,
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
-		free.NewDefaultFreeFactory(app.txConfig.TxDecoder()),
+		blockbuster.DefaultTxPriority(),
+		free.DefaultMatchHandler(),
 	)
 
 	// Default lane accepts all other transactions.
-	defaultConfig := blockbuster.BaseLaneConfig{
+	defaultConfig := blockbuster.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList: []blockbuster.Lane{
-			tobLane,
-			freeLane,
-		},
+		MaxTxs:        0,
 	}
 	defaultLane := base.NewDefaultLane(defaultConfig)
 
@@ -308,7 +304,7 @@ func New(
 		freeLane,
 		defaultLane,
 	}
-	mempool := blockbuster.NewMempool(app.Logger(), lanes...)
+	mempool := blockbuster.NewMempool(app.Logger(), true, lanes...)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when
@@ -338,16 +334,16 @@ func New(
 	app.App.SetAnteHandler(anteHandler)
 
 	// Set the proposal handlers on base app
-	proposalHandler := abci.NewProposalHandler(
+	proposalHandler := proposals.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
-		mempool,
+		lanes,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
-	checkTxHandler := abci.NewCheckTxHandler(
+	checkTxHandler := proposals.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
 		tobLane,
@@ -396,7 +392,7 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
-func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
+func (app *TestApp) SetCheckTx(handler proposals.CheckTx) {
 	app.checkTxHandler = handler
 }
 

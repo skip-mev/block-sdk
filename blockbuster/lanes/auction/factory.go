@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/x/builder/types"
 )
 
@@ -21,6 +22,9 @@ type (
 
 		// GetAuctionBidInfo defines a function that returns the bid info from an auction transaction.
 		GetAuctionBidInfo(tx sdk.Tx) (*types.BidInfo, error)
+
+		// MatchHandler defines a function that checks if a transaction matches the auction lane.
+		MatchHandler() blockbuster.MatchHandler
 	}
 
 	// DefaultAuctionFactory defines a default implmentation for the auction factory interface for processing auction transactions.
@@ -89,6 +93,13 @@ func (config *DefaultAuctionFactory) GetAuctionBidInfo(tx sdk.Tx) (*types.BidInf
 		Timeout:      timeoutTx.GetTimeoutHeight(),
 		Signers:      signers,
 	}, nil
+}
+
+func (config *DefaultAuctionFactory) MatchHandler() blockbuster.MatchHandler {
+	return func(ctx sdk.Context, tx sdk.Tx) bool {
+		bidInfo, err := config.GetAuctionBidInfo(tx)
+		return bidInfo != nil && err == nil
+	}
 }
 
 // getBundleSigners defines a default function that returns the signers of all transactions in
