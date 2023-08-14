@@ -139,7 +139,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
-	checkTxHandler abci.CheckTx
+	checkTxHandler auction.CheckTx
 }
 
 func init() {
@@ -343,7 +343,7 @@ func New(
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
-	checkTxHandler := abci.NewCheckTxHandler(
+	checkTxHandler := auction.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
 		tobLane,
@@ -392,7 +392,7 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
-func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
+func (app *TestApp) SetCheckTx(handler auction.CheckTx) {
 	app.checkTxHandler = handler
 }
 
