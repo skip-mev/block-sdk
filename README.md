@@ -11,22 +11,7 @@
 
 ## 📖 Overview
 
-The Block SDK is a framework for building smarter blocks. The Block SDK is built
-harnessing the power of ABCI++ which is a new ABCI implementation that allows
-for more complex and expressive applications to be built on top of the Cosmos SDK.
-The process of building and verifiying proposals can be broken down into two
-distinct parts: 
-
-1. Preparing a proposal during `PrepareProposal`.
-2. Processing a proposal during `ProcessProposal`.
-
-The Block SDK provides a framework for building and verifying proposals by
-segmenting a single block into multiple lanes. Each lane can be responsible for
-proposing and verifying specific types of transaction. The Block SDK provides
-a default implementation of a lane that can be used to build and verify proposals
-similar to how they are built and verified in the Cosmos SDK today while also
-providing a framework for building more complex lanes that can be used to build
-and verify much more complex proposals.
+The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **transaction highway** consisting of individual lanes with their own special functionality.
 
 ## 🤔 How does it work
 
@@ -80,130 +65,24 @@ lane's `ProcessLane` will only verify transactions that belong to that lane.
 
 > **Scenario**
 > 
-> Let's say we have a `LanedMempool` composed of two lanes: `LaneA` and `LaneB`.
-> `LaneA` is defined first in the `LanedMempool` and `LaneB` is defined second.
-> `LaneA` contains transactions `Tx1` and `Tx2` and `LaneB` contains transactions
-> `Tx3` and `Tx4`.
+> Let's say we have a `LanedMempool` composed of two lanes: LaneA and LaneB.
+> LaneA is defined first in the `LanedMempool` and LaneB is defined second.
+> LaneA contains transactions Tx1 and Tx2 and LaneB contains transactions
+> Tx3 and Tx4.
 
 
 When a new block needs to be proposed, the `PrepareProposalHandler` will call
-`PrepareLane` on `LaneA` first and `LaneB` second. When `PrepareLane` is called
-on `LaneA`, `LaneA` will reap transactions from its mempool and add them to the
-proposal. Same applies for `LaneB`. Say `LaneA` reaps transactions `Tx1` and `Tx2`
-and `LaneB` reaps transactions `Tx3` and `Tx4`. This gives us a proposal composed
+`PrepareLane` on LaneA first and LaneB second. When `PrepareLane` is called
+on LaneA, LaneA will reap transactions from its mempool and add them to the
+proposal. Same applies for LaneB. Say LaneA reaps transactions Tx1 and Tx2
+and LaneB reaps transactions Tx3 and Tx4. This gives us a proposal composed
 of the following:
 
-* `Tx1`, `Tx2`, `Tx3`, `Tx4`
+* Tx1, Tx2, Tx3, Tx4
 
-When the `ProcessProposalHandler` is called, it will call `ProcessLane` on `LaneA`
-with the proposal composed of `Tx1`, `Tx2`, `Tx3`, and `Tx4`. `LaneA` will then
-verify `Tx1` and `Tx2` and return the remaining transactions - `Tx3` and `Tx4`. 
-The `ProcessProposalHandler` will then call `ProcessLane` on `LaneB` with the
-remaining transactions - `Tx3` and `Tx4`. `LaneB` will then verify `Tx3` and `Tx4`
+When the `ProcessProposalHandler` is called, it will call `ProcessLane` on LaneA
+with the proposal composed of Tx1, Tx2, Tx3, and Tx4. LaneA will then
+verify Tx1 and Tx2 and return the remaining transactions - Tx3 and Tx4. 
+The `ProcessProposalHandler` will then call `ProcessLane` on LaneB with the
+remaining transactions - Tx3 and Tx4. LaneB will then verify Tx3 and Tx4
 and return no remaining transactions.
-
-## 🏗️ Setup
-
-> **Note**
-> 
-> For a more in depth example of how to use the Block SDK, check out our
-> example application in `block-sdk/tests/app/app.go`.
-
-### 📦 Dependencies
-
-The Block SDK is built on top of the Cosmos SDK. The Block SDK is currently
-compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
-
-### 📥 Installation
-
-To install the Block SDK, run the following command:
-
-```bash
-go get github.com/skip-mev/block-sdk/abci
-```
-
-### 📚 Usage
-
-First determine the set of lanes that you want to use in your application. The available
-lanes can be found in our **Lane App Store** in `block-sdk/lanes`. In your base
-application, you will need to create a `LanedMempool` composed of the lanes that
-you want to use. You will also need to create a `PrepareProposalHandler` and a
-`ProcessProposalHandler` that will be responsible for preparing and processing 
-proposals respectively. 
-
-```golang
-// 1. Create the lanes.
-//
-// NOTE: The lanes are ordered by priority. The first lane is the highest priority
-// lane and the last lane is the lowest priority lane. Top of block lane allows
-// transactions to bid for inclusion at the top of the next block.
-//
-// For more information on how to utilize the LaneConfig please
-// visit the README in block-sdk/block/base.
-//
-// MEV lane hosts an action at the top of the block.
-mevConfig := constructor.LaneConfig{
-    Logger:        app.Logger(),
-    TxEncoder:     app.txConfig.TxEncoder(),
-    TxDecoder:     app.txConfig.TxDecoder(),
-    MaxBlockSpace: math.LegacyZeroDec(), 
-    MaxTxs:        0,
-}
-mevLane := mev.NewMEVLane(
-    mevConfig,
-    mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
-)
-
-// Free lane allows transactions to be included in the next block for free.
-freeConfig := constructor.LaneConfig{
-    Logger:        app.Logger(),
-    TxEncoder:     app.txConfig.TxEncoder(),
-    TxDecoder:     app.txConfig.TxDecoder(),
-    MaxBlockSpace: math.LegacyZeroDec(),
-    MaxTxs:        0,
-}
-freeLane := free.NewFreeLane(
-    freeConfig,
-    constructor.DefaultTxPriority(),
-    free.DefaultMatchHandler(),
-)
-
-// Default lane accepts all other transactions.
-defaultConfig := constructor.LaneConfig{
-    Logger:        app.Logger(),
-    TxEncoder:     app.txConfig.TxEncoder(),
-    TxDecoder:     app.txConfig.TxDecoder(),
-    MaxBlockSpace: math.LegacyZeroDec(),
-    MaxTxs:        0,
-}
-defaultLane := base.NewStandardLane(defaultConfig)
-
-// Set the lanes into the mempool.
-lanes := []block.Lane{
-    mevLane,
-    freeLane,
-    defaultLane,
-}
-mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
-app.App.SetMempool(mempool)
-
-...
-
-anteHandler := NewAnteHandler(options)
-
-// Set the lane ante handlers on the lanes.
-for _, lane := range lanes {
-    lane.SetAnteHandler(anteHandler)
-}
-app.App.SetAnteHandler(anteHandler)
-
-// Set the abci handlers on base app
-proposalHandler := abci.NewProposalHandler(
-    app.Logger(),
-    app.TxConfig().TxDecoder(),
-    lanes,
-)
-app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
-app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
-```
-
