@@ -14,10 +14,6 @@ const (
 	LaneName = "Terminator"
 )
 
-const (
-	LaneName = "Terminator"
-)
-
 // Terminator Lane will get added to the chain to simplify chaining code so that we
 // don't need to check if next == nil further up the chain
 //
