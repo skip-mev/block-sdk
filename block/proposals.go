@@ -30,7 +30,7 @@ type (
 	// and updating proposals. BlockProposals are iteratively updated as each lane prepares its
 	// partial proposal. Each lane must call UpdateProposal with its partial proposal in PrepareLane. BlockProposals
 	// can also include vote extensions, which are included at the top of the proposal.
-	BlockProposal interface {
+	BlockProposal interface { //nolint
 		// UpdateProposal updates the proposal with the given transactions. There are a
 		// few invarients that are checked:
 		//  1. The total size of the proposal must be less than the maximum number of bytes allowed.

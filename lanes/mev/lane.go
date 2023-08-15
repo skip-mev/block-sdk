@@ -13,9 +13,7 @@ const (
 	LaneName = "mev"
 )
 
-var (
-	_ MEVLaneI = (*MEVLane)(nil)
-)
+var _ MEVLaneI = (*MEVLane)(nil)
 
 // MEVLane defines a MEV (Maximal Extracted Value) auction lane. The MEV auction lane
 // hosts transactions that want to bid for inclusion at the top of the next block.
@@ -26,13 +24,13 @@ var (
 type (
 	// MEVLaneI defines the interface for the mev auction lane. This interface
 	// is utilized by both the x/builder module and the checkTx handler.
-	MEVLaneI interface {
+	MEVLaneI interface { //nolint
 		block.Lane
 		Factory
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 	}
 
-	MEVLane struct {
+	MEVLane struct { //nolint
 		// LaneConfig defines the base lane configuration.
 		*base.BaseLane
 

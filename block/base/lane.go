@@ -16,7 +16,7 @@ var _ block.Lane = (*BaseLane)(nil)
 // implementation of the MatchHandler, PrepareLaneHandler, ProcessLaneHandler,
 // and CheckOrderHandler. To extend this lane, you must either utilize the default
 // handlers or construct your own that you pass into the base/setters.
-type BaseLane struct {
+type BaseLane struct { //nolint
 	// cfg stores functionality required to encode/decode transactions, maintains how
 	// many transactions are allowed in this lane's mempool, and the amount of block
 	// space this lane is allowed to consume.
