@@ -22,7 +22,7 @@ Skip's POB provides developers with a set of a few core primitives:
   on-chain in a transparent, enforceable way. At its core, BlockBuster is an app-side mempool + set 
   of proposal handlers (`PrepareProposal`/`ProcessProposal`) that allow developers to configure 
   modular lanes of transactions in their blocks with distinct validation/ordering logic. For more
-  information, see the [BlockBuster README](/blockbuster/README.md).
+  information, see the [BlockBuster README](/block/README.md).
 * `x/builder`: This Cosmos SDK module gives applications the ability to process
   MEV bundled transactions in addition to having the ability to define how searchers
   and block proposers are rewarded. In addition, the module defines a `AuctionDecorator`,
@@ -59,20 +59,20 @@ $ go install github.com/skip-mev/pob
 >* Builder module that pairs with the auction lane to process auction transactions and distribute revenue
 >     to the auction house.
 >
-> To build your own custom BlockBuster Lane, please see the [BlockBuster README](/blockbuster/README.md).
+> To build your own custom BlockBuster Lane, please see the [BlockBuster README](/block/README.md).
 
 1. Import the necessary dependencies into your application. This includes the
-   blockbuster proposal handlers +mempool, keeper, builder types, and builder module. This
+   block proposal handlers +mempool, keeper, builder types, and builder module. This
    tutorial will go into more detail into each of the dependencies.
 
    ```go
    import (
     ...
-    "github.com/skip-mev/pob/blockbuster"
-    "github.com/skip-mev/pob/blockbuster/abci"
-    "github.com/skip-mev/pob/blockbuster/lanes/mev"
-    "github.com/skip-mev/pob/blockbuster/lanes/base"
-    "github.com/skip-mev/pob/blockbuster/lanes/free"
+    "github.com/skip-mev/pob/block"
+    "github.com/skip-mev/pob/block/abci"
+    "github.com/skip-mev/pob/block/lanes/mev"
+    "github.com/skip-mev/pob/block/lanes/base"
+    "github.com/skip-mev/pob/block/lanes/free"
     buildermodule "github.com/skip-mev/pob/x/builder"
     builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
      ...
@@ -129,18 +129,18 @@ $ go install github.com/skip-mev/pob
       }
       ```
 
-    c. Instantiate the blockbuster mempool with the application's desired lanes. 
+    c. Instantiate the block mempool with the application's desired lanes. 
 
       ```go
-        // Set the blockbuster mempool into the app.
+        // Set the block mempool into the app.
         // Create the lanes.
         //
         // NOTE: The lanes are ordered by priority. The first lane is the highest priority
         // lane and the last lane is the lowest priority lane.
         // Top of block lane allows transactions to bid for inclusion at the top of the next block.
         //
-        // blockbuster.BaseLaneConfig is utilized for basic encoding/decoding of transactions. 
-        tobConfig := blockbuster.BaseLaneConfig{
+        // block.BaseLaneConfig is utilized for basic encoding/decoding of transactions. 
+        tobConfig := block.BaseLaneConfig{
           Logger:        app.Logger(),
           TxEncoder:     app.txConfig.TxEncoder(),
           TxDecoder:     app.txConfig.TxDecoder(),
@@ -160,7 +160,7 @@ $ go install github.com/skip-mev/pob
         )
 
         // Free lane allows transactions to be included in the next block for free.
-        freeConfig := blockbuster.BaseLaneConfig{
+        freeConfig := block.BaseLaneConfig{
           Logger:        app.Logger(),
           TxEncoder:     app.txConfig.TxEncoder(),
           TxDecoder:     app.txConfig.TxDecoder(),
@@ -168,7 +168,7 @@ $ go install github.com/skip-mev/pob
           // IgnoreList is a list of lanes that if a transaction should be included in, it will be
           // ignored by the lane. For example, if a transaction should belong to the tob lane, it
           // will be ignored by the free lane.
-          IgnoreList: []blockbuster.Lane{
+          IgnoreList: []block.Lane{
             tobLane,
           },
         }
@@ -178,12 +178,12 @@ $ go install github.com/skip-mev/pob
         )
 
         // Default lane accepts all other transactions.
-        defaultConfig := blockbuster.BaseLaneConfig{
+        defaultConfig := block.BaseLaneConfig{
           Logger:        app.Logger(),
           TxEncoder:     app.txConfig.TxEncoder(),
           TxDecoder:     app.txConfig.TxDecoder(),
           MaxBlockSpace: sdk.ZeroDec(),
-          IgnoreList: []blockbuster.Lane{
+          IgnoreList: []block.Lane{
             tobLane,
             freeLane,
           },
@@ -191,17 +191,17 @@ $ go install github.com/skip-mev/pob
         defaultLane := base.NewDefaultLane(defaultConfig)
 
         // Set the lanes into the mempool.
-        lanes := []blockbuster.Lane{
+        lanes := []block.Lane{
           tobLane,
           freeLane,
           defaultLane,
         }
-        mempool := blockbuster.NewMempool(lanes...)
+        mempool := block.NewMempool(lanes...)
         app.App.SetMempool(mempool)
       ```
 
     d. Instantiate the antehandler chain for the application with awareness of the
-    blockbuster mempool. This will allow the application to verify the validity
+    block mempool. This will allow the application to verify the validity
     of a transaction respecting the desired logic of a given lane. In this walkthrough,
     we want the `FeeDecorator` to be ignored for all transactions that should belong to the 
     free lane. Additionally, we want to add the `x/builder` module's `AuctionDecorator` to the
@@ -211,8 +211,8 @@ $ go install github.com/skip-mev/pob
       ```go
         import (
             ...
-            "github.com/skip-mev/pob/blockbuster"
-            "github.com/skip-mev/pob/blockbuster/utils"
+            "github.com/skip-mev/pob/block"
+            "github.com/skip-mev/pob/block/utils"
             builderante "github.com/skip-mev/pob/x/builder/ante"
             ...
         )

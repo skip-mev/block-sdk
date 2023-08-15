@@ -1,4 +1,4 @@
-package blockbuster
+package block
 
 import (
 	"context"
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-// NewLanedMempool returns a new Blockbuster mempool. The blockbuster mempool is
+// NewLanedMempool returns a new Blockbuster mempool. The block mempool is
 // comprised of a registry of lanes. Each lane is responsible for selecting
 // transactions according to its own selection logic. The lanes are ordered
 // according to their priority. The first lane in the registry has the highest

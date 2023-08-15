@@ -4,8 +4,8 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 )
 
 const (
@@ -27,7 +27,7 @@ type (
 	// MEVLaneI defines the interface for the mev auction lane. This interface
 	// is utilized by both the x/builder module and the checkTx handler.
 	MEVLaneI interface {
-		blockbuster.Lane
+		block.Lane
 		Factory
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 	}
@@ -45,7 +45,7 @@ type (
 
 // NewMEVLane returns a new TOB lane.
 func NewMEVLane(
-	cfg blockbuster.LaneConfig,
+	cfg block.LaneConfig,
 	factory Factory,
 ) *MEVLane {
 	lane := &MEVLane{

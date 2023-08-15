@@ -8,8 +8,8 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/utils/mocks"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/utils/mocks"
 	"github.com/skip-mev/pob/lanes/base"
 	testutils "github.com/skip-mev/pob/testutils"
 )
@@ -41,7 +41,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Create a proposal
 		maxTxBytes := int64(len(txBz) - 1)
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -75,7 +75,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Create a proposal
 		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().Error(err)
 
 		// Ensure the proposal is empty
@@ -109,7 +109,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Create a proposal
 		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is not empty and contains the transaction
@@ -144,7 +144,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -196,7 +196,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -245,7 +245,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -294,7 +294,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2)) - 1
-		proposal, err := lane.PrepareLane(sdk.Context{}, blockbuster.NewProposal(maxTxBytes), maxTxBytes, blockbuster.NoOpPrepareLanesHandler())
+		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -323,7 +323,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1: true,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, blockbuster.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
 
@@ -345,7 +345,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1: false,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, blockbuster.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -389,7 +389,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx3: true,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, blockbuster.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 }
@@ -487,7 +487,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 		mocklane.On("Match", sdk.Context{}, tx2).Return(false)
 
 		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), nil)
-		lane.SetIgnoreList([]blockbuster.Lane{mocklane})
+		lane.SetIgnoreList([]block.Lane{mocklane})
 
 		proposal := []sdk.Tx{
 			tx1,
@@ -502,7 +502,7 @@ func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
 ) *base.DefaultLane {
-	config := blockbuster.NewBaseLaneConfig(
+	config := block.NewBaseLaneConfig(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),

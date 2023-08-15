@@ -62,8 +62,8 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/skip-mev/pob/abci"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 	"github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
@@ -263,7 +263,7 @@ func New(
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
-	mevConfig := blockbuster.LaneConfig{
+	mevConfig := block.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -276,7 +276,7 @@ func New(
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
-	freeConfig := blockbuster.LaneConfig{
+	freeConfig := block.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -290,7 +290,7 @@ func New(
 	)
 
 	// Default lane accepts all other transactions.
-	defaultConfig := blockbuster.LaneConfig{
+	defaultConfig := block.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -300,12 +300,12 @@ func New(
 	defaultLane := base.NewDefaultLane(defaultConfig)
 
 	// Set the lanes into the mempool.
-	lanes := []blockbuster.Lane{
+	lanes := []block.Lane{
 		mevLane,
 		freeLane,
 		defaultLane,
 	}
-	mempool := blockbuster.NewLanedMempool(app.Logger(), true, lanes...)
+	mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when

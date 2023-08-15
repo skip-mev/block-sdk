@@ -3,8 +3,8 @@ package free
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 )
 
 const (
@@ -12,7 +12,7 @@ const (
 	LaneName = "free"
 )
 
-var _ blockbuster.Lane = (*FreeLane)(nil)
+var _ block.Lane = (*FreeLane)(nil)
 
 // FreeLane defines the lane that is responsible for processing free transactions.
 // By default, transactions that are staking related are considered free.
@@ -22,9 +22,9 @@ type FreeLane struct {
 
 // NewFreeLane returns a new free lane.
 func NewFreeLane(
-	cfg blockbuster.LaneConfig,
-	txPriority blockbuster.TxPriority[string],
-	matchFn blockbuster.MatchHandler,
+	cfg block.LaneConfig,
+	txPriority block.TxPriority[string],
+	matchFn block.MatchHandler,
 ) *FreeLane {
 	lane := constructor.NewLaneConstructor[string](
 		cfg,
@@ -45,7 +45,7 @@ func NewFreeLane(
 // DefaultMatchHandler returns the default match handler for the free lane. The
 // default implementation matches transactions that are staking related. In particular,
 // any transaction that is a MsgDelegate, MsgBeginRedelegate, or MsgCancelUnbondingDelegation.
-func DefaultMatchHandler() blockbuster.MatchHandler {
+func DefaultMatchHandler() block.MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		for _, msg := range tx.GetMsgs() {
 			switch msg.(type) {

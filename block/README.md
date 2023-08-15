@@ -69,13 +69,13 @@ implementations of lanes: MEV lane, free lane, and a default lane.
     2. Free lane allows base app to not charge certain types of transactions 
     any fees. For example, delegations and/or re-delegations might be charged no
     fees. What qualifies as a free transaction is determined
-     [here](https://github.com/skip-mev/pob/blob/main/blockbuster/lanes/free/factory.go).
+     [here](https://github.com/skip-mev/pob/blob/main/block/lanes/free/factory.go).
     3. Default lane accepts all other transactions and is considered to be 
     analogous to how mempools and proposals are constructed today.
 * Instantiate the mempool in base app. 
 
 ```go
-mempool := blockbuster.NewMempool(lanes...)
+mempool := block.NewMempool(lanes...)
 app.App.SetMempool(mempool)
 ```
 
@@ -158,7 +158,7 @@ given lane be ordered in a block / mempool.
 2. Inclusion function to determine what types of transactions belong in the lane.
 3. Unique block building/verification mechanism.
 
-The general interface that each lane must implement can be found [here](https://github.com/skip-mev/pob/blob/main/blockbuster/lane.go):
+The general interface that each lane must implement can be found [here](https://github.com/skip-mev/pob/blob/main/block/lane.go):
 
 ```go
 // Lane defines an interface used for block construction
@@ -226,8 +226,8 @@ an custom `TxPriority` that orders transactions in the mempool based on their
 bid. 
 
 ```go
-func TxPriority(config Factory) blockbuster.TxPriority[string] {
-    return blockbuster.TxPriority[string]{
+func TxPriority(config Factory) block.TxPriority[string] {
+    return block.TxPriority[string]{
         GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
             bidInfo, err := config.GetAuctionBidInfo(tx)
             if err != nil {
@@ -270,8 +270,8 @@ func TxPriority(config Factory) blockbuster.TxPriority[string] {
 // NewMempool returns a new auction mempool.
 func NewMempool(txEncoder sdk.TxEncoder, maxTx int, config Factory) *TOBMempool {
 	return &TOBMempool{
-		index: blockbuster.NewPriorityMempool(
-			blockbuster.PriorityNonceMempoolConfig[string]{
+		index: block.NewPriorityMempool(
+			block.PriorityNonceMempoolConfig[string]{
 				TxPriority: TxPriority(config),
 				MaxTx:      maxTx,
 			},

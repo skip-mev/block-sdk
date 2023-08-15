@@ -3,7 +3,7 @@ package base_test
 import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block/constructor"
 	testutils "github.com/skip-mev/pob/testutils"
 )
 

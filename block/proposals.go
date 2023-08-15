@@ -1,4 +1,4 @@
-package blockbuster
+package block
 
 import (
 	"crypto/sha256"
@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/skip-mev/pob/blockbuster/utils"
+	"github.com/skip-mev/pob/block/utils"
 )
 
 var _ BlockProposal = (*Proposal)(nil)

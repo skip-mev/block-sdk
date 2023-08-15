@@ -1,4 +1,4 @@
-package blockbuster
+package block
 
 import (
 	"cosmossdk.io/log"

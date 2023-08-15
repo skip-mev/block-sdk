@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/block"
 )
 
 const (
@@ -36,10 +36,10 @@ const (
 //	 snd    \  \      \        /
 type Terminator struct{}
 
-var _ blockbuster.Lane = (*Terminator)(nil)
+var _ block.Lane = (*Terminator)(nil)
 
 // PrepareLane is a no-op
-func (t Terminator) PrepareLane(_ sdk.Context, proposal blockbuster.BlockProposal, _ int64, _ blockbuster.PrepareLanesHandler) (blockbuster.BlockProposal, error) {
+func (t Terminator) PrepareLane(_ sdk.Context, proposal block.BlockProposal, _ int64, _ block.PrepareLanesHandler) (block.BlockProposal, error) {
 	return proposal, nil
 }
 
@@ -49,7 +49,7 @@ func (t Terminator) CheckOrder(sdk.Context, []sdk.Tx) error {
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ blockbuster.ProcessLanesHandler) (sdk.Context, error) {
+func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ block.ProcessLanesHandler) (sdk.Context, error) {
 	return ctx, nil
 }
 
@@ -72,7 +72,7 @@ func (t Terminator) Name() string {
 func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 
 // SetIgnoreList is a no-op
-func (t Terminator) SetIgnoreList([]blockbuster.Lane) {}
+func (t Terminator) SetIgnoreList([]block.Lane) {}
 
 // Match is a no-op
 func (t Terminator) Match(sdk.Context, sdk.Tx) bool {

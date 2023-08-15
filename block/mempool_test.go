@@ -1,4 +1,4 @@
-package blockbuster_test
+package block_test
 
 import (
 	"math/rand"
@@ -10,8 +10,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 	"github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
@@ -33,8 +33,8 @@ type BlockBusterTestSuite struct {
 	freeLane      *free.FreeLane
 	gasTokenDenom string
 
-	lanes   []blockbuster.Lane
-	mempool blockbuster.Mempool
+	lanes   []block.Lane
+	mempool block.Mempool
 
 	// account set up
 	accounts []testutils.Account
@@ -58,7 +58,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
-	mevConfig := blockbuster.LaneConfig{
+	mevConfig := block.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -71,7 +71,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Free lane set up
-	freeConfig := blockbuster.LaneConfig{
+	freeConfig := block.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -85,7 +85,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Base lane set up
-	baseConfig := blockbuster.LaneConfig{
+	baseConfig := block.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -97,8 +97,8 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Mempool set up
-	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
+	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)

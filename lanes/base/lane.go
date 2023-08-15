@@ -1,8 +1,8 @@
 package base
 
 import (
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 )
 
 const (
@@ -10,7 +10,7 @@ const (
 	LaneName = "default"
 )
 
-var _ blockbuster.Lane = (*DefaultLane)(nil)
+var _ block.Lane = (*DefaultLane)(nil)
 
 // DefaultLane defines a default lane implementation. The default lane orders
 // transactions by the transaction fees. The default lane accepts any transaction
@@ -23,7 +23,7 @@ type DefaultLane struct {
 }
 
 // NewDefaultLane returns a new default lane.
-func NewDefaultLane(cfg blockbuster.LaneConfig) *DefaultLane {
+func NewDefaultLane(cfg block.LaneConfig) *DefaultLane {
 	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		LaneName,

@@ -4,13 +4,13 @@ import (
 	"context"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/block"
 )
 
 // TxPriority returns a TxPriority over mev lane transactions only. It
 // is to be used in the mev index only.
-func TxPriority(config Factory) blockbuster.TxPriority[string] {
-	return blockbuster.TxPriority[string]{
+func TxPriority(config Factory) block.TxPriority[string] {
+	return block.TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
 			bidInfo, err := config.GetAuctionBidInfo(tx)
 			if err != nil {

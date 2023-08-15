@@ -11,7 +11,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
-	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/block"
 	"github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
@@ -39,10 +39,10 @@ type AnteTestSuite struct {
 	authorityAccount sdk.AccAddress
 
 	// mempool and lane set up
-	mempool  blockbuster.Mempool
+	mempool  block.Mempool
 	mevLane  *mev.MEVLane
 	baseLane *base.DefaultLane
-	lanes    []blockbuster.Lane
+	lanes    []block.Lane
 
 	// Account set up
 	balance sdk.Coin
@@ -83,7 +83,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	mevConfig := blockbuster.LaneConfig{
+	mevConfig := block.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -96,19 +96,19 @@ func (suite *AnteTestSuite) SetupTest() {
 	)
 
 	// Base lane set up
-	baseConfig := blockbuster.LaneConfig{
+	baseConfig := block.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList:    []blockbuster.Lane{suite.mevLane},
+		IgnoreList:    []block.Lane{suite.mevLane},
 	}
 	suite.baseLane = base.NewDefaultLane(baseConfig)
 
 	// Mempool set up
-	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.baseLane}
-	suite.mempool = blockbuster.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.lanes = []block.Lane{suite.mevLane, suite.baseLane}
+	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {

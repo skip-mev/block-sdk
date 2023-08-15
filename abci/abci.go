@@ -6,8 +6,8 @@ import (
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/utils"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/utils"
 	"github.com/skip-mev/pob/lanes/terminator"
 )
 
@@ -17,14 +17,14 @@ type (
 	ProposalHandler struct {
 		logger              log.Logger
 		txDecoder           sdk.TxDecoder
-		prepareLanesHandler blockbuster.PrepareLanesHandler
-		processLanesHandler blockbuster.ProcessLanesHandler
+		prepareLanesHandler block.PrepareLanesHandler
+		processLanesHandler block.ProcessLanesHandler
 	}
 )
 
 // NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
 // iteratively call each of the lanes in the chain to prepare and process the proposal.
-func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []blockbuster.Lane) *ProposalHandler {
+func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []block.Lane) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
 		txDecoder:           txDecoder,
@@ -48,7 +48,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			}
 		}()
 
-		proposal, err := h.prepareLanesHandler(ctx, blockbuster.NewProposal(req.MaxTxBytes))
+		proposal, err := h.prepareLanesHandler(ctx, block.NewProposal(req.MaxTxBytes))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
@@ -114,7 +114,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 //
 // In the case where any of the lanes fail to prepare the partial proposal, the lane that failed
 // will be skipped and the next lane in the chain will be called to prepare the proposal.
-func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandler {
+func ChainPrepareLanes(chain ...block.Lane) block.PrepareLanesHandler {
 	if len(chain) == 0 {
 		return nil
 	}
@@ -124,7 +124,7 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 		chain = append(chain, terminator.Terminator{})
 	}
 
-	return func(ctx sdk.Context, partialProposal blockbuster.BlockProposal) (finalProposal blockbuster.BlockProposal, err error) {
+	return func(ctx sdk.Context, partialProposal block.BlockProposal) (finalProposal block.BlockProposal, err error) {
 		lane := chain[0]
 		lane.Logger().Info("preparing lane", "lane", lane.Name())
 
@@ -182,7 +182,7 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 // ChainProcessLanes chains together the proposal verification logic from each lane
 // into a single function. The first lane in the chain is the first lane to be verified and
 // the last lane in the chain is the last lane to be verified.
-func ChainProcessLanes(chain ...blockbuster.Lane) blockbuster.ProcessLanesHandler {
+func ChainProcessLanes(chain ...block.Lane) block.ProcessLanesHandler {
 	if len(chain) == 0 {
 		return nil
 	}

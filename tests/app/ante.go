@@ -3,20 +3,20 @@ package app
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
-	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/utils"
+	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/utils"
 	builderante "github.com/skip-mev/pob/x/builder/ante"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
 
 type POBHandlerOptions struct {
 	BaseOptions   ante.HandlerOptions
-	Mempool       blockbuster.Mempool
+	Mempool       block.Mempool
 	MEVLane       builderante.MEVLane
 	TxDecoder     sdk.TxDecoder
 	TxEncoder     sdk.TxEncoder
 	BuilderKeeper builderkeeper.Keeper
-	FreeLane      blockbuster.Lane
+	FreeLane      block.Lane
 }
 
 // NewPOBAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the POB AnteHandler.
