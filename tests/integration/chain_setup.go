@@ -189,7 +189,6 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 			require.NoError(t, err)
 		} else {
 			require.Error(t, err)
-
 		}
 
 	}

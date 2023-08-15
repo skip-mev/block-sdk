@@ -131,7 +131,7 @@ func ChainPrepareLanes(chain ...block.Lane) block.PrepareLanesHandler {
 		// Cache the context in the case where any of the lanes fail to prepare the proposal.
 		cacheCtx, write := ctx.CacheContext()
 
-		// We utilize a recover to handler any panics or errors that occur during the preparation
+		// We utilize a recover to handle any panics or errors that occur during the preparation
 		// of a lane's transactions. This defer will first check if there was a panic or error
 		// thrown from the lane's preparation logic. If there was, we log the error, skip the lane,
 		// and call the next lane in the chain to the prepare the proposal.

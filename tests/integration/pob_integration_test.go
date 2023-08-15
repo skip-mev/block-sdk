@@ -5,9 +5,9 @@ import (
 	"testing"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/skip-mev/pob/tests/integration"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/strangelove-ventures/interchaintest/v7"
-	"github.com/skip-mev/pob/tests/integration"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/suite"
@@ -16,7 +16,7 @@ import (
 var (
 	// config params
 	numValidators = 4
-	numFullNodes = 0
+	numFullNodes  = 0
 	denom         = "stake"
 
 	image = ibc.DockerImage{
