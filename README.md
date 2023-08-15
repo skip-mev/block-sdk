@@ -1,4 +1,4 @@
-<h1 align="center">Protocol-Owned Builder</h1>
+<h1 align="center">Block SDK 🧱</h1>
 
 <!-- markdownlint-disable MD013 -->
 <!-- markdownlint-disable MD041 -->
@@ -9,337 +9,201 @@
 [![License: Apache-2.0](https://img.shields.io/github/license/skip-mev/pob.svg?style=flat-square)](https://github.com/skip-mev/pob/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/skip-mev/pob?style=flat-square)](https://github.com/skip-mev/pob)
 
-Skip Protocol's Protocol-Owned Builder (POB) is a set of Cosmos SDK and ABCI++
-primitives that provide application developers the ability to define how their
-apps construct and validate blocks on-chain in a transparent, enforceable way,
-such as giving complete control to the protocol to recapture, control, and
-redistribute MEV.
+## 📖 Overview
 
-Skip's POB provides developers with a set of a few core primitives:
+The Block SDK is a framework for building smarter blocks. The Block SDK is built
+harnessing the power of ABCI++ which is a new ABCI implementation that allows
+for more complex and expressive applications to be built on top of the Cosmos SDK.
+The process of building and verifiying proposals can be broken down into two
+distinct parts: 
 
-* `BlockBuster`: BlockBuster is a generalized block-building and mempool SDK
-  that allows developers to define how their applications construct and validate blocks
-  on-chain in a transparent, enforceable way. At its core, BlockBuster is an app-side mempool + set 
-  of proposal handlers (`PrepareProposal`/`ProcessProposal`) that allow developers to configure 
-  modular lanes of transactions in their blocks with distinct validation/ordering logic. For more
-  information, see the [BlockBuster README](/block/README.md).
-* `x/builder`: This Cosmos SDK module gives applications the ability to process
-  MEV bundled transactions in addition to having the ability to define how searchers
-  and block proposers are rewarded. In addition, the module defines a `AuctionDecorator`,
-  which is an AnteHandler decorator that enforces various chain configurable MEV
-  rules.
+1. Preparing a proposal during `PrepareProposal`.
+2. Processing a proposal during `ProcessProposal`.
 
-## Releases
+The Block SDK provides a framework for building and verifying proposals by
+segmenting a single block into multiple lanes. Each lane can be responsible for
+proposing and verifying specific types of transaction. The Block SDK provides
+a default implementation of a lane that can be used to build and verify proposals
+similar to how they are built and verified in the Cosmos SDK today while also
+providing a framework for building more complex lanes that can be used to build
+and verify much more complex proposals.
 
-### Release Compatibility Matrix
+## 🤔 How does it work
 
-| POB Version | Cosmos SDK |
-| :---------: | :--------: |
-|   v1.x.x    |  v0.47.x   |
-|   v1.x.x    |  v0.48.x   |
-|   v1.x.x    |  v0.49.x   |
-|   v1.x.x    |  v0.50.x   |
+### 🔁 Transaction Lifecycle
 
-## Install
+The best way to understand how lanes work is to first understand the lifecycle 
+of a transaction. A transaction begins its lifecycle when it is first signed and
+broadcasted to a chain. After it is broadcasted to a validator, it will be checked
+in `CheckTx` by the base application. If the transaction is valid, it will be
+inserted into the applications mempool. 
 
-```shell
-$ go install github.com/skip-mev/pob
+The transaction then waits in the mempool until a new block needs to be proposed.
+When a new block needs to be proposed, the application will call `PrepareProposal`
+(which is a new ABCI++ addition) to request a new block from the current 
+proposer. The proposer will look at what transactions currently waiting to 
+be included in a block by looking at their mempool. The proposer will then 
+iteratively select transactions until the block is full. The proposer will then
+send the block to other validators in the network. 
+
+When a validator receives a proposed block, the validator will first want to 
+verify the contents of the block before signing off on it. The validator will 
+call `ProcessProposal` to verify the contents of the block. If the block is 
+valid, the validator will sign off on the block and broadcast their vote to the 
+network. If the block is invalid, the validator will reject the block. Once a 
+block is accepted by the network, it is committed and the transactions that 
+were included in the block are removed from the validator's mempool (as they no
+longer need to be considered).
+
+### 🛣️ Lane Lifecycle
+
+After a transaction is verified in `CheckTx`, it will attempt to be inserted 
+into the `LanedMempool`. A `LanedMempool` is composed of several distinct `Lanes`
+that have the ability to store their own transactions. The `LanedMempool` will 
+insert the transaction into all lanes that will accept it. The criteria for 
+whether a lane will accept a transaction is defined by the lane's 
+`MatchHandler`. The default implementation of a `MatchHandler` will accept all transactions.
+
+
+When a new block is proposed, the `PrepareProposalHandler` will iteratively call
+`PrepareLane` on each lane (in the order in which they are defined in the
+`LanedMempool`). The `PrepareLane` method is anaolgous to `PrepareProposal`. Calling
+`PrepareLane` on a lane will trigger the lane to reap transactions from its mempool
+and add them to the proposal (given they are valid respecting the verification rules
+of the lane).
+
+When proposals need to be verified in `ProcessProposal`, the `ProcessProposalHandler`
+defined in `abci/abci.go` will call `ProcessLane` on each lane in the same order
+as they were called in the `PrepareProposalHandler`. Each subsequent call to
+`ProcessLane` will filter out transactions that belong to previous lanes. A given
+lane's `ProcessLane` will only verify transactions that belong to that lane.
+
+> **Scenario**
+> 
+> Let's say we have a `LanedMempool` composed of two lanes: `LaneA` and `LaneB`.
+> `LaneA` is defined first in the `LanedMempool` and `LaneB` is defined second.
+> `LaneA` contains transactions `Tx1` and `Tx2` and `LaneB` contains transactions
+> `Tx3` and `Tx4`.
+
+
+When a new block needs to be proposed, the `PrepareProposalHandler` will call
+`PrepareLane` on `LaneA` first and `LaneB` second. When `PrepareLane` is called
+on `LaneA`, `LaneA` will reap transactions from its mempool and add them to the
+proposal. Same applies for `LaneB`. Say `LaneA` reaps transactions `Tx1` and `Tx2`
+and `LaneB` reaps transactions `Tx3` and `Tx4`. This gives us a proposal composed
+of the following:
+
+* `Tx1`, `Tx2`, `Tx3`, `Tx4`
+
+When the `ProcessProposalHandler` is called, it will call `ProcessLane` on `LaneA`
+with the proposal composed of `Tx1`, `Tx2`, `Tx3`, and `Tx4`. `LaneA` will then
+verify `Tx1` and `Tx2` and return the remaining transactions - `Tx3` and `Tx4`. 
+The `ProcessProposalHandler` will then call `ProcessLane` on `LaneB` with the
+remaining transactions - `Tx3` and `Tx4`. `LaneB` will then verify `Tx3` and `Tx4`
+and return no remaining transactions.
+
+## 🏗️ Setup
+
+> **Note**
+> 
+> For a more in depth example of how to use the Block SDK, check out our
+> example application in `block-sdk/tests/app/app.go`.
+
+### 📦 Dependencies
+
+The Block SDK is built on top of the Cosmos SDK. The Block SDK is currently
+compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
+
+### 📥 Installation
+
+To install the Block SDK, run the following command:
+
+```bash
+go get github.com/skip-mev/block-sdk/abci
 ```
 
-## Setup
+### 📚 Usage
 
->This set up guide will walk you through the process of setting up a POB application. In particular, we will configure an application with the following features:
->
->* Top of block lane (auction lane). This will create an auction lane where users can bid to have their
->    transactions executed at the top of the block.
->* Free lane. This will create a free lane where users can submit transactions that will be executed
->     for free (no fees).
->* Default lane. This will create a default lane where users can submit transactions that will be executed
->     with the default app logic.
->* Builder module that pairs with the auction lane to process auction transactions and distribute revenue
->     to the auction house.
->
-> To build your own custom BlockBuster Lane, please see the [BlockBuster README](/block/README.md).
+First determine the set of lanes that you want to use in your application. The available
+lanes can be found in our **Lane App Store** in `block-sdk/lanes`. In your base
+application, you will need to create a `LanedMempool` composed of the lanes that
+you want to use. You will also need to create a `PrepareProposalHandler` and a
+`ProcessProposalHandler` that will be responsible for preparing and processing 
+proposals respectively. 
 
-1. Import the necessary dependencies into your application. This includes the
-   block proposal handlers +mempool, keeper, builder types, and builder module. This
-   tutorial will go into more detail into each of the dependencies.
+```golang
+// 1. Create the lanes.
+//
+// NOTE: The lanes are ordered by priority. The first lane is the highest priority
+// lane and the last lane is the lowest priority lane. Top of block lane allows
+// transactions to bid for inclusion at the top of the next block.
+//
+// For more information on how to utilize the LaneConfig please
+// visit the README in block-sdk/block/base.
+//
+// MEV lane hosts an action at the top of the block.
+mevConfig := constructor.LaneConfig{
+    Logger:        app.Logger(),
+    TxEncoder:     app.txConfig.TxEncoder(),
+    TxDecoder:     app.txConfig.TxDecoder(),
+    MaxBlockSpace: math.LegacyZeroDec(), 
+    MaxTxs:        0,
+}
+mevLane := mev.NewMEVLane(
+    mevConfig,
+    mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
+)
 
-   ```go
-   import (
-    ...
-    "github.com/skip-mev/pob/block"
-    "github.com/skip-mev/pob/block/abci"
-    "github.com/skip-mev/pob/block/lanes/mev"
-    "github.com/skip-mev/pob/block/lanes/base"
-    "github.com/skip-mev/pob/block/lanes/free"
-    buildermodule "github.com/skip-mev/pob/x/builder"
-    builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
-     ...
-   )
-   ```
+// Free lane allows transactions to be included in the next block for free.
+freeConfig := constructor.LaneConfig{
+    Logger:        app.Logger(),
+    TxEncoder:     app.txConfig.TxEncoder(),
+    TxDecoder:     app.txConfig.TxDecoder(),
+    MaxBlockSpace: math.LegacyZeroDec(),
+    MaxTxs:        0,
+}
+freeLane := free.NewFreeLane(
+    freeConfig,
+    constructor.DefaultTxPriority(),
+    free.DefaultMatchHandler(),
+)
 
-2. Add your module to the the `AppModuleBasic` manager. This manager is in
-   charge of setting up basic, non-dependent module elements such as codec
-   registration and genesis verification. This will register the special
-   `MsgAuctionBid` message. When users want to bid for MEV execution,
-   they will submit a transaction - which we call an auction transaction - that
-   includes a single `MsgAuctionBid`. We prevent any other messages from being
-   included in auction transaction to prevent malicious behavior - such as front
-   running or sandwiching.
+// Default lane accepts all other transactions.
+defaultConfig := constructor.LaneConfig{
+    Logger:        app.Logger(),
+    TxEncoder:     app.txConfig.TxEncoder(),
+    TxDecoder:     app.txConfig.TxDecoder(),
+    MaxBlockSpace: math.LegacyZeroDec(),
+    MaxTxs:        0,
+}
+defaultLane := base.NewStandardLane(defaultConfig)
 
-   ```go
-   var (
-     ModuleBasics = module.NewBasicManager(
-       ...
-       buildermodule.AppModuleBasic{},
-     )
-     ...
-   )
-   ```
+// Set the lanes into the mempool.
+lanes := []block.Lane{
+    mevLane,
+    freeLane,
+    defaultLane,
+}
+mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
+app.App.SetMempool(mempool)
 
-3. The builder `Keeper` is POB's gateway to processing special `MsgAuctionBid`
-   messages that allow users to participate in the MEV auction, distribute
-   revenue to the auction house, and ensure the validity of auction transactions.
+...
 
-   a. First add the keeper to the app's struct definition. We also want to add POB's custom
-   checkTx handler to the app's struct definition. This will allow us to override the 
-   default checkTx handler to process bid transactions before they are inserted into the mempool.
-   NOTE: The custom handler is required as otherwise the auction can be held hostage by a malicious
-   users.
+anteHandler := NewAnteHandler(options)
 
-      ```go
-      type App struct {
-        ...
-        // BuilderKeeper is the keeper that handles processing auction transactions
-        BuilderKeeper         builderkeeper.Keeper
+// Set the lane ante handlers on the lanes.
+for _, lane := range lanes {
+    lane.SetAnteHandler(anteHandler)
+}
+app.App.SetAnteHandler(anteHandler)
 
-        // Custom checkTx handler
-        checkTxHandler abci.CheckTx
-      }
-      ```
+// Set the abci handlers on base app
+proposalHandler := abci.NewProposalHandler(
+    app.Logger(),
+    app.TxConfig().TxDecoder(),
+    lanes,
+)
+app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
+app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
+```
 
-    b. Add the builder module to the list of module account permissions. This will
-    instantiate the builder module account on genesis.
-
-      ```go
-      maccPerms = map[string][]string{
-        builder.ModuleName: nil,
-        ...
-      }
-      ```
-
-    c. Instantiate the block mempool with the application's desired lanes. 
-
-      ```go
-        // Set the block mempool into the app.
-        // Create the lanes.
-        //
-        // NOTE: The lanes are ordered by priority. The first lane is the highest priority
-        // lane and the last lane is the lowest priority lane.
-        // Top of block lane allows transactions to bid for inclusion at the top of the next block.
-        //
-        // block.BaseLaneConfig is utilized for basic encoding/decoding of transactions. 
-        tobConfig := block.BaseLaneConfig{
-          Logger:        app.Logger(),
-          TxEncoder:     app.txConfig.TxEncoder(),
-          TxDecoder:     app.txConfig.TxDecoder(),
-          // the desired portion of total block space to be reserved for the lane. a value of 0
-          // indicates that the lane can use all available block space.
-          MaxBlockSpace: sdk.ZeroDec(),
-        }
-        tobLane := auction.NewMEVLane(
-          tobConfig,
-          // the maximum number of transactions that the mempool can store. a value of 0 indicates
-          // that the mempool can store an unlimited number of transactions.
-          0,
-          // AuctionFactory is responsible for determining what is an auction bid transaction and
-          // how to extract the bid information from the transaction. There is a default implementation
-          // that can be used or application developers can implement their own.
-          auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
-        )
-
-        // Free lane allows transactions to be included in the next block for free.
-        freeConfig := block.BaseLaneConfig{
-          Logger:        app.Logger(),
-          TxEncoder:     app.txConfig.TxEncoder(),
-          TxDecoder:     app.txConfig.TxDecoder(),
-          MaxBlockSpace: sdk.ZeroDec(),
-          // IgnoreList is a list of lanes that if a transaction should be included in, it will be
-          // ignored by the lane. For example, if a transaction should belong to the tob lane, it
-          // will be ignored by the free lane.
-          IgnoreList: []block.Lane{
-            tobLane,
-          },
-        }
-        freeLane := free.NewFreeLane(
-          freeConfig,
-          free.NewDefaultFreeFactory(app.txConfig.TxDecoder()),
-        )
-
-        // Default lane accepts all other transactions.
-        defaultConfig := block.BaseLaneConfig{
-          Logger:        app.Logger(),
-          TxEncoder:     app.txConfig.TxEncoder(),
-          TxDecoder:     app.txConfig.TxDecoder(),
-          MaxBlockSpace: sdk.ZeroDec(),
-          IgnoreList: []block.Lane{
-            tobLane,
-            freeLane,
-          },
-        }
-        defaultLane := base.NewStandardLane(defaultConfig)
-
-        // Set the lanes into the mempool.
-        lanes := []block.Lane{
-          tobLane,
-          freeLane,
-          defaultLane,
-        }
-        mempool := block.NewMempool(lanes...)
-        app.App.SetMempool(mempool)
-      ```
-
-    d. Instantiate the antehandler chain for the application with awareness of the
-    block mempool. This will allow the application to verify the validity
-    of a transaction respecting the desired logic of a given lane. In this walkthrough,
-    we want the `FeeDecorator` to be ignored for all transactions that should belong to the 
-    free lane. Additionally, we want to add the `x/builder` module's `AuctionDecorator` to the
-    ante-handler chain. The `AuctionDecorator` is an AnteHandler decorator that enforces various
-    chain configurable MEV rules.
-
-      ```go
-        import (
-            ...
-            "github.com/skip-mev/pob/block"
-            "github.com/skip-mev/pob/block/utils"
-            builderante "github.com/skip-mev/pob/x/builder/ante"
-            ...
-        )
-
-        anteDecorators := []sdk.AnteDecorator{
-          ante.NewSetUpContextDecorator(), // outermost AnteDecorator. SetUpContext must be called first
-          ...
-          // The IgnoreDecorator allows for certain decorators to be ignored for certain transactions. In 
-          // this case, we want to ignore the FeeDecorator for all transactions that should belong to the
-          // free lane.
-          utils.NewIgnoreDecorator(
-            ante.NewDeductFeeDecorator(
-              options.BaseOptions.AccountKeeper,
-              options.BaseOptions.BankKeeper,
-              options.BaseOptions.FeegrantKeeper,
-              options.BaseOptions.TxFeeChecker,
-            ),
-            options.FreeLane,
-          ),
-          ...
-          builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.MEVLane, options.Mempool),
-        }
-
-        anteHandler := sdk.ChainAnteDecorators(anteDecorators...)
-        app.SetAnteHandler(anteHandler)
-
-        // Set the antehandlers on the lanes.
-        for _, lane := range lanes {
-          lane.SetAnteHandler(anteHandler)
-        }
-        app.App.SetAnteHandler(anteHandler)
-      ```
-
-    e. Instantiate the builder keeper, store keys, and module manager. Note, be
-    sure to do this after all the required keeper dependencies have been instantiated.
-
-      ```go
-      keys := storetypes.NewKVStoreKeys(
-        buildertypes.StoreKey,
-        ...
-      )
-
-      ...
-      app.BuilderKeeper := builderkeeper.NewKeeper(
-        appCodec,
-        keys[buildertypes.StoreKey],
-        app.AccountKeeper,
-        app.BankKeeper,
-        app.DistrKeeper,
-        app.StakingKeeper,
-        authtypes.NewModuleAddress(govv1.ModuleName).String(),
-      )
-
-      
-      app.ModuleManager = module.NewManager(
-        builder.NewAppModule(appCodec, app.BuilderKeeper),
-        ...
-      )
-      ```
-
-    e. With Cosmos SDK version 0.47.0, the process of building blocks has been
-    updated and moved from the consensus layer, CometBFT, to the application layer.
-    When a new block is requested, the proposer for that height will utilize the
-    `PrepareProposal` handler to build a block while the `ProcessProposal` handler
-    will verify the contents of the block proposal by all validators. The
-    combination of the `BlockBuster` mempool + `PrepareProposal`/`ProcessProposal`
-    handlers allows the application to verifiably build valid blocks with
-    mev block space reserved for auctions and partial block for free transactions. 
-    Additionally, we override the `BaseApp`'s `CheckTx` handler with our own custom 
-    `CheckTx` handler that will be responsible for checking the validity of transactions. 
-    We override the `CheckTx` handler so that we can verify auction transactions before they are
-    inserted into the mempool. With the POB `CheckTx`, we can verify the auction
-    transaction and all of the bundled transactions before inserting the auction
-    transaction into the mempool. This is important because we otherwise there may be
-    discrepencies between the auction transaction and the bundled transactions
-    are validated in `CheckTx` and `PrepareProposal` such that the auction can be 
-    griefed. All other transactions will be executed with base app's `CheckTx`.
-
-    ```go
-
-    // Create the proposal handler that will be used to build and validate blocks.
-    proposalHandler := abci.NewProposalHandler(
-      app.Logger(),
-      app.txConfig.TxDecoder(),
-      mempool,
-    )
-    app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
-    app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
-
-
-    // Set the custom CheckTx handler on BaseApp.
-    checkTxHandler := abci.NewCheckTxHandler(
-      app.App,
-      app.txConfig.TxDecoder(),
-      tobLane,
-      anteHandler,
-      app.ChainID(),
-    )
-    app.SetCheckTx(checkTxHandler.CheckTx())
-    ...
-
-    // CheckTx will check the transaction with the provided checkTxHandler. We override the default
-    // handler so that we can verify bid transactions before they are inserted into the mempool.
-    // With the POB CheckTx, we can verify the bid transaction and all of the bundled transactions
-    // before inserting the bid transaction into the mempool.
-    func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
-      return app.checkTxHandler(req)
-    }
-
-    // SetCheckTx sets the checkTxHandler for the app.
-    func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
-      app.checkTxHandler = handler
-    }
-    ```
-
-    f. Finally, update the app's `InitGenesis` order and ante-handler chain.
-
-    ```go
-    genesisModuleOrder := []string{
-      buildertypes.ModuleName,
-      ...,
-    }
-    ```
-
-## Params
-
-Note, before building or upgrading the application, make sure to initialize the
-escrow address for POB in the parameters of the module. The default parameters
-initialize the escrow address to be the module account address. The escrow address 
-will be the address that is receiving a portion of auction house revenue alongside the proposer (or custom rewards providers).
