@@ -42,37 +42,37 @@ longer need to be considered).
 
 ### 🛣️ Lane Lifecycle
 
-After a transaction is verified in `CheckTx`, it will attempt to be inserted 
-into the `LanedMempool`. A `LanedMempool` is composed of several distinct `Lanes`
-that have the ability to store their own transactions. The `LanedMempool` will 
+After a transaction is verified in CheckTx, it will attempt to be inserted 
+into the `LanedMempool`. A LanedMempool is composed of several distinct `Lanes`
+that have the ability to store their own transactions. The LanedMempool will 
 insert the transaction into all lanes that will accept it. The criteria for 
 whether a lane will accept a transaction is defined by the lane's 
-`MatchHandler`. The default implementation of a `MatchHandler` will accept all transactions.
+`MatchHandler`. The default implementation of a MatchHandler will accept all transactions.
 
 
 When a new block is proposed, the `PrepareProposalHandler` will iteratively call
 `PrepareLane` on each lane (in the order in which they are defined in the
-`LanedMempool`). The `PrepareLane` method is anaolgous to `PrepareProposal`. Calling
-`PrepareLane` on a lane will trigger the lane to reap transactions from its mempool
+LanedMempool). The PrepareLane method is anaolgous to PrepareProposal. Calling
+PrepareLane on a lane will trigger the lane to reap transactions from its mempool
 and add them to the proposal (given they are valid respecting the verification rules
 of the lane).
 
 When proposals need to be verified in `ProcessProposal`, the `ProcessProposalHandler`
 defined in `abci/abci.go` will call `ProcessLane` on each lane in the same order
-as they were called in the `PrepareProposalHandler`. Each subsequent call to
-`ProcessLane` will filter out transactions that belong to previous lanes. A given
-lane's `ProcessLane` will only verify transactions that belong to that lane.
+as they were called in the PrepareProposalHandler. Each subsequent call to
+ProcessLane will filter out transactions that belong to previous lanes. A given
+lane's ProcessLane will only verify transactions that belong to that lane.
 
 > **Scenario**
 > 
-> Let's say we have a `LanedMempool` composed of two lanes: LaneA and LaneB.
-> LaneA is defined first in the `LanedMempool` and LaneB is defined second.
+> Let's say we have a LanedMempool composed of two lanes: LaneA and LaneB.
+> LaneA is defined first in the LanedMempool and LaneB is defined second.
 > LaneA contains transactions Tx1 and Tx2 and LaneB contains transactions
 > Tx3 and Tx4.
 
 
-When a new block needs to be proposed, the `PrepareProposalHandler` will call
-`PrepareLane` on LaneA first and LaneB second. When `PrepareLane` is called
+When a new block needs to be proposed, the PrepareProposalHandler will call
+PrepareLane on LaneA first and LaneB second. When PrepareLane is called
 on LaneA, LaneA will reap transactions from its mempool and add them to the
 proposal. Same applies for LaneB. Say LaneA reaps transactions Tx1 and Tx2
 and LaneB reaps transactions Tx3 and Tx4. This gives us a proposal composed
@@ -80,9 +80,9 @@ of the following:
 
 * Tx1, Tx2, Tx3, Tx4
 
-When the `ProcessProposalHandler` is called, it will call `ProcessLane` on LaneA
+When the ProcessProposalHandler is called, it will call ProcessLane on LaneA
 with the proposal composed of Tx1, Tx2, Tx3, and Tx4. LaneA will then
 verify Tx1 and Tx2 and return the remaining transactions - Tx3 and Tx4. 
-The `ProcessProposalHandler` will then call `ProcessLane` on LaneB with the
+The ProcessProposalHandler will then call ProcessLane on LaneB with the
 remaining transactions - Tx3 and Tx4. LaneB will then verify Tx3 and Tx4
 and return no remaining transactions.
