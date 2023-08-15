@@ -36,7 +36,7 @@ lane and the ordering rules of the other lanes).
 handler for processing transactions that are included in block proposals.
 
 
-### 1. Lane Config 📝
+### 1. 📝 Lane Config
 
 The lane config (`LaneConfig`) is a simple configuration
 object that defines the desired amount of block space the lane should
@@ -125,7 +125,7 @@ to the free lane will be processed by the default lane (which accepts all
 transactions by default).
 
 
-### 2. LaneMempool 🗄️
+### 2. 🗄️ LaneMempool
 
 This is the data structure that is responsible for storing transactions
 as they are being verified and are waiting to be included in proposals. `block/constructor/mempool.go`
@@ -236,7 +236,7 @@ lane := constructor.NewLaneConstructor(
 )
 ```
 
-### 3. MatchHandler 🤝
+### 3. 🤝 MatchHandler
 
 `MatchHandler` is utilized to determine if a transaction should be included in 
 the lane. This function can be a stateless or stateful check on the transaction.
@@ -328,7 +328,7 @@ than the previous steps and is a all or nothing approach. This means that if
 you implement any of the handlers, you must implement all of them in most cases.
 If you do not implement all of them, the lane may have unintended behavior.
 
-### 4. PrepareLaneHandler
+### 4. 🛠️ PrepareLaneHandler
 
 The `PrepareLaneHandler` is an optional field you can set on the lane constructor.
 This handler is responsible for the transaction selection logic when a new proposal
@@ -374,7 +374,7 @@ customLane := constructor.NewCustomLane(
 customLane.SetPrepareLaneHandler(customlane.PrepareLaneHandler())
 ```
 
-### 5. CheckOrderHandler
+### 5. ✅ CheckOrderHandler
 
 The `CheckOrderHandler` is an optional field you can set on the lane constructor.
 This handler is responsible for verifying the ordering of the transactions in the
@@ -421,7 +421,7 @@ customLane.SetCheckOrderHandler(customlane.CheckOrderHandler())
 ```
 
 
-### 6. ProcessLaneHandler
+### 6. 🆗 ProcessLaneHandler
 
 The `ProcessLaneHandler` is an optional field you can set on the lane constructor.
 This handler is responsible for verifying the transactions in the block proposal
