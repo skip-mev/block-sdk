@@ -52,7 +52,7 @@ func NewMEVLane(
 		LaneConstructor: constructor.NewLaneConstructor[string](
 			cfg,
 			LaneName,
-			constructor.NewConstructorMempool[string](
+			constructor.NewMempool[string](
 				TxPriority(factory),
 				cfg.TxEncoder,
 				cfg.MaxTxs,

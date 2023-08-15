@@ -771,7 +771,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *const
 	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		"panic",
-		constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), cfg.TxEncoder, 0),
+		constructor.NewMempool[string](constructor.DefaultTxPriority(), cfg.TxEncoder, 0),
 		constructor.DefaultMatchHandler(),
 	)
 

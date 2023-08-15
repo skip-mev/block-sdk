@@ -84,7 +84,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 }
 
 func (s *BaseTestSuite) TestInsert() {
-	mempool := constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+	mempool := constructor.NewMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
 
 	s.Run("should be able to insert a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -136,7 +136,7 @@ func (s *BaseTestSuite) TestInsert() {
 }
 
 func (s *BaseTestSuite) TestRemove() {
-	mempool := constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+	mempool := constructor.NewMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
 
 	s.Run("should be able to remove a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -174,7 +174,7 @@ func (s *BaseTestSuite) TestRemove() {
 
 func (s *BaseTestSuite) TestSelect() {
 	s.Run("should be able to select transactions in the correct order", func() {
-		mempool := constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+		mempool := constructor.NewMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -213,7 +213,7 @@ func (s *BaseTestSuite) TestSelect() {
 	})
 
 	s.Run("should be able to select a single transaction", func() {
-		mempool := constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+		mempool := constructor.NewMempool[string](constructor.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,

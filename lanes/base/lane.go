@@ -27,7 +27,7 @@ func NewDefaultLane(cfg block.LaneConfig) *DefaultLane {
 	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		LaneName,
-		constructor.NewConstructorMempool[string](
+		constructor.NewMempool[string](
 			constructor.DefaultTxPriority(),
 			cfg.TxEncoder,
 			cfg.MaxTxs,

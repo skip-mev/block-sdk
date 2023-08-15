@@ -16,7 +16,7 @@ type (
 	// It include's additional helper functions that allow users to determine if a
 	// transaction is already in the mempool and to compare the priority of two
 	// transactions.
-	ConstructorMempool[C comparable] struct {
+	Mempool[C comparable] struct {
 		// index defines an index of transactions.
 		index sdkmempool.Mempool
 
@@ -79,9 +79,9 @@ func DefaultTxPriority() TxPriority[string] {
 	}
 }
 
-// NewConstructorMempool returns a new ConstructorMempool.
-func NewConstructorMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *ConstructorMempool[C] {
-	return &ConstructorMempool[C]{
+// NewMempool returns a new ConstructorMempool.
+func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *Mempool[C] {
+	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{
 				TxPriority: txPriority,
@@ -95,7 +95,7 @@ func NewConstructorMempool[C comparable](txPriority TxPriority[C], txEncoder sdk
 }
 
 // Insert inserts a transaction into the mempool.
-func (cm *ConstructorMempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
+func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 	if err := cm.index.Insert(ctx, tx); err != nil {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
@@ -112,7 +112,7 @@ func (cm *ConstructorMempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 }
 
 // Remove removes a transaction from the mempool.
-func (cm *ConstructorMempool[C]) Remove(tx sdk.Tx) error {
+func (cm *Mempool[C]) Remove(tx sdk.Tx) error {
 	if err := cm.index.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
 	}
@@ -131,17 +131,17 @@ func (cm *ConstructorMempool[C]) Remove(tx sdk.Tx) error {
 // remove a transaction from the mempool while iterating over the transactions,
 // the iterator will not be aware of the removal and will continue to iterate
 // over the removed transaction. Be sure to reset the iterator if you remove a transaction.
-func (cm *ConstructorMempool[C]) Select(ctx context.Context, txs [][]byte) sdkmempool.Iterator {
+func (cm *Mempool[C]) Select(ctx context.Context, txs [][]byte) sdkmempool.Iterator {
 	return cm.index.Select(ctx, txs)
 }
 
 // CountTx returns the number of transactions in the mempool.
-func (cm *ConstructorMempool[C]) CountTx() int {
+func (cm *Mempool[C]) CountTx() int {
 	return cm.index.CountTx()
 }
 
 // Contains returns true if the transaction is contained in the mempool.
-func (cm *ConstructorMempool[C]) Contains(tx sdk.Tx) bool {
+func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
 	_, txHashStr, err := utils.GetTxHashStr(cm.txEncoder, tx)
 	if err != nil {
 		return false
@@ -152,7 +152,7 @@ func (cm *ConstructorMempool[C]) Contains(tx sdk.Tx) bool {
 }
 
 // Compare determines the relative priority of two transactions belonging in the same lane.
-func (cm *ConstructorMempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) int {
+func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) int {
 	firstPriority := cm.txPriority.GetTxPriority(ctx, this)
 	secondPriority := cm.txPriority.GetTxPriority(ctx, other)
 	return cm.txPriority.Compare(firstPriority, secondPriority)
