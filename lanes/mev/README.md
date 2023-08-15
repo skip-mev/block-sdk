@@ -107,7 +107,7 @@ $ go install github.com/skip-mev/block-sdk
       }
       ```
 
-    c. Instantiate the blockbuster mempool with the application's desired lanes. 
+    c. Instantiate the blockbuster mempool with the application's desired lanes.
 
       ```go
         // 1. Create the lanes.
