@@ -63,9 +63,9 @@ import (
 
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -139,7 +139,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
-	checkTxHandler auction.CheckTx
+	checkTxHandler mev.CheckTx
 }
 
 func init() {
@@ -262,16 +262,16 @@ func New(
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
-	tobConfig := blockbuster.LaneConfig{
+	mevConfig := blockbuster.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(), // This means the lane has no limit on block space.
 		MaxTxs:        0,                    // This means the lane has no limit on the number of transactions it can store.
 	}
-	tobLane := auction.NewTOBLane(
-		tobConfig,
-		auction.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
+	mevLane := mev.NewMEVLane(
+		mevConfig,
+		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
@@ -300,7 +300,7 @@ func New(
 
 	// Set the lanes into the mempool.
 	lanes := []blockbuster.Lane{
-		tobLane,
+		mevLane,
 		freeLane,
 		defaultLane,
 	}
@@ -322,7 +322,7 @@ func New(
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,
-		TOBLane:       tobLane,
+		MEVLane:       mevLane,
 		Mempool:       mempool,
 	}
 	anteHandler := NewPOBAnteHandler(options)
@@ -343,10 +343,10 @@ func New(
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 	// Set the custom CheckTx handler on BaseApp.
-	checkTxHandler := auction.NewCheckTxHandler(
+	checkTxHandler := mev.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
-		tobLane,
+		mevLane,
 		anteHandler,
 	)
 	app.SetCheckTx(checkTxHandler.CheckTx())
@@ -392,7 +392,7 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
-func (app *TestApp) SetCheckTx(handler auction.CheckTx) {
+func (app *TestApp) SetCheckTx(handler mev.CheckTx) {
 	app.checkTxHandler = handler
 }
 

@@ -4,11 +4,11 @@
 ## Abstract
 
 The `x/builder` module is a Cosmos SDK module that allows Cosmos chains to host
-top-of-block auctions directly in-protocol with auction revenue (MEV) being
+mev auctions directly in-protocol with auction revenue (MEV) being
 redistributed according to the preferences of the chain. The `x/builder` module
 introduces a new `MsgAuctionBid` message that allows users to submit a bid
 alongside an ordered list of transactions, i.e. a **bundle**, that they want
-executed at top-of-block before any other transactions are executed for that
+executed at mev before any other transactions are executed for that
 block. The `x/builder` module works alongside the `AuctionMempool` such that:
 
 * Auctions are held directly in the `AuctionMempool`, where a winner is determined
@@ -169,7 +169,7 @@ Then, it will build the rest of the block by reaping and validating the transact
 in the global index. The second portion of block building iterates from highest
 to lowest priority transactions in the global index and adds them to the proposal
 if they are valid. If the proposer comes across a transaction that was already
-included in the top of block, it will be ignored.
+included in the MEV, it will be ignored.
 
 ### ProcessProposal
 
@@ -183,7 +183,7 @@ transactions in the block in the order in which they were provided in the propos
 
 ### Ante Handler
 
-When users want to bid for the rights for top-of-block execution they will submit
+When users want to bid for the rights for mev execution they will submit
 a normal `sdk.Tx` transaction with a single `MsgAuctionBid`. The ante handler is
 responsible for verification of this transaction. The ante handler will verify that:
 
@@ -253,7 +253,7 @@ message Params {
 ### MsgAuctionBid
 
 POB defines a new Cosmos SDK `Message`, `MsgAuctionBid`, that allows users to
-create an auction bid and participate in a top-of-block auction. The `MsgAuctionBid`
+create an auction bid and participate in a mev auction. The `MsgAuctionBid`
 message defines a bidder and a series of embedded transactions, i.e. the bundle.
 
 ```protobuf

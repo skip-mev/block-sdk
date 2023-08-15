@@ -1,4 +1,4 @@
-package auction_test
+package mev_test
 
 import (
 	"crypto/rand"
@@ -8,7 +8,7 @@ import (
 	testutils "github.com/skip-mev/pob/testutils"
 )
 
-func (suite *IntegrationTestSuite) TestIsAuctionTx() {
+func (suite *MEVTestSuite) TestIsAuctionTx() {
 	testCases := []struct {
 		name          string
 		createTx      func() sdk.Tx
@@ -92,7 +92,7 @@ func (suite *IntegrationTestSuite) TestIsAuctionTx() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestGetTransactionSigners() {
+func (suite *MEVTestSuite) TestGetTransactionSigners() {
 	testCases := []struct {
 		name            string
 		createTx        func() sdk.Tx
@@ -176,7 +176,7 @@ func (suite *IntegrationTestSuite) TestGetTransactionSigners() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestWrapBundleTransaction() {
+func (suite *MEVTestSuite) TestWrapBundleTransaction() {
 	testCases := []struct {
 		name           string
 		createBundleTx func() (sdk.Tx, []byte)
@@ -229,7 +229,7 @@ func (suite *IntegrationTestSuite) TestWrapBundleTransaction() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestGetBidder() {
+func (suite *MEVTestSuite) TestGetBidder() {
 	testCases := []struct {
 		name           string
 		createTx       func() sdk.Tx
@@ -304,7 +304,7 @@ func (suite *IntegrationTestSuite) TestGetBidder() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestGetBid() {
+func (suite *MEVTestSuite) TestGetBid() {
 	testCases := []struct {
 		name          string
 		createTx      func() sdk.Tx
@@ -379,7 +379,7 @@ func (suite *IntegrationTestSuite) TestGetBid() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestGetBundledTransactions() {
+func (suite *MEVTestSuite) TestGetBundledTransactions() {
 	testCases := []struct {
 		name          string
 		createTx      func() (sdk.Tx, [][]byte)
@@ -450,7 +450,7 @@ func (suite *IntegrationTestSuite) TestGetBundledTransactions() {
 	}
 }
 
-func (suite *IntegrationTestSuite) TestGetTimeout() {
+func (suite *MEVTestSuite) TestGetTimeout() {
 	testCases := []struct {
 		name            string
 		createTx        func() sdk.Tx

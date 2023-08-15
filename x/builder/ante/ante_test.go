@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -40,7 +40,7 @@ type AnteTestSuite struct {
 
 	// mempool and lane set up
 	mempool  blockbuster.Mempool
-	tobLane  *auction.TOBLane
+	mevLane  *mev.MEVLane
 	baseLane *base.DefaultLane
 	lanes    []blockbuster.Lane
 
@@ -83,16 +83,16 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	tobConfig := blockbuster.LaneConfig{
+	mevConfig := blockbuster.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
-	suite.tobLane = auction.NewTOBLane(
-		tobConfig,
-		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+	suite.mevLane = mev.NewMEVLane(
+		mevConfig,
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Base lane set up
@@ -102,12 +102,12 @@ func (suite *AnteTestSuite) SetupTest() {
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList:    []blockbuster.Lane{suite.tobLane},
+		IgnoreList:    []blockbuster.Lane{suite.mevLane},
 	}
 	suite.baseLane = base.NewDefaultLane(baseConfig)
 
 	// Mempool set up
-	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.baseLane}
+	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.baseLane}
 	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 }
 
@@ -180,7 +180,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			false,
 		},
 		{
-			"valid auction bid tx",
+			"valid mev bid tx",
 			func() {
 				balance = sdk.NewCoin("stake", math.NewInt(10000))
 				bid = sdk.NewCoin("stake", math.NewInt(1000))
@@ -189,14 +189,14 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			true,
 		},
 		{
-			"invalid auction bid tx with no timeout",
+			"invalid mev bid tx with no timeout",
 			func() {
 				timeout = 0
 			},
 			false,
 		},
 		{
-			"auction tx is the top bidding tx",
+			"mev tx is the top bidding tx",
 			func() {
 				timeout = 1000
 				balance = sdk.NewCoin("stake", math.NewInt(10000))
@@ -211,7 +211,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			true,
 		},
 		{
-			"invalid frontrunning auction bid tx",
+			"invalid frontrunning mev bid tx",
 			func() {
 				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
@@ -223,7 +223,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			false,
 		},
 		{
-			"valid frontrunning auction bid tx",
+			"valid frontrunning mev bid tx",
 			func() {
 				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
@@ -235,7 +235,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			true,
 		},
 		{
-			"invalid sandwiching auction bid tx",
+			"invalid sandwiching mev bid tx",
 			func() {
 				randomAccount := testutils.RandomAccounts(suite.random, 2)
 				bidder := randomAccount[0]
@@ -247,7 +247,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 			false,
 		},
 		{
-			"invalid auction bid tx with many signers",
+			"invalid mev bid tx with many signers",
 			func() {
 				signers = testutils.RandomAccounts(suite.random, 10)
 				frontRunningProtection = true
@@ -263,7 +263,7 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 
 			suite.ctx = suite.ctx.WithBlockHeight(1)
 
-			// Set the auction params
+			// Set the mev params
 			err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.Params{
 				MaxBundleSize:          maxBundleSize,
 				ReserveFee:             reserveFee,
@@ -278,24 +278,24 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 				suite.Require().NoError(err)
 
 				distribution := suite.mempool.GetTxDistribution()
-				suite.Require().Equal(0, distribution[auction.LaneName])
+				suite.Require().Equal(0, distribution[mev.LaneName])
 				suite.Require().Equal(0, distribution[base.LaneName])
 
 				suite.Require().NoError(suite.mempool.Insert(suite.ctx, topAuctionTx))
 
 				distribution = suite.mempool.GetTxDistribution()
-				suite.Require().Equal(1, distribution[auction.LaneName])
+				suite.Require().Equal(1, distribution[mev.LaneName])
 				suite.Require().Equal(0, distribution[base.LaneName])
 			}
 
-			// Create the actual auction tx and insert into the mempool
-			auctionTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, timeout, signers)
+			// Create the actual mev tx and insert into the mempool
+			mevTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, 0, timeout, signers)
 			suite.Require().NoError(err)
 
 			// Execute the ante handler
 			suite.balance = balance
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.tobLane, suite.mempool)
-			_, err = suite.anteHandler(suite.ctx, auctionTx, false)
+			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.mevLane, suite.mempool)
+			_, err = suite.anteHandler(suite.ctx, mevTx, false)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {

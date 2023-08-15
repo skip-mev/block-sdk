@@ -29,8 +29,8 @@ together define the desired block structure of a chain.
 
 A mempool with separate `lanes` can be used for:
 
-1. **MEV mitigation**: a top of block lane could be designed to create an 
-in-protocol top-of-block auction (as we are doing with POB) to recapture MEV 
+1. **MEV mitigation**: a MEV lane could be designed to create an 
+in-protocol mev auction (as we are doing with POB) to recapture MEV 
 in a transparent and governable way.
 2. **Free/reduced fee txs**: transactions with certain properties (e.g. 
 from trusted accounts or performing encouraged actions) could leverage a 
@@ -63,7 +63,7 @@ desired lanes and their configurations (including lane ordering).
 Utilizing BlockBuster is a simple three step process:
 
 * Determine the lanes desired. Currently, POB supports three different 
-implementations of lanes: top of block lane, free lane, and a default lane.
+implementations of lanes: MEV lane, free lane, and a default lane.
     1. Top of block lane allows the top of every block to be auctioned off 
     and constructed using logic defined by the `x/builder` module. 
     2. Free lane allows base app to not charge certain types of transactions 
@@ -111,7 +111,7 @@ three lanes:
 #### Preparing Proposals
 
 When the current proposer starts building a block, it will first populate the 
-proposal with transactions from the top of block lane, followed by free and 
+proposal with transactions from the MEV lane, followed by free and 
 default lane. Each lane proposes its own set of transactions using the lane’s 
 `PrepareLane` (analogous to `PrepareProposal`). Each lane has a limit on the 
 relative percentage of total block space that the lane can consume. 
@@ -131,7 +131,7 @@ order relative to the ordering of lanes will be rejected. Following the
 example defined above, if a proposal contains the following transactions:
 
 1. Default transaction (belonging to the default lane)
-2. Top of block transaction (belonging to the top of block lane)
+2. Top of block transaction (belonging to the MEV lane)
 3. Free transaction (belonging to the free lane)
 
 It will be rejected because it does not respect the lane ordering.
@@ -221,7 +221,7 @@ Transactions within a lane are ordered in a proposal respecting the ordering
 defined on the lane’s mempool. Developers can define their own custom ordering 
 by implementing a custom `TxPriority` struct that allows the lane’s mempool to 
 determine the priority of a transaction `GetTxPriority` and relatively order 
-two transactions given the priority `Compare`. The top of block lane includes 
+two transactions given the priority `Compare`. The MEV lane includes 
 an custom `TxPriority` that orders transactions in the mempool based on their 
 bid. 
 
@@ -323,14 +323,14 @@ func (config *DefaultFreeFactory) IsFreeTx(tx sdk.Tx) bool {
 Lanes must implement a `Match` interface which determines whether a transaction 
 should be considered for a given lane. Developer’s are encouraged to utilize the
  same interfaces defined in the `Factory` to match transactions to lanes. For 
- example, developers might configure a top of block auction lane to accept 
+ example, developers might configure a MEV auction lane to accept 
  transactions if they contain a single `MsgAuctionBid` message in the transaction.
 
 ### 4.1. [Optional] Transaction Validation
 
 Transactions will be verified the lane’s `VerifyTx` function. This logic can be 
 completely arbitrary. For example, the default lane verifies transactions
-using base app’s `AnteHandler` while the top of block lane verifies transactions
+using base app’s `AnteHandler` while the MEV lane verifies transactions
 by extracting all bundled transactions included in the bid transaction and then 
 verifying the transaction iteratively given the bundle.
 

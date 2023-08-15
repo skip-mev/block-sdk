@@ -70,7 +70,7 @@ $ go install github.com/skip-mev/pob
     ...
     "github.com/skip-mev/pob/blockbuster"
     "github.com/skip-mev/pob/blockbuster/abci"
-    "github.com/skip-mev/pob/blockbuster/lanes/auction"
+    "github.com/skip-mev/pob/blockbuster/lanes/mev"
     "github.com/skip-mev/pob/blockbuster/lanes/base"
     "github.com/skip-mev/pob/blockbuster/lanes/free"
     buildermodule "github.com/skip-mev/pob/x/builder"
@@ -82,7 +82,7 @@ $ go install github.com/skip-mev/pob
 2. Add your module to the the `AppModuleBasic` manager. This manager is in
    charge of setting up basic, non-dependent module elements such as codec
    registration and genesis verification. This will register the special
-   `MsgAuctionBid` message. When users want to bid for top of block execution,
+   `MsgAuctionBid` message. When users want to bid for MEV execution,
    they will submit a transaction - which we call an auction transaction - that
    includes a single `MsgAuctionBid`. We prevent any other messages from being
    included in auction transaction to prevent malicious behavior - such as front
@@ -99,7 +99,7 @@ $ go install github.com/skip-mev/pob
    ```
 
 3. The builder `Keeper` is POB's gateway to processing special `MsgAuctionBid`
-   messages that allow users to participate in the top of block auction, distribute
+   messages that allow users to participate in the MEV auction, distribute
    revenue to the auction house, and ensure the validity of auction transactions.
 
    a. First add the keeper to the app's struct definition. We also want to add POB's custom
@@ -148,7 +148,7 @@ $ go install github.com/skip-mev/pob
           // indicates that the lane can use all available block space.
           MaxBlockSpace: sdk.ZeroDec(),
         }
-        tobLane := auction.NewTOBLane(
+        tobLane := auction.NewMEVLane(
           tobConfig,
           // the maximum number of transactions that the mempool can store. a value of 0 indicates
           // that the mempool can store an unlimited number of transactions.
@@ -233,7 +233,7 @@ $ go install github.com/skip-mev/pob
             options.FreeLane,
           ),
           ...
-          builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.TOBLane, options.Mempool),
+          builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.MEVLane, options.Mempool),
         }
 
         anteHandler := sdk.ChainAnteDecorators(anteDecorators...)
@@ -280,7 +280,7 @@ $ go install github.com/skip-mev/pob
     will verify the contents of the block proposal by all validators. The
     combination of the `BlockBuster` mempool + `PrepareProposal`/`ProcessProposal`
     handlers allows the application to verifiably build valid blocks with
-    top-of-block block space reserved for auctions and partial block for free transactions. 
+    mev block space reserved for auctions and partial block for free transactions. 
     Additionally, we override the `BaseApp`'s `CheckTx` handler with our own custom 
     `CheckTx` handler that will be responsible for checking the validity of transactions. 
     We override the `CheckTx` handler so that we can verify auction transactions before they are

@@ -11,9 +11,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
@@ -27,7 +27,7 @@ type BlockBusterTestSuite struct {
 	encodingConfig testutils.EncodingConfig
 
 	// Define all of the lanes utilized in the test suite
-	tobLane       *auction.TOBLane
+	mevLane       *mev.MEVLane
 	baseLane      *base.DefaultLane
 	freeLane      *free.FreeLane
 	gasTokenDenom string
@@ -57,16 +57,16 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
-	tobConfig := blockbuster.LaneConfig{
+	mevConfig := blockbuster.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
-	suite.tobLane = auction.NewTOBLane(
-		tobConfig,
-		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+	suite.mevLane = mev.NewMEVLane(
+		mevConfig,
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Free lane set up
@@ -96,7 +96,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Mempool set up
-	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
+	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
 	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 
 	// Accounts set up
@@ -113,15 +113,15 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 		insertDistribution map[string]int
 	}{
 		{
-			"insert 1 tob tx",
+			"insert 1 mev tx",
 			map[string]int{
-				suite.tobLane.Name(): 1,
+				suite.mevLane.Name(): 1,
 			},
 		},
 		{
-			"insert 10 tob txs",
+			"insert 10 mev txs",
 			map[string]int{
-				suite.tobLane.Name(): 10,
+				suite.mevLane.Name(): 10,
 			},
 		},
 		{
@@ -131,24 +131,24 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			},
 		},
 		{
-			"insert 10 base txs and 10 tob txs",
+			"insert 10 base txs and 10 mev txs",
 			map[string]int{
 				suite.baseLane.Name(): 10,
-				suite.tobLane.Name():  10,
+				suite.mevLane.Name():  10,
 			},
 		},
 		{
-			"insert 100 base txs and 100 tob txs",
+			"insert 100 base txs and 100 mev txs",
 			map[string]int{
 				suite.baseLane.Name(): 100,
-				suite.tobLane.Name():  100,
+				suite.mevLane.Name():  100,
 			},
 		},
 		{
-			"insert 100 base txs, 100 tob txs, and 100 free txs",
+			"insert 100 base txs, 100 mev txs, and 100 free txs",
 			map[string]int{
 				suite.baseLane.Name(): 100,
-				suite.tobLane.Name():  100,
+				suite.mevLane.Name():  100,
 				suite.freeLane.Name(): 100,
 			},
 		},
@@ -166,9 +166,9 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			},
 		},
 		{
-			"insert 10 tob txs and 10 free txs",
+			"insert 10 mev txs and 10 free txs",
 			map[string]int{
-				suite.tobLane.Name():  10,
+				suite.mevLane.Name():  10,
 				suite.freeLane.Name(): 10,
 			},
 		},
@@ -182,7 +182,7 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			suite.fillBaseLane(tc.insertDistribution[suite.baseLane.Name()])
 
 			// Fill the TOB lane with numTobTxs transactions
-			suite.fillTOBLane(tc.insertDistribution[suite.tobLane.Name()])
+			suite.fillTOBLane(tc.insertDistribution[suite.mevLane.Name()])
 
 			// Fill the Free lane with numFreeTxs transactions
 			suite.fillFreeLane(tc.insertDistribution[suite.freeLane.Name()])
@@ -196,7 +196,7 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			suite.Require().Equal(sum, suite.mempool.CountTx())
 
 			// Validate the lanes
-			suite.Require().Equal(tc.insertDistribution[suite.tobLane.Name()], suite.tobLane.CountTx())
+			suite.Require().Equal(tc.insertDistribution[suite.mevLane.Name()], suite.mevLane.CountTx())
 			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], suite.baseLane.CountTx())
 			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], suite.freeLane.CountTx())
 
@@ -204,7 +204,7 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			laneCounts := suite.mempool.GetTxDistribution()
 
 			// Ensure that the lane counts are correct
-			suite.Require().Equal(tc.insertDistribution[suite.tobLane.Name()], laneCounts[suite.tobLane.Name()])
+			suite.Require().Equal(tc.insertDistribution[suite.mevLane.Name()], laneCounts[suite.mevLane.Name()])
 			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], laneCounts[suite.baseLane.Name()])
 			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], laneCounts[suite.freeLane.Name()])
 		})
@@ -218,12 +218,12 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 		numBaseTxs int
 	}{
 		{
-			"insert 1 tob tx",
+			"insert 1 mev tx",
 			1,
 			0,
 		},
 		{
-			"insert 10 tob txs",
+			"insert 10 mev txs",
 			10,
 			0,
 		},
@@ -233,12 +233,12 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			1,
 		},
 		{
-			"insert 10 base txs and 10 tob txs",
+			"insert 10 base txs and 10 mev txs",
 			10,
 			10,
 		},
 		{
-			"insert 100 base txs and 100 tob txs",
+			"insert 100 base txs and 100 mev txs",
 			100,
 			100,
 		},
@@ -255,7 +255,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			suite.fillTOBLane(tc.numTobTxs)
 
 			// Remove all transactions from the lanes
-			tobCount := tc.numTobTxs
+			mevCount := tc.numTobTxs
 			baseCount := tc.numBaseTxs
 			for iterator := suite.baseLane.Select(suite.ctx, nil); iterator != nil; {
 				tx := iterator.Tx()
@@ -277,10 +277,10 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			}
 
 			suite.Require().Equal(0, suite.baseLane.CountTx())
-			suite.Require().Equal(tobCount, suite.tobLane.CountTx())
+			suite.Require().Equal(mevCount, suite.mevLane.CountTx())
 
 			// Remove all transactions from the lanes
-			for iterator := suite.tobLane.Select(suite.ctx, nil); iterator != nil; {
+			for iterator := suite.mevLane.Select(suite.ctx, nil); iterator != nil; {
 				tx := iterator.Tx()
 
 				// Remove the transaction from the mempool
@@ -290,16 +290,16 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 				suite.Require().Equal(false, suite.mempool.Contains(tx))
 
 				// Ensure the number of transactions in the lane is correct
-				tobCount--
-				suite.Require().Equal(suite.tobLane.CountTx(), tobCount)
+				mevCount--
+				suite.Require().Equal(suite.mevLane.CountTx(), mevCount)
 
 				distribution := suite.mempool.GetTxDistribution()
-				suite.Require().Equal(distribution[suite.tobLane.Name()], tobCount)
+				suite.Require().Equal(distribution[suite.mevLane.Name()], mevCount)
 
-				iterator = suite.tobLane.Select(suite.ctx, nil)
+				iterator = suite.mevLane.Select(suite.ctx, nil)
 			}
 
-			suite.Require().Equal(0, suite.tobLane.CountTx())
+			suite.Require().Equal(0, suite.mevLane.CountTx())
 			suite.Require().Equal(0, suite.baseLane.CountTx())
 			suite.Require().Equal(0, suite.mempool.CountTx())
 
@@ -307,7 +307,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			distribution := suite.mempool.GetTxDistribution()
 
 			// Ensure that the lane counts are correct
-			suite.Require().Equal(distribution[suite.tobLane.Name()], 0)
+			suite.Require().Equal(distribution[suite.mevLane.Name()], 0)
 			suite.Require().Equal(distribution[suite.baseLane.Name()], 0)
 		})
 	}

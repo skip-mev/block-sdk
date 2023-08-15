@@ -1,4 +1,4 @@
-package auction_test
+package mev_test
 
 import (
 	"math/rand"
@@ -8,16 +8,16 @@ import (
 	"cosmossdk.io/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/stretchr/testify/suite"
 )
 
-type IntegrationTestSuite struct {
+type MEVTestSuite struct {
 	suite.Suite
 
 	encCfg   testutils.EncodingConfig
-	config   auction.Factory
+	config   mev.Factory
 	ctx      sdk.Context
 	random   *rand.Rand
 	accounts []testutils.Account
@@ -25,13 +25,13 @@ type IntegrationTestSuite struct {
 }
 
 func TestMempoolTestSuite(t *testing.T) {
-	suite.Run(t, new(IntegrationTestSuite))
+	suite.Run(t, new(MEVTestSuite))
 }
 
-func (suite *IntegrationTestSuite) SetupTest() {
+func (suite *MEVTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
-	suite.config = auction.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
+	suite.config = mev.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewTestLogger(suite.T()))
 
 	// Init accounts

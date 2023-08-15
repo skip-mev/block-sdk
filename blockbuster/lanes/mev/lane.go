@@ -1,4 +1,4 @@
-package auction
+package mev
 
 import (
 	"context"
@@ -8,30 +8,30 @@ import (
 )
 
 const (
-	// LaneName defines the name of the top-of-block auction lane.
-	LaneName = "top-of-block"
+	// LaneName defines the name of the mev lane.
+	LaneName = "mev"
 )
 
 var (
-	_ TOBLaneI = (*TOBLane)(nil)
+	_ MEVLaneI = (*MEVLane)(nil)
 )
 
-// TOBLane defines a top-of-block auction lane. The top of block auction lane
+// MEVLane defines a MEV (Maximal Extracted Value) auction lane. The MEV auction lane
 // hosts transactions that want to bid for inclusion at the top of the next block.
-// The top of block auction lane stores bid transactions that are sorted by
-// their bid price. The highest valid bid transaction is selected for inclusion in the
-// next block. The bundled transactions of the selected bid transaction are also
-// included in the next block.
+// The MEV auction lane stores bid transactions that are sorted by their bid price.
+// The highest valid bid transaction is selected for inclusion in the next block.
+// The bundled transactions of the selected bid transaction are also included in the
+// next block.
 type (
-	// TOBLaneI defines the interface for the top-of-block auction lane. This interface
+	// MEVLaneI defines the interface for the mev auction lane. This interface
 	// is utilized by both the x/builder module and the checkTx handler.
-	TOBLaneI interface {
+	MEVLaneI interface {
 		blockbuster.Lane
 		Factory
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 	}
 
-	TOBLane struct {
+	MEVLane struct {
 		// LaneConfig defines the base lane configuration.
 		*blockbuster.LaneConstructor[string]
 
@@ -42,12 +42,12 @@ type (
 	}
 )
 
-// NewTOBLane returns a new TOB lane.
-func NewTOBLane(
+// NewMEVLane returns a new TOB lane.
+func NewMEVLane(
 	cfg blockbuster.LaneConfig,
 	factory Factory,
-) *TOBLane {
-	lane := &TOBLane{
+) *MEVLane {
+	lane := &MEVLane{
 		LaneConstructor: blockbuster.NewLaneConstructor[string](
 			cfg,
 			LaneName,

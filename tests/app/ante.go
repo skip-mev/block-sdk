@@ -12,7 +12,7 @@ import (
 type POBHandlerOptions struct {
 	BaseOptions   ante.HandlerOptions
 	Mempool       blockbuster.Mempool
-	TOBLane       builderante.TOBLane
+	MEVLane       builderante.MEVLane
 	TxDecoder     sdk.TxDecoder
 	TxEncoder     sdk.TxEncoder
 	BuilderKeeper builderkeeper.Keeper
@@ -54,7 +54,7 @@ func NewPOBAnteHandler(options POBHandlerOptions) sdk.AnteHandler {
 		ante.NewSigGasConsumeDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.BaseOptions.AccountKeeper),
-		builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.TOBLane, options.Mempool),
+		builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.MEVLane, options.Mempool),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...)

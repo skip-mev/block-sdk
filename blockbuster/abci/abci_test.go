@@ -15,9 +15,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/stretchr/testify/suite"
 )
@@ -167,10 +167,10 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 	})
 
 	s.Run("can build a proposal an empty proposal with multiple lanes", func() {
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), nil)
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
@@ -192,15 +192,15 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		// Set up the TOB lane with the bid tx and the bundled tx
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
 			tx:           true,
 			bundleTxs[0]: true,
 		})
-		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
 
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), nil)
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NoError(err)
@@ -224,11 +224,11 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		// Set up the TOB lane with the bid tx and the bundled tx
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
 			tx:           true,
 			bundleTxs[0]: true,
 		})
-		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
 
 		// Set up the default lane with the bid tx and the bundled tx
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
@@ -238,7 +238,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NoError(err)
@@ -262,11 +262,11 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		// Set up the TOB lane with the bid tx and the bundled tx
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
 			tx:           false,
 			bundleTxs[0]: true,
 		})
-		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
 
 		// Set up the default lane with the bid tx and the bundled tx
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
@@ -277,7 +277,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NoError(err)
@@ -301,11 +301,11 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		// Set up the TOB lane with the bid tx and the bundled tx
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
 			tx:           true,
 			bundleTxs[0]: true,
 		})
-		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
 
 		// Set up the default lane with the bid tx and the bundled tx
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
@@ -316,7 +316,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0])
 		size := int64(len(proposal[0]) - 1)
 
@@ -329,7 +329,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 	})
 
 	s.Run("can build a proposal with single tx from middle lane", func() {
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), nil)
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), nil)
 
 		freeTx, err := testutils.CreateFreeTx(
 			s.encodingConfig.TxConfig,
@@ -352,7 +352,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		})
 		s.Require().NoError(freeLane.Insert(sdk.Context{}, freeTx))
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 
 		proposal := s.getTxBytes(freeTx)
 
@@ -399,14 +399,14 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		)
 		s.Require().NoError(err)
 
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
 			tx:           true,
 			bundleTxs[0]: true,
 			bundleTxs[1]: true,
 			bundleTxs[2]: true,
 			bundleTxs[3]: true,
 		})
-		tobLane.Insert(sdk.Context{}, tx)
+		mevLane.Insert(sdk.Context{}, tx)
 
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
 			normalTx: true,
@@ -418,7 +418,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		})
 		freeLane.Insert(sdk.Context{}, freeTx)
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).PrepareProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
@@ -568,11 +568,11 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 
 func (s *ProposalsTestSuite) TestProcessProposal() {
 	s.Run("can process a valid empty proposal", func() {
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: nil})
 		s.Require().NoError(err)
@@ -581,11 +581,11 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 	})
 
 	s.Run("rejects a proposal with bad txs", func() {
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{{0x01, 0x02, 0x03}}})
 		s.Require().Error(err)
@@ -593,7 +593,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 	})
 
 	s.Run("rejects a proposal when a lane panics", func() {
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.0"))
 
 		txbz, err := testutils.CreateRandomTxBz(
@@ -605,7 +605,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		s.Require().NoError(err)
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, panicLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, panicLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{txbz}})
 		s.Require().Error(err)
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
@@ -680,10 +680,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane.SetProcessLaneHandler(blockbuster.NoOpProcessLaneHandler())
 
 		// Set up the TOB lane
-		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
-		tobLane.SetProcessLaneHandler(blockbuster.NoOpProcessLaneHandler())
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+		mevLane.SetProcessLaneHandler(blockbuster.NoOpProcessLaneHandler())
 
-		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
@@ -735,7 +735,7 @@ func (s *ProposalsTestSuite) setUpDefaultLane(maxBlockSpace math.LegacyDec, expe
 	return base.NewDefaultLane(cfg)
 }
 
-func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *auction.TOBLane {
+func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := blockbuster.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
@@ -744,7 +744,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 		MaxBlockSpace: maxBlockSpace,
 	}
 
-	return auction.NewTOBLane(cfg, auction.NewDefaultAuctionFactory(cfg.TxDecoder))
+	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder))
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {

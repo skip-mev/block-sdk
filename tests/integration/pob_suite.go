@@ -1003,7 +1003,7 @@ func (s *POBIntegrationTestSuite) TestLanes() {
 
 	params := QueryBuilderParams(s.T(), s.chain)
 
-	s.Run("block with tob, free, and normal tx", func() {
+	s.Run("block with mev, free, and normal tx", func() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 
 		// create free-tx, bid-tx, and normal-tx\
@@ -1071,7 +1071,7 @@ func (s *POBIntegrationTestSuite) TestLanes() {
 		require.Equal(s.T(), user2BalanceBefore, user2BalanceAfter+delegation.Amount.Int64())
 	})
 
-	s.Run("failing top of block transaction, free, and normal tx", func() {
+	s.Run("failing MEV transaction, free, and normal tx", func() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 		user1Balance := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user1.FormattedAddress(), s.denom)
 		// create free-tx, bid-tx, and normal-tx\
@@ -1151,7 +1151,7 @@ func (s *POBIntegrationTestSuite) TestLanes() {
 		require.Equal(s.T(), user2BalanceBefore, user2BalanceAfter+delegation.Amount.Int64())
 	})
 
-	s.Run("top of block transaction that includes transactions from the free lane", func() {
+	s.Run("MEV transaction that includes transactions from the free lane", func() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 
 		delegateTx := Tx{
@@ -1212,7 +1212,7 @@ func (s *POBIntegrationTestSuite) TestLanes() {
 		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTx)
 	})
 
-	s.Run("top of block transaction that includes transaction from free lane + other free lane txs + normal txs", func() {
+	s.Run("MEV transaction that includes transaction from free lane + other free lane txs + normal txs", func() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 
 		// create free-txs signed by user2 / 3

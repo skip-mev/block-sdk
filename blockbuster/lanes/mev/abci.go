@@ -1,4 +1,4 @@
-package auction
+package mev
 
 import (
 	"bytes"
@@ -14,7 +14,7 @@ import (
 // and whose bundled transactions are valid and include them in the proposal. It
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
-func (l *TOBLane) PrepareLaneHandler() blockbuster.PrepareLaneHandler {
+func (l *MEVLane) PrepareLaneHandler() blockbuster.PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal blockbuster.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
@@ -128,7 +128,7 @@ func (l *TOBLane) PrepareLaneHandler() blockbuster.PrepareLaneHandler {
 				txs = append(txs, bundledTxBz...)
 
 				// Write the cache context to the original context when we know we have a
-				// valid top of block bundle.
+				// valid bundle.
 				write()
 
 				break selectBidTxLoop
@@ -146,8 +146,8 @@ func (l *TOBLane) PrepareLaneHandler() blockbuster.PrepareLaneHandler {
 }
 
 // ProcessLaneHandler will ensure that block proposals that include transactions from
-// the top-of-block auction lane are valid.
-func (l *TOBLane) ProcessLaneHandler() blockbuster.ProcessLaneHandler {
+// the mev lane are valid.
+func (l *MEVLane) ProcessLaneHandler() blockbuster.ProcessLaneHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
 		if len(txs) == 0 {
 			return txs, nil
@@ -178,7 +178,7 @@ func (l *TOBLane) ProcessLaneHandler() blockbuster.ProcessLaneHandler {
 //   - there are no other bid transactions in the proposal
 //   - transactions from other lanes are not interleaved with transactions from the bid
 //     transaction.
-func (l *TOBLane) CheckOrderHandler() blockbuster.CheckOrderHandler {
+func (l *MEVLane) CheckOrderHandler() blockbuster.CheckOrderHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) error {
 		if len(txs) == 0 {
 			return nil
@@ -241,7 +241,7 @@ func (l *TOBLane) CheckOrderHandler() blockbuster.CheckOrderHandler {
 // VerifyTx will verify that the bid transaction and all of its bundled
 // transactions are valid. It will return an error if any of the transactions
 // are invalid.
-func (l *TOBLane) VerifyTx(ctx sdk.Context, bidTx sdk.Tx, bidInfo *types.BidInfo) (err error) {
+func (l *MEVLane) VerifyTx(ctx sdk.Context, bidTx sdk.Tx, bidInfo *types.BidInfo) (err error) {
 	if bidInfo == nil {
 		return fmt.Errorf("bid info is nil")
 	}

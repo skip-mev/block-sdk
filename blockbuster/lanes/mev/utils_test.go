@@ -1,10 +1,10 @@
-package auction_test
+package mev_test
 
 import (
 	"testing"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/skip-mev/pob/blockbuster/lanes/auction"
+	"github.com/skip-mev/pob/blockbuster/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/require"
@@ -16,7 +16,7 @@ func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(&buildertypes.MsgAuctionBid{})
 
-	msg, err := auction.GetMsgAuctionBidFromTx(txBuilder.GetTx())
+	msg, err := mev.GetMsgAuctionBidFromTx(txBuilder.GetTx())
 	require.NoError(t, err)
 	require.NotNil(t, msg)
 }
@@ -31,7 +31,7 @@ func TestGetMsgAuctionBidFromTx_MultiMsgBid(t *testing.T) {
 		&banktypes.MsgSend{},
 	)
 
-	msg, err := auction.GetMsgAuctionBidFromTx(txBuilder.GetTx())
+	msg, err := mev.GetMsgAuctionBidFromTx(txBuilder.GetTx())
 	require.Error(t, err)
 	require.Nil(t, msg)
 }
@@ -42,7 +42,7 @@ func TestGetMsgAuctionBidFromTx_NoBid(t *testing.T) {
 	txBuilder := encCfg.TxConfig.NewTxBuilder()
 	txBuilder.SetMsgs(&banktypes.MsgSend{})
 
-	msg, err := auction.GetMsgAuctionBidFromTx(txBuilder.GetTx())
+	msg, err := mev.GetMsgAuctionBidFromTx(txBuilder.GetTx())
 	require.NoError(t, err)
 	require.Nil(t, msg)
 }

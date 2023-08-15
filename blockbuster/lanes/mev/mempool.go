@@ -1,4 +1,4 @@
-package auction
+package mev
 
 import (
 	"context"
@@ -7,8 +7,8 @@ import (
 	"github.com/skip-mev/pob/blockbuster"
 )
 
-// TxPriority returns a TxPriority over auction bid transactions only. It
-// is to be used in the auction index only.
+// TxPriority returns a TxPriority over mev lane transactions only. It
+// is to be used in the mev index only.
 func TxPriority(config Factory) blockbuster.TxPriority[string] {
 	return blockbuster.TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
@@ -52,7 +52,7 @@ func TxPriority(config Factory) blockbuster.TxPriority[string] {
 
 // GetTopAuctionTx returns the highest bidding transaction in the auction mempool.
 // This is primarily a helper function for the x/builder module.
-func (l *TOBLane) GetTopAuctionTx(ctx context.Context) sdk.Tx {
+func (l *MEVLane) GetTopAuctionTx(ctx context.Context) sdk.Tx {
 	iterator := l.Select(ctx, nil)
 	if iterator == nil {
 		return nil
