@@ -93,23 +93,8 @@ config := block.LaneConfig{
     TxDecoder: app.TxDecoder(),
     TxEncoder: app.TxEncoder(),
     AnteHandler: app.AnteHandler(),
-    // Setting MaxTxs to 0 allows the mempool to store an unlimited number of
-    // transactions. This parameter may be useful for chains that have fast
-    // block speeds that may require a smaller number of transactions.
     MaxTxs: 0,
-    // MaxBlockSpace is the maximum amount of block space that the lane will
-    // attempt to fill when building a proposal. This parameter may be useful
-    // lanes that should be limited (such as a free or onboarding lane) in space
-    // usage. Setting this to 0 will allow the lane to fill the block with as
-    // many transactions as possible.
     MaxBlockSpace: math.LegacyZeroDec(),
-    // IgnoreList defines the list of lanes to ignore when processing transactions.
-    // This is useful for when you want lanes to exist after the default lane.
-    // For example, say there are two lanes: default and free. The free lane should
-    // be processed after the default lane. In this case, the free lane should 
-    // be added to the ignore list of the default lane. Otherwise, the 
-    // transactions that belong to the free lane will be processed by the 
-    // default lane (which accepts all transactions by default).
     IgnoreList: []block.Lane{},
 }
 ```
@@ -117,9 +102,15 @@ config := block.LaneConfig{
 The three most important parameters to set are the `AnteHandler`, `MaxTxs`, and
 `MaxBlockSpace`.
 
-#### MaxTxs
+### **AnteHandler**
 
-`MaxTxs` sets the maximum number of transactions allowed in the mempool with
+With the default implementation, the `AnteHandler` is responsible for verifying
+transactions as they are being considered for a new proposal or are being processed
+in a proposal. 
+
+### **MaxTxs**
+
+This sets the maximum number of transactions allowed in the mempool with
 the semantics:
 
 * if `MaxTxs` == 0, there is no cap on the number of transactions in the mempool
@@ -128,7 +119,22 @@ the semantics:
     (sequence number) when evicting transactions.
 * if `MaxTxs` < 0, `Insert` is a no-op.
 
-#### MaxBlockSpace
+### **MaxBlockSpace**
+
+MaxBlockSpace is the maximum amount of block space that the lane will attempt to
+fill when building a proposal. This parameter may be useful lanes that should be
+limited (such as a free or onboarding lane) in space usage. Setting this to 0 
+will allow the lane to fill the block with as many transactions as possible.
+
+#### **[OPTIONAL] IgnoreList**
+
+IgnoreList defines the list of lanes to ignore when processing transactions. 
+This is useful for when you want lanes to exist after the default lane. For 
+example, say there are two lanes: default and free. The free lane should be 
+processed after the default lane. In this case, the free lane should be added 
+to the ignore list of the default lane. Otherwise, the transactions that belong 
+to the free lane will be processed by the default lane (which accepts all 
+transactions by default).
 
 
 ### 2. LaneMempool
