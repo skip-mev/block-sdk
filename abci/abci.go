@@ -7,8 +7,8 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/terminator"
 	"github.com/skip-mev/pob/blockbuster/utils"
+	"github.com/skip-mev/pob/lanes/terminator"
 )
 
 type (

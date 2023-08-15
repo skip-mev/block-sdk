@@ -12,8 +12,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/base"
-	"github.com/skip-mev/pob/blockbuster/lanes/mev"
+	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -108,7 +108,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.mempool = blockbuster.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {

@@ -61,11 +61,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
+	"github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/abci"
-	"github.com/skip-mev/pob/blockbuster/lanes/base"
-	"github.com/skip-mev/pob/blockbuster/lanes/free"
-	"github.com/skip-mev/pob/blockbuster/lanes/mev"
+	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/lanes/free"
+	"github.com/skip-mev/pob/lanes/mev"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -284,7 +285,7 @@ func New(
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
-		blockbuster.DefaultTxPriority(),
+		constructor.DefaultTxPriority(),
 		free.DefaultMatchHandler(),
 	)
 
@@ -304,7 +305,7 @@ func New(
 		freeLane,
 		defaultLane,
 	}
-	mempool := blockbuster.NewMempool(app.Logger(), true, lanes...)
+	mempool := blockbuster.NewLanedMempool(app.Logger(), true, lanes...)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when

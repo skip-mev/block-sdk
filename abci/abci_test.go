@@ -13,11 +13,12 @@ import (
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/abci"
-	"github.com/skip-mev/pob/blockbuster/lanes/base"
-	"github.com/skip-mev/pob/blockbuster/lanes/free"
-	"github.com/skip-mev/pob/blockbuster/lanes/mev"
+	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/lanes/free"
+	"github.com/skip-mev/pob/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/stretchr/testify/suite"
 )
@@ -756,10 +757,10 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 		MaxBlockSpace: maxBlockSpace,
 	}
 
-	return free.NewFreeLane(cfg, blockbuster.DefaultTxPriority(), free.DefaultMatchHandler())
+	return free.NewFreeLane(cfg, constructor.DefaultTxPriority(), free.DefaultMatchHandler())
 }
 
-func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *blockbuster.LaneConstructor[string] {
+func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *constructor.LaneConstructor[string] {
 	cfg := blockbuster.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
@@ -767,11 +768,11 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *block
 		MaxBlockSpace: maxBlockSpace,
 	}
 
-	lane := blockbuster.NewLaneConstructor[string](
+	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		"panic",
-		blockbuster.NewConstructorMempool[string](blockbuster.DefaultTxPriority(), cfg.TxEncoder, 0),
-		blockbuster.DefaultMatchHandler(),
+		constructor.NewConstructorMempool[string](constructor.DefaultTxPriority(), cfg.TxEncoder, 0),
+		constructor.DefaultMatchHandler(),
 	)
 
 	lane.SetPrepareLaneHandler(blockbuster.PanicPrepareLaneHandler())
@@ -781,7 +782,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *block
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []blockbuster.Lane) *abci.ProposalHandler {
-	mempool := blockbuster.NewMempool(log.NewTestLogger(s.T()), true, lanes...)
+	mempool := blockbuster.NewLanedMempool(log.NewTestLogger(s.T()), true, lanes...)
 
 	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),

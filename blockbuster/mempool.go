@@ -11,10 +11,10 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
 
-var _ Mempool = (*BBMempool)(nil)
+var _ Mempool = (*LanedMempool)(nil)
 
 type (
-	// Mempool defines the Blockbuster mempool interface.
+	// LanedMempool defines the Block SDK mempool interface.
 	Mempool interface {
 		sdkmempool.Mempool
 
@@ -26,14 +26,11 @@ type (
 
 		// GetTxDistribution returns the number of transactions in each lane.
 		GetTxDistribution() map[string]int
-
-		// GetLane returns the lane with the given name.
-		GetLane(name string) (Lane, error)
 	}
 
-	// BBMempool defines the Blockbuster mempool implementation. It contains a registry
+	// LanedMempool defines the Block SDK mempool implementation. It contains a registry
 	// of lanes, which allows for customizable block proposal construction.
-	BBMempool struct {
+	LanedMempool struct {
 		logger log.Logger
 
 		// registry contains the lanes in the mempool. The lanes are ordered
@@ -43,7 +40,7 @@ type (
 	}
 )
 
-// NewMempool returns a new Blockbuster mempool. The blockbuster mempool is
+// NewLanedMempool returns a new Blockbuster mempool. The blockbuster mempool is
 // comprised of a registry of lanes. Each lane is responsible for selecting
 // transactions according to its own selection logic. The lanes are ordered
 // according to their priority. The first lane in the registry has the highest
@@ -54,8 +51,8 @@ type (
 // attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
 // that mutex is set to true when creating the mempool. This will ensure that each
 // transaction cannot be inserted into the lanes before it.
-func NewMempool(logger log.Logger, mutex bool, lanes ...Lane) *BBMempool {
-	mempool := &BBMempool{
+func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) *LanedMempool {
+	mempool := &LanedMempool{
 		logger:   logger,
 		registry: lanes,
 	}
@@ -79,7 +76,7 @@ func NewMempool(logger log.Logger, mutex bool, lanes ...Lane) *BBMempool {
 
 // CountTx returns the total number of transactions in the mempool. This will
 // be the sum of the number of transactions in each lane.
-func (m *BBMempool) CountTx() int {
+func (m *LanedMempool) CountTx() int {
 	var total int
 	for _, lane := range m.registry {
 		total += lane.CountTx()
@@ -89,7 +86,7 @@ func (m *BBMempool) CountTx() int {
 }
 
 // GetTxDistribution returns the number of transactions in each lane.
-func (m *BBMempool) GetTxDistribution() map[string]int {
+func (m *LanedMempool) GetTxDistribution() map[string]int {
 	counts := make(map[string]int, len(m.registry))
 
 	for _, lane := range m.registry {
@@ -101,7 +98,7 @@ func (m *BBMempool) GetTxDistribution() map[string]int {
 
 // Insert will insert a transaction into the mempool. It inserts the transaction
 // into the first lane that it matches.
-func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
+func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			m.logger.Error("panic in Insert", "err", r)
@@ -136,12 +133,12 @@ func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 // - Determine if it even makes sense to return an iterator. What does that even
 // mean in the context where you have multiple lanes?
 // - Perhaps consider implementing and returning a no-op iterator?
-func (m *BBMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
+func (m *LanedMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
 	return nil
 }
 
 // Remove removes a transaction from all of the lanes it is currently in.
-func (m *BBMempool) Remove(tx sdk.Tx) (err error) {
+func (m *LanedMempool) Remove(tx sdk.Tx) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
 			m.logger.Error("panic in Remove", "err", r)
@@ -179,7 +176,7 @@ func (m *BBMempool) Remove(tx sdk.Tx) (err error) {
 }
 
 // Contains returns true if the transaction is contained in any of the lanes.
-func (m *BBMempool) Contains(tx sdk.Tx) (contains bool) {
+func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 	defer func() {
 		if r := recover(); r != nil {
 			m.logger.Error("panic in Contains", "err", r)
@@ -197,7 +194,7 @@ func (m *BBMempool) Contains(tx sdk.Tx) (contains bool) {
 }
 
 // Registry returns the mempool's lane registry.
-func (m *BBMempool) Registry() []Lane {
+func (m *LanedMempool) Registry() []Lane {
 	return m.registry
 }
 
@@ -205,7 +202,7 @@ func (m *BBMempool) Registry() []Lane {
 // the following:
 // - The sum of the lane max block space percentages is less than or equal to 1.
 // - There is no unused block space.
-func (m *BBMempool) ValidateBasic() error {
+func (m *LanedMempool) ValidateBasic() error {
 	sum := math.LegacyZeroDec()
 	seenZeroMaxBlockSpace := false
 
@@ -229,15 +226,4 @@ func (m *BBMempool) ValidateBasic() error {
 	}
 
 	return nil
-}
-
-// GetLane returns the lane with the given name.
-func (m *BBMempool) GetLane(name string) (Lane, error) {
-	for _, lane := range m.registry {
-		if lane.Name() == name {
-			return lane, nil
-		}
-	}
-
-	return nil, fmt.Errorf("lane %s not found", name)
 }

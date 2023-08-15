@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/constructor"
 )
 
 const (
@@ -33,7 +34,7 @@ type (
 
 	MEVLane struct {
 		// LaneConfig defines the base lane configuration.
-		*blockbuster.LaneConstructor[string]
+		*constructor.LaneConstructor[string]
 
 		// Factory defines the API/functionality which is responsible for determining
 		// if a transaction is a bid transaction and how to extract relevant
@@ -48,10 +49,10 @@ func NewMEVLane(
 	factory Factory,
 ) *MEVLane {
 	lane := &MEVLane{
-		LaneConstructor: blockbuster.NewLaneConstructor[string](
+		LaneConstructor: constructor.NewLaneConstructor[string](
 			cfg,
 			LaneName,
-			blockbuster.NewConstructorMempool[string](
+			constructor.NewConstructorMempool[string](
 				TxPriority(factory),
 				cfg.TxEncoder,
 				cfg.MaxTxs,

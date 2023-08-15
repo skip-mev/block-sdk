@@ -11,9 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/base"
-	"github.com/skip-mev/pob/blockbuster/lanes/free"
-	"github.com/skip-mev/pob/blockbuster/lanes/mev"
+	"github.com/skip-mev/pob/blockbuster/constructor"
+	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/lanes/free"
+	"github.com/skip-mev/pob/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
@@ -79,7 +80,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
-		blockbuster.DefaultTxPriority(),
+		constructor.DefaultTxPriority(),
 		free.DefaultMatchHandler(),
 	)
 
@@ -97,7 +98,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.mempool = blockbuster.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)

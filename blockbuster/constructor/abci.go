@@ -1,7 +1,8 @@
-package blockbuster
+package constructor
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
@@ -11,10 +12,10 @@ import (
 // error. The proposal will only be modified if it passes all of the invarient checks.
 func (l *LaneConstructor[C]) PrepareLane(
 	ctx sdk.Context,
-	proposal BlockProposal,
+	proposal blockbuster.BlockProposal,
 	maxTxBytes int64,
-	next PrepareLanesHandler,
-) (BlockProposal, error) {
+	next blockbuster.PrepareLanesHandler,
+) (blockbuster.BlockProposal, error) {
 	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, maxTxBytes)
 	if err != nil {
 		return proposal, err
@@ -47,7 +48,7 @@ func (l *LaneConstructor[C]) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 // the verification logic of the lane (processLaneHandler). If the transactions are valid, we
 // return the transactions that do not belong to this lane to the next lane. If the transactions
 // are invalid, we return an error.
-func (l *LaneConstructor[C]) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next ProcessLanesHandler) (sdk.Context, error) {
+func (l *LaneConstructor[C]) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blockbuster.ProcessLanesHandler) (sdk.Context, error) {
 	remainingTxs, err := l.processLaneHandler(ctx, txs)
 	if err != nil {
 		return ctx, err

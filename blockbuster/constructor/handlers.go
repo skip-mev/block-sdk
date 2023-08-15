@@ -1,9 +1,10 @@
-package blockbuster
+package constructor
 
 import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
@@ -11,8 +12,8 @@ import (
 // selects all transactions in the mempool that are valid and not already in the partial
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
-func (l *LaneConstructor[C]) DefaultPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
+func (l *LaneConstructor[C]) DefaultPrepareLaneHandler() blockbuster.PrepareLaneHandler {
+	return func(ctx sdk.Context, proposal blockbuster.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
 		var (
 			totalSize   int64
 			txs         [][]byte
@@ -95,7 +96,7 @@ func (l *LaneConstructor[C]) DefaultPrepareLaneHandler() PrepareLaneHandler {
 // fails to verify, the entire proposal is rejected. If the handler comes across a transaction
 // that does not match the lane's matcher, it will return the remaining transactions in the
 // proposal.
-func (l *LaneConstructor[C]) DefaultProcessLaneHandler() ProcessLaneHandler {
+func (l *LaneConstructor[C]) DefaultProcessLaneHandler() blockbuster.ProcessLaneHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
 		var err error
 
@@ -122,7 +123,7 @@ func (l *LaneConstructor[C]) DefaultProcessLaneHandler() ProcessLaneHandler {
 //     lane.
 //  2. Transactions that belong to other lanes cannot be interleaved with transactions that
 //     belong to this lane.
-func (l *LaneConstructor[C]) DefaultCheckOrderHandler() CheckOrderHandler {
+func (l *LaneConstructor[C]) DefaultCheckOrderHandler() blockbuster.CheckOrderHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) error {
 		seenOtherLaneTx := false
 
@@ -148,7 +149,7 @@ func (l *LaneConstructor[C]) DefaultCheckOrderHandler() CheckOrderHandler {
 
 // DefaultMatchHandler returns a default implementation of the MatchHandler. It matches all
 // transactions.
-func DefaultMatchHandler() MatchHandler {
+func DefaultMatchHandler() blockbuster.MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		return true
 	}

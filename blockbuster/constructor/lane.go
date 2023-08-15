@@ -1,4 +1,4 @@
-package blockbuster
+package constructor
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/skip-mev/pob/blockbuster"
 )
 
 // LaneConstructor is a generic implementation of a lane. It is meant to be used
@@ -17,42 +18,42 @@ type LaneConstructor[C comparable] struct {
 	// cfg stores functionality required to encode/decode transactions, maintains how
 	// many transactions are allowed in this lane's mempool, and the amount of block
 	// space this lane is allowed to consume.
-	cfg LaneConfig
+	cfg blockbuster.LaneConfig
 
 	// laneName is the name of the lane.
 	laneName string
 
 	// LaneMempool is the mempool that is responsible for storing transactions
 	// that are waiting to be processed.
-	LaneMempool
+	blockbuster.LaneMempool
 
 	// matchHandler is the function that determines whether or not a transaction
 	// should be processed by this lane.
-	matchHandler MatchHandler
+	matchHandler blockbuster.MatchHandler
 
 	// prepareLaneHandler is the function that is called when a new proposal is being
 	// requested and the lane needs to submit transactions it wants included in the block.
-	prepareLaneHandler PrepareLaneHandler
+	prepareLaneHandler blockbuster.PrepareLaneHandler
 
 	// checkOrderHandler is the function that is called when a new proposal is being
 	// verified and the lane needs to verify that the transactions included in the proposal
 	// respect the ordering rules of the lane and does not interleave transactions from other lanes.
-	checkOrderHandler CheckOrderHandler
+	checkOrderHandler blockbuster.CheckOrderHandler
 
 	// processLaneHandler is the function that is called when a new proposal is being
 	// verified and the lane needs to verify that the transactions included in the proposal
 	// are valid respecting the verification logic of the lane.
-	processLaneHandler ProcessLaneHandler
+	processLaneHandler blockbuster.ProcessLaneHandler
 }
 
 // NewLaneConstructor returns a new lane constructor. When creating this lane, the type
 // of the lane must be specified. The type of the lane is directly associated with the
 // type of the mempool that is used to store transactions that are waiting to be processed.
 func NewLaneConstructor[C comparable](
-	cfg LaneConfig,
+	cfg blockbuster.LaneConfig,
 	laneName string,
-	laneMempool LaneMempool,
-	matchHandlerFn MatchHandler,
+	laneMempool blockbuster.LaneMempool,
+	matchHandlerFn blockbuster.MatchHandler,
 ) *LaneConstructor[C] {
 	lane := &LaneConstructor[C]{
 		cfg:          cfg,
@@ -105,7 +106,7 @@ func (l *LaneConstructor[C]) ValidateBasic() error {
 // SetPrepareLaneHandler sets the prepare lane handler for the lane. This handler
 // is called when a new proposal is being requested and the lane needs to submit
 // transactions it wants included in the block.
-func (l *LaneConstructor[C]) SetPrepareLaneHandler(prepareLaneHandler PrepareLaneHandler) {
+func (l *LaneConstructor[C]) SetPrepareLaneHandler(prepareLaneHandler blockbuster.PrepareLaneHandler) {
 	if prepareLaneHandler == nil {
 		panic("prepare lane handler cannot be nil")
 	}
@@ -117,7 +118,7 @@ func (l *LaneConstructor[C]) SetPrepareLaneHandler(prepareLaneHandler PrepareLan
 // is called when a new proposal is being verified and the lane needs to verify
 // that the transactions included in the proposal are valid respecting the verification
 // logic of the lane.
-func (l *LaneConstructor[C]) SetProcessLaneHandler(processLaneHandler ProcessLaneHandler) {
+func (l *LaneConstructor[C]) SetProcessLaneHandler(processLaneHandler blockbuster.ProcessLaneHandler) {
 	if processLaneHandler == nil {
 		panic("process lane handler cannot be nil")
 	}
@@ -129,7 +130,7 @@ func (l *LaneConstructor[C]) SetProcessLaneHandler(processLaneHandler ProcessLan
 // is called when a new proposal is being verified and the lane needs to verify
 // that the transactions included in the proposal respect the ordering rules of
 // the lane and does not include transactions from other lanes.
-func (l *LaneConstructor[C]) SetCheckOrderHandler(checkOrderHandler CheckOrderHandler) {
+func (l *LaneConstructor[C]) SetCheckOrderHandler(checkOrderHandler blockbuster.CheckOrderHandler) {
 	if checkOrderHandler == nil {
 		panic("check order handler cannot be nil")
 	}
@@ -165,7 +166,7 @@ func (l *LaneConstructor[C]) Name() string {
 
 // SetIgnoreList sets the ignore list for the lane. The ignore list is a list
 // of lanes that the lane should ignore when processing transactions.
-func (l *LaneConstructor[C]) SetIgnoreList(lanes []Lane) {
+func (l *LaneConstructor[C]) SetIgnoreList(lanes []blockbuster.Lane) {
 	l.cfg.IgnoreList = lanes
 }
 

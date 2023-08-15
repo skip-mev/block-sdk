@@ -9,8 +9,8 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/blockbuster"
-	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/utils/mocks"
+	"github.com/skip-mev/pob/lanes/base"
 	testutils "github.com/skip-mev/pob/testutils"
 )
 

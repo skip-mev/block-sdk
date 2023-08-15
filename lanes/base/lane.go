@@ -2,6 +2,7 @@ package base
 
 import (
 	"github.com/skip-mev/pob/blockbuster"
+	"github.com/skip-mev/pob/blockbuster/constructor"
 )
 
 const (
@@ -18,20 +19,20 @@ var _ blockbuster.Lane = (*DefaultLane)(nil)
 // CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
 // 0.47.0.
 type DefaultLane struct {
-	*blockbuster.LaneConstructor[string]
+	*constructor.LaneConstructor[string]
 }
 
 // NewDefaultLane returns a new default lane.
 func NewDefaultLane(cfg blockbuster.LaneConfig) *DefaultLane {
-	lane := blockbuster.NewLaneConstructor[string](
+	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		LaneName,
-		blockbuster.NewConstructorMempool[string](
-			blockbuster.DefaultTxPriority(),
+		constructor.NewConstructorMempool[string](
+			constructor.DefaultTxPriority(),
 			cfg.TxEncoder,
 			cfg.MaxTxs,
 		),
-		blockbuster.DefaultMatchHandler(),
+		constructor.DefaultMatchHandler(),
 	)
 
 	return &DefaultLane{

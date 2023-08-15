@@ -1,4 +1,4 @@
-package blockbuster
+package constructor
 
 import (
 	"context"
@@ -7,6 +7,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/utils"
 )
 
@@ -24,7 +25,7 @@ type (
 		// retrieve the priority of a given transaction and to compare the priority
 		// of two transactions. The index utilizes this struct to order transactions
 		// in the mempool.
-		txPriority TxPriority[C]
+		txPriority blockbuster.TxPriority[C]
 
 		// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
 		// to bytes.
@@ -38,8 +39,8 @@ type (
 
 // DefaultTxPriority returns a default implementation of the TxPriority. It prioritizes
 // transactions by their fee.
-func DefaultTxPriority() TxPriority[string] {
-	return TxPriority[string]{
+func DefaultTxPriority() blockbuster.TxPriority[string] {
+	return blockbuster.TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
 			feeTx, ok := tx.(sdk.FeeTx)
 			if !ok {
@@ -80,10 +81,10 @@ func DefaultTxPriority() TxPriority[string] {
 }
 
 // NewConstructorMempool returns a new ConstructorMempool.
-func NewConstructorMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *ConstructorMempool[C] {
+func NewConstructorMempool[C comparable](txPriority blockbuster.TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *ConstructorMempool[C] {
 	return &ConstructorMempool[C]{
-		index: NewPriorityMempool(
-			PriorityNonceMempoolConfig[C]{
+		index: blockbuster.NewPriorityMempool(
+			blockbuster.PriorityNonceMempoolConfig[C]{
 				TxPriority: txPriority,
 				MaxTx:      maxTx,
 			},
