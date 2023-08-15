@@ -35,8 +35,7 @@ compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
 To install the Block SDK, run the following command:
 
 ```bash
-$ go get github.com/skip-mev/block-sdk/abci
-$ go get github.com/skip-mev/block-sdk/lanes/standard
+$ go install github.com/skip-mev/block-sdk
 ```
 
 ### 📚 Usage
