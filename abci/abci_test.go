@@ -760,7 +760,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 	return free.NewFreeLane(cfg, constructor.DefaultTxPriority(), free.DefaultMatchHandler())
 }
 
-func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *constructor.LaneConstructor[string] {
+func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *constructor.LaneConstructor {
 	cfg := constructor.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
@@ -768,7 +768,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *const
 		MaxBlockSpace: maxBlockSpace,
 	}
 
-	lane := constructor.NewLaneConstructor[string](
+	lane := constructor.NewLaneConstructor(
 		cfg,
 		"panic",
 		constructor.NewMempool[string](constructor.DefaultTxPriority(), cfg.TxEncoder, 0),

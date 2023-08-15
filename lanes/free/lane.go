@@ -17,7 +17,7 @@ var _ block.Lane = (*FreeLane)(nil)
 // FreeLane defines the lane that is responsible for processing free transactions.
 // By default, transactions that are staking related are considered free.
 type FreeLane struct {
-	*constructor.LaneConstructor[string]
+	*constructor.LaneConstructor
 }
 
 // NewFreeLane returns a new free lane.
@@ -26,7 +26,7 @@ func NewFreeLane(
 	txPriority constructor.TxPriority[string],
 	matchFn block.MatchHandler,
 ) *FreeLane {
-	lane := constructor.NewLaneConstructor[string](
+	lane := constructor.NewLaneConstructor(
 		cfg,
 		LaneName,
 		constructor.NewMempool[string](

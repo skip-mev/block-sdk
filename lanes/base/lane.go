@@ -19,12 +19,12 @@ var _ block.Lane = (*DefaultLane)(nil)
 // CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
 // 0.47.0.
 type DefaultLane struct {
-	*constructor.LaneConstructor[string]
+	*constructor.LaneConstructor
 }
 
 // NewDefaultLane returns a new default lane.
 func NewDefaultLane(cfg constructor.LaneConfig) *DefaultLane {
-	lane := constructor.NewLaneConstructor[string](
+	lane := constructor.NewLaneConstructor(
 		cfg,
 		LaneName,
 		constructor.NewMempool[string](

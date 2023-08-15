@@ -12,7 +12,7 @@ import (
 // selects all transactions in the mempool that are valid and not already in the partial
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
-func (l *LaneConstructor[C]) DefaultPrepareLaneHandler() block.PrepareLaneHandler {
+func (l *LaneConstructor) DefaultPrepareLaneHandler() block.PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
 		var (
 			totalSize   int64
@@ -96,7 +96,7 @@ func (l *LaneConstructor[C]) DefaultPrepareLaneHandler() block.PrepareLaneHandle
 // fails to verify, the entire proposal is rejected. If the handler comes across a transaction
 // that does not match the lane's matcher, it will return the remaining transactions in the
 // proposal.
-func (l *LaneConstructor[C]) DefaultProcessLaneHandler() block.ProcessLaneHandler {
+func (l *LaneConstructor) DefaultProcessLaneHandler() block.ProcessLaneHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
 		var err error
 
@@ -123,7 +123,7 @@ func (l *LaneConstructor[C]) DefaultProcessLaneHandler() block.ProcessLaneHandle
 //     lane.
 //  2. Transactions that belong to other lanes cannot be interleaved with transactions that
 //     belong to this lane.
-func (l *LaneConstructor[C]) DefaultCheckOrderHandler() block.CheckOrderHandler {
+func (l *LaneConstructor) DefaultCheckOrderHandler() block.CheckOrderHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) error {
 		seenOtherLaneTx := false
 

@@ -10,7 +10,7 @@ import (
 // lane respecting the selection logic of the prepareLaneHandler. It will then update the partial
 // proposal with the selected transactions. If the proposal is unable to be updated, we return an
 // error. The proposal will only be modified if it passes all of the invarient checks.
-func (l *LaneConstructor[C]) PrepareLane(
+func (l *LaneConstructor) PrepareLane(
 	ctx sdk.Context,
 	proposal block.BlockProposal,
 	maxTxBytes int64,
@@ -40,7 +40,7 @@ func (l *LaneConstructor[C]) PrepareLane(
 
 // CheckOrder checks that the ordering logic of the lane is respected given the set of transactions
 // in the block proposal. If the ordering logic is not respected, we return an error.
-func (l *LaneConstructor[C]) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
+func (l *LaneConstructor) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 	return l.checkOrderHandler(ctx, txs)
 }
 
@@ -48,7 +48,7 @@ func (l *LaneConstructor[C]) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 // the verification logic of the lane (processLaneHandler). If the transactions are valid, we
 // return the transactions that do not belong to this lane to the next lane. If the transactions
 // are invalid, we return an error.
-func (l *LaneConstructor[C]) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next block.ProcessLanesHandler) (sdk.Context, error) {
+func (l *LaneConstructor) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next block.ProcessLanesHandler) (sdk.Context, error) {
 	remainingTxs, err := l.processLaneHandler(ctx, txs)
 	if err != nil {
 		return ctx, err
@@ -59,7 +59,7 @@ func (l *LaneConstructor[C]) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next blo
 
 // AnteVerifyTx verifies that the transaction is valid respecting the ante verification logic of
 // of the antehandler chain.
-func (l *LaneConstructor[C]) AnteVerifyTx(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+func (l *LaneConstructor) AnteVerifyTx(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
 	if l.cfg.AnteHandler != nil {
 		return l.cfg.AnteHandler(ctx, tx, simulate)
 	}

@@ -34,7 +34,7 @@ type (
 
 	MEVLane struct {
 		// LaneConfig defines the base lane configuration.
-		*constructor.LaneConstructor[string]
+		*constructor.LaneConstructor
 
 		// Factory defines the API/functionality which is responsible for determining
 		// if a transaction is a bid transaction and how to extract relevant
@@ -49,7 +49,7 @@ func NewMEVLane(
 	factory Factory,
 ) *MEVLane {
 	lane := &MEVLane{
-		LaneConstructor: constructor.NewLaneConstructor[string](
+		LaneConstructor: constructor.NewLaneConstructor(
 			cfg,
 			LaneName,
 			constructor.NewMempool[string](
