@@ -9,6 +9,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 	"github.com/skip-mev/pob/block/utils/mocks"
 	"github.com/skip-mev/pob/lanes/base"
 	testutils "github.com/skip-mev/pob/testutils"
@@ -502,7 +503,7 @@ func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
 ) *base.DefaultLane {
-	config := block.NewBaseLaneConfig(
+	config := constructor.NewLaneConfig(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),

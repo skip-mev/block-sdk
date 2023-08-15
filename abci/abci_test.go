@@ -725,7 +725,7 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 }
 
 func (s *ProposalsTestSuite) setUpDefaultLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *base.DefaultLane {
-	cfg := block.LaneConfig{
+	cfg := constructor.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
@@ -737,7 +737,7 @@ func (s *ProposalsTestSuite) setUpDefaultLane(maxBlockSpace math.LegacyDec, expe
 }
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
-	cfg := block.LaneConfig{
+	cfg := constructor.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
@@ -749,7 +749,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
-	cfg := block.LaneConfig{
+	cfg := constructor.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
@@ -761,7 +761,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 }
 
 func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *constructor.LaneConstructor[string] {
-	cfg := block.LaneConfig{
+	cfg := constructor.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),

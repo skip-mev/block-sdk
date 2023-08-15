@@ -23,7 +23,7 @@ type DefaultLane struct {
 }
 
 // NewDefaultLane returns a new default lane.
-func NewDefaultLane(cfg block.LaneConfig) *DefaultLane {
+func NewDefaultLane(cfg constructor.LaneConfig) *DefaultLane {
 	lane := constructor.NewLaneConstructor[string](
 		cfg,
 		LaneName,

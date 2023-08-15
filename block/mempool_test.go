@@ -58,7 +58,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
-	mevConfig := block.LaneConfig{
+	mevConfig := constructor.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -71,7 +71,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Free lane set up
-	freeConfig := block.LaneConfig{
+	freeConfig := constructor.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -85,7 +85,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Base lane set up
-	baseConfig := block.LaneConfig{
+	baseConfig := constructor.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),

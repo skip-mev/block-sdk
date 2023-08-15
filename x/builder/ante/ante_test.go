@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/pob/block/constructor"
 	"github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/mev"
 	testutils "github.com/skip-mev/pob/testutils"
@@ -83,7 +84,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	mevConfig := block.LaneConfig{
+	mevConfig := constructor.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -96,7 +97,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	)
 
 	// Base lane set up
-	baseConfig := block.LaneConfig{
+	baseConfig := constructor.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),

@@ -263,7 +263,7 @@ func New(
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
-	mevConfig := block.LaneConfig{
+	mevConfig := constructor.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -276,7 +276,7 @@ func New(
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
-	freeConfig := block.LaneConfig{
+	freeConfig := constructor.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -290,7 +290,7 @@ func New(
 	)
 
 	// Default lane accepts all other transactions.
-	defaultConfig := block.LaneConfig{
+	defaultConfig := constructor.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),

@@ -22,7 +22,7 @@ type FreeLane struct {
 
 // NewFreeLane returns a new free lane.
 func NewFreeLane(
-	cfg block.LaneConfig,
+	cfg constructor.LaneConfig,
 	txPriority constructor.TxPriority[string],
 	matchFn block.MatchHandler,
 ) *FreeLane {

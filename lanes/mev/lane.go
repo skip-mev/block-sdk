@@ -45,7 +45,7 @@ type (
 
 // NewMEVLane returns a new TOB lane.
 func NewMEVLane(
-	cfg block.LaneConfig,
+	cfg constructor.LaneConfig,
 	factory Factory,
 ) *MEVLane {
 	lane := &MEVLane{

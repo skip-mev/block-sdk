@@ -18,7 +18,7 @@ type LaneConstructor[C comparable] struct {
 	// cfg stores functionality required to encode/decode transactions, maintains how
 	// many transactions are allowed in this lane's mempool, and the amount of block
 	// space this lane is allowed to consume.
-	cfg block.LaneConfig
+	cfg LaneConfig
 
 	// laneName is the name of the lane.
 	laneName string
@@ -50,7 +50,7 @@ type LaneConstructor[C comparable] struct {
 // of the lane must be specified. The type of the lane is directly associated with the
 // type of the mempool that is used to store transactions that are waiting to be processed.
 func NewLaneConstructor[C comparable](
-	cfg block.LaneConfig,
+	cfg LaneConfig,
 	laneName string,
 	laneMempool block.LaneMempool,
 	matchHandlerFn block.MatchHandler,
