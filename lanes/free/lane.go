@@ -4,7 +4,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
+	"github.com/skip-mev/pob/block/base"
 )
 
 const (
@@ -17,19 +17,19 @@ var _ block.Lane = (*FreeLane)(nil)
 // FreeLane defines the lane that is responsible for processing free transactions.
 // By default, transactions that are staking related are considered free.
 type FreeLane struct {
-	*constructor.LaneConstructor
+	*base.BaseLane
 }
 
 // NewFreeLane returns a new free lane.
 func NewFreeLane(
-	cfg constructor.LaneConfig,
-	txPriority constructor.TxPriority[string],
+	cfg base.LaneConfig,
+	txPriority base.TxPriority[string],
 	matchFn block.MatchHandler,
 ) *FreeLane {
-	lane := constructor.NewLaneConstructor(
+	lane := base.NewBaseLane(
 		cfg,
 		LaneName,
-		constructor.NewMempool[string](
+		base.NewMempool[string](
 			txPriority,
 			cfg.TxEncoder,
 			cfg.MaxTxs,
@@ -38,7 +38,7 @@ func NewFreeLane(
 	)
 
 	return &FreeLane{
-		LaneConstructor: lane,
+		BaseLane: lane,
 	}
 }
 

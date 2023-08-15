@@ -1,8 +1,8 @@
-package base
+package standard
 
 import (
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
+	"github.com/skip-mev/pob/block/base"
 )
 
 const (
@@ -10,32 +10,32 @@ const (
 	LaneName = "default"
 )
 
-var _ block.Lane = (*DefaultLane)(nil)
+var _ block.Lane = (*StandardLane)(nil)
 
-// DefaultLane defines a default lane implementation. The default lane orders
+// StandardLane defines a default lane implementation. The standard lane orders
 // transactions by the transaction fees. The default lane accepts any transaction
 // that is should not be ignored (as defined by the IgnoreList in the LaneConfig).
 // The default lane builds and verifies blocks in a similiar fashion to how the
 // CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
 // 0.47.0.
-type DefaultLane struct {
-	*constructor.LaneConstructor
+type StandardLane struct {
+	*base.BaseLane
 }
 
-// NewDefaultLane returns a new default lane.
-func NewDefaultLane(cfg constructor.LaneConfig) *DefaultLane {
-	lane := constructor.NewLaneConstructor(
+// NewStandardLane returns a new default lane.
+func NewStandardLane(cfg base.LaneConfig) *StandardLane {
+	lane := base.NewBaseLane(
 		cfg,
 		LaneName,
-		constructor.NewMempool[string](
-			constructor.DefaultTxPriority(),
+		base.NewMempool[string](
+			base.DefaultTxPriority(),
 			cfg.TxEncoder,
 			cfg.MaxTxs,
 		),
-		constructor.DefaultMatchHandler(),
+		base.DefaultMatchHandler(),
 	)
 
-	return &DefaultLane{
-		LaneConstructor: lane,
+	return &StandardLane{
+		BaseLane: lane,
 	}
 }

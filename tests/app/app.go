@@ -63,10 +63,10 @@ import (
 
 	"github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
-	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/block/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
+	"github.com/skip-mev/pob/lanes/standard"
 	buildermodule "github.com/skip-mev/pob/x/builder"
 	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
 )
@@ -263,7 +263,7 @@ func New(
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
 	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
-	mevConfig := constructor.LaneConfig{
+	mevConfig := base.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -276,7 +276,7 @@ func New(
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
-	freeConfig := constructor.LaneConfig{
+	freeConfig := base.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -285,19 +285,19 @@ func New(
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
-		constructor.DefaultTxPriority(),
+		base.DefaultTxPriority(),
 		free.DefaultMatchHandler(),
 	)
 
 	// Default lane accepts all other transactions.
-	defaultConfig := constructor.LaneConfig{
+	defaultConfig := base.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(),
 		MaxTxs:        0,
 	}
-	defaultLane := base.NewDefaultLane(defaultConfig)
+	defaultLane := standard.NewStandardLane(defaultConfig)
 
 	// Set the lanes into the mempool.
 	lanes := []block.Lane{

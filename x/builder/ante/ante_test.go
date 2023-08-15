@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
-	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/block/base"
 	"github.com/skip-mev/pob/lanes/mev"
+	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -42,7 +42,7 @@ type AnteTestSuite struct {
 	// mempool and lane set up
 	mempool  block.Mempool
 	mevLane  *mev.MEVLane
-	baseLane *base.DefaultLane
+	baseLane *standard.StandardLane
 	lanes    []block.Lane
 
 	// Account set up
@@ -84,7 +84,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	mevConfig := constructor.LaneConfig{
+	mevConfig := base.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -97,7 +97,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	)
 
 	// Base lane set up
-	baseConfig := constructor.LaneConfig{
+	baseConfig := base.LaneConfig{
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -105,7 +105,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		MaxBlockSpace: math.LegacyZeroDec(),
 		IgnoreList:    []block.Lane{suite.mevLane},
 	}
-	suite.baseLane = base.NewDefaultLane(baseConfig)
+	suite.baseLane = standard.NewStandardLane(baseConfig)
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.baseLane}
@@ -280,13 +280,13 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 
 				distribution := suite.mempool.GetTxDistribution()
 				suite.Require().Equal(0, distribution[mev.LaneName])
-				suite.Require().Equal(0, distribution[base.LaneName])
+				suite.Require().Equal(0, distribution[standard.LaneName])
 
 				suite.Require().NoError(suite.mempool.Insert(suite.ctx, topAuctionTx))
 
 				distribution = suite.mempool.GetTxDistribution()
 				suite.Require().Equal(1, distribution[mev.LaneName])
-				suite.Require().Equal(0, distribution[base.LaneName])
+				suite.Require().Equal(0, distribution[standard.LaneName])
 			}
 
 			// Create the actual mev tx and insert into the mempool

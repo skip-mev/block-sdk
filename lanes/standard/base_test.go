@@ -1,4 +1,4 @@
-package base_test
+package standard_test
 
 import (
 	"math/rand"

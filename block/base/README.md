@@ -1,10 +1,10 @@
-# 🎨 Lane Constructor
+# 🎨 Base Lane
 
-> 🏗️ Build your own lane in less than 10 minutes using the Lane Constructor
+> 🏗️ Build your own lane in less than 10 minutes using the Base Lane
 
 ## 💡 Overview
 
-The Lane Constructor is a generic implementation of a lane. It comes out of the 
+The Base Lane is a generic implementation of a lane. It comes out of the 
 box with default implementations for all the required interfaces. It is meant to
 be used as a starting point for building your own lane. 
 
@@ -13,7 +13,7 @@ be used as a starting point for building your own lane.
 > **Default Implementations**
 >
 > There are default implementations for all of the below which can be found in 
-> the `block/constructor` package. It is highly recommended that developers overview
+> the `block/base` package. It is highly recommended that developers overview
 > the default implementations before building their own lane.
 
 There are **three** critical components to building a custom lane using the lane
@@ -128,7 +128,7 @@ transactions by default).
 ### 2. 🗄️ LaneMempool
 
 This is the data structure that is responsible for storing transactions
-as they are being verified and are waiting to be included in proposals. `block/constructor/mempool.go`
+as they are being verified and are waiting to be included in proposals. `block/base/mempool.go`
 provides an out-of-the-box implementation that should be used as a starting 
 point for building out the mempool and should cover most use cases. To 
 utilize the mempool, you must implement a `TxPriority[C]` struct that does the
@@ -143,7 +143,7 @@ should return 1, otherwise the method should return 0.
 * Implements a `MinValue` method that returns the minimum priority value
 that a transaction can have.
 
-The default implementation can be found in `block/constructor/mempool.go`. What
+The default implementation can be found in `block/base/mempool.go`. What
 if we wanted to prioritize transactions by the amount they have staked on a chain?
 Well we could do something like the following:
 
@@ -228,7 +228,7 @@ mempool := constructor.NewMempool[string](
 )
 
 // Initialize your lane with the mempool
-lane := constructor.NewLaneConstructor(
+lane := constructor.NewBaseLane(
     laneCfg,
     LaneName,
     mempool,
@@ -240,7 +240,7 @@ lane := constructor.NewLaneConstructor(
 
 `MatchHandler` is utilized to determine if a transaction should be included in 
 the lane. This function can be a stateless or stateful check on the transaction.
-The default implementation can be found in `block/constructor/handlers.go`.
+The default implementation can be found in `block/base/handlers.go`.
 
 The match handler can be as custom as desired. Following the example above, if 
 we wanted to make a lane that only accepts transactions if they have a large 
@@ -298,7 +298,7 @@ mempool := constructor.NewMempool[string](
 )
 
 // Initialize your lane with the mempool
-lane := constructor.NewLaneConstructor(
+lane := constructor.NewBaseLane(
     cfg,
     LaneName,
     mempool,
@@ -319,7 +319,7 @@ have a custom lane that only accepts transactions that match a custom criteria.
 ### [OPTIONAL] Steps 4-6
 
 The remaining steps walk through the process of creating custom block 
-building/verification logic. The default implementation found in `block/constructor/handlers.go`
+building/verification logic. The default implementation found in `block/base/handlers.go`
 should fit most use cases. Please reference that file for more details on
 the default implementation and whether it fits your use case.
 

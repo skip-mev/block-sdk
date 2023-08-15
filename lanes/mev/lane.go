@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
+	"github.com/skip-mev/pob/block/base"
 )
 
 const (
@@ -34,7 +34,7 @@ type (
 
 	MEVLane struct {
 		// LaneConfig defines the base lane configuration.
-		*constructor.LaneConstructor
+		*base.BaseLane
 
 		// Factory defines the API/functionality which is responsible for determining
 		// if a transaction is a bid transaction and how to extract relevant
@@ -45,14 +45,14 @@ type (
 
 // NewMEVLane returns a new TOB lane.
 func NewMEVLane(
-	cfg constructor.LaneConfig,
+	cfg base.LaneConfig,
 	factory Factory,
 ) *MEVLane {
 	lane := &MEVLane{
-		LaneConstructor: constructor.NewLaneConstructor(
+		BaseLane: base.NewBaseLane(
 			cfg,
 			LaneName,
-			constructor.NewMempool[string](
+			base.NewMempool[string](
 				TxPriority(factory),
 				cfg.TxEncoder,
 				cfg.MaxTxs,

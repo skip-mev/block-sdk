@@ -63,7 +63,7 @@ type (
 	}
 )
 
-// NewCheckTxHandler is a constructor for CheckTxHandler.
+// NewCheckTxHandler is a base for CheckTxHandler.
 func NewCheckTxHandler(
 	baseApp BaseApp,
 	txDecoder sdk.TxDecoder,

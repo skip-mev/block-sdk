@@ -133,7 +133,7 @@ proposals respectively.
 // transactions to bid for inclusion at the top of the next block.
 //
 // For more information on how to utilize the LaneConfig please
-// visit the README in block-sdk/block/constructor.
+// visit the README in block-sdk/block/base.
 //
 // MEV lane hosts an action at the top of the block.
 mevConfig := constructor.LaneConfig{
@@ -170,7 +170,7 @@ defaultConfig := constructor.LaneConfig{
     MaxBlockSpace: math.LegacyZeroDec(),
     MaxTxs:        0,
 }
-defaultLane := base.NewDefaultLane(defaultConfig)
+defaultLane := base.NewStandardLane(defaultConfig)
 
 // Set the lanes into the mempool.
 lanes := []block.Lane{

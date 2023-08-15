@@ -1,4 +1,4 @@
-package base_test
+package standard_test
 
 import (
 	"crypto/sha256"
@@ -9,9 +9,9 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
+	"github.com/skip-mev/pob/block/base"
 	"github.com/skip-mev/pob/block/utils/mocks"
-	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 )
 
@@ -502,8 +502,8 @@ func (s *BaseTestSuite) TestCheckOrder() {
 func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
-) *base.DefaultLane {
-	config := constructor.NewLaneConfig(
+) *standard.StandardLane {
+	config := base.NewLaneConfig(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),
@@ -511,7 +511,7 @@ func (s *BaseTestSuite) initLane(
 		maxBlockSpace,
 	)
 
-	return base.NewDefaultLane(config)
+	return standard.NewStandardLane(config)
 }
 
 func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {

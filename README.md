@@ -188,7 +188,7 @@ $ go install github.com/skip-mev/pob
             freeLane,
           },
         }
-        defaultLane := base.NewDefaultLane(defaultConfig)
+        defaultLane := base.NewStandardLane(defaultConfig)
 
         // Set the lanes into the mempool.
         lanes := []block.Lane{

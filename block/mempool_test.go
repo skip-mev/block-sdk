@@ -11,10 +11,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/constructor"
-	"github.com/skip-mev/pob/lanes/base"
+	"github.com/skip-mev/pob/block/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
+	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
@@ -29,7 +29,7 @@ type BlockBusterTestSuite struct {
 
 	// Define all of the lanes utilized in the test suite
 	mevLane       *mev.MEVLane
-	baseLane      *base.DefaultLane
+	baseLane      *standard.StandardLane
 	freeLane      *free.FreeLane
 	gasTokenDenom string
 
@@ -58,7 +58,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
-	mevConfig := constructor.LaneConfig{
+	mevConfig := base.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -71,7 +71,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	)
 
 	// Free lane set up
-	freeConfig := constructor.LaneConfig{
+	freeConfig := base.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -80,19 +80,19 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
-		constructor.DefaultTxPriority(),
+		base.DefaultTxPriority(),
 		free.DefaultMatchHandler(),
 	)
 
 	// Base lane set up
-	baseConfig := constructor.LaneConfig{
+	baseConfig := base.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
-	suite.baseLane = base.NewDefaultLane(
+	suite.baseLane = standard.NewStandardLane(
 		baseConfig,
 	)
 
