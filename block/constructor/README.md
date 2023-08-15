@@ -10,30 +10,33 @@ be used as a starting point for building your own lane.
 
 ## 🤔 How to use it
 
-There are **three** critical
-components to the Lane Constructor:
+> **Default Implementations**
+>
+> There are default implementations for all of the below which can be found in 
+> the `block/constructor` package. It is highly recommended that developers overview
+> the default implementations before building their own lane.
 
-1. The lane configuration (`LaneConfig`) which determines the basic properties 
+There are **three** critical components to building a custom lane using the lane
+constructor:
+
+1. `LaneConfig` - The lane configuration which determines the basic properties 
 of the lane including the maximum block space that the lane can fill up.
-2. The lane mempool (`LaneMempool`) which is responsible for storing 
-transactions as they are being verified and are waiting to be included in proposals.
-3. A `MatchHandler` which is responsible for determining whether a transaction should
-be accepted to this lane.
-4. [**OPTIONAL**] Users can optionally define their own `PrepareLaneHandler`, which
-is responsible for reaping transactions from its mempool and adding them to a proposal.
-This allows users to customize the order/how transactions are added to a proposal
-if any custom block building logic is required.
-5. [**OPTIONAL**] Users can optionally define their own `CheckOrderHandler`, which
-is responsible for determining whether transactions that are included in a proposal
-and belong to a given lane are ordered correctly in a block proposal. This is useful
-for lanes that require a specific ordering of transactions in a proposal.
-6. [**OPTIONAL**] Users can optionally define their own `ProcessLaneHandler`, which
-is responsible for processing transactions that are included in block proposals.
-In the case where a custom `PrepareLaneHandler` is defined, a custom `ProcessLaneHandler`
-will likely follow. This will allow a proposal to be verified against the custom
-block building logic.
+2. `LaneMempool` - The lane mempool which is responsible for storing 
+transactions that have been verified and are waiting to be included in proposals.
+3. `MatchHandler` - This is responsible for determining whether a transaction should
+belong to this lane.
+4. [**OPTIONAL**] `PrepareLaneHandler` - Allows developers to define their own 
+handler to customize the how transactions are verified and ordered before they 
+are included into a proposal.
+5. [**OPTIONAL**] `CheckOrderHandler` - Allows developers to define their own
+handler that will run any custom checks on whether transactions included in 
+block proposals are in the correct order (respecting the ordering rules of the 
+lane and the ordering rules of the other lanes).
+6. [**OPTIONAL**] `ProcessLaneHandler` - Allows developers to define their own
+handler for processing transactions that are included in block proposals.
 
-### 1. Lane Config
+
+### 1. Lane Config 📝
 
 The lane config (`LaneConfig`) is a simple configuration
 object that defines the desired amount of block space the lane should
@@ -57,13 +60,41 @@ config := block.LaneConfig{
 The three most important parameters to set are the `AnteHandler`, `MaxTxs`, and
 `MaxBlockSpace`.
 
-### **AnteHandler**
+#### **AnteHandler**
 
 With the default implementation, the `AnteHandler` is responsible for verifying
 transactions as they are being considered for a new proposal or are being processed
-in a proposal. 
+in a proposed block. We recommend user's utilize the same antehandler chain that
+is used in the base app. If developers want a certain `AnteDecorator` to be
+ignored if it qualifies for a given lane, they can do so by using the `NewIgnoreDecorator`
+defined in `block/utils/ante.go`.
 
-### **MaxTxs**
+For example, a free lane might want to ignore the `DeductFeeDecorator` so that it's
+transactions are not charged any fees. Where ever the `AnteHandler` is defined,
+we could add the following to ignore the `DeductFeeDecorator`:
+
+```golang
+anteDecorators := []sdk.AnteDecorator{
+    ante.NewSetUpContextDecorator(),
+    ...,
+    utils.NewIgnoreDecorator(
+        ante.NewDeductFeeDecorator(
+            options.BaseOptions.AccountKeeper,
+            options.BaseOptions.BankKeeper,
+            options.BaseOptions.FeegrantKeeper,
+            options.BaseOptions.TxFeeChecker,
+        ),
+        options.FreeLane,
+    ),
+    ...,
+}
+```
+
+Anytime a transaction that qualifies for the free lane is being processed, the
+`DeductFeeDecorator` will be ignored and no fees will be deducted!
+
+
+#### **MaxTxs**
 
 This sets the maximum number of transactions allowed in the mempool with
 the semantics:
@@ -74,25 +105,27 @@ the semantics:
     (sequence number) when evicting transactions.
 * if `MaxTxs` < 0, `Insert` is a no-op.
 
-### **MaxBlockSpace**
+#### **MaxBlockSpace**
 
 MaxBlockSpace is the maximum amount of block space that the lane will attempt to
 fill when building a proposal. This parameter may be useful lanes that should be
 limited (such as a free or onboarding lane) in space usage. Setting this to 0 
 will allow the lane to fill the block with as many transactions as possible.
 
+If a block proposal request has a `MaxTxBytes` of 1000 and the lane has a
+`MaxBlockSpace` of 0.5, the lane will attempt to fill the block with 500 bytes.
+
 #### **[OPTIONAL] IgnoreList**
 
-IgnoreList defines the list of lanes to ignore when processing transactions. 
-This is useful for when you want lanes to exist after the default lane. For 
-example, say there are two lanes: default and free. The free lane should be 
+`IgnoreList` defines the list of lanes to ignore when processing transactions. 
+For example, say there are two lanes: default and free. The free lane is  
 processed after the default lane. In this case, the free lane should be added 
 to the ignore list of the default lane. Otherwise, the transactions that belong 
 to the free lane will be processed by the default lane (which accepts all 
 transactions by default).
 
 
-### 2. LaneMempool
+### 2. LaneMempool 🗄️
 
 This is the data structure that is responsible for storing transactions
 as they are being verified and are waiting to be included in proposals. `block/constructor/mempool.go`
@@ -101,18 +134,18 @@ point for building out the mempool and should cover most use cases. To
 utilize the mempool, you must implement a `TxPriority[C]` struct that does the
 following:
 
-- Implements a `GetTxPriority` method that returns the priority (as defined
+* Implements a `GetTxPriority` method that returns the priority (as defined
 by the type `[C]`) of a given transaction.
-- Implements a `Compare` method that returns the relative priority of two
+* Implements a `Compare` method that returns the relative priority of two
 transactions. If the first transaction has a higher priority, the method
-should return -1, if the second transaction has a higher priority, the method
+should return -1, if the second transaction has a higher priority the method
 should return 1, otherwise the method should return 0.
-- Implements a `MinValue` method that returns the minimum priority value
+* Implements a `MinValue` method that returns the minimum priority value
 that a transaction can have.
 
-The default implementation can be found in `block/constructor/mempool.go`. What if 
-we wanted to prioritize transactions by the amount they have staked on chain? Well
-we could do something like the following:
+The default implementation can be found in `block/constructor/mempool.go`. What
+if we wanted to prioritize transactions by the amount they have staked on a chain?
+Well we could do something like the following:
 
 ```golang
 // CustomTxPriority returns a TxPriority that prioritizes transactions by the
@@ -166,10 +199,19 @@ func (p *CustomTxPriority) CustomTxPriority() TxPriority[string] {
 }
 ```
 
-To utilize this mempool in a lane, all you have to then do is pass in the
-`TxPriority[C]` to the `NewLaneMempool` function.
+#### Using a Custom TxPriority
+
+To utilize this new priority configuration in a lane, all you have to then do 
+is pass in the `TxPriority[C]` to the `NewLaneMempool` function.
 
 ```golang
+// Create the lane config
+laneCfg := NewLaneConfig(
+    ...
+    MaxTxs: 100,
+    ...
+)
+
 // Pseudocode for creating the custom tx priority
 priorityCfg := NewPriorityConfig(
     stakingKeeper,
@@ -178,32 +220,25 @@ priorityCfg := NewPriorityConfig(
 )
 
 
-// define your mempool that orders transactions by on chain stake
+// define your mempool that orders transactions by on-chain stake
 mempool := constructor.NewMempool[string](
     priorityCfg.CustomTxPriority(),
-    cfg.TxEncoder,
-    cfg.MaxTxs,
+    laneCfg.TxEncoder,
+    laneCfg.MaxTxs,
 )
 
 // Initialize your lane with the mempool
 lane := constructor.NewLaneConstructor(
-    cfg,
+    laneCfg,
     LaneName,
     mempool,
     constructor.DefaultMatchHandler(),
 )
 ```
 
-### 3. MatchHandler
+### 3. MatchHandler 🤝
 
-> 🔒 `MatchHandler` Invarients
-> 
-> The handler assumes that the transactions passed into the function are already
-> ordered respecting the lane's ordering rules and respecting the ordering rules
-> of the mempool relative to the lanes it has. This means that the transactions
-> should already be in contiguous order.
-
-MatchHandler is utilized to determine if a transaction should be included in 
+`MatchHandler` is utilized to determine if a transaction should be included in 
 the lane. This function can be a stateless or stateful check on the transaction.
 The default implementation can be found in `block/constructor/handlers.go`.
 
@@ -235,10 +270,14 @@ func (h *Handler) CustomMatchHandler() block.MatchHandler {
             return false
         }
 
+        // The transaction can only be considered for inclusion if the amount
+        // staked is greater than some predetermined threshold.
         return stakeAmount.GT(h.Threshold)
     }
 }
 ```
+
+#### Using a Custom MatchHandler
 
 If we wanted to create the lane using the custom match handler along with the 
 custom mempool, we could do the following:
@@ -267,30 +306,38 @@ lane := constructor.NewLaneConstructor(
 )
 ```
 
-### Notes on Steps 4-6
+### Summary on Steps 1-3
 
-Although not required, if you implement any single custom handler, whether it's
-the `PrepareLaneHandler`, `ProcessLaneHandler`, or `CheckOrderHandler`, you must
-implement all of them. This is because the default implementation of the lane
-constructor will call all of these handlers. If you do not implement all of them,
-the lane may have unintended behavior.
+The following is a summary of the steps above:
 
-### 4. [OPTIONAL] PrepareLaneHandler
+1. Create a custom `LaneConfig` struct that defines the configuration of the lane.
+2. Create a custom `TxPriority[C]` struct to have a custom mempool that orders 
+transactions via a custom priority mechanism.
+3. Create a custom `MatchHandler` that implements the `block.MatchHandler` to 
+have a custom lane that only accepts transactions that match a custom criteria.
 
-> 🔒 `PrepareLaneHandler` Invarients
-> 
-> Transactions should be reaped respecting the priority mechanism of the lane. 
-> By default this is the TxPriority object used to initialize the lane's mempool.
+### [OPTIONAL] Steps 4-6
+
+The remaining steps walk through the process of creating custom block 
+building/verification logic. The default implementation found in `block/constructor/handlers.go`
+should fit most use cases. Please reference that file for more details on
+the default implementation and whether it fits your use case.
+
+Implementing custom block building/verification logic is a bit more involved
+than the previous steps and is a all or nothing approach. This means that if
+you implement any of the handlers, you must implement all of them in most cases.
+If you do not implement all of them, the lane may have unintended behavior.
+
+### 4. PrepareLaneHandler
 
 The `PrepareLaneHandler` is an optional field you can set on the lane constructor.
 This handler is responsible for the transaction selection logic when a new proposal
-is requested. The default implementation should fit most use cases and can be found
-in `block/constructor/handlers.go`.
+is requested.
 
 The handler should return the following for a given lane:
 
 1. The transactions to be included in the block proposal.
-2. The transactions to be removed from the mempool.
+2. The transactions to be removed from the lane's mempool.
 3. An error if the lane is unable to prepare a block proposal.
 
 ```golang
@@ -298,11 +345,8 @@ The handler should return the following for a given lane:
 // in the block from a given lane. Given a lane, this function should return 
 // the transactions to include in the block, the transactions that must be 
 // removed from the lane, and an error if one occurred.
-PrepareLaneHandler func(
-    ctx sdk.Context,
-    proposal BlockProposal,
-    maxTxBytes int64,
-) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error)
+PrepareLaneHandler func(ctx sdk.Context,proposal BlockProposal,maxTxBytes int64)
+    (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error)
 ```
 
 The default implementation is simple. It will continue to select transactions
@@ -316,43 +360,77 @@ If a more involved selection process is required, you can implement your own
 `PrepareLaneHandler` and and set it after creating the lane constructor.
 
 ```golang
-customLane := constructor.NewLaneConstructor(
+// Pseudocode for creating the custom prepare lane handler
+// This assumes that the CustomLane inherits from the constructor
+// lane.
+customLane := constructor.NewCustomLane(
     cfg,
     LaneName,
     mempool,
     handler.CustomMatchHandler(),
 )
 
+// Set the custom PrepareLaneHandler on the lane
 customLane.SetPrepareLaneHandler(customlane.PrepareLaneHandler())
 ```
 
-### 5. [OPTIONAL] CheckOrderHandler
+### 5. CheckOrderHandler
 
-> 🔒 `CheckOrderHandler` Invarients
-> 
-> The CheckOrderHandler must ensure that transactions included in block proposals
-> only include transactions that are in contiguous order respecting the lane's
-> ordering rules and respecting the ordering rules of the mempool relative to the
-> lanes it has. This means that all transactions that belong to the same lane, must
-> be right next to each other in the block proposal. Additionally, the relative priority
-> of each transaction belonging to the lane must be respected.
+The `CheckOrderHandler` is an optional field you can set on the lane constructor.
+This handler is responsible for verifying the ordering of the transactions in the
+block proposal that belong to the lane.
 
-The `CheckOrderHandler` is an optional field you can set on the lane constructor. 
+```golang
+// CheckOrderHandler is responsible for checking the order of transactions that 
+// belong to a given lane. This handler should be used to verify that the 
+// ordering of transactions passed into the function respect the ordering logic
+// of the lane (if any transactions from the lane are included). This function
+// should also ensure that transactions that belong to this lane are contiguous
+// and do not have any transactions from other lanes in between them.
+CheckOrderHandler func(ctx sdk.Context, txs []sdk.Tx) error
+```
+
+The default implementation is simple and utilizes the same `TxPriority` struct
+that the mempool uses to determine if transactions are in order. The criteria
+for determining if transactions are in order is as follows:
+
+1. The transactions are in order according to the `TxPriority` struct. i.e. any
+two transactions (that match to the lane) `tx1` and `tx2` where `tx1` has a
+higher priority than `tx2` should be ordered before `tx2`.
+2. The transactions are contiguous. i.e. there are no transactions from other
+lanes in between the transactions that belong to this lane. i.e. if `tx1` and
+`tx2` belong to the lane, there should be no transactions from other lanes in
+between `tx1` and `tx2`.
+
+If a more involved ordering process is required, you can implement your own
+`CheckOrderHandler` and and set it after creating the lane constructor.
+
+```golang
+// Pseudocode for creating the custom check order handler
+// This assumes that the CustomLane inherits from the constructor
+// lane.
+customLane := constructor.NewCustomLane(
+    cfg,
+    LaneName,
+    mempool,
+    handler.CustomMatchHandler(),
+)
+
+// Set the custom CheckOrderHandler on the lane
+customLane.SetCheckOrderHandler(customlane.CheckOrderHandler())
+```
 
 
-### 6. [OPTIONAL] ProcessLaneHandler
-
-> 🔒 `ProcessLaneHandler` Invarients
-> 
-> The handler assumes that the transactions passed into the function are already
-> ordered respecting the lane's ordering rules and respecting the ordering rules
-> of the mempool relative to the lanes it has. This means that the transactions
-> should already be in contiguous order.
+### 6. ProcessLaneHandler
 
 The `ProcessLaneHandler` is an optional field you can set on the lane constructor.
 This handler is responsible for verifying the transactions in the block proposal
-that belong to the lane. The default implementation should fit most use cases and
-can be found in `block/constructor/handlers.go`.
+that belong to the lane. This handler is executed after the `CheckOrderHandler`
+so the transactions passed into this function SHOULD already be in order
+respecting the ordering rules of the lane and respecting the ordering rules of
+mempool relative to the lanes it has. This means that if the first transaction
+does not belong to the lane, the remaining transactions should not belong to the
+lane either.
 
 
 ```golang
@@ -370,4 +448,5 @@ criteria:
 
 1. If a transaction matches to this lane, verify it and continue. If it is not
 valid, return an error.
-2. If a transaction does not match to this lane, return the remaining transactions.
+2. If a transaction does not match to this lane, return the remaining transactions
+to the next lane to process.
