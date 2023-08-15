@@ -1,1071 +1,802 @@
 package abci_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
+	"fmt"
 	"math/rand"
 	"testing"
-	"time"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/blockbuster"
 	"github.com/skip-mev/pob/blockbuster/abci"
 	"github.com/skip-mev/pob/blockbuster/lanes/auction"
 	"github.com/skip-mev/pob/blockbuster/lanes/base"
 	"github.com/skip-mev/pob/blockbuster/lanes/free"
 	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/builder/ante"
-	"github.com/skip-mev/pob/x/builder/keeper"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
-
-	abcitypes "github.com/cometbft/cometbft/abci/types"
 )
 
-type ABCITestSuite struct {
+type ProposalsTestSuite struct {
 	suite.Suite
 	ctx sdk.Context
+	key *storetypes.KVStoreKey
 
-	// Define basic tx configuration
 	encodingConfig testutils.EncodingConfig
-
-	// Define all of the lanes utilized in the test suite
-	tobConfig blockbuster.BaseLaneConfig
-	tobLane   *auction.TOBLane
-
-	freeConfig blockbuster.BaseLaneConfig
-	freeLane   *free.Lane
-
-	baseConfig blockbuster.BaseLaneConfig
-	baseLane   *base.DefaultLane
-
-	lanes   []blockbuster.Lane
-	mempool blockbuster.Mempool
-
-	// Proposal handler set up
-	proposalHandler *abci.ProposalHandler
-
-	// account set up
-	accounts []testutils.Account
-	random   *rand.Rand
-	nonces   map[string]uint64
-
-	// Keeper set up
-	builderKeeper    keeper.Keeper
-	bankKeeper       *testutils.MockBankKeeper
-	accountKeeper    *testutils.MockAccountKeeper
-	distrKeeper      *testutils.MockDistributionKeeper
-	stakingKeeper    *testutils.MockStakingKeeper
-	builderDecorator ante.BuilderDecorator
+	random         *rand.Rand
+	accounts       []testutils.Account
+	gasTokenDenom  string
 }
 
 func TestBlockBusterTestSuite(t *testing.T) {
-	suite.Run(t, new(ABCITestSuite))
+	suite.Run(t, new(ProposalsTestSuite))
 }
 
-func (suite *ABCITestSuite) SetupTest() {
-	// General config for transactions and randomness for the test suite
-	suite.encodingConfig = testutils.CreateTestEncodingConfig()
-	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	key := storetypes.NewKVStoreKey(buildertypes.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), key, storetypes.NewTransientStoreKey("transient_test"))
-	suite.ctx = testCtx.Ctx.WithBlockHeight(1)
+func (s *ProposalsTestSuite) SetupTest() {
+	// Set up basic TX encoding config.
+	s.encodingConfig = testutils.CreateTestEncodingConfig()
 
-	// Lanes configuration
-	// Top of block lane set up
-	suite.tobConfig = blockbuster.BaseLaneConfig{
-		Logger:        log.NewTestLogger(suite.T()),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
-	}
-	suite.tobLane = auction.NewTOBLane(
-		suite.tobConfig,
-		0, // No bound on the number of transactions in the lane
-		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
-	)
+	// Create a few random accounts
+	s.random = rand.New(rand.NewSource(1))
+	s.accounts = testutils.RandomAccounts(s.random, 5)
+	s.gasTokenDenom = "stake"
 
-	// Free lane set up
-	suite.freeConfig = blockbuster.BaseLaneConfig{
-		Logger:        log.NewTestLogger(suite.T()),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
-		IgnoreList:    []blockbuster.Lane{suite.tobLane},
-	}
-	suite.freeLane = free.NewFreeLane(
-		suite.freeConfig,
-		free.NewDefaultFreeFactory(suite.encodingConfig.TxConfig.TxDecoder()),
-	)
-
-	// Base lane set up
-	suite.baseConfig = blockbuster.BaseLaneConfig{
-		Logger:        log.NewTestLogger(suite.T()),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(), // It can be as big as it wants (up to maxTxBytes)
-		IgnoreList:    []blockbuster.Lane{suite.tobLane, suite.freeLane},
-	}
-	suite.baseLane = base.NewDefaultLane(
-		suite.baseConfig,
-	)
-
-	// Mempool set up
-	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
-
-	// Accounts set up
-	suite.accounts = testutils.RandomAccounts(suite.random, 10)
-	suite.nonces = make(map[string]uint64)
-	for _, acc := range suite.accounts {
-		suite.nonces[acc.Address.String()] = 0
-	}
-
-	// Set up the keepers and decorators
-	// Mock keepers set up
-	ctrl := gomock.NewController(suite.T())
-	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
-	suite.accountKeeper.EXPECT().GetModuleAddress(buildertypes.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
-	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
-	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
-
-	// Builder keeper / decorator set up
-	suite.builderKeeper = keeper.NewKeeper(
-		suite.encodingConfig.Codec,
-		key,
-		suite.accountKeeper,
-		suite.bankKeeper,
-		suite.distrKeeper,
-		suite.stakingKeeper,
-		sdk.AccAddress([]byte("authority")).String(),
-	)
-
-	// Set the default params for the builder keeper
-	err := suite.builderKeeper.SetParams(suite.ctx, buildertypes.DefaultParams())
-	suite.Require().NoError(err)
-
-	// Set up the ante handler
-	suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.tobLane, suite.mempool)
-
-	// Proposal handler set up
-	suite.proposalHandler = abci.NewProposalHandler(log.NewTestLogger(suite.T()), suite.encodingConfig.TxConfig.TxDecoder(), suite.mempool)
+	s.key = storetypes.NewKVStoreKey("test")
+	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx.WithIsCheckTx(true)
 }
 
-func (suite *ABCITestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {
-	suite.bankKeeper.EXPECT().GetBalance(ctx, gomock.Any(), "stake").AnyTimes().Return(
-		sdk.NewCoin("stake", math.NewInt(100000000000000)),
-	)
+func (s *ProposalsTestSuite) TestPrepareProposal() {
+	s.Run("can prepare a proposal with no transactions", func() {
+		// Set up the default lane with no transactions
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("1"), nil)
 
-	next := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
-		return ctx, nil
-	}
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{defaultLane}).PrepareProposalHandler()
 
-	return suite.builderDecorator.AnteHandle(ctx, tx, false, next)
-}
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+		s.Require().Equal(0, len(resp.Txs))
+	})
 
-func (suite *ABCITestSuite) resetLanesWithNewConfig() {
-	// Top of block lane set up
-	suite.tobLane = auction.NewTOBLane(
-		suite.tobConfig,
-		0, // No bound on the number of transactions in the lane
-		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
-	)
-
-	// Free lane set up
-	suite.freeLane = free.NewFreeLane(
-		suite.freeConfig,
-		free.NewDefaultFreeFactory(suite.encodingConfig.TxConfig.TxDecoder()),
-	)
-
-	// Base lane set up
-	suite.baseLane = base.NewDefaultLane(
-		suite.baseConfig,
-	)
-
-	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
-
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
-}
-
-func (suite *ABCITestSuite) TestPrepareProposal() {
-	var (
-		// the modified transactions cannot exceed this size
-		maxTxBytes int64 = 1000000000000000000
-
-		// mempool configuration
-		txs              []sdk.Tx
-		auctionTxs       []sdk.Tx
-		winningBidTx     sdk.Tx
-		insertBundledTxs = false
-
-		// auction configuration
-		maxBundleSize          uint32 = 10
-		reserveFee                    = sdk.NewCoin("stake", math.NewInt(1000))
-		minBidIncrement               = sdk.NewCoin("stake", math.NewInt(100))
-		frontRunningProtection        = true
-	)
-
-	cases := []struct {
-		name                        string
-		malleate                    func()
-		expectedNumberProposalTxs   int
-		expectedMempoolDistribution map[string]int
-	}{
-		{
-			"empty mempool",
-			func() {
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{}
-				winningBidTx = nil
-				insertBundledTxs = false
-			},
+	s.Run("can build a proposal with a single tx from the lane", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
 			0,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 0,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"maxTxBytes is less than any transaction in the mempool",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Create a normal tx
-				account = suite.accounts[2]
-				nonce = suite.nonces[account.Address.String()]
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{freeTx, normalTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = nil
-				insertBundledTxs = false
-				maxTxBytes = 10
-			},
-			0,
-			map[string]int{
-				base.LaneName:    1,
-				auction.LaneName: 1,
-				free.LaneName:    1,
-			},
-		},
-		{
-			"valid tob tx but maxTxBytes is less for the tob lane so only the free tx should be included",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Get the size of the tob tx
-				bidTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(bidTx)
-				suite.Require().NoError(err)
-				tobSize := int64(len(bidTxBytes))
-
-				// Get the size of the free tx
-				freeTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(freeTx)
-				suite.Require().NoError(err)
-				freeSize := int64(len(freeTxBytes))
-
-				maxTxBytes = tobSize + freeSize
-				suite.tobConfig.MaxBlockSpace = math.LegacyMustNewDecFromStr("0.1")
-
-				txs = []sdk.Tx{freeTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = nil
-				insertBundledTxs = false
-			},
 			1,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 1,
-				free.LaneName:    1,
-			},
-		},
-		{
-			"valid tob tx with sufficient space for only tob tx",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2]}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Get the size of the tob tx
-				bidTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(bidTx)
-				suite.Require().NoError(err)
-				tobSize := int64(len(bidTxBytes))
-
-				// Get the size of the free tx
-				freeTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(freeTx)
-				suite.Require().NoError(err)
-				freeSize := int64(len(freeTxBytes))
-
-				maxTxBytes = tobSize*2 + freeSize - 1
-				suite.tobConfig.MaxBlockSpace = math.LegacyZeroDec()
-				suite.freeConfig.MaxBlockSpace = math.LegacyMustNewDecFromStr("0.1")
-
-				txs = []sdk.Tx{freeTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-			},
-			2,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 1,
-				free.LaneName:    1,
-			},
-		},
-		{
-			"tob, free, and normal tx but only space for tob and normal tx",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Create a normal tx
-				account = suite.accounts[3]
-				nonce = suite.nonces[account.Address.String()]
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				// Get the size of the tob tx
-				bidTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(bidTx)
-				suite.Require().NoError(err)
-				tobSize := int64(len(bidTxBytes))
-
-				// Get the size of the free tx
-				freeTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(freeTx)
-				suite.Require().NoError(err)
-				freeSize := int64(len(freeTxBytes))
-
-				// Get the size of the normal tx
-				normalTxBytes, err := suite.encodingConfig.TxConfig.TxEncoder()(normalTx)
-				suite.Require().NoError(err)
-				normalSize := int64(len(normalTxBytes))
-
-				maxTxBytes = tobSize*2 + freeSize + normalSize + 1
-
-				// Tob can take up as much space as it wants
-				suite.tobConfig.MaxBlockSpace = math.LegacyZeroDec()
-
-				// Free can take up less space than the tx
-				suite.freeConfig.MaxBlockSpace = math.LegacyMustNewDecFromStr("0.01")
-
-				// Default can take up as much space as it wants
-				suite.baseConfig.MaxBlockSpace = math.LegacyZeroDec()
-
-				txs = []sdk.Tx{freeTx, normalTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-			},
-			4,
-			map[string]int{
-				base.LaneName:    1,
-				auction.LaneName: 1,
-				free.LaneName:    1,
-			},
-		},
-		{
-			"single valid tob transaction in the mempool",
-			func() {
-				// reset the configs
-				suite.tobConfig.MaxBlockSpace = math.LegacyZeroDec()
-				suite.freeConfig.MaxBlockSpace = math.LegacyZeroDec()
-				suite.baseConfig.MaxBlockSpace = math.LegacyZeroDec()
-
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-				maxTxBytes = 1000000000000000000
-			},
-			2,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 1,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"single invalid tob transaction in the mempool",
-			func() {
-				bidder := suite.accounts[0]
-				bid := reserveFee.Sub(sdk.NewCoin("stake", math.NewInt(1))) // bid is less than the reserve fee
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = nil
-				insertBundledTxs = false
-			},
 			0,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 0,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"normal transactions in the mempool",
-			func() {
-				account := suite.accounts[0]
-				nonce := suite.nonces[account.Address.String()]
-				timeout := uint64(100)
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
 
-				txs = []sdk.Tx{normalTx}
-				auctionTxs = []sdk.Tx{}
-				winningBidTx = nil
-				insertBundledTxs = false
-			},
+		// Set up the default lane
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{tx: true})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{defaultLane}).PrepareProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NotNil(resp)
+		s.Require().NoError(err)
+
+		proposal := s.getTxBytes(tx)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal with multiple txs from the lane", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
 			1,
-			map[string]int{
-				base.LaneName:    1,
-				auction.LaneName: 0,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"normal transactions and tob transactions in the mempool",
-			func() {
-				// Create a valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
 
-				// Create a valid default transaction
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()] + 1
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
+		// Create a second random transaction that will be inserted into the default lane
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			1,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
+		)
+		s.Require().NoError(err)
 
-				txs = []sdk.Tx{normalTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-			},
-			3,
-			map[string]int{
-				base.LaneName:    1,
-				auction.LaneName: 1,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"multiple tob transactions where the first is invalid",
-			func() {
-				// Create an invalid tob transaction (frontrunning)
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder, bidder, suite.accounts[1]}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+		// Set up the default lane with both transactions passing
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{tx1: true, tx2: true})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx1))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
-				// Create a valid tob transaction
-				bidder = suite.accounts[1]
-				bid = sdk.NewCoin("stake", math.NewInt(1000))
-				nonce = suite.nonces[bidder.Address.String()]
-				timeout = uint64(100)
-				signers = []testutils.Account{bidder}
-				bidTx2, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{defaultLane}).PrepareProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NotNil(resp)
+		s.Require().NoError(err)
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx, bidTx2}
-				winningBidTx = bidTx2
-				insertBundledTxs = false
-			},
-			2,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 1,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"multiple tob transactions where the first is valid",
-			func() {
-				// Create an valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(10000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+		proposal := s.getTxBytes(tx2, tx1)
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
 
-				// Create a valid tob transaction
-				bidder = suite.accounts[1]
-				bid = sdk.NewCoin("stake", math.NewInt(1000))
-				nonce = suite.nonces[bidder.Address.String()]
-				timeout = uint64(100)
-				signers = []testutils.Account{bidder}
-				bidTx2, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+	s.Run("can build a proposal with single tx with other that fails", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx, bidTx2}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-			},
-			3,
-			map[string]int{
-				base.LaneName:    0,
-				auction.LaneName: 2,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"multiple tob transactions where the first is valid and bundle is inserted into mempool",
-			func() {
-				frontRunningProtection = false
+		// Create a second random transaction that will be inserted into the default lane
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			1,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
+		)
+		s.Require().NoError(err)
 
-				// Create an valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(10000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], suite.accounts[1], bidder, suite.accounts[3], suite.accounts[4]}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+		// Set up the default lane with both transactions passing
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{tx1: true, tx2: false})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx1))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = true
-			},
-			6,
-			map[string]int{
-				base.LaneName:    5,
-				auction.LaneName: 1,
-				free.LaneName:    0,
-			},
-		},
-		{
-			"valid tob, free, and normal tx",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{defaultLane}).PrepareProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NotNil(resp)
+		s.Require().NoError(err)
 
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
+		proposal := s.getTxBytes(tx1)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
 
-				// Create a normal tx
-				account = suite.accounts[3]
-				nonce = suite.nonces[account.Address.String()]
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
+	s.Run("can build a proposal an empty proposal with multiple lanes", func() {
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), nil)
 
-				txs = []sdk.Tx{freeTx, normalTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				winningBidTx = bidTx
-				insertBundledTxs = false
-			},
-			5,
-			map[string]int{
-				base.LaneName:    1,
-				auction.LaneName: 1,
-				free.LaneName:    1,
-			},
-		},
-	}
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
 
-	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.SetupTest() // reset
-			tc.malleate()
-			suite.resetLanesWithNewConfig()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
 
-			// Insert all of the normal transactions into the default lane
-			for _, tx := range txs {
-				suite.Require().NoError(suite.mempool.Insert(suite.ctx, tx))
-			}
+		s.Require().Equal(0, len(resp.Txs))
+	})
 
-			// Insert all of the auction transactions into the TOB lane
-			for _, tx := range auctionTxs {
-				suite.Require().NoError(suite.mempool.Insert(suite.ctx, tx))
-			}
+	s.Run("can build a proposal with transactions from a single lane given multiple lanes", func() {
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:1],
+		)
+		s.Require().NoError(err)
 
-			// Insert all of the bundled transactions into the TOB lane if desired
-			if insertBundledTxs {
-				for _, tx := range auctionTxs {
-					bidInfo, err := suite.tobLane.GetAuctionBidInfo(tx)
-					suite.Require().NoError(err)
-
-					for _, txBz := range bidInfo.Transactions {
-						tx, err := suite.encodingConfig.TxConfig.TxDecoder()(txBz)
-						suite.Require().NoError(err)
-
-						suite.Require().NoError(suite.mempool.Insert(suite.ctx, tx))
-					}
-				}
-			}
-
-			// Create a new auction
-			params := buildertypes.Params{
-				MaxBundleSize:          maxBundleSize,
-				ReserveFee:             reserveFee,
-				FrontRunningProtection: frontRunningProtection,
-				MinBidIncrement:        minBidIncrement,
-			}
-			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.tobLane, suite.mempool)
-
-			for _, lane := range suite.lanes {
-				lane.SetAnteHandler(suite.anteHandler)
-			}
-
-			// Create a new proposal handler
-			suite.proposalHandler = abci.NewProposalHandler(log.NewTestLogger(suite.T()), suite.encodingConfig.TxConfig.TxDecoder(), suite.mempool)
-			handler := suite.proposalHandler.PrepareProposalHandler()
-			res, err := handler(suite.ctx, &abcitypes.RequestPrepareProposal{
-				MaxTxBytes: maxTxBytes,
-			})
-			suite.Require().NoError(err)
-
-			// -------------------- Check Invariants -------------------- //
-			// 1. the number of transactions in the response must be equal to the number of expected transactions
-			suite.Require().Equal(tc.expectedNumberProposalTxs, len(res.Txs))
-
-			// 2. total bytes must be less than or equal to maxTxBytes
-			totalBytes := int64(0)
-			txIndex := 0
-			for txIndex < len(res.Txs) {
-				totalBytes += int64(len(res.Txs[txIndex]))
-
-				tx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[txIndex])
-				suite.Require().NoError(err)
-
-				suite.Require().Equal(true, suite.mempool.Contains(tx))
-
-				// In the case where we have a tob tx, we skip the other transactions in the bundle
-				// in order to not double count
-				switch {
-				case suite.tobLane.Match(suite.ctx, tx):
-					bidInfo, err := suite.tobLane.GetAuctionBidInfo(tx)
-					suite.Require().NoError(err)
-
-					txIndex += len(bidInfo.Transactions) + 1
-				default:
-					txIndex++
-				}
-			}
-
-			suite.Require().LessOrEqual(totalBytes, maxTxBytes)
-
-			// 3. if there are auction transactions, the first transaction must be the top bid
-			// and the rest of the bundle must be in the response
-			if winningBidTx != nil {
-				auctionTx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[0])
-				suite.Require().NoError(err)
-
-				bidInfo, err := suite.tobLane.GetAuctionBidInfo(auctionTx)
-				suite.Require().NoError(err)
-
-				for index, tx := range bidInfo.Transactions {
-					suite.Require().Equal(tx, res.Txs[index+1])
-				}
-			} else if len(res.Txs) > 0 {
-				tx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[0])
-				suite.Require().NoError(err)
-
-				bidInfo, err := suite.tobLane.GetAuctionBidInfo(tx)
-				suite.Require().NoError(err)
-				suite.Require().Nil(bidInfo)
-			}
-
-			// 4. All of the transactions must be unique
-			uniqueTxs := make(map[string]bool)
-			for _, tx := range res.Txs {
-				suite.Require().False(uniqueTxs[string(tx)])
-				uniqueTxs[string(tx)] = true
-			}
-
-			// 5. The number of transactions in the mempool must be correct
-			suite.Require().Equal(tc.expectedMempoolDistribution, suite.mempool.GetTxDistribution())
-
-			// 6. The ordering of transactions must respect the ordering of the lanes
-			laneIndex := 0
-			txIndex = 0
-			for txIndex < len(res.Txs) {
-				sdkTx, err := suite.encodingConfig.TxConfig.TxDecoder()(res.Txs[txIndex])
-				suite.Require().NoError(err)
-
-				if suite.lanes[laneIndex].Match(suite.ctx, sdkTx) {
-					switch suite.lanes[laneIndex].Name() {
-					case suite.tobLane.Name():
-						bidInfo, err := suite.tobLane.GetAuctionBidInfo(sdkTx)
-						suite.Require().NoError(err)
-
-						txIndex += len(bidInfo.Transactions) + 1
-					default:
-						txIndex++
-					}
-				} else {
-					laneIndex++
-				}
-
-				suite.Require().Less(laneIndex, len(suite.lanes))
-			}
+		// Set up the TOB lane with the bid tx and the bundled tx
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
 		})
-	}
+		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx, bundleTxs[0])
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can ignore txs that are already included in a proposal", func() {
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:1],
+		)
+		s.Require().NoError(err)
+
+		// Set up the TOB lane with the bid tx and the bundled tx
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+
+		// Set up the default lane with the bid tx and the bundled tx
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx, bundleTxs[0])
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal where first lane has too large of a tx and second lane has a valid tx", func() {
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:1],
+		)
+		s.Require().NoError(err)
+
+		// Set up the TOB lane with the bid tx and the bundled tx
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           false,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+
+		// Set up the default lane with the bid tx and the bundled tx
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			// Even though this passes it should not include it in the proposal because it is in the ignore list
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(bundleTxs[0])
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal where first lane cannot fit txs but second lane can", func() {
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:1],
+		)
+		s.Require().NoError(err)
+
+		// Set up the TOB lane with the bid tx and the bundled tx
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(tobLane.Insert(sdk.Context{}, tx))
+
+		// Set up the default lane with the bid tx and the bundled tx
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			// Even though this passes it should not include it in the proposal because it is in the ignore list
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).PrepareProposalHandler()
+		proposal := s.getTxBytes(tx, bundleTxs[0])
+		size := int64(len(proposal[0]) - 1)
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: size})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal[1:], resp.Txs)
+	})
+
+	s.Run("can build a proposal with single tx from middle lane", func() {
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), nil)
+
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, freeTx))
+
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
+		s.Require().NoError(freeLane.Insert(sdk.Context{}, freeTx))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).PrepareProposalHandler()
+
+		proposal := s.getTxBytes(freeTx)
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("transaction from every lane", func() {
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:4],
+		)
+		s.Require().NoError(err)
+
+		// Create a normal tx
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Create a free tx
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
+			bundleTxs[1]: true,
+			bundleTxs[2]: true,
+			bundleTxs[3]: true,
+		})
+		tobLane.Insert(sdk.Context{}, tx)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			normalTx: true,
+		})
+		defaultLane.Insert(sdk.Context{}, normalTx)
+
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
+		freeLane.Insert(sdk.Context{}, freeTx)
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).PrepareProposalHandler()
+		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		s.Require().Equal(7, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
 }
 
-func (suite *ABCITestSuite) TestProcessProposal() {
-	var (
-		// mempool configuration
-		txs          []sdk.Tx
-		auctionTxs   []sdk.Tx
-		insertRefTxs = false
+func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
+	s.Run("can build a proposal if a lane panics first", func() {
+		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
 
-		// auction configuration
-		maxBundleSize          uint32 = 10
-		reserveFee                    = sdk.NewCoin("stake", math.NewInt(1000))
-		frontRunningProtection        = true
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := abci.NewProposalHandler(
+			log.NewTestLogger(s.T()),
+			s.encodingConfig.TxConfig.TxDecoder(),
+			[]blockbuster.Lane{panicLane, defaultLane},
+		).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal if second lane panics", func() {
+		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := abci.NewProposalHandler(
+			log.NewTestLogger(s.T()),
+			s.encodingConfig.TxConfig.TxDecoder(),
+			[]blockbuster.Lane{defaultLane, panicLane},
+		).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal if multiple consecutive lanes panic", func() {
+		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := abci.NewProposalHandler(
+			log.NewTestLogger(s.T()),
+			s.encodingConfig.TxConfig.TxDecoder(),
+			[]blockbuster.Lane{panicLane, panicLane2, defaultLane},
+		).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+
+	s.Run("can build a proposal if the last few lanes panic", func() {
+		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := abci.NewProposalHandler(
+			log.NewTestLogger(s.T()),
+			s.encodingConfig.TxConfig.TxDecoder(),
+			[]blockbuster.Lane{defaultLane, panicLane, panicLane2},
+		).PrepareProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		proposal := s.getTxBytes(tx)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
+	})
+}
+
+func (s *ProposalsTestSuite) TestProcessProposal() {
+	s.Run("can process a valid empty proposal", func() {
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).ProcessProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: nil})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+	})
+
+	s.Run("rejects a proposal with bad txs", func() {
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, freeLane, defaultLane}).ProcessProposalHandler()
+
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{{0x01, 0x02, 0x03}}})
+		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
+	s.Run("rejects a proposal when a lane panics", func() {
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.0"))
+
+		txbz, err := testutils.CreateRandomTxBz(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+		)
+		s.Require().NoError(err)
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, panicLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{txbz}})
+		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
+	s.Run("can process a invalid proposal (out of order)", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Create a random transaction that will be inserted into the default lane
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		// Set up the default lane
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{tx: true})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(tx, tx2)})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+	})
+
+	s.Run("can process a invalid proposal where first lane is valid second is not", func() {
+		bidTx, bundle, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			1,
+			s.accounts[0:2],
+		)
+		s.Require().NoError(err)
+
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		normalTx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
+		)
+		s.Require().NoError(err)
+
+		// Set up the default lane
+		defaultLane := s.setUpDefaultLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+		defaultLane.SetProcessLaneHandler(blockbuster.NoOpProcessLaneHandler())
+
+		// Set up the TOB lane
+		tobLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
+		tobLane.SetProcessLaneHandler(blockbuster.NoOpProcessLaneHandler())
+
+		proposalHandler := s.setUpProposalHandlers([]blockbuster.Lane{tobLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+	})
+}
+
+func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {
+	txCache := make(map[string]bool)
+	for tx, pass := range expectedExecution {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		hash := sha256.Sum256(bz)
+		hashStr := hex.EncodeToString(hash[:])
+		txCache[hashStr] = pass
+	}
+
+	anteHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		hash := sha256.Sum256(bz)
+		hashStr := hex.EncodeToString(hash[:])
+
+		pass, found := txCache[hashStr]
+		if !found {
+			return ctx, fmt.Errorf("tx not found")
+		}
+
+		if pass {
+			return ctx, nil
+		}
+
+		return ctx, fmt.Errorf("tx failed")
+	}
+
+	return anteHandler
+}
+
+func (s *ProposalsTestSuite) setUpDefaultLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *base.DefaultLane {
+	cfg := blockbuster.LaneConfig{
+		Logger:        log.NewTestLogger(s.T()),
+		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace: maxBlockSpace,
+	}
+
+	return base.NewDefaultLane(cfg)
+}
+
+func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *auction.TOBLane {
+	cfg := blockbuster.LaneConfig{
+		Logger:        log.NewTestLogger(s.T()),
+		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace: maxBlockSpace,
+	}
+
+	return auction.NewTOBLane(cfg, auction.NewDefaultAuctionFactory(cfg.TxDecoder))
+}
+
+func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
+	cfg := blockbuster.LaneConfig{
+		Logger:        log.NewTestLogger(s.T()),
+		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:   s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace: maxBlockSpace,
+	}
+
+	return free.NewFreeLane(cfg, blockbuster.DefaultTxPriority(), free.DefaultMatchHandler())
+}
+
+func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *blockbuster.LaneConstructor {
+	cfg := blockbuster.LaneConfig{
+		Logger:        log.NewTestLogger(s.T()),
+		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		MaxBlockSpace: maxBlockSpace,
+	}
+
+	lane := blockbuster.NewLaneConstructor(
+		cfg,
+		"panic",
+		blockbuster.NewConstructorMempool[string](blockbuster.DefaultTxPriority(), cfg.TxEncoder, 0),
+		blockbuster.DefaultMatchHandler(),
 	)
 
-	cases := []struct {
-		name     string
-		malleate func()
-		response abcitypes.ResponseProcessProposal_ProposalStatus
-	}{
-		{
-			"no normal tx, no tob tx",
-			func() {
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
-		{
-			"single default tx",
-			func() {
-				account := suite.accounts[0]
-				nonce := suite.nonces[account.Address.String()]
-				timeout := uint64(100)
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
+	lane.SetPrepareLaneHandler(blockbuster.PanicPrepareLaneHandler())
+	lane.SetProcessLaneHandler(blockbuster.PanicProcessLaneHandler())
 
-				txs = []sdk.Tx{normalTx}
-				auctionTxs = []sdk.Tx{}
-				insertRefTxs = false
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
-		{
-			"single tob tx without bundled txs in proposal",
-			func() {
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+	return lane
+}
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = false
-			},
-			abcitypes.ResponseProcessProposal_REJECT,
-		},
-		{
-			"single tob tx with bundled txs in proposal",
-			func() {
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[1], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []blockbuster.Lane) *abci.ProposalHandler {
+	mempool := blockbuster.NewMempool(log.NewTestLogger(s.T()), true, lanes...)
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
-		{
-			"single invalid tob tx (front-running)",
-			func() {
-				// Create an valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(10000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], suite.accounts[1], bidder, suite.accounts[3], suite.accounts[4]}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+	return abci.NewProposalHandler(
+		log.NewTestLogger(s.T()),
+		s.encodingConfig.TxConfig.TxDecoder(),
+		mempool.Registry(),
+	)
+}
 
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_REJECT,
-		},
-		{
-			"multiple tob txs in the proposal",
-			func() {
-				// Create an valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(10000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
+func (s *ProposalsTestSuite) getTxBytes(txs ...sdk.Tx) [][]byte {
+	txBytes := make([][]byte, len(txs))
+	for i, tx := range txs {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
 
-				// Create a valid tob transaction
-				bidder = suite.accounts[1]
-				bid = sdk.NewCoin("stake", math.NewInt(1000))
-				nonce = suite.nonces[bidder.Address.String()]
-				timeout = uint64(100)
-				signers = []testutils.Account{bidder}
-				bidTx2, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{}
-				auctionTxs = []sdk.Tx{bidTx, bidTx2}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_REJECT,
-		},
-		{
-			"single tob tx with front-running disabled and multiple other txs",
-			func() {
-				frontRunningProtection = false
-
-				// Create an valid tob transaction
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(10000000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a few other transactions
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				timeout = uint64(100)
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				account = suite.accounts[3]
-				nonce = suite.nonces[account.Address.String()]
-				timeout = uint64(100)
-				numberMsgs = uint64(3)
-				normalTx2, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{normalTx, normalTx2}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
-		{
-			"tob, free, and default tx",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Create a normal tx
-				account = suite.accounts[3]
-				nonce = suite.nonces[account.Address.String()]
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{freeTx, normalTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
-		{
-			"tob, free, and default tx with default and free mixed",
-			func() {
-				// Create a tob tx
-				bidder := suite.accounts[0]
-				bid := sdk.NewCoin("stake", math.NewInt(1000))
-				nonce := suite.nonces[bidder.Address.String()]
-				timeout := uint64(100)
-				signers := []testutils.Account{suite.accounts[2], bidder}
-				bidTx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, bidder, bid, nonce, timeout, signers)
-				suite.Require().NoError(err)
-
-				// Create a free tx
-				account := suite.accounts[1]
-				nonce = suite.nonces[account.Address.String()]
-				freeTx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, account, nonce, timeout, "val1", bid)
-				suite.Require().NoError(err)
-
-				// Create a normal tx
-				account = suite.accounts[3]
-				nonce = suite.nonces[account.Address.String()]
-				numberMsgs := uint64(3)
-				normalTx, err := testutils.CreateRandomTx(suite.encodingConfig.TxConfig, account, nonce, numberMsgs, timeout)
-				suite.Require().NoError(err)
-
-				txs = []sdk.Tx{normalTx, freeTx}
-				auctionTxs = []sdk.Tx{bidTx}
-				insertRefTxs = true
-			},
-			abcitypes.ResponseProcessProposal_ACCEPT,
-		},
+		txBytes[i] = bz
 	}
-
-	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.SetupTest() // reset
-			tc.malleate()
-
-			// Insert all of the transactions into the proposal
-			proposalTxs := make([][]byte, 0)
-			for _, tx := range auctionTxs {
-				txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
-				suite.Require().NoError(err)
-
-				proposalTxs = append(proposalTxs, txBz)
-
-				if insertRefTxs {
-					bidInfo, err := suite.tobLane.GetAuctionBidInfo(tx)
-					suite.Require().NoError(err)
-
-					proposalTxs = append(proposalTxs, bidInfo.Transactions...)
-				}
-			}
-
-			for _, tx := range txs {
-				txBz, err := suite.encodingConfig.TxConfig.TxEncoder()(tx)
-				suite.Require().NoError(err)
-
-				proposalTxs = append(proposalTxs, txBz)
-			}
-
-			// create a new auction
-			params := buildertypes.Params{
-				MaxBundleSize:          maxBundleSize,
-				ReserveFee:             reserveFee,
-				FrontRunningProtection: frontRunningProtection,
-			}
-			suite.builderKeeper.SetParams(suite.ctx, params)
-			suite.builderDecorator = ante.NewBuilderDecorator(suite.builderKeeper, suite.encodingConfig.TxConfig.TxEncoder(), suite.tobLane, suite.mempool)
-
-			handler := suite.proposalHandler.ProcessProposalHandler()
-			res, err := handler(suite.ctx, &abcitypes.RequestProcessProposal{
-				Txs: proposalTxs,
-			})
-
-			// Check if the response is valid
-			suite.Require().Equal(tc.response, res.Status)
-
-			if res.Status == abcitypes.ResponseProcessProposal_ACCEPT {
-				suite.Require().NoError(err)
-			} else {
-				suite.Require().Error(err)
-			}
-		})
-	}
+	return txBytes
 }

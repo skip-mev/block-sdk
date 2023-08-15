@@ -131,14 +131,6 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 	}
 	p.totalTxBytes = updatedSize
 
-	lane.Logger().Info(
-		"adding transactions to proposal",
-		"lane", lane.Name(),
-		"num_txs", len(partialProposalTxs),
-		"total_tx_bytes", partialProposalSize,
-		"cumulative_size", updatedSize,
-	)
-
 	p.txs = append(p.txs, partialProposalTxs...)
 
 	for _, tx := range partialProposalTxs {
@@ -146,7 +138,22 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 		txHashStr := hex.EncodeToString(txHash[:])
 
 		p.cache[txHashStr] = struct{}{}
+
+		lane.Logger().Info(
+			"added transaction to proposal",
+			"lane", lane.Name(),
+			"tx_hash", txHashStr,
+			"tx_bytes", len(tx),
+		)
 	}
+
+	lane.Logger().Info(
+		"added transactions to proposal",
+		"lane", lane.Name(),
+		"num_txs", len(partialProposalTxs),
+		"total_tx_bytes", partialProposalSize,
+		"cumulative_size", updatedSize,
+	)
 
 	return nil
 }

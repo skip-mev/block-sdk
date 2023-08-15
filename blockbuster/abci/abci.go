@@ -1,6 +1,8 @@
 package abci
 
 import (
+	"fmt"
+
 	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -20,13 +22,14 @@ type (
 	}
 )
 
-// NewProposalHandler returns a new abci++ proposal handler.
-func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, mempool blockbuster.Mempool) *ProposalHandler {
+// NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
+// iteratively call each of the lanes in the chain to prepare and process the proposal.
+func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []blockbuster.Lane) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
 		txDecoder:           txDecoder,
-		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()...),
-		processLanesHandler: ChainProcessLanes(mempool.Registry()...),
+		prepareLanesHandler: ChainPrepareLanes(lanes...),
+		processLanesHandler: ChainProcessLanes(lanes...),
 	}
 }
 
@@ -55,6 +58,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"prepared proposal",
 			"num_txs", proposal.GetNumTxs(),
 			"total_tx_bytes", proposal.GetTotalTxBytes(),
+			"height", req.Height,
 		)
 
 		return &abci.ResponsePrepareProposal{
@@ -71,9 +75,11 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		// In the case where any of the lanes panic, we recover here and return a reject status.
 		defer func() {
-			if err := recover(); err != nil {
-				h.logger.Error("failed to process proposal", "err", err)
+			if rec := recover(); rec != nil {
+				h.logger.Error("failed to process proposal", "recover_err", rec)
+
 				resp = &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
+				err = fmt.Errorf("failed to process proposal: %v", rec)
 			}
 		}()
 
@@ -125,9 +131,14 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 		// Cache the context in the case where any of the lanes fail to prepare the proposal.
 		cacheCtx, write := ctx.CacheContext()
 
+		// We utilize a recover to handle any panics or errors that occur during the preparation
+		// of a lane's transactions. This defer will first check if there was a panic or error
+		// thrown from the lane's preparation logic. If there was, we log the error, skip the lane,
+		// and call the next lane in the chain to the prepare the proposal.
 		defer func() {
 			if rec := recover(); rec != nil || err != nil {
 				lane.Logger().Error("failed to prepare lane", "lane", lane.Name(), "err", err, "recover_error", rec)
+				lane.Logger().Info("skipping lane", "lane", lane.Name())
 
 				lanesRemaining := len(chain)
 				switch {
@@ -141,22 +152,13 @@ func ChainPrepareLanes(chain ...blockbuster.Lane) blockbuster.PrepareLanesHandle
 					// is the lane that failed to prepare the proposal but the second lane in the
 					// chain is not the terminator lane so there could potentially be more transactions
 					// added to the proposal
-					maxTxBytesForLane := utils.GetMaxTxBytesForLane(
-						partialProposal.GetMaxTxBytes(),
-						partialProposal.GetTotalTxBytes(),
-						chain[1].GetMaxBlockSpace(),
-					)
-
-					finalProposal, err = chain[1].PrepareLane(
-						ctx,
-						partialProposal,
-						maxTxBytesForLane,
-						ChainPrepareLanes(chain[2:]...),
-					)
+					finalProposal, err = ChainPrepareLanes(chain[1:]...)(ctx, partialProposal)
 				}
 			} else {
 				// Write the cache to the context since we know that the lane successfully prepared
-				// the partial proposal.
+				// the partial proposal. State is written to in a backwards, cascading fashion. This means
+				// that the final context will only be updated after all other lanes have successfully
+				// prepared the partial proposal.
 				write()
 			}
 		}()
@@ -198,7 +200,7 @@ func ChainProcessLanes(chain ...blockbuster.Lane) blockbuster.ProcessLanesHandle
 
 		chain[0].Logger().Info("processing lane", "lane", chain[0].Name())
 
-		if err := chain[0].ProcessLaneBasic(ctx, proposalTxs); err != nil {
+		if err := chain[0].CheckOrder(ctx, proposalTxs); err != nil {
 			chain[0].Logger().Error("failed to process lane", "lane", chain[0].Name(), "err", err)
 			return ctx, err
 		}

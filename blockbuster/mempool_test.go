@@ -27,9 +27,10 @@ type BlockBusterTestSuite struct {
 	encodingConfig testutils.EncodingConfig
 
 	// Define all of the lanes utilized in the test suite
-	tobLane  *auction.TOBLane
-	baseLane *base.DefaultLane
-	freeLane *free.Lane
+	tobLane       *auction.TOBLane
+	baseLane      *base.DefaultLane
+	freeLane      *free.FreeLane
+	gasTokenDenom string
 
 	lanes   []blockbuster.Lane
 	mempool blockbuster.Mempool
@@ -55,7 +56,8 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// Lanes configuration
 	//
 	// TOB lane set up
-	tobConfig := blockbuster.BaseLaneConfig{
+	suite.gasTokenDenom = "stake"
+	tobConfig := blockbuster.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
@@ -64,37 +66,30 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.tobLane = auction.NewTOBLane(
 		tobConfig,
-		0, // No bound on the number of transactions in the lane
 		auction.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
 	)
 
 	// Free lane set up
-	freeConfig := blockbuster.BaseLaneConfig{
+	freeConfig := blockbuster.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList: []blockbuster.Lane{
-			suite.tobLane,
-		},
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
-		free.NewDefaultFreeFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+		blockbuster.DefaultTxPriority(),
+		free.DefaultMatchHandler(),
 	)
 
 	// Base lane set up
-	baseConfig := blockbuster.BaseLaneConfig{
+	baseConfig := blockbuster.LaneConfig{
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList: []blockbuster.Lane{
-			suite.tobLane,
-			suite.freeLane,
-		},
 	}
 	suite.baseLane = base.NewDefaultLane(
 		baseConfig,
@@ -102,7 +97,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []blockbuster.Lane{suite.tobLane, suite.freeLane, suite.baseLane}
-	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), suite.lanes...)
+	suite.mempool = blockbuster.NewMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
@@ -328,12 +323,12 @@ func (suite *BlockBusterTestSuite) fillBaseLane(numTxs int) {
 		// create a few random msgs and construct the tx
 		nonce := suite.nonces[acc.Address.String()]
 		randomMsgs := testutils.CreateRandomMsgs(acc.Address, 3)
-		tx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, randomMsgs)
+		priority := suite.random.Int63n(100) + 1
+		tx, err := testutils.CreateTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, randomMsgs, sdk.NewCoin(suite.gasTokenDenom, math.NewInt(priority)))
 		suite.Require().NoError(err)
 
 		// insert the tx into the lane and update the account
 		suite.nonces[acc.Address.String()]++
-		priority := suite.random.Int63n(100) + 1
 		suite.Require().NoError(suite.mempool.Insert(suite.ctx.WithPriority(priority), tx))
 	}
 }
@@ -348,7 +343,7 @@ func (suite *BlockBusterTestSuite) fillTOBLane(numTxs int) {
 		// create a randomized auction transaction
 		nonce := suite.nonces[acc.Address.String()]
 		bidAmount := math.NewInt(int64(suite.random.Intn(1000) + 1))
-		bid := sdk.NewCoin("stake", bidAmount)
+		bid := sdk.NewCoin(suite.gasTokenDenom, bidAmount)
 		tx, err := testutils.CreateAuctionTxWithSigners(suite.encodingConfig.TxConfig, acc, bid, nonce, 1000, nil)
 		suite.Require().NoError(err)
 
@@ -367,7 +362,7 @@ func (suite *BlockBusterTestSuite) fillFreeLane(numTxs int) {
 
 		// create a few random msgs and construct the tx
 		nonce := suite.nonces[acc.Address.String()]
-		tx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, "val1", sdk.NewCoin("stake", math.NewInt(100)))
+		tx, err := testutils.CreateFreeTx(suite.encodingConfig.TxConfig, acc, nonce, 1000, "val1", sdk.NewCoin(suite.gasTokenDenom, math.NewInt(100)), sdk.NewCoin(suite.gasTokenDenom, math.NewInt(100)))
 		suite.Require().NoError(err)
 
 		// insert the tx into the lane and update the account

@@ -31,11 +31,15 @@ type (
 		GetLane(name string) (Lane, error)
 	}
 
-	// Mempool defines the Blockbuster mempool implement. It contains a registry
+	// BBMempool defines the Blockbuster mempool implementation. It contains a registry
 	// of lanes, which allows for customizable block proposal construction.
 	BBMempool struct {
+		logger log.Logger
+
+		// registry contains the lanes in the mempool. The lanes are ordered
+		// according to their priority. The first lane in the registry has the
+		// highest priority and the last lane has the lowest priority.
 		registry []Lane
-		logger   log.Logger
 	}
 )
 
@@ -47,8 +51,10 @@ type (
 // registry. Each transaction should only belong in one lane but this is NOT enforced.
 // To enforce that each transaction belong to a single lane, you must configure the
 // ignore list of each lane to include all preceding lanes. Basic mempool API will
-// attempt to insert, remove transactions from all lanes it belongs to.
-func NewMempool(logger log.Logger, lanes ...Lane) *BBMempool {
+// attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
+// that mutex is set to true when creating the mempool. This will ensure that each
+// transaction cannot be inserted into the lanes before it.
+func NewMempool(logger log.Logger, mutex bool, lanes ...Lane) *BBMempool {
 	mempool := &BBMempool{
 		logger:   logger,
 		registry: lanes,
@@ -56,6 +62,16 @@ func NewMempool(logger log.Logger, lanes ...Lane) *BBMempool {
 
 	if err := mempool.ValidateBasic(); err != nil {
 		panic(err)
+	}
+
+	// Set the ignore list for each lane
+	if mutex {
+		registry := mempool.registry
+		for index, lane := range mempool.registry {
+			if index > 0 {
+				lane.SetIgnoreList(registry[:index])
+			}
+		}
 	}
 
 	return mempool
@@ -85,7 +101,14 @@ func (m *BBMempool) GetTxDistribution() map[string]int {
 
 // Insert will insert a transaction into the mempool. It inserts the transaction
 // into the first lane that it matches.
-func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) error {
+func (m *BBMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			m.logger.Error("panic in Insert", "err", r)
+			err = fmt.Errorf("panic in Insert: %v", r)
+		}
+	}()
+
 	var errors []string
 
 	unwrappedCtx := sdk.UnwrapSDKContext(ctx)
@@ -118,7 +141,14 @@ func (m *BBMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
 }
 
 // Remove removes a transaction from all of the lanes it is currently in.
-func (m *BBMempool) Remove(tx sdk.Tx) error {
+func (m *BBMempool) Remove(tx sdk.Tx) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			m.logger.Error("panic in Remove", "err", r)
+			err = fmt.Errorf("panic in Remove: %v", r)
+		}
+	}()
+
 	var errors []string
 
 	for _, lane := range m.registry {
@@ -149,7 +179,14 @@ func (m *BBMempool) Remove(tx sdk.Tx) error {
 }
 
 // Contains returns true if the transaction is contained in any of the lanes.
-func (m *BBMempool) Contains(tx sdk.Tx) bool {
+func (m *BBMempool) Contains(tx sdk.Tx) (contains bool) {
+	defer func() {
+		if r := recover(); r != nil {
+			m.logger.Error("panic in Contains", "err", r)
+			contains = false
+		}
+	}()
+
 	for _, lane := range m.registry {
 		if lane.Contains(tx) {
 			return true
@@ -164,7 +201,10 @@ func (m *BBMempool) Registry() []Lane {
 	return m.registry
 }
 
-// ValidateBasic validates the mempools configuration.
+// ValidateBasic validates the mempools configuration. ValidateBasic ensures
+// the following:
+// - The sum of the lane max block space percentages is less than or equal to 1.
+// - There is no unused block space.
 func (m *BBMempool) ValidateBasic() error {
 	sum := math.LegacyZeroDec()
 	seenZeroMaxBlockSpace := false

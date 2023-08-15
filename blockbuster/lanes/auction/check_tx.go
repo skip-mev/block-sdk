@@ -1,7 +1,6 @@
-package abci
+package auction
 
 import (
-	"context"
 	"fmt"
 
 	log "cosmossdk.io/log"
@@ -29,7 +28,7 @@ type (
 
 		// TOBLane is utilized to retrieve the bid info of a transaction and to
 		// insert a bid transaction into the application-side mempool.
-		tobLane TOBLane
+		tobLane TOBLaneI
 
 		// anteHandler is utilized to verify the bid transaction against the latest
 		// committed state.
@@ -39,20 +38,6 @@ type (
 	// CheckTx is baseapp's CheckTx method that checks the validity of a
 	// transaction.
 	CheckTx func(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error)
-
-	// TOBLane is the interface that defines all of the dependencies that
-	// are required to interact with the top of block lane.
-	TOBLane interface {
-		// GetAuctionBidInfo is utilized to retrieve the bid info of a transaction.
-		GetAuctionBidInfo(tx sdk.Tx) (*types.BidInfo, error)
-
-		// Insert is utilized to insert a transaction into the application-side mempool.
-		Insert(ctx context.Context, tx sdk.Tx) error
-
-		// WrapBundleTransaction is utilized to wrap a transaction included in a bid transaction
-		// into an sdk.Tx.
-		WrapBundleTransaction(tx []byte) (sdk.Tx, error)
-	}
 
 	// BaseApp is an interface that allows us to call baseapp's CheckTx method
 	// as well as retrieve the latest committed state.
@@ -82,7 +67,7 @@ type (
 func NewCheckTxHandler(
 	baseApp BaseApp,
 	txDecoder sdk.TxDecoder,
-	tobLane TOBLane,
+	tobLane TOBLaneI,
 	anteHandler sdk.AnteHandler,
 ) *CheckTxHandler {
 	return &CheckTxHandler{
