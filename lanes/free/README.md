@@ -71,7 +71,7 @@ func NewApp() {
     // visit the README in block-sdk/block/base.
     //
     // MEV lane hosts an action at the top of the block.
-    mevConfig := constructor.LaneConfig{
+    mevConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
@@ -84,7 +84,7 @@ func NewApp() {
     )
 
     // Free lane allows transactions to be included in the next block for free.
-    freeConfig := constructor.LaneConfig{
+    freeConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
@@ -93,12 +93,12 @@ func NewApp() {
     }
     freeLane := free.NewFreeLane(
         freeConfig,
-        constructor.DefaultTxPriority(),
+        base.DefaultTxPriority(),
         free.DefaultMatchHandler(),
     )
 
     // Default lane accepts all other transactions.
-    defaultConfig := constructor.LaneConfig{
+    defaultConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),

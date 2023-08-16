@@ -44,7 +44,7 @@ In the Block SDK, each lane has its own set of rules and transaction flow manage
 
 A block with separate `lanes` can be used for:
 
-1. **MEV mitigation**: a top of block lane could be designed to create an in-protocol top-of-block auction (as we are doing with POB) to recapture MEV in a transparent and governable way.
+1. **MEV mitigation**: a top of block lane could be designed to create an in-protocol top-of-block auction (as we are doing with the Block SDK) to recapture MEV in a transparent and governable way.
 2. **Free/reduced fee txs**: transactions with certain properties (e.g. from trusted accounts or performing encouraged actions) could leverage a free lane to reward behavior.
 3. **Dedicated oracle space** Oracles could be included before other kinds of transactions to ensure that price updates occur first, and are not able to be sandwiched or manipulated.
 4. **Orderflow auctions**: an OFA lane could be constructed such that order flow providers can have their submitted transactions bundled with specific backrunners, to guarantee MEV rewards are attributed back to users. Imagine MEV-share but in protocol.

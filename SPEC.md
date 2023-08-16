@@ -1,6 +1,8 @@
 
 # POB Specification
 
+> **Note**: This specification is a work in progress and is subject to change.
+
 ## Abstract
 
 The `x/builder` module is a Cosmos SDK module that allows Cosmos chains to host

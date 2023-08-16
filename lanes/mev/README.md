@@ -107,7 +107,7 @@ $ go install github.com/skip-mev/block-sdk
       }
       ```
 
-    c. Instantiate the blockbuster mempool with the application's desired lanes.
+    c. Instantiate the Block SDK mempool with the application's desired lanes.
 
       ```go
         // 1. Create the lanes.
@@ -121,7 +121,7 @@ $ go install github.com/skip-mev/block-sdk
         // visit the README in block-sdk/block/base.
         //
         // MEV lane hosts an auction at the top of the block.
-        mevConfig := constructor.LaneConfig{
+        mevConfig := base.LaneConfig{
             Logger:        app.Logger(),
             TxEncoder:     app.txConfig.TxEncoder(),
             TxDecoder:     app.txConfig.TxDecoder(),
@@ -134,7 +134,7 @@ $ go install github.com/skip-mev/block-sdk
         )
 
         // Free lane allows transactions to be included in the next block for free.
-        freeConfig := constructor.LaneConfig{
+        freeConfig := base.LaneConfig{
             Logger:        app.Logger(),
             TxEncoder:     app.txConfig.TxEncoder(),
             TxDecoder:     app.txConfig.TxDecoder(),
@@ -143,12 +143,12 @@ $ go install github.com/skip-mev/block-sdk
         }
         freeLane := free.NewFreeLane(
             freeConfig,
-            constructor.DefaultTxPriority(),
+            base.DefaultTxPriority(),
             free.DefaultMatchHandler(),
         )
 
         // Standard lane accepts all other transactions.
-        defaultConfig := constructor.LaneConfig{
+        defaultConfig := base.LaneConfig{
             Logger:        app.Logger(),
             TxEncoder:     app.txConfig.TxEncoder(),
             TxDecoder:     app.txConfig.TxDecoder(),
@@ -168,7 +168,7 @@ $ go install github.com/skip-mev/block-sdk
       ```
 
     d. Instantiate the antehandler chain for the application with awareness of the
-    blockbuster mempool. This will allow the application to verify the validity
+    LanedMempool. This will allow the application to verify the validity
     of a transaction respecting the desired logic of a given lane. In this walkthrough,
     we want the `FeeDecorator` to be ignored for all transactions that should 
     belong to the free lane. Additionally, we want to add the `x/builder` 
@@ -178,9 +178,9 @@ $ go install github.com/skip-mev/block-sdk
       ```go
         import (
             ...
-            "github.com/skip-mev/pob/blockbuster"
-            "github.com/skip-mev/pob/blockbuster/utils"
-            builderante "github.com/skip-mev/pob/x/builder/ante"
+            "github.com/skip-mev/block-sdk/block"
+            "github.com/skip-mev/block-sdk/block/utils"
+            builderante "github.com/skip-mev/block-sdk/x/builder/ante"
             ...
         )
 
