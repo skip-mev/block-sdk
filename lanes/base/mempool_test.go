@@ -1,4 +1,4 @@
-package standard_test
+package base_test
 
 import (
 	"cosmossdk.io/math"

@@ -1,22 +1,14 @@
-# Standard Lane
+# Default Lane
 
-> The Standard Lane is the most general and least restrictive lane. The Standard
+> The Default Lane is the most general and least restrictive lane. The Default
 > Lane accepts all transactions that are not accepted by the other lanes, is 
 > generally the lowest priority lane, and consumes all blockspace that is not 
 > consumed by the other lanes.
 
 ## 📖 Overview
 
-Blockspace is valuable, and MEV bots find arbitrage opportunities to capture 
-value. The Block SDK provides a fair auction for these opportunities via the 
-x/auction module inside the Block SDK so that protocols are rewarded while 
-ensuring that users are not front-run or sandwiched in the process. 
-
-The Block SDK uses the app-side mempool, PrepareLane / ProcessLane, and CheckTx 
-to create an MEV marketplace inside the protocol. It introduces a new message 
-type, called a MsgAuctionBid, that allows the submitter to execute multiple 
-transactions at the top of the block atomically 
-(atomically = directly next to each other).
+The default lane should be used to accept all transactions that are not accepted
+by the other lanes.
 
 ## 🏗️ Setup
 
@@ -46,17 +38,21 @@ your base application, you will need to create a `LanedMempool` composed of the
 lanes that you want to use.
 2. Next, order the lanes by priority. The first lane is the highest priority lane
 and the last lane is the lowest priority lane. **It is recommended that the last
-lane is the standard lane.**
+lane is the default lane.**
 3. You will also need to create a `PrepareProposalHandler` and a 
 `ProcessProposalHandler` that will be responsible for preparing and processing 
 proposals respectively. Configure the order of the lanes in the
 `PrepareProposalHandler` and `ProcessProposalHandler` to match the order of the
 lanes in the `LanedMempool`.
 
+NOTE: This example walks through setting up the MEV, Free, and Default Lanes. To
+only utilize the default lane, ignore the MEV and Free Lane setup.
+
 ```golang
 import (
     "github.com/skip-mev/block-sdk/abci"
-    "github.com/skip-mev/block-sdk/lanes/standard"
+    "github.com/skip-mev/block-sdk/block/base"
+    defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 )
 
 ...
@@ -75,7 +71,7 @@ func NewApp() {
     // visit the README in block-sdk/block/base.
     //
     // MEV lane hosts an action at the top of the block.
-    mevConfig := constructor.LaneConfig{
+    mevConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
@@ -88,7 +84,7 @@ func NewApp() {
     )
 
     // Free lane allows transactions to be included in the next block for free.
-    freeConfig := constructor.LaneConfig{
+    freeConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
@@ -97,19 +93,19 @@ func NewApp() {
     }
     freeLane := free.NewFreeLane(
         freeConfig,
-        constructor.DefaultTxPriority(),
+        base.DefaultTxPriority(),
         free.DefaultMatchHandler(),
     )
 
-    // Standard lane accepts all other transactions.
-    defaultConfig := constructor.LaneConfig{
+    // Default lane accepts all other transactions.
+    defaultConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(),
         MaxTxs:        0,
     }
-    defaultLane := base.NewStandardLane(defaultConfig)
+    defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 
     // 2. Set up the relateive priority of lanes
     lanes := []block.Lane{
@@ -126,7 +122,7 @@ func NewApp() {
     anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
         ...
-		utils.NewIgnoreDecorator(
+		utils.NewIgnoreDecorator( // free lane specific set up
 			ante.NewDeductFeeDecorator(
 				options.BaseOptions.AccountKeeper,
 				options.BaseOptions.BankKeeper,

@@ -12,9 +12,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/pob/block"
 	"github.com/skip-mev/pob/block/base"
+	defaultlane "github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
-	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 	buildertypes "github.com/skip-mev/pob/x/builder/types"
 	"github.com/stretchr/testify/suite"
@@ -29,7 +29,7 @@ type BlockBusterTestSuite struct {
 
 	// Define all of the lanes utilized in the test suite
 	mevLane       *mev.MEVLane
-	baseLane      *standard.StandardLane
+	baseLane      *defaultlane.DefaultLane
 	freeLane      *free.FreeLane
 	gasTokenDenom string
 
@@ -92,7 +92,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
-	suite.baseLane = standard.NewStandardLane(
+	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,
 	)
 

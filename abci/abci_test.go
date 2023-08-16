@@ -16,9 +16,9 @@ import (
 	"github.com/skip-mev/pob/abci"
 	"github.com/skip-mev/pob/block"
 	"github.com/skip-mev/pob/block/base"
+	defaultlane "github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/free"
 	"github.com/skip-mev/pob/lanes/mev"
-	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/stretchr/testify/suite"
 )
@@ -724,7 +724,7 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 	return anteHandler
 }
 
-func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *standard.StandardLane {
+func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
@@ -733,7 +733,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		MaxBlockSpace: maxBlockSpace,
 	}
 
-	return standard.NewStandardLane(cfg)
+	return defaultlane.NewDefaultLane(cfg)
 }
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {

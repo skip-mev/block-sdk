@@ -1,4 +1,4 @@
-package standard_test
+package base_test
 
 import (
 	"crypto/sha256"
@@ -11,7 +11,7 @@ import (
 	"github.com/skip-mev/pob/block"
 	"github.com/skip-mev/pob/block/base"
 	"github.com/skip-mev/pob/block/utils/mocks"
-	"github.com/skip-mev/pob/lanes/standard"
+	defaultlane "github.com/skip-mev/pob/lanes/base"
 	testutils "github.com/skip-mev/pob/testutils"
 )
 
@@ -502,7 +502,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
-) *standard.StandardLane {
+) *defaultlane.DefaultLane {
 	config := base.NewLaneConfig(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
@@ -511,7 +511,7 @@ func (s *BaseTestSuite) initLane(
 		maxBlockSpace,
 	)
 
-	return standard.NewStandardLane(config)
+	return defaultlane.NewDefaultLane(config)
 }
 
 func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {

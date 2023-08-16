@@ -13,8 +13,8 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/skip-mev/pob/block"
 	"github.com/skip-mev/pob/block/base"
+	defaultlane "github.com/skip-mev/pob/lanes/base"
 	"github.com/skip-mev/pob/lanes/mev"
-	"github.com/skip-mev/pob/lanes/standard"
 	testutils "github.com/skip-mev/pob/testutils"
 	"github.com/skip-mev/pob/x/builder/ante"
 	"github.com/skip-mev/pob/x/builder/keeper"
@@ -42,7 +42,7 @@ type AnteTestSuite struct {
 	// mempool and lane set up
 	mempool  block.Mempool
 	mevLane  *mev.MEVLane
-	baseLane *standard.StandardLane
+	baseLane *defaultlane.DefaultLane
 	lanes    []block.Lane
 
 	// Account set up
@@ -105,7 +105,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		MaxBlockSpace: math.LegacyZeroDec(),
 		IgnoreList:    []block.Lane{suite.mevLane},
 	}
-	suite.baseLane = standard.NewStandardLane(baseConfig)
+	suite.baseLane = defaultlane.NewDefaultLane(baseConfig)
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.baseLane}
@@ -280,13 +280,13 @@ func (suite *AnteTestSuite) TestAnteHandler() {
 
 				distribution := suite.mempool.GetTxDistribution()
 				suite.Require().Equal(0, distribution[mev.LaneName])
-				suite.Require().Equal(0, distribution[standard.LaneName])
+				suite.Require().Equal(0, distribution[defaultlane.LaneName])
 
 				suite.Require().NoError(suite.mempool.Insert(suite.ctx, topAuctionTx))
 
 				distribution = suite.mempool.GetTxDistribution()
 				suite.Require().Equal(1, distribution[mev.LaneName])
-				suite.Require().Equal(0, distribution[standard.LaneName])
+				suite.Require().Equal(0, distribution[defaultlane.LaneName])
 			}
 
 			// Create the actual mev tx and insert into the mempool

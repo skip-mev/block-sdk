@@ -20,9 +20,9 @@ Skip has built out a number of plug-and-play `lanes` on the SDK that your protoc
 
 Most Cosmos chains today utilize standard `CometBFT` block construction - which is too limited.
 
-- The standard `CometBFT` block building is susceptible to MEV-related issues, such as front-running and sandwich attacks, since proposers have monopolistic rights on ordering and no verification of good behavior. MEV that is created cannot be redistributed to the protocol.
-- The standard `CometBFT` block building uses a one-size-fits-all approach, which can result in inefficient transaction processing for specific applications or use cases and sub-optimal fee markets.
-- Transactions tailored for specific applications may need custom prioritization, ordering or validation rules that the mempool is otherwise unaware of because transactions within a block are currently in-differentiable when a blockchain might want them to be.
+* The standard `CometBFT` block building is susceptible to MEV-related issues, such as front-running and sandwich attacks, since proposers have monopolistic rights on ordering and no verification of good behavior. MEV that is created cannot be redistributed to the protocol.
+* The standard `CometBFT` block building uses a one-size-fits-all approach, which can result in inefficient transaction processing for specific applications or use cases and sub-optimal fee markets.
+* Transactions tailored for specific applications may need custom prioritization, ordering or validation rules that the mempool is otherwise unaware of because transactions within a block are currently in-differentiable when a blockchain might want them to be.
 
 ### ✅ Solution: The Block SDK
 
@@ -57,12 +57,12 @@ A block with separate `lanes` can be used for:
 
 #### Lane App Store
 
-To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store]().
+To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default).
 
 #### How the Block SDK works
 
-To read more about how the Block SDK works, check out the [How it Works]().
+To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/chains/how-it-works).
 
 #### Lane Development
 
-To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane]().
+To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/chains/lanes/build-your-own-lane).
