@@ -9,80 +9,57 @@
 [![License: Apache-2.0](https://img.shields.io/github/license/skip-mev/pob.svg?style=flat-square)](https://github.com/skip-mev/pob/blob/main/LICENSE)
 [![Lines Of Code](https://img.shields.io/tokei/lines/github/skip-mev/pob?style=flat-square)](https://github.com/skip-mev/pob)
 
-## 📖 Overview
+### 🤔 What is the Block SDK?
 
-The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **transaction highway** consisting of individual lanes with their own special functionality.
-
-## 🤔 How does it work
-
-### 🔁 Transaction Lifecycle
-
-The best way to understand how lanes work is to first understand the lifecycle 
-of a transaction. A transaction begins its lifecycle when it is first signed and
-broadcasted to a chain. After it is broadcasted to a validator, it will be checked
-in `CheckTx` by the base application. If the transaction is valid, it will be
-inserted into the applications mempool. 
-
-The transaction then waits in the mempool until a new block needs to be proposed.
-When a new block needs to be proposed, the application will call `PrepareProposal`
-(which is a new ABCI++ addition) to request a new block from the current 
-proposer. The proposer will look at what transactions currently waiting to 
-be included in a block by looking at their mempool. The proposer will then 
-iteratively select transactions until the block is full. The proposer will then
-send the block to other validators in the network. 
-
-When a validator receives a proposed block, the validator will first want to 
-verify the contents of the block before signing off on it. The validator will 
-call `ProcessProposal` to verify the contents of the block. If the block is 
-valid, the validator will sign off on the block and broadcast their vote to the 
-network. If the block is invalid, the validator will reject the block. Once a 
-block is accepted by the network, it is committed and the transactions that 
-were included in the block are removed from the validator's mempool (as they no
-longer need to be considered).
-
-### 🛣️ Lane Lifecycle
-
-After a transaction is verified in CheckTx, it will attempt to be inserted 
-into the `LanedMempool`. A LanedMempool is composed of several distinct `Lanes`
-that have the ability to store their own transactions. The LanedMempool will 
-insert the transaction into all lanes that will accept it. The criteria for 
-whether a lane will accept a transaction is defined by the lane's 
-`MatchHandler`. The default implementation of a MatchHandler will accept all transactions.
+> **🌐 The Block SDK is a toolkit for building customized blocks**
+> The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
 
 
-When a new block is proposed, the `PrepareProposalHandler` will iteratively call
-`PrepareLane` on each lane (in the order in which they are defined in the
-LanedMempool). The PrepareLane method is anaolgous to PrepareProposal. Calling
-PrepareLane on a lane will trigger the lane to reap transactions from its mempool
-and add them to the proposal (given they are valid respecting the verification rules
-of the lane).
+Skip has built out a number of plug-and-play `lanes` on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add **your own custom `lanes`** to configure your blocks to exactly fit your application needs.
 
-When proposals need to be verified in `ProcessProposal`, the `ProcessProposalHandler`
-defined in `abci/abci.go` will call `ProcessLane` on each lane in the same order
-as they were called in the PrepareProposalHandler. Each subsequent call to
-ProcessLane will filter out transactions that belong to previous lanes. A given
-lane's ProcessLane will only verify transactions that belong to that lane.
+### ❌ Problems: Blocks are not Customizable
 
-> **Scenario**
-> 
-> Let's say we have a LanedMempool composed of two lanes: LaneA and LaneB.
-> LaneA is defined first in the LanedMempool and LaneB is defined second.
-> LaneA contains transactions Tx1 and Tx2 and LaneB contains transactions
-> Tx3 and Tx4.
+Most Cosmos chains today utilize standard `CometBFT` block construction - which is too limited.
+
+- The standard `CometBFT` block building is susceptible to MEV-related issues, such as front-running and sandwich attacks, since proposers have monopolistic rights on ordering and no verification of good behavior. MEV that is created cannot be redistributed to the protocol.
+- The standard `CometBFT` block building uses a one-size-fits-all approach, which can result in inefficient transaction processing for specific applications or use cases and sub-optimal fee markets.
+- Transactions tailored for specific applications may need custom prioritization, ordering or validation rules that the mempool is otherwise unaware of because transactions within a block are currently in-differentiable when a blockchain might want them to be.
+
+### ✅ Solution: The Block SDK
+
+You can think of the Block SDK as a **transaction `highway` system**, where each
+`lane` on the highway serves a specific purpose and has its own set of rules and
+traffic flow.
+
+In the Block SDK, each `lane` has its own set of rules and transaction flow management systems.
+
+* A `lane` is what we might traditionally consider to be a standard mempool
+  where transaction **_validation_**, **_ordering_** and **_prioritization_** for
+  contained transactions are shared.
+* `lanes` implement a **standard interface** that allows each individual `lane` to
+  propose and validate a portion of a block.
+* `lanes` are ordered with each other, configurable by developers. All `lanes`
+  together define the desired block structure of a chain.
+
+### ✨ Block SDK Use Cases
+
+A block with separate `lanes` can be used for:
+
+1. **MEV mitigation**: a top of block lane could be designed to create an in-protocol top-of-block auction (as we are doing with POB) to recapture MEV in a transparent and governable way.
+2. **Free/reduced fee txs**: transactions with certain properties (e.g. from trusted accounts or performing encouraged actions) could leverage a free lane to reward behavior.
+3. **Dedicated oracle space** Oracles could be included before other kinds of transactions to ensure that price updates occur first, and are not able to be sandwiched or manipulated.
+4. **Orderflow auctions**: an OFA lane could be constructed such that order flow providers can have their submitted transactions bundled with specific backrunners, to guarantee MEV rewards are attributed back to users. Imagine MEV-share but in protocol.
+5. **Enhanced and customizable privacy**: privacy-enhancing features could be introduced, such as threshold encrypted lanes, to protect user data and maintain privacy for specific use cases.
+6. **Fee market improvements**: one or many fee markets - such as EIP-1559 - could be easily adopted for different lanes (potentially custom for certain dApps). Each smart contract/exchange could have its own fee market or auction for transaction ordering.
+7. **Congestion management**: segmentation of transactions to lanes can help mitigate network congestion by capping usage of certain applications and tailoring fee markets.
 
 
-When a new block needs to be proposed, the PrepareProposalHandler will call
-PrepareLane on LaneA first and LaneB second. When PrepareLane is called
-on LaneA, LaneA will reap transactions from its mempool and add them to the
-proposal. Same applies for LaneB. Say LaneA reaps transactions Tx1 and Tx2
-and LaneB reaps transactions Tx3 and Tx4. This gives us a proposal composed
-of the following:
+### 📚 Block SDK Documentation
 
-* Tx1, Tx2, Tx3, Tx4
+#### Lane App Store
 
-When the ProcessProposalHandler is called, it will call ProcessLane on LaneA
-with the proposal composed of Tx1, Tx2, Tx3, and Tx4. LaneA will then
-verify Tx1 and Tx2 and return the remaining transactions - Tx3 and Tx4. 
-The ProcessProposalHandler will then call ProcessLane on LaneB with the
-remaining transactions - Tx3 and Tx4. LaneB will then verify Tx3 and Tx4
-and return no remaining transactions.
+To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store]().
+
+#### Lane Development
+
+To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane]().
