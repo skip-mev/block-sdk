@@ -13,7 +13,7 @@ To install the Block SDK, run the following command:
 $ go install github.com/skip-mev/block-sdk
 ```
 
-## 🤔 How to use it [1 hour]
+## 📚 Usage
 
 There are **five** required components to building a custom lane using the base lane:
 
@@ -39,10 +39,7 @@ This is the data structure that is responsible for storing transactions as they 
 
 The default implementation can be found in `block/base/mempool.go`.
 
-:::info Scenario
-What if we wanted to prioritize transactions by the amount they have staked on a chain?
-
-:::
+### What if we wanted to prioritize transactions by the amount they have staked on a chain?
 
 We could do the following:
 
