@@ -11,8 +11,7 @@
 
 ### 🤔 What is the Block SDK?
 
-> **🌐 The Block SDK is a toolkit for building customized blocks**
-> The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
+**🌐 The Block SDK is a toolkit for building customized blocks**. The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
 
 
 Skip has built out a number of plug-and-play `lanes` on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add **your own custom `lanes`** to configure your blocks to exactly fit your application needs.
@@ -31,14 +30,14 @@ You can think of the Block SDK as a **transaction `highway` system**, where each
 `lane` on the highway serves a specific purpose and has its own set of rules and
 traffic flow.
 
-In the Block SDK, each `lane` has its own set of rules and transaction flow management systems.
+In the Block SDK, each lane has its own set of rules and transaction flow management systems.
 
-* A `lane` is what we might traditionally consider to be a standard mempool
+* A lane is what we might traditionally consider to be a standard mempool
   where transaction **_validation_**, **_ordering_** and **_prioritization_** for
   contained transactions are shared.
-* `lanes` implement a **standard interface** that allows each individual `lane` to
+* lanes implement a **standard interface** that allows each individual lane to
   propose and validate a portion of a block.
-* `lanes` are ordered with each other, configurable by developers. All `lanes`
+* lanes are ordered with each other, configurable by developers. All lanes
   together define the desired block structure of a chain.
 
 ### ✨ Block SDK Use Cases
@@ -59,6 +58,10 @@ A block with separate `lanes` can be used for:
 #### Lane App Store
 
 To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store]().
+
+#### How the Block SDK works
+
+To read more about how the Block SDK works, check out the [How it Works]().
 
 #### Lane Development
 
