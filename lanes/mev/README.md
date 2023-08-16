@@ -15,20 +15,15 @@ $ go install github.com/skip-mev/block-sdk
 
 ## 📚 Usage
 
-1. First determine the set of lanes that you want to use in your application. The
-available lanes can be found in our 
-[Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). 
-In your base application, you will need to create a `LanedMempool` composed of the
-lanes you want to use. *The MEV lane should not exist on its own. At minimum, it
-is recommended that the MEV lane is paired with the default lane.*
+1. This guide assumes you have already set up the [Block SDK (and the default lane)](https://docs.skip.money/chains/overview)
 2. You will need to instantiate the `x/builder` module into your application. This
 module is responsible for processing auction transactions and distributing revenue
 to the auction house. The `x/builder` module is also responsible for ensuring the
 validity of auction transactions. *The `x/builder` module should not exist on its
 own. **This is the most intensive part of the set up process.**
-3. Next, order the lanes by priority. The first lane is the highest priority lane
+3. Next, add the MEV lane into the `lane` object on your `app.go`. The first lane is the highest priority lane
 and the last lane is the lowest priority lane. Since the MEV lane is meant to auction
-off the top of the block, it should be the highest priority lane. The default lane
+off the top of the block, **it should be the highest priority lane**. The default lane
 should follow.
 4. You will also need to create a `PrepareProposalHandler` and a 
 `ProcessProposalHandler` that will be responsible for preparing and processing 

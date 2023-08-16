@@ -17,10 +17,11 @@ $ go install github.com/skip-mev/block-sdk
 
 1. First determine the set of lanes that you want to use in your application. The
 available lanes can be found in our 
-[Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). 
-In your base application, you will need to create a `LanedMempool` composed of the
-lanes you want to use.
-2. Next, order the lanes by priority. The first lane is the highest priority lane
+[Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). This guide
+only sets up the `default lane`
+2. In your base application, you will need to create a `LanedMempool` composed of the
+`lanes` you want to use.
+3. Next, order the lanes by priority. The first lane is the highest priority lane
 and the last lane is the lowest priority lane. **It is recommended that the last
 lane is the default lane.**
 3. You will also need to create a `PrepareProposalHandler` and a 
@@ -28,6 +29,7 @@ lane is the default lane.**
 proposals respectively. Configure the order of the lanes in the
 `PrepareProposalHandler` and `ProcessProposalHandler` to match the order of the
 lanes in the `LanedMempool`.
+4. Configure your `app.go` to include the following:
 
 ```golang
 import (
