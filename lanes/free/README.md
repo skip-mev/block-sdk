@@ -55,6 +55,16 @@ func NewApp() {
     // For more information on how to utilize the LaneConfig please
     // visit the README in docs.skip.money/chains/lanes/build-your-own-lane#-lane-config.
     //
+    // Set up the configuration of the free lane and instantiate it.
+    freeConfig := base.LaneConfig{
+        Logger:        app.Logger(),
+        TxEncoder:     app.txConfig.TxEncoder(),
+        TxDecoder:     app.txConfig.TxDecoder(),
+        MaxBlockSpace: math.LegacyZeroDec(),
+        MaxTxs:        0,
+    }
+    freeLane := freelane.NewFreeLane(freeConfig, base.DefaultTxPriority(), freelane.DefaultMatchHandler())
+    
     // Default lane accepts all transactions.
     defaultConfig := base.LaneConfig{
         Logger:        app.Logger(),
@@ -67,6 +77,7 @@ func NewApp() {
 
     // 2. Set up the relative priority of lanes
     lanes := []block.Lane{
+        freeLane,
         defaultLane,
     }
     mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
@@ -74,7 +85,10 @@ func NewApp() {
 
     ...
 
-    // 3. Set up the ante handler. 
+    // 3. Set up the ante handler.
+    //
+    // This will allow any transaction that matches the to the free lane to 
+    // be processed without paying any fees.
     anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
         ...

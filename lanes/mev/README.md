@@ -1,42 +1,42 @@
-# MEV Lane
+# 🏗️ MEV Lane Setup
 
-> The MEV Lane hosts top of block auctions in protocol and verifiably builds 
-> blocks with top-of-block block space reserved for auction winners, with 
-> auction revenue being redistributed to chains.
+## 📦 Dependencies
 
-## 📖 Overview
+The Block SDK is built on top of the Cosmos SDK. The Block SDK is currently
+compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
 
-Blockspace is valuable, and MEV bots find arbitrage opportunities to capture 
-value. The Block SDK provides a fair auction for these opportunities via the 
-x/auction module inside the Block SDK so that protocols are rewarded while 
-ensuring that users are not front-run or sandwiched in the process. 
+## 📥 Installation
 
-The Block SDK uses the app-side mempool, PrepareLane / ProcessLane, and CheckTx 
-to create an MEV marketplace inside the protocol. It introduces a new message 
-type, called a MsgAuctionBid, that allows the submitter to execute multiple 
-transactions at the top of the block atomically 
-(atomically = directly next to each other).
+To install the Block SDK, run the following command:
 
-## Install
-
-```shell
+```bash
 $ go install github.com/skip-mev/block-sdk
 ```
 
-## Setup
+## 📚 Usage
 
-> This set up guide will walk you through the process of setting up a POB 
-> application. In particular, we will configure an application with the 
-> following features:
->
->* MEV lane (auction lane). This will create an MEV lane where users can bid to 
-> have their transactions executed at the top of the block.
->* Free lane. This will create a free lane where users can submit transactions 
-> that will be executed for free (no fees).
->* Default lane. This will create a default lane where users can submit 
-> transactions that will be executed with the default app logic.
->* Builder module that pairs with the auction lane to process auction 
-> transactions and distribute revenue to the auction house.
+1. First determine the set of lanes that you want to use in your application. The
+available lanes can be found in our 
+[Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). 
+In your base application, you will need to create a `LanedMempool` composed of the
+lanes you want to use. *The MEV lane should not exist on its own. At minimum, it
+is recommended that the MEV lane is paired with the default lane.*
+2. You will need to instantiate the `x/builder` module into your application. This
+module is responsible for processing auction transactions and distributing revenue
+to the auction house. The `x/builder` module is also responsible for ensuring the
+validity of auction transactions. *The `x/builder` module should not exist on its
+own. **This is the most intensive part of the set up process.**
+3. Next, order the lanes by priority. The first lane is the highest priority lane
+and the last lane is the lowest priority lane. Since the MEV lane is meant to auction
+off the top of the block, it should be the highest priority lane. The default lane
+should follow.
+4. You will also need to create a `PrepareProposalHandler` and a 
+`ProcessProposalHandler` that will be responsible for preparing and processing 
+proposals respectively. Configure the order of the lanes in the
+`PrepareProposalHandler` and `ProcessProposalHandler` to match the order of the
+lanes in the `LanedMempool`.
+
+NOTE: This example walks through setting up the MEV and Default lanes.
 
 1. Import the necessary dependencies into your application. This includes the
    Block SDK proposal handlers + mempool, keeper, builder types, and builder 
@@ -47,11 +47,12 @@ $ go install github.com/skip-mev/block-sdk
     ...
     "github.com/skip-mev/pob/block-sdk"
     "github.com/skip-mev/pob/block-sdk/abci"
-    "github.com/skip-mev/pob/block-sdk/lanes/auction"
+    "github.com/skip-mev/pob/block-sdk/lanes/mev"
     "github.com/skip-mev/pob/block-sdk/lanes/base"
-    "github.com/skip-mev/pob/block-sdk/lanes/free"
     buildermodule "github.com/skip-mev/block-sdk/x/builder"
     builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
+    buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+    builderante "github.com/skip-mev/block-sdk/x/builder/ante"
      ...
    )
    ```
@@ -75,14 +76,14 @@ $ go install github.com/skip-mev/block-sdk
    )
    ```
 
-3. The builder `Keeper` is POB's gateway to processing special `MsgAuctionBid`
+3. The builder `Keeper` is MEV lane's gateway to processing special `MsgAuctionBid`
    messages that allow users to participate in the top of block auction, distribute
    revenue to the auction house, and ensure the validity of auction transactions.
 
    a. First add the keeper to the app's struct definition. We also want to add 
    MEV lane's custom checkTx handler to the app's struct definition. This will 
    allow us to override the default checkTx handler to process bid transactions 
-   before they are inserted into the mempool. NOTE: The custom handler is 
+   before they are inserted into the `LanedMempool`. NOTE: The custom handler is 
    required as otherwise the auction can be held hostage by a malicious
    users.
 
@@ -107,18 +108,17 @@ $ go install github.com/skip-mev/block-sdk
       }
       ```
 
-    c. Instantiate the Block SDK mempool with the application's desired lanes.
+    c. Instantiate the Block SDK's `LanedMempool` with the application's desired lanes.
 
       ```go
         // 1. Create the lanes.
         //
-        // NOTE: The lanes are ordered by priority. The first lane is the 
-        // highest priority lane and the last lane is the lowest priority lane. 
-        // Top of block lane allows transactions to bid for inclusion at the 
-        // top of the next block.
+        // NOTE: The lanes are ordered by priority. The first lane is the highest priority
+        // lane and the last lane is the lowest priority lane. Top of block lane allows
+        // transactions to bid for inclusion at the top of the next block.
         //
         // For more information on how to utilize the LaneConfig please
-        // visit the README in block-sdk/block/base.
+        // visit the README in docs.skip.money/chains/lanes/build-your-own-lane#-lane-config.
         //
         // MEV lane hosts an auction at the top of the block.
         mevConfig := base.LaneConfig{
@@ -133,21 +133,7 @@ $ go install github.com/skip-mev/block-sdk
             mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
         )
 
-        // Free lane allows transactions to be included in the next block for free.
-        freeConfig := base.LaneConfig{
-            Logger:        app.Logger(),
-            TxEncoder:     app.txConfig.TxEncoder(),
-            TxDecoder:     app.txConfig.TxDecoder(),
-            MaxBlockSpace: math.LegacyZeroDec(),
-            MaxTxs:        0,
-        }
-        freeLane := free.NewFreeLane(
-            freeConfig,
-            base.DefaultTxPriority(),
-            free.DefaultMatchHandler(),
-        )
-
-        // Standard lane accepts all other transactions.
+        // default lane accepts all other transactions.
         defaultConfig := base.LaneConfig{
             Logger:        app.Logger(),
             TxEncoder:     app.txConfig.TxEncoder(),
@@ -160,42 +146,19 @@ $ go install github.com/skip-mev/block-sdk
         // 2. Set up the relateive priority of lanes
         lanes := []block.Lane{
             mevLane,
-            freeLane,
             defaultLane,
         }
         mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
         app.App.SetMempool(mempool)
       ```
 
-    d. Instantiate the antehandler chain for the application with awareness of the
-    LanedMempool. This will allow the application to verify the validity
-    of a transaction respecting the desired logic of a given lane. In this walkthrough,
-    we want the `FeeDecorator` to be ignored for all transactions that should 
-    belong to the free lane. Additionally, we want to add the `x/builder` 
-    module's `AuctionDecorator` to the ante-handler chain. The `AuctionDecorator`
-    is an AnteHandler decorator that enforces various chain configurable MEV rules.
+    d. Add the `x/builder` module's `AuctionDecorator` to the ante-handler 
+    chain. The `AuctionDecorator` is an AnteHandler decorator that enforces 
+    various chain configurable MEV rules.
 
       ```go
-        import (
-            ...
-            "github.com/skip-mev/block-sdk/block"
-            "github.com/skip-mev/block-sdk/block/utils"
-            builderante "github.com/skip-mev/block-sdk/x/builder/ante"
-            ...
-        )
-
         anteDecorators := []sdk.AnteDecorator{
           ante.NewSetUpContextDecorator(), 
-          ...
-          utils.NewIgnoreDecorator(
-            ante.NewDeductFeeDecorator(
-              options.BaseOptions.AccountKeeper,
-              options.BaseOptions.BankKeeper,
-              options.BaseOptions.FeegrantKeeper,
-              options.BaseOptions.TxFeeChecker,
-            ),
-            options.FreeLane,
-          ),
           ...
           builderante.NewBuilderDecorator(
             options.BuilderKeeper, 
@@ -209,6 +172,9 @@ $ go install github.com/skip-mev/block-sdk
         app.SetAnteHandler(anteHandler)
 
         // Set the antehandlers on the lanes.
+        //
+        // NOTE: This step is required as otherwise the lanes will not be able to
+        // process auction transactions.
         for _, lane := range lanes {
           lane.SetAnteHandler(anteHandler)
         }
@@ -250,36 +216,40 @@ $ go install github.com/skip-mev/block-sdk
     proposalHandler := abci.NewProposalHandler(
       app.Logger(),
       app.txConfig.TxDecoder(),
-      mempool,
+      lanes,
     )
     app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
     app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 
     // Set the custom CheckTx handler on BaseApp.
-    checkTxHandler := abci.NewCheckTxHandler(
-      app.App,
-      app.txConfig.TxDecoder(),
-      tobLane,
-      anteHandler,
-      app.ChainID(),
-    )
-    app.SetCheckTx(checkTxHandler.CheckTx())
+	checkTxHandler := mev.NewCheckTxHandler(
+		app.App,
+		app.txConfig.TxDecoder(),
+		mevLane,
+		anteHandler,
+	)
+	app.SetCheckTx(checkTxHandler.CheckTx())
     ...
 
 
-    func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) 
-        cometabci.ResponseCheckTx {
-      return app.checkTxHandler(req)
+    // CheckTx will check the transaction with the provided checkTxHandler. 
+    // We override the default handler so that we can verify bid transactions 
+    // before they are inserted into the mempool. With the POB CheckTx, we can 
+    // verify the bid transaction and all of the bundled transactions
+    // before inserting the bid transaction into the mempool.
+    func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) 
+        (*cometabci.ResponseCheckTx, error) {
+        return app.checkTxHandler(req)
     }
 
     // SetCheckTx sets the checkTxHandler for the app.
-    func (app *TestApp) SetCheckTx(handler abci.CheckTx) {
-      app.checkTxHandler = handler
+    func (app *TestApp) SetCheckTx(handler mev.CheckTx) {
+        app.checkTxHandler = handler
     }
     ```
 
-    f. Finally, update the app's `InitGenesis` order and ante-handler chain.
+    f. Finally, update the app's `InitGenesis` order.
 
     ```go
     genesisModuleOrder := []string{
@@ -291,5 +261,5 @@ $ go install github.com/skip-mev/block-sdk
 ## Params
 
 Note, before building or upgrading the application, make sure to initialize the
-escrow address for POB in the parameters of the module. The default parameters
+escrow address in the parameters of the module. The default parameters
 initialize the escrow address to be the module account address.
