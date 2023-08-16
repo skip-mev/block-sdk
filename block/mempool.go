@@ -14,7 +14,7 @@ import (
 var _ Mempool = (*LanedMempool)(nil)
 
 type (
-	// LanedMempool defines the Block SDK mempool interface.
+	// Mempool defines the Block SDK mempool interface.
 	Mempool interface {
 		sdkmempool.Mempool
 
@@ -40,7 +40,7 @@ type (
 	}
 )
 
-// NewLanedMempool returns a new Block SDK mempool. The laned mempool is
+// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool is
 // comprised of a registry of lanes. Each lane is responsible for selecting
 // transactions according to its own selection logic. The lanes are ordered
 // according to their priority. The first lane in the registry has the highest

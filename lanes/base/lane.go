@@ -14,7 +14,7 @@ var _ block.Lane = (*DefaultLane)(nil)
 
 // DefaultLane defines a default lane implementation. The default lane orders
 // transactions by the transaction fees. The default lane accepts any transaction
-// that is should not be ignored (as defined by the IgnoreList in the LaneConfig).
+// that should not be ignored (as defined by the IgnoreList in the LaneConfig).
 // The default lane builds and verifies blocks in a similar fashion to how the
 // CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
 // 0.47.0.

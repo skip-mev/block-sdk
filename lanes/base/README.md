@@ -1,28 +1,11 @@
-# Default Lane
+# 🏗️ Default Lane Setup
 
-> The Default Lane is the most general and least restrictive lane. The Default
-> Lane accepts all transactions that are not accepted by the other lanes, is 
-> generally the lowest priority lane, and consumes all blockspace that is not 
-> consumed by the other lanes.
-
-## 📖 Overview
-
-The default lane should be used to accept all transactions that are not accepted
-by the other lanes.
-
-## 🏗️ Setup
-
-> **Note**
-> 
-> For a more in depth example of how to use the Block SDK, check out our
-> example application in `block-sdk/tests/app/app.go`.
-
-### 📦 Dependencies
+## 📦 Dependencies
 
 The Block SDK is built on top of the Cosmos SDK. The Block SDK is currently
 compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
 
-### 📥 Installation
+## 📥 Installation
 
 To install the Block SDK, run the following command:
 
@@ -30,12 +13,13 @@ To install the Block SDK, run the following command:
 $ go install github.com/skip-mev/block-sdk
 ```
 
-### 📚 Usage
+## 📚 Usage
 
 1. First determine the set of lanes that you want to use in your application. The
-available lanes can be found in our **Lane App Store** in `block-sdk/lanes`. In
-your base application, you will need to create a `LanedMempool` composed of the
-lanes that you want to use.
+available lanes can be found in our 
+[Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). 
+In your base application, you will need to create a `LanedMempool` composed of the
+lanes you want to use.
 2. Next, order the lanes by priority. The first lane is the highest priority lane
 and the last lane is the lowest priority lane. **It is recommended that the last
 lane is the default lane.**
@@ -45,9 +29,6 @@ proposals respectively. Configure the order of the lanes in the
 `PrepareProposalHandler` and `ProcessProposalHandler` to match the order of the
 lanes in the `LanedMempool`.
 
-NOTE: This example walks through setting up the MEV, Free, and Default Lanes. To
-only utilize the default lane, ignore the MEV and Free Lane setup.
-
 ```golang
 import (
     "github.com/skip-mev/block-sdk/abci"
@@ -56,9 +37,7 @@ import (
 )
 
 ...
-```
 
-```golang
 func NewApp() {
     ...
     // 1. Create the lanes.
@@ -68,36 +47,9 @@ func NewApp() {
     // transactions to bid for inclusion at the top of the next block.
     //
     // For more information on how to utilize the LaneConfig please
-    // visit the README in block-sdk/block/base.
+    // visit the README in docs.skip.money/chains/lanes/build-your-own-lane#-lane-config.
     //
-    // MEV lane hosts an action at the top of the block.
-    mevConfig := base.LaneConfig{
-        Logger:        app.Logger(),
-        TxEncoder:     app.txConfig.TxEncoder(),
-        TxDecoder:     app.txConfig.TxDecoder(),
-        MaxBlockSpace: math.LegacyZeroDec(), 
-        MaxTxs:        0,
-    }
-    mevLane := mev.NewMEVLane(
-        mevConfig,
-        mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
-    )
-
-    // Free lane allows transactions to be included in the next block for free.
-    freeConfig := base.LaneConfig{
-        Logger:        app.Logger(),
-        TxEncoder:     app.txConfig.TxEncoder(),
-        TxDecoder:     app.txConfig.TxDecoder(),
-        MaxBlockSpace: math.LegacyZeroDec(),
-        MaxTxs:        0,
-    }
-    freeLane := free.NewFreeLane(
-        freeConfig,
-        base.DefaultTxPriority(),
-        free.DefaultMatchHandler(),
-    )
-
-    // Default lane accepts all other transactions.
+    // Default lane accepts all transactions.
     defaultConfig := base.LaneConfig{
         Logger:        app.Logger(),
         TxEncoder:     app.txConfig.TxEncoder(),
@@ -107,10 +59,8 @@ func NewApp() {
     }
     defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 
-    // 2. Set up the relateive priority of lanes
+    // 2. Set up the relative priority of lanes
     lanes := []block.Lane{
-        mevLane,
-        freeLane,
         defaultLane,
     }
     mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
@@ -118,11 +68,11 @@ func NewApp() {
 
     ...
 
-    // 3. Set up the ante handler.
+    // 3. Set up the ante handler. 
     anteDecorators := []sdk.AnteDecorator{
 		ante.NewSetUpContextDecorator(),
         ...
-		utils.NewIgnoreDecorator( // free lane specific set up
+		utils.NewIgnoreDecorator(
 			ante.NewDeductFeeDecorator(
 				options.BaseOptions.AccountKeeper,
 				options.BaseOptions.BankKeeper,
@@ -137,6 +87,9 @@ func NewApp() {
     anteHandler := sdk.ChainAnteDecorators(anteDecorators...)
 
     // Set the lane ante handlers on the lanes.
+    //
+    // NOTE: This step is very important. Without the antehandlers, lanes will not
+    // be able to verify transactions.
     for _, lane := range lanes {
         lane.SetAnteHandler(anteHandler)
     }

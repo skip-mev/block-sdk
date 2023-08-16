@@ -9,7 +9,7 @@ import (
 	"github.com/skip-mev/pob/block"
 )
 
-// LaneConfig defines the basic functionality needed for a lane.
+// LaneConfig defines the basic configurations needed for a lane.
 type LaneConfig struct {
 	Logger      log.Logger
 	TxEncoder   sdk.TxEncoder

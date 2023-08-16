@@ -11,7 +11,7 @@ import (
 )
 
 type (
-	// ConstructorMempool defines a mempool that orders transactions based on the
+	// Mempool defines a mempool that orders transactions based on the
 	// txPriority. The mempool is a wrapper on top of the SDK's Priority Nonce mempool.
 	// It include's additional helper functions that allow users to determine if a
 	// transaction is already in the mempool and to compare the priority of two
@@ -79,7 +79,7 @@ func DefaultTxPriority() TxPriority[string] {
 	}
 }
 
-// NewMempool returns a new ConstructorMempool.
+// NewMempool returns a new Mempool.
 func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
