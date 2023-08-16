@@ -18,7 +18,7 @@ var _ block.Lane = (*DefaultLane)(nil)
 // The default lane builds and verifies blocks in a similar fashion to how the
 // CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
 // 0.47.0.
-type DefaultLane struct { //nolint
+type DefaultLane struct {
 	*base.BaseLane
 }
 
