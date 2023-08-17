@@ -1,10 +1,10 @@
 syntax = "proto3";
-package pob.builder.v1;
+package sdk.builder.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/query/v1/query.proto";
-import "pob/builder/v1/genesis.proto";
+import "sdk/builder/v1/genesis.proto";
 
 option go_package = "github.com/skip-mev/block-sdk/x/builder/types";
 
@@ -13,7 +13,7 @@ service Query {
   // Params queries the parameters of the x/builder module.
   rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
-    option (google.api.http).get = "/pob/builder/v1/params";
+    option (google.api.http).get = "/block-sdk/builder/v1/params";
   }
 }
 

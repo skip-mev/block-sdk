@@ -105,9 +105,6 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 // ValidateTimeout validates that the timeout is greater than or equal to the expected block height
 // the bid transaction will be executed in.
-//
-// TODO: This will be deprecated in favor of the pre-commit hook once this available on the SDK
-// https://github.com/skip-mev/pob/issues/147
 func (bd BuilderDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
 	currentBlockHeight := ctx.BlockHeight()
 

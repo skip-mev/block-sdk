@@ -218,8 +218,6 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 }
 
 func (suite *KeeperTestSuite) TestValidateBundle() {
-	// TODO: Update this to be multi-dimensional to test multi-sig
-	// https://github.com/skip-mev/pob/issues/14
 	var accounts []testutils.Account // tracks the order of signers in the bundle
 
 	rng := rand.New(rand.NewSource(time.Now().Unix()))

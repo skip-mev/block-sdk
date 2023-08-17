@@ -1,10 +1,10 @@
 syntax = "proto3";
-package pob.builder.v1;
+package sdk.builder.v1;
 
 import "gogoproto/gogo.proto";
 import "google/api/annotations.proto";
 import "cosmos/base/v1beta1/coin.proto";
-import "pob/builder/v1/genesis.proto";
+import "sdk/builder/v1/genesis.proto";
 import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
@@ -17,7 +17,7 @@ service Msg {
 
   // AuctionBid defines a method for sending bids to the x/builder module.
   rpc AuctionBid(MsgAuctionBid) returns (MsgAuctionBidResponse) {
-    option (google.api.http).post = "/pob/builder/v1/bid";
+    option (google.api.http).post = "/block-sdk/builder/v1/bid";
   };
 
   // UpdateParams defines a governance operation for updating the x/builder
@@ -29,7 +29,7 @@ service Msg {
 // module.
 message MsgAuctionBid {
   option (cosmos.msg.v1.signer) = "bidder";
-  option (amino.name) = "pob/x/builder/MsgAuctionBid";
+  option (amino.name) = "block-sdk/x/builder/MsgAuctionBid";
 
   option (gogoproto.equal) = false;
 
@@ -52,7 +52,7 @@ message MsgAuctionBidResponse {}
 // parameters.
 message MsgUpdateParams {
   option (cosmos.msg.v1.signer) = "authority";
-  option (amino.name) = "pob/x/builder/MsgUpdateParams";
+  option (amino.name) = "block-sdk/x/builder/MsgUpdateParams";
 
   option (gogoproto.equal) = false;
 
