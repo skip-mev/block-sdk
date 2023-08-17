@@ -68,7 +68,7 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	buildermodulev1 "github.com/skip-mev/block-sdk/api/pob/builder/module/v1"
+	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 

@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: pob/builder/v1/tx.proto
+// source: sdk/builder/v1/tx.proto
 
 package builderv1
 
@@ -19,8 +19,8 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Msg_AuctionBid_FullMethodName   = "/pob.builder.v1.Msg/AuctionBid"
-	Msg_UpdateParams_FullMethodName = "/pob.builder.v1.Msg/UpdateParams"
+	Msg_AuctionBid_FullMethodName   = "/sdk.builder.v1.Msg/AuctionBid"
+	Msg_UpdateParams_FullMethodName = "/sdk.builder.v1.Msg/UpdateParams"
 )
 
 // MsgClient is the client API for Msg service.
@@ -135,7 +135,7 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Msg_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "pob.builder.v1.Msg",
+	ServiceName: "sdk.builder.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -148,5 +148,5 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "pob/builder/v1/tx.proto",
+	Metadata: "sdk/builder/v1/tx.proto",
 }
