@@ -21,10 +21,10 @@ module is responsible for processing auction transactions and distributing reven
 to the auction house. The `x/builder` module is also responsible for ensuring the
 validity of auction transactions. *The `x/builder` module should not exist on its
 own. **This is the most intensive part of the set up process.**
-3. Next, add the MEV lane into the `lane` object on your `app.go`. The first lane is the highest priority lane
-and the last lane is the lowest priority lane. Since the MEV lane is meant to auction
-off the top of the block, **it should be the highest priority lane**. The default lane
-should follow.
+3. Next, add the MEV lane into the `lane` object on your `app.go`. The first 
+lane is the highest priority lane and the last lane is the lowest priority lane.
+Since the MEV lane is meant to auction off the top of the block, **it should be 
+the highest priority lane**. The default lane should follow.
 4. You will also need to create a `PrepareProposalHandler` and a 
 `ProcessProposalHandler` that will be responsible for preparing and processing 
 proposals respectively. Configure the order of the lanes in the
@@ -77,7 +77,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
 
     a. First add the keeper to the app's struct definition. We also want to add 
     MEV lane's custom checkTx handler to the app's struct definition. This will 
-    allow us to override the default checkTx handler to process bid transactions 
+    allow us to override the default checkTx handler to process bid transactions
     before they are inserted into the `LanedMempool`. NOTE: The custom handler 
     is required as otherwise the auction can be held hostage by a malicious
     users.

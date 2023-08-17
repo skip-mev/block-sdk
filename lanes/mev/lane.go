@@ -31,7 +31,6 @@ type (
 	}
 
 	MEVLane struct { //nolint
-		// LaneConfig defines the base lane configuration.
 		*base.BaseLane
 
 		// Factory defines the API/functionality which is responsible for determining

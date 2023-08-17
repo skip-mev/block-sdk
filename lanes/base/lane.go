@@ -22,7 +22,7 @@ type DefaultLane struct {
 	*base.BaseLane
 }
 
-// NewStandardLane returns a new default lane.
+// NewDefaultLane returns a new default lane.
 func NewDefaultLane(cfg base.LaneConfig) *DefaultLane {
 	lane := base.NewBaseLane(
 		cfg,
