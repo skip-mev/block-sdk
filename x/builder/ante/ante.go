@@ -14,9 +14,9 @@ import (
 var _ sdk.AnteDecorator = BuilderDecorator{}
 
 type (
-	// TOBLane is an interface that defines the methods required to interact with the top of block
+	// MEVLane is an interface that defines the methods required to interact with the MEV
 	// lane.
-	TOBLane interface {
+	MEVLane interface {
 		GetAuctionBidInfo(tx sdk.Tx) (*types.BidInfo, error)
 		GetTopAuctionTx(ctx context.Context) sdk.Tx
 	}
@@ -30,12 +30,12 @@ type (
 	BuilderDecorator struct {
 		builderKeeper keeper.Keeper
 		txEncoder     sdk.TxEncoder
-		lane          TOBLane
+		lane          MEVLane
 		mempool       Mempool
 	}
 )
 
-func NewBuilderDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane TOBLane, mempool Mempool) BuilderDecorator {
+func NewBuilderDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane, mempool Mempool) BuilderDecorator {
 	return BuilderDecorator{
 		builderKeeper: ak,
 		txEncoder:     txEncoder,
