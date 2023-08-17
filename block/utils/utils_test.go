@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/skip-mev/pob/block/utils"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 func TestGetMaxTxBytesForLane(t *testing.T) {

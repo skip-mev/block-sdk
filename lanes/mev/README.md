@@ -40,10 +40,9 @@ NOTE: This example walks through setting up the MEV and Default lanes.
    ```go
    import (
     ...
-    "github.com/skip-mev/pob/block-sdk"
-    "github.com/skip-mev/pob/block-sdk/abci"
-    "github.com/skip-mev/pob/block-sdk/lanes/mev"
-    "github.com/skip-mev/pob/block-sdk/lanes/base"
+    "github.com/skip-mev/block-sdk/abci"
+    "github.com/skip-mev/block-sdk/lanes/mev"
+    "github.com/skip-mev/block-sdk/lanes/base"
     buildermodule "github.com/skip-mev/block-sdk/x/builder"
     builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
     buildertypes "github.com/skip-mev/block-sdk/x/builder/types"

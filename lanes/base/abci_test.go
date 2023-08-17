@@ -8,11 +8,11 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/base"
-	"github.com/skip-mev/pob/block/utils/mocks"
-	defaultlane "github.com/skip-mev/pob/lanes/base"
-	testutils "github.com/skip-mev/pob/testutils"
+	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
+	"github.com/skip-mev/block-sdk/block/utils/mocks"
+	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
+	testutils "github.com/skip-mev/block-sdk/testutils"
 )
 
 func (s *BaseTestSuite) TestPrepareLane() {

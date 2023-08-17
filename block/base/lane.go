@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/block"
+	"github.com/skip-mev/block-sdk/block"
 )
 
 var _ block.Lane = (*BaseLane)(nil)

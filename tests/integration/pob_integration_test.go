@@ -5,8 +5,8 @@ import (
 	"testing"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/skip-mev/pob/tests/integration"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/tests/integration"
+	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 	"github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -20,7 +20,7 @@ var (
 	denom         = "stake"
 
 	image = ibc.DockerImage{
-		Repository: "pob-integration",
+		Repository: "block-sdk-integration",
 		Version:    "latest",
 		UidGid:     "1000:1000",
 	}
@@ -37,8 +37,8 @@ var (
 
 	// interchain specification
 	spec = &interchaintest.ChainSpec{
-		ChainName:     "pob",
-		Name:          "pob",
+		ChainName:     "block-sdk",
+		Name:          "block-sdk",
 		NumValidators: &numValidators,
 		NumFullNodes:  &numFullNodes,
 		Version:       "latest",
@@ -50,7 +50,7 @@ var (
 				image,
 			},
 			Type:                   "cosmos",
-			Name:                   "pob",
+			Name:                   "block-sdk",
 			Denom:                  denom,
 			ChainID:                "chain-id-0",
 			Bin:                    "testappd",
@@ -76,5 +76,5 @@ func MakeEncodingConfig() *testutil.TestEncodingConfig {
 }
 
 func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, integration.NewPOBIntegrationTestSuiteFromSpec(spec))
+	suite.Run(t, integration.NewIntegrationTestSuiteFromSpec(spec))
 }

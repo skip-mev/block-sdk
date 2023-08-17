@@ -18,8 +18,8 @@ const (
 	initBalance = 1000000000000
 )
 
-// POBIntegrationTestSuite runs the POB integration test-suite against a given interchaintest specification
-type POBIntegrationTestSuite struct {
+// IntegrationTestSuite runs the Block SDK integration test-suite against a given interchaintest specification
+type IntegrationTestSuite struct {
 	suite.Suite
 	// spec
 	spec *interchaintest.ChainSpec
@@ -33,19 +33,19 @@ type POBIntegrationTestSuite struct {
 	denom string
 }
 
-func NewPOBIntegrationTestSuiteFromSpec(spec *interchaintest.ChainSpec) *POBIntegrationTestSuite {
-	return &POBIntegrationTestSuite{
+func NewIntegrationTestSuiteFromSpec(spec *interchaintest.ChainSpec) *IntegrationTestSuite {
+	return &IntegrationTestSuite{
 		spec:  spec,
 		denom: "stake",
 	}
 }
 
-func (s *POBIntegrationTestSuite) WithDenom(denom string) *POBIntegrationTestSuite {
+func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
 	s.denom = denom
 	return s
 }
 
-func (s *POBIntegrationTestSuite) SetupSuite() {
+func (s *IntegrationTestSuite) SetupSuite() {
 	// build the chain
 	s.T().Log("building chain with spec", s.spec)
 	s.chain = ChainBuilderFromChainSpec(s.T(), s.spec)
@@ -53,7 +53,7 @@ func (s *POBIntegrationTestSuite) SetupSuite() {
 	// build the interchain
 	s.T().Log("building interchain")
 	ctx := context.Background()
-	s.ic = BuildPOBInterchain(s.T(), ctx, s.chain)
+	s.ic = BuildInterchain(s.T(), ctx, s.chain)
 
 	// get the users
 	s.user1 = interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0]
@@ -61,12 +61,12 @@ func (s *POBIntegrationTestSuite) SetupSuite() {
 	s.user3 = interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0]
 }
 
-func (s *POBIntegrationTestSuite) TearDownSuite() {
+func (s *IntegrationTestSuite) TearDownSuite() {
 	// close the interchain
 	s.ic.Close()
 }
 
-func (s *POBIntegrationTestSuite) SetupSubTest() {
+func (s *IntegrationTestSuite) SetupSubTest() {
 	// wait for 1 block height
 	// query height
 	height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -74,7 +74,7 @@ func (s *POBIntegrationTestSuite) SetupSubTest() {
 	WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 }
 
-func (s *POBIntegrationTestSuite) TestQueryParams() {
+func (s *IntegrationTestSuite) TestQueryParams() {
 	// query params
 	params := QueryBuilderParams(s.T(), s.chain)
 
@@ -89,7 +89,7 @@ func (s *POBIntegrationTestSuite) TestQueryParams() {
 //  2. All transactions execute as expected.
 //  3. The balance of the escrow account should be updated correctly.
 //  4. Top of block bids will be included in block proposals before other transactions
-func (s *POBIntegrationTestSuite) TestValidBids() {
+func (s *IntegrationTestSuite) TestValidBids() {
 	params := QueryBuilderParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
@@ -321,7 +321,7 @@ func (s *POBIntegrationTestSuite) TestValidBids() {
 //     that are included in the same block.
 //  5. If there is a block that has multiple valid bids with timeouts that are sufficiently far apart,
 //     the bids should be executed respecting the highest bids until the timeout is reached.
-func (s *POBIntegrationTestSuite) TestMultipleBids() {
+func (s *IntegrationTestSuite) TestMultipleBids() {
 	params := QueryBuilderParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
@@ -663,7 +663,7 @@ func (s *POBIntegrationTestSuite) TestMultipleBids() {
 	})
 }
 
-func (s *POBIntegrationTestSuite) TestInvalidBids() {
+func (s *IntegrationTestSuite) TestInvalidBids() {
 	params := QueryBuilderParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
@@ -889,7 +889,7 @@ func escrowAddressIncrement(bid math.Int, proposerFee sdk.Dec) int64 {
 //
 // 1. Transactions that qualify as free should not be deducted any fees.
 // 2. Transactions that do not qualify as free should be deducted the correct fees.
-func (s *POBIntegrationTestSuite) TestFreeLane() {
+func (s *IntegrationTestSuite) TestFreeLane() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 
@@ -995,7 +995,7 @@ func (s *POBIntegrationTestSuite) TestFreeLane() {
 	})
 }
 
-func (s *POBIntegrationTestSuite) TestLanes() {
+func (s *IntegrationTestSuite) TestLanes() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 

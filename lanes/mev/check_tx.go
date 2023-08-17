@@ -9,7 +9,7 @@ import (
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-	"github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 type (

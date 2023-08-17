@@ -1,4 +1,4 @@
-module github.com/skip-mev/pob/tests/integration
+module github.com/skip-mev/block-sdk/tests/integration
 
 go 1.20
 
@@ -11,7 +11,7 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/vedhavyas/go-subkey => github.com/strangelove-ventures/go-subkey v1.0.7
-
+	github.com/skip-mev/block-sdk => ../../
 )
 
 require (
@@ -23,7 +23,7 @@ require (
 	cosmossdk.io/math v1.0.1 // indirect
 	cosmossdk.io/tools/rosetta v0.2.1 // indirect
 	github.com/cosmos/cosmos-sdk v0.47.4
-	github.com/skip-mev/pob v1.0.3 // reference local
+	github.com/skip-mev/block-sdk v1.0.0 // reference local
 	github.com/strangelove-ventures/interchaintest/v7 v7.0.0-20230721183422-fb937bb0e165
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.24.0

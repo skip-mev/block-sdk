@@ -2,7 +2,7 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 // InitGenesis initializes the builder module's state from a given genesis state.

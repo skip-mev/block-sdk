@@ -7,8 +7,8 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/x/builder/keeper"
-	"github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/builder/keeper"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 var _ sdk.AnteDecorator = BuilderDecorator{}
@@ -105,9 +105,6 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 // ValidateTimeout validates that the timeout is greater than or equal to the expected block height
 // the bid transaction will be executed in.
-//
-// TODO: This will be deprecated in favor of the pre-commit hook once this available on the SDK
-// https://github.com/skip-mev/pob/issues/147
 func (bd BuilderDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
 	currentBlockHeight := ctx.BlockHeight()
 

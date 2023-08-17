@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"cosmossdk.io/math"
 	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
 	comettypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/client/tx"
@@ -15,7 +16,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
@@ -47,8 +48,8 @@ func ChainBuilderFromChainSpec(t *testing.T, spec *interchaintest.ChainSpec) ibc
 	return chain
 }
 
-// BuildPOBInterchain creates a new Interchain testing env with the configured POB CosmosChain
-func BuildPOBInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *interchaintest.Interchain {
+// BuildInterchain creates a new Interchain testing env with the configured Block SDK CosmosChain
+func BuildInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *interchaintest.Interchain {
 	ic := interchaintest.NewInterchain()
 	ic.AddChain(chain)
 
@@ -97,7 +98,7 @@ func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user
 
 	// update sequence number
 	txf = txf.WithSequence(txf.Sequence() + seqIncrement)
-	txf = txf.WithGasPrices(sdk.NewDecCoins(sdk.NewDecCoin(chain.Config().Denom, sdk.NewInt(GasPrice))).String())
+	txf = txf.WithGasPrices(sdk.NewDecCoins(sdk.NewDecCoin(chain.Config().Denom, math.NewInt(GasPrice))).String())
 
 	// sign the tx
 	txBuilder, err := txf.BuildUnsignedTx(msgs...)

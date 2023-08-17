@@ -24,10 +24,10 @@ func init() {
 // concrete types on the provided LegacyAmino codec. These types are used for
 // Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgAuctionBid{}, "pob/x/builder/MsgAuctionBid")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, "pob/x/builder/MsgUpdateParams")
+	legacy.RegisterAminoMsg(cdc, &MsgAuctionBid{}, "block-sdk/x/builder/MsgAuctionBid")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, "block-sdk/x/builder/MsgUpdateParams")
 
-	cdc.RegisterConcrete(Params{}, "pob/builder/Params", nil)
+	cdc.RegisterConcrete(Params{}, "block-sdk/x/builder/Params", nil)
 }
 
 // RegisterInterfaces registers the x/builder interfaces types with the

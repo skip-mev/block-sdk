@@ -5,7 +5,7 @@ package mocks
 import (
 	context "context"
 
-	block "github.com/skip-mev/pob/block"
+	block "github.com/skip-mev/block-sdk/block"
 
 	log "cosmossdk.io/log"
 

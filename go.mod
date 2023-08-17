@@ -1,4 +1,4 @@
-module github.com/skip-mev/pob
+module github.com/skip-mev/block-sdk
 
 go 1.20
 

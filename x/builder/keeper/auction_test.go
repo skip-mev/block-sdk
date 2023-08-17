@@ -6,9 +6,9 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	testutils "github.com/skip-mev/pob/testutils"
-	"github.com/skip-mev/pob/x/builder/keeper"
-	"github.com/skip-mev/pob/x/builder/types"
+	testutils "github.com/skip-mev/block-sdk/testutils"
+	"github.com/skip-mev/block-sdk/x/builder/keeper"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 func (suite *KeeperTestSuite) TestValidateBidInfo() {
@@ -218,8 +218,6 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 }
 
 func (suite *KeeperTestSuite) TestValidateBundle() {
-	// TODO: Update this to be multi-dimensional to test multi-sig
-	// https://github.com/skip-mev/pob/issues/14
 	var accounts []testutils.Account // tracks the order of signers in the bundle
 
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
