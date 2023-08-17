@@ -5,8 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 type (

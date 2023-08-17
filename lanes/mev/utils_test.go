@@ -4,9 +4,9 @@ import (
 	"testing"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/skip-mev/pob/lanes/mev"
-	testutils "github.com/skip-mev/pob/testutils"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/lanes/mev"
+	testutils "github.com/skip-mev/block-sdk/testutils"
+	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 	"github.com/stretchr/testify/require"
 )
 

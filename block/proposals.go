@@ -7,7 +7,7 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/skip-mev/pob/block/utils"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 var _ BlockProposal = (*Proposal)(nil)

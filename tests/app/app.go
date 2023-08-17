@@ -61,14 +61,14 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/skip-mev/pob/abci"
-	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/base"
-	defaultlane "github.com/skip-mev/pob/lanes/base"
-	"github.com/skip-mev/pob/lanes/free"
-	"github.com/skip-mev/pob/lanes/mev"
-	buildermodule "github.com/skip-mev/pob/x/builder"
-	builderkeeper "github.com/skip-mev/pob/x/builder/keeper"
+	"github.com/skip-mev/block-sdk/abci"
+	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
+	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
+	"github.com/skip-mev/block-sdk/lanes/free"
+	"github.com/skip-mev/block-sdk/lanes/mev"
+	buildermodule "github.com/skip-mev/block-sdk/x/builder"
+	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
 )
 
 const (

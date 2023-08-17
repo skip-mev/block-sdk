@@ -4,7 +4,7 @@ import (
 	"math/rand"
 	"testing"
 
-	testutils "github.com/skip-mev/pob/testutils"
+	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/stretchr/testify/suite"
 )
 

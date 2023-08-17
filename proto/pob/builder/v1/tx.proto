@@ -9,7 +9,7 @@ import "cosmos_proto/cosmos.proto";
 import "cosmos/msg/v1/msg.proto";
 import "amino/amino.proto";
 
-option go_package = "github.com/skip-mev/pob/x/builder/types";
+option go_package = "github.com/skip-mev/block-sdk/x/builder/types";
 
 // Msg defines the x/builder Msg service.
 service Msg {

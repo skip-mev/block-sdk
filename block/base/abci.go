@@ -2,8 +2,8 @@ package base
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/utils"
+	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // PrepareLane will prepare a partial proposal for the lane. It will select transactions from the

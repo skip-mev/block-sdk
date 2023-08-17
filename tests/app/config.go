@@ -43,7 +43,7 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/params"       // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
-	_ "github.com/skip-mev/pob/x/builder"           // import for side-effects
+	_ "github.com/skip-mev/block-sdk/x/builder"     // import for side-effects
 
 	"cosmossdk.io/core/appconfig"
 	circuittypes "cosmossdk.io/x/circuit/types"
@@ -68,8 +68,8 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	buildermodulev1 "github.com/skip-mev/pob/api/pob/builder/module/v1"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	buildermodulev1 "github.com/skip-mev/block-sdk/api/pob/builder/module/v1"
+	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 var (

@@ -5,9 +5,9 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/pob/block"
-	"github.com/skip-mev/pob/block/utils"
-	"github.com/skip-mev/pob/x/builder/types"
+	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/utils"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 // PrepareLaneHandler will attempt to select the highest bid transaction that is valid

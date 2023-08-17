@@ -18,10 +18,10 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-	modulev1 "github.com/skip-mev/pob/api/pob/builder/module/v1"
-	"github.com/skip-mev/pob/x/builder/client/cli"
-	"github.com/skip-mev/pob/x/builder/keeper"
-	"github.com/skip-mev/pob/x/builder/types"
+	modulev1 "github.com/skip-mev/block-sdk/api/pob/builder/module/v1"
+	"github.com/skip-mev/block-sdk/x/builder/client/cli"
+	"github.com/skip-mev/block-sdk/x/builder/keeper"
+	"github.com/skip-mev/block-sdk/x/builder/types"
 	"github.com/spf13/cobra"
 )
 

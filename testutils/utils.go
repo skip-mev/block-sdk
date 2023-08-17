@@ -19,7 +19,7 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
-	buildertypes "github.com/skip-mev/pob/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 type EncodingConfig struct {

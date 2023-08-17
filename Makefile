@@ -7,7 +7,7 @@ export COMETBFT_VERSION := $(shell go list -m github.com/cometbft/cometbft | sed
 BIN_DIR ?= $(GOPATH)/bin
 BUILD_DIR ?= $(CURDIR)/build
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
-HTTPS_GIT := https://github.com/skip-mev/pob.git
+HTTPS_GIT := https://github.com/skip-mev/block-sdk.git
 DOCKER := $(shell which docker)
 
 ###############################################################################
@@ -70,7 +70,7 @@ $(BUILD_TARGETS): $(BUILD_DIR)/
 $(BUILD_DIR)/:
 	mkdir -p $(BUILD_DIR)/
 
-# build-and-start-app builds a POB simulation application binary in the build folder
+# build-and-start-app builds a Block SDK simulation application binary in the build folder
 # and initializes a single validator configuration. If desired, users can suppliment
 # other addresses using "genesis add-genesis-account address 10000000000000000000000000stake".
 # This will allow users to bootstrap their wallet with a balance.

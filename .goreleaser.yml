@@ -1,10 +1,10 @@
 ---
-project_name: pob
+project_name: block-sdk
 
 release:
   github:
     owner: skip-mev
-    name: pob
+    name: block-sdk
 
 builds:
   - skip: true
