@@ -1,4 +1,4 @@
-module github.com/skip-mev/pob/tests/integration
+module github.com/skip-mev/block-sdk/tests/integration
 
 go 1.20
 
@@ -11,7 +11,7 @@ replace (
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 
 	github.com/vedhavyas/go-subkey => github.com/strangelove-ventures/go-subkey v1.0.7
-
+	github.com/skip-mev/block-sdk => ../../
 )
 
 require (
