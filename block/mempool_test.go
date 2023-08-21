@@ -7,8 +7,8 @@ import (
 	"time"
 
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
 	"github.com/cometbft/cometbft/libs/log"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"

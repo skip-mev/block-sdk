@@ -67,14 +67,14 @@ type (
 func NewCheckTxHandler(
 	baseApp BaseApp,
 	txDecoder sdk.TxDecoder,
-	tobLane TOBLane,
+	mevLane MEVLaneI,
 	anteHandler sdk.AnteHandler,
 	chainID string,
 ) *CheckTxHandler {
 	return &CheckTxHandler{
 		baseApp:     baseApp,
 		txDecoder:   txDecoder,
-		tobLane:     tobLane,
+		mevLane:     mevLane,
 		anteHandler: anteHandler,
 		chainID:     chainID,
 	}
@@ -123,7 +123,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 		}
 
 		// Attempt to get the bid info of the transaction.
-		bidInfo, err := handler.tobLane.GetAuctionBidInfo(tx)
+		bidInfo, err := handler.mevLane.GetAuctionBidInfo(tx)
 		if err != nil {
 			handler.baseApp.Logger().Info(
 				"failed to get auction bid info",
@@ -167,7 +167,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 		}
 
 		// If the bid transaction is valid, we know we can insert it into the mempool for consideration in the next block.
-		if err := handler.tobLane.Insert(ctx, tx); err != nil {
+		if err := handler.mevLane.Insert(ctx, tx); err != nil {
 			handler.baseApp.Logger().Info(
 				"invalid bid tx; failed to insert bid transaction into mempool",
 				"err", err,
@@ -206,13 +206,13 @@ func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidI
 
 	// Verify all of the bundled transactions.
 	for _, tx := range bidInfo.Transactions {
-		bundledTx, err := handler.tobLane.WrapBundleTransaction(tx)
+		bundledTx, err := handler.mevLane.WrapBundleTransaction(tx)
 		if err != nil {
 			return gasInfo, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 		}
 
 		// bid txs cannot be included in bundled txs
-		bidInfo, _ := handler.tobLane.GetAuctionBidInfo(bundledTx)
+		bidInfo, _ := handler.mevLane.GetAuctionBidInfo(bundledTx)
 		if bidInfo != nil {
 			return gasInfo, fmt.Errorf("invalid bid tx; bundled tx cannot be a bid tx")
 		}
