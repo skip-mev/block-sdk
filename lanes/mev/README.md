@@ -211,7 +211,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     proposalHandler := abci.NewProposalHandler(
         app.Logger(),
         app.txConfig.TxDecoder(),
-        lanes,
+        mempool,
     )
     app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
     app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())

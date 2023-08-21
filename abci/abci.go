@@ -17,17 +17,19 @@ type (
 		txDecoder           sdk.TxDecoder
 		prepareLanesHandler block.PrepareLanesHandler
 		processLanesHandler block.ProcessLanesHandler
+		mempool             block.Mempool
 	}
 )
 
 // NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
 // iteratively call each of the lanes in the chain to prepare and process the proposal.
-func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []block.Lane) *ProposalHandler {
+func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, mempool block.Mempool) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
 		txDecoder:           txDecoder,
-		prepareLanesHandler: ChainPrepareLanes(lanes...),
-		processLanesHandler: ChainProcessLanes(lanes...),
+		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()...),
+		processLanesHandler: ChainProcessLanes(mempool.Registry()...),
+		mempool:             mempool,
 	}
 }
 
@@ -46,6 +48,8 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			}
 		}()
 
+		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
+
 		proposal, err := h.prepareLanesHandler(ctx, block.NewProposal(req.MaxTxBytes))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
@@ -59,7 +63,15 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
+<<<<<<< HEAD
 		return abci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
+=======
+		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
+
+		return &abci.ResponsePrepareProposal{
+			Txs: proposal.GetProposal(),
+		}, nil
+>>>>>>> 6745a20 (init (#9))
 	}
 }
 
