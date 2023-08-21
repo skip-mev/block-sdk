@@ -37,6 +37,10 @@ func NewFreeLane(
 		matchFn,
 	)
 
+	if err := lane.ValidateBasic(); err != nil {
+		panic(err)
+	}
+
 	return &FreeLane{
 		BaseLane: lane,
 	}

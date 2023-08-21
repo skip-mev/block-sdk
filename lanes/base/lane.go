@@ -35,6 +35,10 @@ func NewDefaultLane(cfg base.LaneConfig) *DefaultLane {
 		base.DefaultMatchHandler(),
 	)
 
+	if err := lane.ValidateBasic(); err != nil {
+		panic(err)
+	}
+
 	return &DefaultLane{
 		BaseLane: lane,
 	}

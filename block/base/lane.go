@@ -64,10 +64,6 @@ func NewBaseLane(
 		matchHandler: matchHandlerFn,
 	}
 
-	if err := lane.ValidateBasic(); err != nil {
-		panic(err)
-	}
-
 	return lane
 }
 
