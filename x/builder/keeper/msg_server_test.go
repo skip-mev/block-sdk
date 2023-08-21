@@ -4,7 +4,6 @@ import (
 	"math/rand"
 	"time"
 
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	testutils "github.com/skip-mev/block-sdk/testutils"
@@ -60,7 +59,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			},
 			malleate: func() {
 				params := types.DefaultParams()
-				params.ProposerFee = math.LegacyZeroDec()
+				params.ProposerFee = sdk.ZeroDec()
 				params.EscrowAccountAddress = escrow.Address
 				suite.builderKeeper.SetParams(suite.ctx, params)
 
@@ -85,17 +84,17 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			},
 			malleate: func() {
 				params := types.DefaultParams()
-				params.ProposerFee = math.LegacyMustNewDecFromStr("0.30")
+				params.ProposerFee = sdk.MustNewDecFromStr("0.30")
 				params.EscrowAccountAddress = escrow.Address
 				suite.builderKeeper.SetParams(suite.ctx, params)
 
 				suite.distrKeeper.EXPECT().
 					GetPreviousProposerConsAddr(suite.ctx).
-					Return(proposerCons.ConsKey.PubKey().Address().Bytes(), nil)
+					Return(proposerCons.ConsKey.PubKey().Address().Bytes())
 
 				suite.stakingKeeper.EXPECT().
-					GetValidatorByConsAddr(suite.ctx, sdk.ConsAddress(proposerCons.ConsKey.PubKey().Address().Bytes())).
-					Return(proposer, nil).
+					ValidatorByConsAddr(suite.ctx, sdk.ConsAddress(proposerCons.ConsKey.PubKey().Address().Bytes())).
+					Return(proposer).
 					AnyTimes()
 
 				suite.bankKeeper.EXPECT().
@@ -140,7 +139,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: suite.authorityAccount.String(),
 				Params: types.Params{
-					ProposerFee: math.LegacyMustNewDecFromStr("1.1"),
+					ProposerFee: sdk.MustNewDecFromStr("1.1"),
 				},
 			},
 			passBasic: false,
@@ -151,7 +150,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: suite.authorityAccount.String(),
 				Params: types.Params{
-					ProposerFee: math.LegacyMustNewDecFromStr("0.1"),
+					ProposerFee: sdk.MustNewDecFromStr("0.1"),
 				},
 			},
 			passBasic: false,
@@ -162,7 +161,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 			msg: &types.MsgUpdateParams{
 				Authority: account.Address.String(),
 				Params: types.Params{
-					ProposerFee:          math.LegacyMustNewDecFromStr("0.1"),
+					ProposerFee:          sdk.MustNewDecFromStr("0.1"),
 					MaxBundleSize:        2,
 					EscrowAccountAddress: suite.authorityAccount,
 					MinBidIncrement:      sdk.NewInt64Coin("stake", 100),

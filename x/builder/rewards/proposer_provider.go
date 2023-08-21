@@ -27,15 +27,8 @@ func NewProposerRewardsAddressProvider(
 }
 
 func (p *ProposerRewardsAddressProvider) GetRewardsAddress(ctx sdk.Context) (sdk.AccAddress, error) {
-	prevPropConsAddr, err := p.distrKeeper.GetPreviousProposerConsAddr(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	prevProposer, err := p.stakingKeeper.GetValidatorByConsAddr(ctx, prevPropConsAddr)
-	if err != nil {
-		return nil, err
-	}
+	prevPropConsAddr := p.distrKeeper.GetPreviousProposerConsAddr(ctx)
+	prevProposer := p.stakingKeeper.ValidatorByConsAddr(ctx, prevPropConsAddr)
 
 	return sdk.AccAddress(prevProposer.GetOperator()), nil
 }
