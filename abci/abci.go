@@ -141,14 +141,12 @@ func ChainPrepareLanes(chain ...block.Lane) block.PrepareLanesHandler {
 				lane.Logger().Error("failed to prepare lane", "lane", lane.Name(), "err", err, "recover_error", rec)
 				lane.Logger().Info("skipping lane", "lane", lane.Name())
 
-				lanesRemaining := len(chain)
-				switch {
-				case lanesRemaining <= 2:
+				if len(chain) <= 2 {
 					// If there are only two lanes remaining, then the first lane in the chain
 					// is the lane that failed to prepare the partial proposal and the second lane in the
 					// chain is the terminator lane. We return the proposal as is.
 					finalProposal, err = partialProposal, nil
-				default:
+				} else {
 					// If there are more than two lanes remaining, then the first lane in the chain
 					// is the lane that failed to prepare the proposal but the second lane in the
 					// chain is not the terminator lane so there could potentially be more transactions
