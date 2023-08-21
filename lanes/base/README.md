@@ -101,7 +101,7 @@ func NewApp() {
     proposalHandler := abci.NewProposalHandler(
         app.Logger(),
         app.TxConfig().TxDecoder(),
-        lanes,
+        mempool,
     )
     app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
     app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())

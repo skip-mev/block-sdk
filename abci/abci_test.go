@@ -450,10 +450,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, defaultLane)
+
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
-			[]block.Lane{panicLane, defaultLane},
+			mempool,
 		).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
@@ -483,10 +485,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane)
+
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
-			[]block.Lane{defaultLane, panicLane},
+			mempool,
 		).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
@@ -517,10 +521,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, panicLane2, defaultLane)
+
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
-			[]block.Lane{panicLane, panicLane2, defaultLane},
+			mempool,
 		).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
@@ -551,10 +557,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane, panicLane2)
+
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
-			[]block.Lane{defaultLane, panicLane, panicLane2},
+			mempool,
 		).PrepareProposalHandler()
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
@@ -787,7 +795,7 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxDecoder(),
-		mempool.Registry(),
+		mempool,
 	)
 }
 
