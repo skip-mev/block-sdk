@@ -140,7 +140,7 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 		p.cache[txHashStr] = struct{}{}
 
 		lane.Logger().Info(
-			"added transaction to proposal",
+			"adding transaction to proposal",
 			"lane", lane.Name(),
 			"tx_hash", txHashStr,
 			"tx_bytes", len(tx),
@@ -148,11 +148,11 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 	}
 
 	lane.Logger().Info(
-		"added transactions to proposal",
+		"lane successfully updated proposal",
 		"lane", lane.Name(),
 		"num_txs", len(partialProposalTxs),
-		"total_tx_bytes", partialProposalSize,
-		"cumulative_size", updatedSize,
+		"partial_proposal_size", partialProposalSize,
+		"cumulative_proposal_size", updatedSize,
 	)
 
 	return nil
