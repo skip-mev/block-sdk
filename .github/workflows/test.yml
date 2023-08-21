@@ -35,6 +35,7 @@ jobs:
         run: |
           make test
 
+  # TODO: Add this back once we have a working version of v0.50.0 with ITS and v0.47.x
   # test-integration:
   #   runs-on: ubuntu-latest
   #   timeout-minutes: 25
