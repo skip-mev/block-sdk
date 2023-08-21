@@ -1,23 +1,17 @@
 package app
 
+//nolint:revive
 import (
+	_ "embed"
 	"io"
 	"os"
 	"path/filepath"
-
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
-	dbm "github.com/cosmos/cosmos-db"
+	"reflect"
 
 	"cosmossdk.io/depinject"
-	storetypes "cosmossdk.io/store/types"
-	circuitkeeper "cosmossdk.io/x/circuit/keeper"
-	"cosmossdk.io/x/upgrade"
-	upgradekeeper "cosmossdk.io/x/upgrade/keeper"
-
-	feegrantkeeper "cosmossdk.io/x/feegrant/keeper"
-	feegrantmodule "cosmossdk.io/x/feegrant/module"
+	dbm "github.com/cometbft/cometbft-db"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
@@ -27,22 +21,28 @@ import (
 	"github.com/cosmos/cosmos-sdk/server/api"
 	"github.com/cosmos/cosmos-sdk/server/config"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/module"
 	"github.com/cosmos/cosmos-sdk/x/auth"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	authkeeper "github.com/cosmos/cosmos-sdk/x/auth/keeper"
+	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
 	"github.com/cosmos/cosmos-sdk/x/auth/vesting"
 	authzkeeper "github.com/cosmos/cosmos-sdk/x/authz/keeper"
 	authzmodule "github.com/cosmos/cosmos-sdk/x/authz/module"
 	"github.com/cosmos/cosmos-sdk/x/bank"
 	bankkeeper "github.com/cosmos/cosmos-sdk/x/bank/keeper"
-	"github.com/cosmos/cosmos-sdk/x/consensus"
+	consensus "github.com/cosmos/cosmos-sdk/x/consensus"
 	consensuskeeper "github.com/cosmos/cosmos-sdk/x/consensus/keeper"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	crisiskeeper "github.com/cosmos/cosmos-sdk/x/crisis/keeper"
 	distr "github.com/cosmos/cosmos-sdk/x/distribution"
 	distrkeeper "github.com/cosmos/cosmos-sdk/x/distribution/keeper"
+	"github.com/cosmos/cosmos-sdk/x/evidence"
+	evidencekeeper "github.com/cosmos/cosmos-sdk/x/evidence/keeper"
+	feegrantkeeper "github.com/cosmos/cosmos-sdk/x/feegrant/keeper"
+	feegrantmodule "github.com/cosmos/cosmos-sdk/x/feegrant/module"
 	"github.com/cosmos/cosmos-sdk/x/genutil"
 	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
 	"github.com/cosmos/cosmos-sdk/x/gov"
@@ -52,6 +52,7 @@ import (
 	groupmodule "github.com/cosmos/cosmos-sdk/x/group/module"
 	"github.com/cosmos/cosmos-sdk/x/mint"
 	mintkeeper "github.com/cosmos/cosmos-sdk/x/mint/keeper"
+	nftmodule "github.com/cosmos/cosmos-sdk/x/nft/module"
 	"github.com/cosmos/cosmos-sdk/x/params"
 	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
 	paramskeeper "github.com/cosmos/cosmos-sdk/x/params/keeper"
@@ -60,6 +61,9 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
+	"github.com/cosmos/cosmos-sdk/x/upgrade"
+	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
+	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
@@ -94,18 +98,22 @@ var (
 		gov.NewAppModuleBasic(
 			[]govclient.ProposalHandler{
 				paramsclient.ProposalHandler,
+				upgradeclient.LegacyProposalHandler,
+				upgradeclient.LegacyCancelProposalHandler,
 			},
 		),
 		params.AppModuleBasic{},
 		crisis.AppModuleBasic{},
 		slashing.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
 		upgrade.AppModuleBasic{},
+		evidence.AppModuleBasic{},
 		authzmodule.AppModuleBasic{},
 		groupmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
+		nftmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		buildermodule.AppModuleBasic{},
-		feegrantmodule.AppModuleBasic{},
 	)
 )
 
@@ -116,6 +124,7 @@ var (
 
 type TestApp struct {
 	*runtime.App
+
 	legacyAmino       *codec.LegacyAmino
 	appCodec          codec.Codec
 	txConfig          client.TxConfig
@@ -133,11 +142,11 @@ type TestApp struct {
 	UpgradeKeeper         *upgradekeeper.Keeper
 	ParamsKeeper          paramskeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
+	EvidenceKeeper        evidencekeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
-	CircuitBreakerKeeper  circuitkeeper.Keeper
 	BuilderKeeper         builderkeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
 	checkTxHandler mev.CheckTx
@@ -170,8 +179,6 @@ func New(
 			depinject.Supply(
 				// supply the application options
 				appOpts,
-
-				logger,
 
 				// ADVANCED CONFIGURATION
 
@@ -216,11 +223,11 @@ func New(
 		&app.UpgradeKeeper,
 		&app.ParamsKeeper,
 		&app.AuthzKeeper,
+		&app.EvidenceKeeper,
+		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
 		&app.BuilderKeeper,
 		&app.ConsensusParamsKeeper,
-		&app.FeeGrantKeeper,
-		&app.CircuitBreakerKeeper,
 	); err != nil {
 		panic(err)
 	}
@@ -251,24 +258,19 @@ func New(
 	// }
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
-	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
-
-	// ---------------------------------------------------------------------------- //
-	// ------------------------- Begin Custom Code -------------------------------- //
-	// ---------------------------------------------------------------------------- //
+	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
 	// Set POB's mempool into the app.
 	// Create the lanes.
 	//
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
-	// MEV lane allows transactions to bid for inclusion at the top of the next block.
+	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
 	mevConfig := base.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: math.LegacyZeroDec(), // This means the lane has no limit on block space.
-		MaxTxs:        0,                    // This means the lane has no limit on the number of transactions it can store.
+		MaxBlockSpace: sdk.ZeroDec(),
 	}
 	mevLane := mev.NewMEVLane(
 		mevConfig,
@@ -280,8 +282,7 @@ func New(
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: math.LegacyZeroDec(),
-		MaxTxs:        0,
+		MaxBlockSpace: sdk.ZeroDec(),
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
@@ -294,8 +295,7 @@ func New(
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: math.LegacyZeroDec(),
-		MaxTxs:        0,
+		MaxBlockSpace: sdk.ZeroDec(),
 	}
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 
@@ -317,7 +317,7 @@ func New(
 		SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		SignModeHandler: app.txConfig.SignModeHandler(),
 	}
-	options := POBHandlerOptions{
+	options := AnteHandlerOptions{
 		BaseOptions:   handlerOptions,
 		BuilderKeeper: app.BuilderKeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -326,7 +326,7 @@ func New(
 		MEVLane:       mevLane,
 		Mempool:       mempool,
 	}
-	anteHandler := NewPOBAnteHandler(options)
+	anteHandler := NewAnteHandler(options)
 
 	// Set the lane config on the lanes.
 	for _, lane := range lanes {
@@ -334,10 +334,10 @@ func New(
 	}
 	app.App.SetAnteHandler(anteHandler)
 
-	// Set the abci handlers on base app
+	// Set the proposal handlers on base app
 	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
-		app.TxConfig().TxDecoder(),
+		app.txConfig.TxDecoder(),
 		lanes,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
@@ -349,6 +349,7 @@ func New(
 		app.txConfig.TxDecoder(),
 		mevLane,
 		anteHandler,
+		app.ChainID(),
 	)
 	app.SetCheckTx(checkTxHandler.CheckTx())
 
@@ -388,13 +389,20 @@ func New(
 // handler so that we can verify bid transactions before they are inserted into the mempool.
 // With the POB CheckTx, we can verify the bid transaction and all of the bundled transactions
 // before inserting the bid transaction into the mempool.
-func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
+func (app *TestApp) CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
 	return app.checkTxHandler(req)
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
 func (app *TestApp) SetCheckTx(handler mev.CheckTx) {
 	app.checkTxHandler = handler
+}
+
+// ChainID gets chainID from private fields of BaseApp
+// Should be removed once SDK 0.50.x will be adopted
+func (app *TestApp) ChainID() string {
+	field := reflect.ValueOf(app.BaseApp).Elem().FieldByName("chainID")
+	return field.String()
 }
 
 // Name returns the name of the App

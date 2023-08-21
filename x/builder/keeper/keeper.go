@@ -3,7 +3,6 @@ package keeper
 import (
 	"fmt"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 
 	storetypes "cosmossdk.io/store/types"
@@ -76,11 +75,6 @@ func NewKeeperWithRewardsAddressProvider(
 		rewardsAddressProvider: rewardsAddressProvider,
 		authority:              authority,
 	}
-}
-
-// Logger returns a builder module-specific logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
-	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
 // GetAuthority returns the address that is capable of executing a MsgUpdateParams message.

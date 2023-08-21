@@ -5,12 +5,13 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
+	"os"
 	"testing"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/abci"
@@ -59,8 +60,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 		s.Require().Equal(0, len(resp.Txs))
 	})
@@ -82,9 +82,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
-		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx)
 		s.Require().Equal(1, len(resp.Txs))
@@ -120,9 +119,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
-		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx2, tx1)
 		s.Require().Equal(2, len(resp.Txs))
@@ -158,9 +156,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
-		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx1)
 		s.Require().Equal(1, len(resp.Txs))
@@ -173,8 +170,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(0, len(resp.Txs))
@@ -203,8 +199,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -241,8 +236,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -280,8 +274,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
@@ -321,8 +314,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0])
 		size := int64(len(proposal[0]) - 1)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: size})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: size})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -357,8 +349,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposal := s.getTxBytes(freeTx)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -422,8 +413,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(7, len(resp.Txs))
@@ -451,13 +441,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]block.Lane{panicLane, defaultLane},
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -484,13 +473,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]block.Lane{defaultLane, panicLane},
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -518,13 +506,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]block.Lane{panicLane, panicLane2, defaultLane},
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -552,13 +539,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			[]block.Lane{defaultLane, panicLane, panicLane2},
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -575,10 +561,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: nil})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: nil})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
 	s.Run("rejects a proposal with bad txs", func() {
@@ -588,9 +573,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{{0x01, 0x02, 0x03}}})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: [][]byte{{0x01, 0x02, 0x03}}})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal when a lane panics", func() {
@@ -607,9 +591,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NoError(err)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, panicLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: [][]byte{txbz}})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: [][]byte{txbz}})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal (out of order)", func() {
@@ -640,9 +623,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(tx, tx2)})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: s.getTxBytes(tx, tx2)})
 		s.Require().NotNil(resp)
-		s.Require().Error(err)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where first lane is valid second is not", func() {
@@ -685,9 +668,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		mevLane.SetProcessLaneHandler(block.NoOpProcessLaneHandler())
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
 		s.Require().NotNil(resp)
-		s.Require().Error(err)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 }
 
@@ -726,7 +709,7 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTestLogger(s.T()),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
@@ -738,7 +721,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTestLogger(s.T()),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
@@ -750,7 +733,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTestLogger(s.T()),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
@@ -762,7 +745,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 
 func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTestLogger(s.T()),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		MaxBlockSpace: maxBlockSpace,
@@ -782,10 +765,10 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), true, lanes...)
+	mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), true, lanes...)
 
 	return abci.NewProposalHandler(
-		log.NewTestLogger(s.T()),
+		log.NewTMLogger(os.Stdout),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		mempool.Registry(),
 	)

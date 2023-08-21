@@ -5,8 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 

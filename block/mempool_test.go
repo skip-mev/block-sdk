@@ -2,12 +2,13 @@ package block_test
 
 import (
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"
@@ -98,7 +99,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.mempool = block.NewLanedMempool(log.NewTMLogger(os.Stdout), true, suite.lanes...)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)

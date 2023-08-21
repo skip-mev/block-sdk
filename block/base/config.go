@@ -3,8 +3,8 @@ package base
 import (
 	"fmt"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"
 )

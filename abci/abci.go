@@ -1,10 +1,8 @@
 package abci
 
 import (
-	"fmt"
-
-	"cosmossdk.io/log"
 	abci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/utils"
@@ -39,19 +37,19 @@ func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, lanes []bloc
 // the default lane will not have a boundary on the number of bytes that can be included in the proposal and
 // will include all valid transactions in the proposal (up to MaxTxBytes).
 func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
-	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (resp *abci.ResponsePrepareProposal, err error) {
+	return func(ctx sdk.Context, req abci.RequestPrepareProposal) (resp abci.ResponsePrepareProposal) {
 		// In the case where there is a panic, we recover here and return an empty proposal.
 		defer func() {
 			if err := recover(); err != nil {
 				h.logger.Error("failed to prepare proposal", "err", err)
-				resp = &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
+				resp = abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 			}
 		}()
 
 		proposal, err := h.prepareLanesHandler(ctx, block.NewProposal(req.MaxTxBytes))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
-			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
+			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 		}
 
 		h.logger.Info(
@@ -61,9 +59,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
-		return &abci.ResponsePrepareProposal{
-			Txs: proposal.GetProposal(),
-		}, nil
+		return abci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
 	}
 }
 
@@ -72,39 +68,38 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // If a lane's portion of the proposal is invalid, we reject the proposal. After a lane's portion
 // of the proposal is verified, we pass the remaining transactions to the next lane in the chain.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
-	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
+	return func(ctx sdk.Context, req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
 		// In the case where any of the lanes panic, we recover here and return a reject status.
 		defer func() {
 			if rec := recover(); rec != nil {
 				h.logger.Error("failed to process proposal", "recover_err", rec)
 
-				resp = &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
-				err = fmt.Errorf("failed to process proposal: %v", rec)
+				resp = abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 			}
 		}()
 
 		txs := req.Txs
 		if len(txs) == 0 {
 			h.logger.Info("accepted empty proposal")
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 		}
 
 		// Decode the transactions from the proposal.
 		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, txs)
 		if err != nil {
 			h.logger.Error("failed to decode transactions", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		// Verify the proposal using the verification logic from each lane.
 		if _, err := h.processLanesHandler(ctx, decodedTxs); err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		h.logger.Info("validated proposal", "num_txs", len(txs))
 
-		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
+		return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 	}
 }
 
