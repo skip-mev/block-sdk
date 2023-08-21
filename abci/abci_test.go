@@ -440,7 +440,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, defaultLane)
+		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, panicLane, defaultLane)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -474,7 +474,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane)
+		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, defaultLane, panicLane)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -509,7 +509,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, panicLane2, defaultLane)
+		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, panicLane, panicLane2, defaultLane)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -544,7 +544,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane, panicLane2)
+		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, defaultLane, panicLane, panicLane2)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),

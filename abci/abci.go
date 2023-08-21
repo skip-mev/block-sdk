@@ -63,15 +63,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
-<<<<<<< HEAD
-		return abci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
-=======
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
-		return &abci.ResponsePrepareProposal{
-			Txs: proposal.GetProposal(),
-		}, nil
->>>>>>> 6745a20 (init (#9))
+		return abci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
 	}
 }
 
