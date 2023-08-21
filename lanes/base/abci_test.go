@@ -4,9 +4,10 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"os"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
@@ -504,7 +505,7 @@ func (s *BaseTestSuite) initLane(
 	expectedExecution map[sdk.Tx]bool,
 ) *defaultlane.DefaultLane {
 	config := base.NewLaneConfig(
-		log.NewTestLogger(s.T()),
+		log.NewTMLogger(os.Stdout),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),

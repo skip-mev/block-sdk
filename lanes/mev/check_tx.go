@@ -3,10 +3,10 @@ package mev
 import (
 	"fmt"
 
-	log "cosmossdk.io/log"
-	storetypes "cosmossdk.io/store/types"
 	cometabci "github.com/cometbft/cometbft/abci/types"
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	"github.com/cometbft/cometbft/libs/log"
+	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 	"github.com/skip-mev/block-sdk/x/builder/types"
@@ -33,11 +33,14 @@ type (
 		// anteHandler is utilized to verify the bid transaction against the latest
 		// committed state.
 		anteHandler sdk.AnteHandler
+
+		// chainID is the chain id of the application.
+		chainID string
 	}
 
 	// CheckTx is baseapp's CheckTx method that checks the validity of a
 	// transaction.
-	CheckTx func(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error)
+	CheckTx func(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx
 
 	// BaseApp is an interface that allows us to call baseapp's CheckTx method
 	// as well as retrieve the latest committed state.
@@ -47,7 +50,7 @@ type (
 
 		// CheckTx is baseapp's CheckTx method that checks the validity of a
 		// transaction.
-		CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error)
+		CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx
 
 		// Logger is utilized to log errors.
 		Logger() log.Logger
@@ -56,10 +59,7 @@ type (
 		LastBlockHeight() int64
 
 		// GetConsensusParams is utilized to retrieve the consensus params.
-		GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams
-
-		// ChainID is utilized to retrieve the chain ID.
-		ChainID() string
+		GetConsensusParams(ctx sdk.Context) *tmproto.ConsensusParams
 	}
 )
 
@@ -69,12 +69,14 @@ func NewCheckTxHandler(
 	txDecoder sdk.TxDecoder,
 	mevLane MEVLaneI,
 	anteHandler sdk.AnteHandler,
+	chainID string,
 ) *CheckTxHandler {
 	return &CheckTxHandler{
 		baseApp:     baseApp,
 		txDecoder:   txDecoder,
 		mevLane:     mevLane,
 		anteHandler: anteHandler,
+		chainID:     chainID,
 	}
 }
 
@@ -85,7 +87,7 @@ func NewCheckTxHandler(
 // otherwise the auction can be griefed. No state changes are applied to the state
 // during this process.
 func (handler *CheckTxHandler) CheckTx() CheckTx {
-	return func(req *cometabci.RequestCheckTx) (resp *cometabci.ResponseCheckTx, err error) {
+	return func(req cometabci.RequestCheckTx) (resp cometabci.ResponseCheckTx) {
 		defer func() {
 			if rec := recover(); rec != nil {
 				handler.baseApp.Logger().Error(
@@ -93,7 +95,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 					"err", rec,
 				)
 
-				err = fmt.Errorf("panic in check tx handler: %s", rec)
+				err := fmt.Errorf("panic in check tx handler: %s", rec)
 				resp = sdkerrors.ResponseCheckTxWithEvents(
 					err,
 					0,
@@ -117,7 +119,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), err
+			)
 		}
 
 		// Attempt to get the bid info of the transaction.
@@ -134,20 +136,12 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), err
+			)
 		}
 
 		// If this is not a bid transaction, we just execute it normally.
 		if bidInfo == nil {
-			resp, err := handler.baseApp.CheckTx(req)
-			if err != nil {
-				handler.baseApp.Logger().Info(
-					"failed to execute check tx",
-					"err", err,
-				)
-			}
-
-			return resp, err
+			return handler.baseApp.CheckTx(req)
 		}
 
 		// We attempt to get the latest committed state in order to verify transactions
@@ -169,7 +163,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				gasInfo.GasUsed,
 				nil,
 				false,
-			), err
+			)
 		}
 
 		// If the bid transaction is valid, we know we can insert it into the mempool for consideration in the next block.
@@ -185,14 +179,14 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				gasInfo.GasUsed,
 				nil,
 				false,
-			), err
+			)
 		}
 
-		return &cometabci.ResponseCheckTx{
+		return cometabci.ResponseCheckTx{
 			Code:      cometabci.CodeTypeOK,
 			GasWanted: int64(gasInfo.GasWanted),
 			GasUsed:   int64(gasInfo.GasUsed),
-		}, nil
+		}
 	}
 }
 
@@ -233,14 +227,14 @@ func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidI
 
 // GetContextForBidTx is returns the latest committed state and sets the context given
 // the checkTx request.
-func (handler *CheckTxHandler) GetContextForBidTx(req *cometabci.RequestCheckTx) sdk.Context {
+func (handler *CheckTxHandler) GetContextForBidTx(req cometabci.RequestCheckTx) sdk.Context {
 	// Retrieve the commit multi-store which is used to retrieve the latest committed state.
 	ms := handler.baseApp.CommitMultiStore().CacheMultiStore()
 
 	// Create a new context based off of the latest committed state.
-	header := cmtproto.Header{
+	header := tmproto.Header{
 		Height:  handler.baseApp.LastBlockHeight(),
-		ChainID: handler.baseApp.ChainID(),
+		ChainID: handler.chainID, // TODO: Replace with actual chain ID. This is currently not exposed by the app.
 	}
 	ctx, _ := sdk.NewContext(ms, header, true, handler.baseApp.Logger()).CacheContext()
 

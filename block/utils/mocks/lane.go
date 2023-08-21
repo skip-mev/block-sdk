@@ -7,7 +7,7 @@ import (
 
 	block "github.com/skip-mev/block-sdk/block"
 
-	log "cosmossdk.io/log"
+	log "github.com/cometbft/cometbft/libs/log"
 
 	math "cosmossdk.io/math"
 

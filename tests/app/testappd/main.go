@@ -3,16 +3,21 @@ package main
 import (
 	"os"
 
-	"cosmossdk.io/log"
+	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 	"github.com/skip-mev/block-sdk/tests/app"
-	cmd "github.com/skip-mev/block-sdk/tests/app/testappd/cmd"
+	"github.com/skip-mev/block-sdk/tests/app/testappd/cmd"
 )
 
 func main() {
 	rootCmd := cmd.NewRootCmd()
 	if err := svrcmd.Execute(rootCmd, "", app.DefaultNodeHome); err != nil {
-		log.NewLogger(rootCmd.OutOrStderr()).Error("failure when running app", "err", err)
-		os.Exit(1)
+		switch e := err.(type) {
+		case server.ErrorCode:
+			os.Exit(e.Code)
+
+		default:
+			os.Exit(1)
+		}
 	}
 }

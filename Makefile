@@ -108,7 +108,7 @@ docker-build: use-main
 
 docker-build-integration: use-main
 	@echo "Building integration-test Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t pob-integration -f contrib/images/pob.integration.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t block-sdk-integration -f contrib/images/pob.integration.Dockerfile .
 
 ###############################################################################
 ###                                  Tests                                  ###

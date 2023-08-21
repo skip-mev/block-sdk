@@ -1,7 +1,6 @@
 package test
 
 import (
-	"context"
 	"reflect"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -59,7 +58,7 @@ func (m *MockBankKeeper) EXPECT() *MockBankKeeperMockRecorder {
 	return m.recorder
 }
 
-func (m *MockBankKeeper) GetBalance(ctx context.Context, addr sdk.AccAddress, denom string) sdk.Coin {
+func (m *MockBankKeeper) GetBalance(ctx sdk.Context, addr sdk.AccAddress, denom string) sdk.Coin {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetBalance", ctx, addr, denom)
 	ret0 := ret[0].(sdk.Coin)
@@ -71,7 +70,7 @@ func (mr *MockBankKeeperMockRecorder) GetBalance(ctx, addr, denom interface{}) *
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetBalance", reflect.TypeOf((*MockBankKeeper)(nil).GetBalance), ctx, addr, denom)
 }
 
-func (m *MockBankKeeper) SendCoins(ctx context.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
+func (m *MockBankKeeper) SendCoins(ctx sdk.Context, fromAddr sdk.AccAddress, toAddr sdk.AccAddress, amt sdk.Coins) error {
 	m.ctrl.T.Helper()
 	m.ctrl.Call(m, "SendCoins", ctx, fromAddr, toAddr, amt)
 	return nil
@@ -101,11 +100,11 @@ func (m *MockDistributionKeeper) EXPECT() *MockDistributionKeeperRecorder {
 	return m.recorder
 }
 
-func (m *MockDistributionKeeper) GetPreviousProposerConsAddr(ctx context.Context) (sdk.ConsAddress, error) {
+func (m *MockDistributionKeeper) GetPreviousProposerConsAddr(ctx sdk.Context) sdk.ConsAddress {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetPreviousProposerConsAddr", ctx)
 	ret0 := ret[0].(sdk.ConsAddress)
-	return ret0, nil
+	return ret0
 }
 
 func (mr *MockDistributionKeeperRecorder) GetPreviousProposerConsAddr(ctx any) *gomock.Call {
@@ -132,14 +131,14 @@ func (m *MockStakingKeeper) EXPECT() *MockStakingKeeperRecorder {
 	return m.recorder
 }
 
-func (m *MockStakingKeeper) GetValidatorByConsAddr(ctx context.Context, consAddr sdk.ConsAddress) (stakingtypes.Validator, error) {
+func (m *MockStakingKeeper) ValidatorByConsAddr(ctx sdk.Context, consAddr sdk.ConsAddress) stakingtypes.ValidatorI {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetValidatorByConsAddr", ctx, consAddr)
-	ret0 := ret[0].(stakingtypes.Validator)
-	return ret0, nil
+	ret := m.ctrl.Call(m, "ValidatorByConsAddr", ctx, consAddr)
+	ret0 := ret[0].(stakingtypes.ValidatorI)
+	return ret0
 }
 
-func (mr *MockStakingKeeperRecorder) GetValidatorByConsAddr(ctx, consAddr any) *gomock.Call {
+func (mr *MockStakingKeeperRecorder) ValidatorByConsAddr(ctx, consAddr any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetValidatorByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).GetValidatorByConsAddr), ctx, consAddr)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ValidatorByConsAddr", reflect.TypeOf((*MockStakingKeeper)(nil).ValidatorByConsAddr), ctx, consAddr)
 }

@@ -2,12 +2,13 @@ package ante_test
 
 import (
 	"math/rand"
+	"os"
 	"testing"
 	"time"
 
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
+	"github.com/cometbft/cometbft/libs/log"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
@@ -85,7 +86,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	mevConfig := base.LaneConfig{
-		Logger:        suite.ctx.Logger(),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
@@ -98,7 +99,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:        suite.ctx.Logger(),
+		Logger:        log.NewTMLogger(os.Stdout),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
@@ -109,7 +110,7 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.baseLane}
-	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.mempool = block.NewLanedMempool(log.NewTMLogger(os.Stdout), true, suite.lanes...)
 }
 
 func (suite *AnteTestSuite) anteHandler(ctx sdk.Context, tx sdk.Tx, _ bool) (sdk.Context, error) {

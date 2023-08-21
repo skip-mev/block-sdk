@@ -9,7 +9,7 @@ import (
 	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
 )
 
-type POBHandlerOptions struct {
+type AnteHandlerOptions struct {
 	BaseOptions   ante.HandlerOptions
 	Mempool       block.Mempool
 	MEVLane       builderante.MEVLane
@@ -20,7 +20,7 @@ type POBHandlerOptions struct {
 }
 
 // NewPOBAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the POB AnteHandler.
-func NewPOBAnteHandler(options POBHandlerOptions) sdk.AnteHandler {
+func NewAnteHandler(options AnteHandlerOptions) sdk.AnteHandler {
 	if options.BaseOptions.AccountKeeper == nil {
 		panic("account keeper is required for ante builder")
 	}
