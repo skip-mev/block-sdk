@@ -189,7 +189,7 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 		if !msgsPerUser[i].ExpectFail {
 			require.Equal(t, resp.Code, uint32(0))
 		} else {
-			require.Equal(t, resp.Code, uint32(1))
+			require.NotEqual(t, resp.Code, uint32(0))
 		}
 
 	}

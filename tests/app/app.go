@@ -265,7 +265,7 @@ func New(
 	//
 	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
 	// lane and the last lane is the lowest priority lane.
-	// Top of block lane allows transactions to bid for inclusion at the top of the next block.
+	// MEV lane allows transactions to bid for inclusion at the top of the next block.
 	mevConfig := base.LaneConfig{
 		Logger:        app.Logger(),
 		TxEncoder:     app.txConfig.TxEncoder(),
