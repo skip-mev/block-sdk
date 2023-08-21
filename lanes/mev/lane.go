@@ -68,5 +68,9 @@ func NewMEVLane(
 	// Set the check order handler to the TOB one
 	lane.SetCheckOrderHandler(lane.CheckOrderHandler())
 
+	if err := lane.ValidateBasic(); err != nil {
+		panic(err)
+	}
+
 	return lane
 }
