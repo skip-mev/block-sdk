@@ -12,7 +12,7 @@ import (
 // selects all transactions in the mempool that are valid and not already in the partial
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
-func (l *BaseLane) DefaultPrepareLaneHandler() block.PrepareLaneHandler {
+func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
 		var (
 			totalSize   int64
@@ -96,7 +96,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() block.PrepareLaneHandler {
 // fails to verify, the entire proposal is rejected. If the handler comes across a transaction
 // that does not match the lane's matcher, it will return the remaining transactions in the
 // proposal.
-func (l *BaseLane) DefaultProcessLaneHandler() block.ProcessLaneHandler {
+func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
 		var err error
 
@@ -123,7 +123,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() block.ProcessLaneHandler {
 //     lane.
 //  2. Transactions that belong to other lanes cannot be interleaved with transactions that
 //     belong to this lane.
-func (l *BaseLane) DefaultCheckOrderHandler() block.CheckOrderHandler {
+func (l *BaseLane) DefaultCheckOrderHandler() CheckOrderHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) error {
 		seenOtherLaneTx := false
 
@@ -149,7 +149,7 @@ func (l *BaseLane) DefaultCheckOrderHandler() block.CheckOrderHandler {
 
 // DefaultMatchHandler returns a default implementation of the MatchHandler. It matches all
 // transactions.
-func DefaultMatchHandler() block.MatchHandler {
+func DefaultMatchHandler() MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		return true
 	}
