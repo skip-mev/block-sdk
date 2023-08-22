@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
@@ -24,7 +24,7 @@ type (
 		GetAuctionBidInfo(tx sdk.Tx) (*types.BidInfo, error)
 
 		// MatchHandler defines a function that checks if a transaction matches the auction lane.
-		MatchHandler() block.MatchHandler
+		MatchHandler() base.MatchHandler
 	}
 
 	// DefaultAuctionFactory defines a default implmentation for the auction factory interface for processing auction transactions.
@@ -95,7 +95,7 @@ func (config *DefaultAuctionFactory) GetAuctionBidInfo(tx sdk.Tx) (*types.BidInf
 	}, nil
 }
 
-func (config *DefaultAuctionFactory) MatchHandler() block.MatchHandler {
+func (config *DefaultAuctionFactory) MatchHandler() base.MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		bidInfo, err := config.GetAuctionBidInfo(tx)
 		return bidInfo != nil && err == nil

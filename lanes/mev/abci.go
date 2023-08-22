@@ -6,6 +6,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/x/builder/types"
 )
@@ -14,7 +15,7 @@ import (
 // and whose bundled transactions are valid and include them in the proposal. It
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
-func (l *MEVLane) PrepareLaneHandler() block.PrepareLaneHandler {
+func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
@@ -147,7 +148,7 @@ func (l *MEVLane) PrepareLaneHandler() block.PrepareLaneHandler {
 
 // ProcessLaneHandler will ensure that block proposals that include transactions from
 // the mev lane are valid.
-func (l *MEVLane) ProcessLaneHandler() block.ProcessLaneHandler {
+func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
 		if len(txs) == 0 {
 			return txs, nil
@@ -178,7 +179,7 @@ func (l *MEVLane) ProcessLaneHandler() block.ProcessLaneHandler {
 //   - there are no other bid transactions in the proposal
 //   - transactions from other lanes are not interleaved with transactions from the bid
 //     transaction.
-func (l *MEVLane) CheckOrderHandler() block.CheckOrderHandler {
+func (l *MEVLane) CheckOrderHandler() base.CheckOrderHandler {
 	return func(ctx sdk.Context, txs []sdk.Tx) error {
 		if len(txs) == 0 {
 			return nil
