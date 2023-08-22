@@ -165,7 +165,7 @@ amount staked, we could do the following:
 // NOTE: This is a stateful check on the transaction. The details of how to
 // implement this are abstracted away in the example, but you can implement
 // this using the staking keeper.
-func (h *Handler) CustomMatchHandler() block.MatchHandler {
+func (h *Handler) CustomMatchHandler() base.MatchHandler {
     return func(ctx sdk.Context, tx sdk.Tx) bool {
         if !h.IsStakingTx(tx) {
             return false
@@ -386,7 +386,7 @@ pass in all of the base apps configurations (txDecoder, logger, etc.). A sample
 `LaneConfig` might look like the following:
 
 ```golang
-config := block.LaneConfig{
+config := base.LaneConfig{
     Logger: app.Logger(),
     TxDecoder: app.TxDecoder(),
     TxEncoder: app.TxEncoder(),

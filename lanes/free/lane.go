@@ -24,7 +24,7 @@ type FreeLane struct { //nolint
 func NewFreeLane(
 	cfg base.LaneConfig,
 	txPriority base.TxPriority[string],
-	matchFn block.MatchHandler,
+	matchFn base.MatchHandler,
 ) *FreeLane {
 	lane := base.NewBaseLane(
 		cfg,
@@ -49,7 +49,7 @@ func NewFreeLane(
 // DefaultMatchHandler returns the default match handler for the free lane. The
 // default implementation matches transactions that are staking related. In particular,
 // any transaction that is a MsgDelegate, MsgBeginRedelegate, or MsgCancelUnbondingDelegation.
-func DefaultMatchHandler() block.MatchHandler {
+func DefaultMatchHandler() base.MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		for _, msg := range tx.GetMsgs() {
 			switch msg.(type) {
