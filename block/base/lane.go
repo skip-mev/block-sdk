@@ -31,21 +31,21 @@ type BaseLane struct { //nolint
 
 	// matchHandler is the function that determines whether or not a transaction
 	// should be processed by this lane.
-	matchHandler block.MatchHandler
+	matchHandler MatchHandler
 
 	// prepareLaneHandler is the function that is called when a new proposal is being
 	// requested and the lane needs to submit transactions it wants included in the block.
-	prepareLaneHandler block.PrepareLaneHandler
+	prepareLaneHandler PrepareLaneHandler
 
 	// checkOrderHandler is the function that is called when a new proposal is being
 	// verified and the lane needs to verify that the transactions included in the proposal
 	// respect the ordering rules of the lane and does not interleave transactions from other lanes.
-	checkOrderHandler block.CheckOrderHandler
+	checkOrderHandler CheckOrderHandler
 
 	// processLaneHandler is the function that is called when a new proposal is being
 	// verified and the lane needs to verify that the transactions included in the proposal
 	// are valid respecting the verification logic of the lane.
-	processLaneHandler block.ProcessLaneHandler
+	processLaneHandler ProcessLaneHandler
 }
 
 // NewBaseLane returns a new lane base. When creating this lane, the type
@@ -55,7 +55,7 @@ func NewBaseLane(
 	cfg LaneConfig,
 	laneName string,
 	laneMempool block.LaneMempool,
-	matchHandlerFn block.MatchHandler,
+	matchHandlerFn MatchHandler,
 ) *BaseLane {
 	lane := &BaseLane{
 		cfg:          cfg,
@@ -104,7 +104,7 @@ func (l *BaseLane) ValidateBasic() error {
 // SetPrepareLaneHandler sets the prepare lane handler for the lane. This handler
 // is called when a new proposal is being requested and the lane needs to submit
 // transactions it wants included in the block.
-func (l *BaseLane) SetPrepareLaneHandler(prepareLaneHandler block.PrepareLaneHandler) {
+func (l *BaseLane) SetPrepareLaneHandler(prepareLaneHandler PrepareLaneHandler) {
 	if prepareLaneHandler == nil {
 		panic("prepare lane handler cannot be nil")
 	}
@@ -116,7 +116,7 @@ func (l *BaseLane) SetPrepareLaneHandler(prepareLaneHandler block.PrepareLaneHan
 // is called when a new proposal is being verified and the lane needs to verify
 // that the transactions included in the proposal are valid respecting the verification
 // logic of the lane.
-func (l *BaseLane) SetProcessLaneHandler(processLaneHandler block.ProcessLaneHandler) {
+func (l *BaseLane) SetProcessLaneHandler(processLaneHandler ProcessLaneHandler) {
 	if processLaneHandler == nil {
 		panic("process lane handler cannot be nil")
 	}
@@ -128,7 +128,7 @@ func (l *BaseLane) SetProcessLaneHandler(processLaneHandler block.ProcessLaneHan
 // is called when a new proposal is being verified and the lane needs to verify
 // that the transactions included in the proposal respect the ordering rules of
 // the lane and does not include transactions from other lanes.
-func (l *BaseLane) SetCheckOrderHandler(checkOrderHandler block.CheckOrderHandler) {
+func (l *BaseLane) SetCheckOrderHandler(checkOrderHandler CheckOrderHandler) {
 	if checkOrderHandler == nil {
 		panic("check order handler cannot be nil")
 	}

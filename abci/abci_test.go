@@ -669,11 +669,11 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		// Set up the default lane
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.5"), nil)
-		defaultLane.SetProcessLaneHandler(block.NoOpProcessLaneHandler())
+		defaultLane.SetProcessLaneHandler(base.NoOpProcessLaneHandler())
 
 		// Set up the TOB lane
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), nil)
-		mevLane.SetProcessLaneHandler(block.NoOpProcessLaneHandler())
+		mevLane.SetProcessLaneHandler(base.NoOpProcessLaneHandler())
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
@@ -766,8 +766,8 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 		base.DefaultMatchHandler(),
 	)
 
-	lane.SetPrepareLaneHandler(block.PanicPrepareLaneHandler())
-	lane.SetProcessLaneHandler(block.PanicProcessLaneHandler())
+	lane.SetPrepareLaneHandler(base.PanicPrepareLaneHandler())
+	lane.SetProcessLaneHandler(base.PanicProcessLaneHandler())
 
 	return lane
 }
