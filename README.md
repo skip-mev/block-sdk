@@ -2,6 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 <!-- markdownlint-disable MD041 -->
+
 <div align="center">
   <a>
     <img alt="Repo Status" src="https://www.repostatus.org/badges/latest/active.svg" />
@@ -11,6 +12,12 @@
   </a>
     <a>
     <img alt="License" src="https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go" />
+  </a>
+</div>
+
+<div align="center">
+  <a>
+    <img alt="Logo" src="img/block-sdk.png" width="600">  
   </a>
 </div>
 
@@ -25,10 +32,10 @@ Skip has built out a number of plug-and-play `lanes` on the SDK that your protoc
 
 To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/chains/overview).
 
-#### Lane "App Store"
+#### 🏪 Lane App Store
 
 To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default).
 
-#### Lane Development
+#### 🎨 Lane Development
 
 To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/chains/lanes/build-your-own-lane).
