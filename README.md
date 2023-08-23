@@ -2,6 +2,7 @@
 
 <!-- markdownlint-disable MD013 -->
 <!-- markdownlint-disable MD041 -->
+
 <div align="center">
   <a>
     <img alt="Logo" src="img/block-sdk.png" width="600">  
@@ -20,6 +21,12 @@
   </a>
 </div>
 
+<div align="center">
+  <a>
+    <img alt="Logo" src="img/block-sdk.png" width="600">  
+  </a>
+</div>
+
 ### 🤔 What is the Block SDK?
 
 **🌐 The Block SDK is a toolkit for building customized blocks**. The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
@@ -31,10 +38,10 @@ Skip has built out a number of plug-and-play `lanes` on the SDK that your protoc
 
 To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/chains/overview).
 
-#### Lane "App Store"
+#### 🏪 Lane App Store
 
 To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default).
 
-#### Lane Development
+#### 🎨 Lane Development
 
 To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/chains/lanes/build-your-own-lane).
