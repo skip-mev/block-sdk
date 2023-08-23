@@ -5,6 +5,12 @@
 
 <div align="center">
   <a>
+    <img alt="Logo" src="img/block-sdk.png" width="600">  
+  </a>
+</div>
+
+<div align="center">
+  <a>
     <img alt="Repo Status" src="https://www.repostatus.org/badges/latest/active.svg" />
   </a>
   <a>
@@ -12,12 +18,6 @@
   </a>
     <a>
     <img alt="License" src="https://img.shields.io/badge/godoc-reference-blue?style=flat-square&logo=go" />
-  </a>
-</div>
-
-<div align="center">
-  <a>
-    <img alt="Logo" src="img/block-sdk.png" width="600">  
   </a>
 </div>
 
