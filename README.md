@@ -5,6 +5,12 @@
 
 <div align="center">
   <a>
+    <img alt="Logo" src="img/block-sdk.png" width="600">  
+  </a>
+</div>
+
+<div align="center">
+  <a>
     <img alt="Repo Status" src="https://www.repostatus.org/badges/latest/active.svg" />
   </a>
   <a>
