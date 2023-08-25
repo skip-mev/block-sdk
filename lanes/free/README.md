@@ -5,8 +5,6 @@
 The Block SDK is built on top of the Cosmos SDK. The Block SDK is currently
 compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
 
-<div align="center">
-
 ### Release Compatibility Matrix
 
 | Block SDK Version | Cosmos SDK |
@@ -14,7 +12,6 @@ compatible with Cosmos SDK versions greater than or equal to `v0.47.0`.
 |   `v1.x.x`    |  `v0.47.x`   |
 |   `v2.x.x`    |  `v0.50.x`   |
 
-</div>
 
 ## 📥 Installation
 
