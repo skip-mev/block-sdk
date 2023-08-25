@@ -28,6 +28,17 @@
 
 Skip has built out a number of plug-and-play `lanes` on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add **your own custom `lanes`** to configure your blocks to exactly fit your application needs.
 
+<div align="center">
+
+### Release Compatibility Matrix
+
+| Block SDK Version | Cosmos SDK |
+| :---------: | :--------: |
+|   `v1.x.x`    |  `v0.47.x`   |
+|   `v2.x.x`    |  `v0.50.x`   |
+
+</div>
+
 ### 📚 Block SDK Documentation
 
 To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/chains/overview).
