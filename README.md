@@ -28,7 +28,6 @@
 
 Skip has built out a number of plug-and-play `lanes` on the SDK that your protocol can use, including in-protocol MEV recapture and Oracles! Additionally, the Block SDK can be extended to add **your own custom `lanes`** to configure your blocks to exactly fit your application needs.
 
-
 ### Release Compatibility Matrix
 
 | Block SDK Version | Cosmos SDK |
