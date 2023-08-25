@@ -21,12 +21,6 @@
   </a>
 </div>
 
-<div align="center">
-  <a>
-    <img alt="Logo" src="img/block-sdk.png" width="600">  
-  </a>
-</div>
-
 ### 🤔 What is the Block SDK?
 
 **🌐 The Block SDK is a toolkit for building customized blocks**. The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
