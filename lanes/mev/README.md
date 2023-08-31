@@ -139,7 +139,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     }
     defaultLane := base.NewStandardLane(defaultConfig)
 
-    // 2. Set up the relateive priority of lanes
+    // 2. Set up the relative priority of lanes
     lanes := []block.Lane{
         mevLane,
         defaultLane,
