@@ -163,18 +163,13 @@ proto-update-deps:
 ###                                Linting                                  ###
 ###############################################################################
 
-golangci_lint_cmd=golangci-lint
-golangci_version=v1.51.2
-
 lint: use-main
 	@echo "--> Running linter"
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
-	@golangci-lint run
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --out-format=tab
 
 lint-fix: use-main
 	@echo "--> Running linter"
-	@go install github.com/golangci/golangci-lint/cmd/golangci-lint@$(golangci_version)
-	@golangci-lint run --fix
+	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
 lint-markdown:
 	@echo "--> Running markdown linter"
