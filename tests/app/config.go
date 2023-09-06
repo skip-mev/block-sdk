@@ -3,8 +3,6 @@ package app
 import (
 	"time"
 
-	"google.golang.org/protobuf/types/known/durationpb"
-
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
 	authmodulev1 "cosmossdk.io/api/cosmos/auth/module/v1"
@@ -25,7 +23,30 @@ import (
 	txconfigv1 "cosmossdk.io/api/cosmos/tx/config/v1"
 	upgrademodulev1 "cosmossdk.io/api/cosmos/upgrade/module/v1"
 	vestingmodulev1 "cosmossdk.io/api/cosmos/vesting/module/v1"
+	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
+	circuittypes "cosmossdk.io/x/circuit/types"
+	"cosmossdk.io/x/feegrant"
+	upgradetypes "cosmossdk.io/x/upgrade/types"
+	"github.com/cosmos/cosmos-sdk/runtime"
+	"github.com/cosmos/cosmos-sdk/types/module"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
+	"github.com/cosmos/cosmos-sdk/x/authz"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
+	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
+	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
+	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
+	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
+	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
+	"github.com/cosmos/cosmos-sdk/x/group"
+	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
+	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
+	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
+	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"google.golang.org/protobuf/types/known/durationpb"
 
 	_ "cosmossdk.io/x/circuit"                        // import for side-effects
 	_ "cosmossdk.io/x/upgrade"                        // import for side-effects
@@ -44,33 +65,8 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
-	_ "github.com/skip-mev/block-sdk/x/builder" // import for side-effects
-
-	"cosmossdk.io/core/appconfig"
-	circuittypes "cosmossdk.io/x/circuit/types"
-	"cosmossdk.io/x/feegrant"
-	upgradetypes "cosmossdk.io/x/upgrade/types"
-	"github.com/cosmos/cosmos-sdk/runtime"
-
-	"github.com/cosmos/cosmos-sdk/types/module"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	vestingtypes "github.com/cosmos/cosmos-sdk/x/auth/vesting/types"
-	"github.com/cosmos/cosmos-sdk/x/authz"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	consensustypes "github.com/cosmos/cosmos-sdk/x/consensus/types"
-	crisistypes "github.com/cosmos/cosmos-sdk/x/crisis/types"
-	distrtypes "github.com/cosmos/cosmos-sdk/x/distribution/types"
-	genutiltypes "github.com/cosmos/cosmos-sdk/x/genutil/types"
-	govclient "github.com/cosmos/cosmos-sdk/x/gov/client"
-	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
-	"github.com/cosmos/cosmos-sdk/x/group"
-	minttypes "github.com/cosmos/cosmos-sdk/x/mint/types"
-	paramsclient "github.com/cosmos/cosmos-sdk/x/params/client"
-	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
-	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
+	_ "github.com/skip-mev/block-sdk/x/builder" // import for side-effects
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 
