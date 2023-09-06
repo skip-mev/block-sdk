@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/skip-mev/block-sdk/x/builder/keeper"
 	"github.com/skip-mev/block-sdk/x/builder/types"
 )

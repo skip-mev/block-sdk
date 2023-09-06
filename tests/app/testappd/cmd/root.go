@@ -14,6 +14,7 @@ import (
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
+
 	"github.com/skip-mev/block-sdk/tests/app"
 
 	"github.com/cosmos/cosmos-sdk/client"

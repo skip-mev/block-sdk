@@ -7,6 +7,7 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 

@@ -10,6 +10,8 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -17,7 +19,6 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type BlockBusterTestSuite struct {
