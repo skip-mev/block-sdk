@@ -4,10 +4,11 @@ import (
 	"testing"
 
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {

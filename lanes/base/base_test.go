@@ -4,8 +4,9 @@ import (
 	"math/rand"
 	"testing"
 
-	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/stretchr/testify/suite"
+
+	testutils "github.com/skip-mev/block-sdk/testutils"
 )
 
 type BaseTestSuite struct {

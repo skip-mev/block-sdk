@@ -6,8 +6,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-	"github.com/skip-mev/block-sdk/x/builder/types"
 	"github.com/spf13/cobra"
+
+	"github.com/skip-mev/block-sdk/x/builder/types"
 )
 
 // GetQueryCmd returns the cli query commands for the builder module.
