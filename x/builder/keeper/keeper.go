@@ -9,6 +9,7 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/skip-mev/block-sdk/x/builder/rewards"
 	"github.com/skip-mev/block-sdk/x/builder/types"
 )
