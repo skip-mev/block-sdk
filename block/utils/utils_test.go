@@ -4,6 +4,7 @@ import (
 	"testing"
 
 	"cosmossdk.io/math"
+
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 

@@ -4,6 +4,7 @@ import (
 	"errors"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 
