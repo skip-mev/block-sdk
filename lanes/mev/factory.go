@@ -5,6 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/x/builder/types"
 )

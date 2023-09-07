@@ -8,10 +8,24 @@ require (
 	cosmossdk.io/depinject v1.0.0-alpha.3
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/math v1.0.1
+<<<<<<< HEAD
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.7.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.4
+=======
+	cosmossdk.io/store v1.0.0-alpha.1
+	cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/feegrant v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/tx v0.9.1
+	cosmossdk.io/x/upgrade v0.0.0-20230724130706-5442197d6bcd
+	github.com/client9/misspell v0.3.4
+	github.com/cometbft/cometbft v0.38.0-rc3
+	github.com/cosmos/cosmos-db v1.0.0
+	github.com/cosmos/cosmos-proto v1.0.0-beta.3
+	github.com/cosmos/cosmos-sdk v0.50.0-beta.0
+>>>>>>> 02b2929 (chore: format (#38))
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
@@ -21,9 +35,11 @@ require (
 	github.com/spf13/cobra v1.6.1
 	github.com/spf13/viper v1.14.0
 	github.com/stretchr/testify v1.8.4
+	golang.org/x/tools v0.12.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230629202037-9506855d4529
 	google.golang.org/grpc v1.56.2
 	google.golang.org/protobuf v1.31.0
+	mvdan.cc/gofumpt v0.5.0
 )
 
 require (
@@ -151,10 +167,17 @@ require (
 	golang.org/x/exp v0.0.0-20230515195305-f3d0a9c9a5cc // indirect
 	golang.org/x/net v0.12.0 // indirect
 	golang.org/x/oauth2 v0.8.0 // indirect
+<<<<<<< HEAD
 	golang.org/x/sys v0.10.0 // indirect
 	golang.org/x/term v0.10.0 // indirect
 	golang.org/x/text v0.11.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
+=======
+	golang.org/x/sync v0.3.0 // indirect
+	golang.org/x/sys v0.11.0 // indirect
+	golang.org/x/term v0.11.0 // indirect
+	golang.org/x/text v0.12.0 // indirect
+>>>>>>> 02b2929 (chore: format (#38))
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
 	google.golang.org/api v0.126.0 // indirect
 	google.golang.org/appengine v1.6.7 // indirect
@@ -163,6 +186,14 @@ require (
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
+<<<<<<< HEAD
+=======
+	gotest.tools/v3 v3.5.0 // indirect
+	honnef.co/go/tools v0.4.5 // indirect
+	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
+	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
+	mvdan.cc/unparam v0.0.0-20221223090309-7455f1af531d // indirect
+>>>>>>> 02b2929 (chore: format (#38))
 	nhooyr.io/websocket v1.8.6 // indirect
 	pgregory.net/rapid v0.5.5 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect

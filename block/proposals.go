@@ -6,7 +6,11 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
+<<<<<<< HEAD
 	"github.com/cometbft/cometbft/libs/log"
+=======
+
+>>>>>>> 02b2929 (chore: format (#38))
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 

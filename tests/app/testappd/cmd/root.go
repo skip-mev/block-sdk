@@ -5,9 +5,24 @@ import (
 	"io"
 	"os"
 
+<<<<<<< HEAD
 	dbm "github.com/cometbft/cometbft-db"
 	tmcfg "github.com/cometbft/cometbft/config"
 	"github.com/cometbft/cometbft/libs/log"
+=======
+	cmtcfg "github.com/cometbft/cometbft/config"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/spf13/cobra"
+	"github.com/spf13/viper"
+
+	"cosmossdk.io/client/v2/autocli"
+	"cosmossdk.io/depinject"
+	"cosmossdk.io/log"
+	confixcmd "cosmossdk.io/tools/confix/cmd"
+
+	"github.com/skip-mev/block-sdk/tests/app"
+
+>>>>>>> 02b2929 (chore: format (#38))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"
 	"github.com/cosmos/cosmos-sdk/client/debug"

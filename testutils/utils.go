@@ -16,6 +16,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+<<<<<<< HEAD
+=======
+	"github.com/cosmos/gogoproto/proto"
+
+>>>>>>> 02b2929 (chore: format (#38))
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 )
 
