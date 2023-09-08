@@ -66,8 +66,8 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
 	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	_ "github.com/skip-mev/block-sdk/x/builder" // import for side-effects
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
+	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 )
 
 var (

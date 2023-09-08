@@ -67,8 +67,8 @@ import (
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
-	buildermodule "github.com/skip-mev/block-sdk/x/builder"
-	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
+	builderkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+	buildermodule "github.com/skip-mev/block-sdk/x/auction"
 )
 
 const (

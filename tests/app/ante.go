@@ -6,8 +6,8 @@ import (
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/utils"
-	builderante "github.com/skip-mev/block-sdk/x/builder/ante"
-	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
+	builderante "github.com/skip-mev/block-sdk/x/auction/ante"
+	builderkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
 type POBHandlerOptions struct {

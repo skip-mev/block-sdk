@@ -9,7 +9,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 func (suite *KeeperTestSuite) TestMsgAuctionBid() {

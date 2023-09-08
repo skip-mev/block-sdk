@@ -51,9 +51,9 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     "github.com/skip-mev/block-sdk/lanes/mev"
     "github.com/skip-mev/block-sdk/lanes/base"
     buildermodule "github.com/skip-mev/block-sdk/x/builder"
-    builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
-    buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-    builderante "github.com/skip-mev/block-sdk/x/builder/ante"
+    builderkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+    buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
+    builderante "github.com/skip-mev/block-sdk/x/auction/ante"
      ...
    )
    ```

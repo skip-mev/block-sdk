@@ -8,7 +8,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 func TestGetMsgAuctionBidFromTx_Valid(t *testing.T) {

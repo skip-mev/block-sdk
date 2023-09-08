@@ -9,8 +9,8 @@ import (
 	"github.com/golang/mock/gomock"
 
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/skip-mev/block-sdk/x/builder/keeper"
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/keeper"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 
 	"github.com/stretchr/testify/suite"
 )

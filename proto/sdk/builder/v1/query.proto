@@ -6,7 +6,7 @@ import "google/api/annotations.proto";
 import "cosmos/query/v1/query.proto";
 import "sdk/builder/v1/genesis.proto";
 
-option go_package = "github.com/skip-mev/block-sdk/x/builder/types";
+option go_package = "github.com/skip-mev/block-sdk/x/auction/types";
 
 // Query defines the x/builder querier service.
 service Query {

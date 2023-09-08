@@ -21,9 +21,9 @@ import (
 	"github.com/spf13/cobra"
 
 	modulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	"github.com/skip-mev/block-sdk/x/builder/client/cli"
-	"github.com/skip-mev/block-sdk/x/builder/keeper"
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/client/cli"
+	"github.com/skip-mev/block-sdk/x/auction/keeper"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (

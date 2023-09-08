@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 // ChainBuilderFromChainSpec creates an interchaintest chain builder factory given a ChainSpec

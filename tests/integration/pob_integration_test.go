@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/tests/integration"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (

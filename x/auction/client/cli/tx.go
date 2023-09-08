@@ -12,7 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/spf13/cobra"
 
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 // NewTxCmd returns a root CLI command handler for all x/builder transaction

@@ -10,8 +10,8 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/x/builder/rewards"
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/rewards"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 type Keeper struct {

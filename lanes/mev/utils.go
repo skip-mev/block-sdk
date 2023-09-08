@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 // GetMsgAuctionBidFromTx attempts to retrieve a MsgAuctionBid from an sdk.Tx if

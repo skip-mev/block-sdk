@@ -18,9 +18,9 @@ import (
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/skip-mev/block-sdk/x/builder/ante"
-	"github.com/skip-mev/block-sdk/x/builder/keeper"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/ante"
+	"github.com/skip-mev/block-sdk/x/auction/keeper"
+	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 type AnteTestSuite struct {
