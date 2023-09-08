@@ -7,6 +7,10 @@ require (
 	cosmossdk.io/core v0.5.1
 	cosmossdk.io/depinject v1.0.0-alpha.3
 	cosmossdk.io/errors v1.0.0
+<<<<<<< HEAD
+=======
+	cosmossdk.io/log v1.2.1
+>>>>>>> 2981f44 (chore(deps): bump cosmossdk.io/log from 1.2.0 to 1.2.1 (#53))
 	cosmossdk.io/math v1.0.1
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.7.0
