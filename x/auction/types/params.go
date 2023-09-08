@@ -35,7 +35,7 @@ func NewParams(
 	}
 }
 
-// DefaultParams returns the default x/builder parameters.
+// DefaultParams returns the default x/auction parameters.
 func DefaultParams() Params {
 	return NewParams(
 		DefaultMaxBundleSize,

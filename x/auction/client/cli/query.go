@@ -11,7 +11,7 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-// GetQueryCmd returns the cli query commands for the builder module.
+// GetQueryCmd returns the cli query commands for the auction module.
 func GetQueryCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:                        types.ModuleName,
@@ -28,11 +28,11 @@ func GetQueryCmd() *cobra.Command {
 	return cmd
 }
 
-// CmdQueryParams implements a command that will return the current parameters of the builder module.
+// CmdQueryParams implements a command that will return the current parameters of the auction module.
 func CmdQueryParams() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "params",
-		Short: "Query the current parameters of the builder module",
+		Short: "Query the current parameters of the auction module",
 		Args:  cobra.NoArgs,
 		RunE: func(cmd *cobra.Command, args []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)

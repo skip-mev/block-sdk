@@ -1,4 +1,4 @@
-package builder
+package auction
 
 import (
 	"context"
@@ -20,7 +20,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	modulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
+	modulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	"github.com/skip-mev/block-sdk/x/auction/client/cli"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
@@ -31,35 +31,35 @@ var (
 	_ module.AppModuleBasic = AppModuleBasic{}
 )
 
-// ConsensusVersion defines the current x/builder module consensus version.
+// ConsensusVersion defines the current x/auction module consensus version.
 const ConsensusVersion = 1
 
-// AppModuleBasic defines the basic application module used by the builder module.
+// AppModuleBasic defines the basic application module used by the auction module.
 type AppModuleBasic struct {
 	cdc codec.Codec
 }
 
-// Name returns the builder module's name.
+// Name returns the auction module's name.
 func (AppModuleBasic) Name() string {
 	return types.ModuleName
 }
 
-// RegisterLegacyAminoCodec registers the builder module's types on the given LegacyAmino codec.
+// RegisterLegacyAminoCodec registers the auction module's types on the given LegacyAmino codec.
 func (AppModuleBasic) RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
 	types.RegisterLegacyAminoCodec(cdc)
 }
 
-// RegisterInterfaces registers the builder module's interface types.
+// RegisterInterfaces registers the auction module's interface types.
 func (AppModuleBasic) RegisterInterfaces(registry cdctypes.InterfaceRegistry) {
 	types.RegisterInterfaces(registry)
 }
 
-// DefaultGenesis returns default genesis state as raw bytes for the builder module.
+// DefaultGenesis returns default genesis state as raw bytes for the auction module.
 func (AppModuleBasic) DefaultGenesis(cdc codec.JSONCodec) json.RawMessage {
 	return cdc.MustMarshalJSON(types.DefaultGenesisState())
 }
 
-// ValidateGenesis performs genesis state validation for the builder module.
+// ValidateGenesis performs genesis state validation for the auction module.
 func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingConfig, bz json.RawMessage) error {
 	var genState types.GenesisState
 	if err := cdc.UnmarshalJSON(bz, &genState); err != nil {
@@ -69,19 +69,19 @@ func (AppModuleBasic) ValidateGenesis(cdc codec.JSONCodec, _ client.TxEncodingCo
 	return genState.Validate()
 }
 
-// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the builder module.
+// RegisterGRPCGatewayRoutes registers the gRPC Gateway routes for the auction module.
 func (AppModuleBasic) RegisterGRPCGatewayRoutes(clientCtx client.Context, mux *runtime.ServeMux) {
 	if err := types.RegisterQueryHandlerClient(context.Background(), mux, types.NewQueryClient(clientCtx)); err != nil {
 		panic(err)
 	}
 }
 
-// GetTxCmd returns the root tx command for the builder module.
+// GetTxCmd returns the root tx command for the auction module.
 func (AppModuleBasic) GetTxCmd() *cobra.Command {
 	return cli.NewTxCmd()
 }
 
-// GetQueryCmd returns the root query command for the builder module.
+// GetQueryCmd returns the root query command for the auction module.
 func (AppModuleBasic) GetQueryCmd() *cobra.Command {
 	return cli.GetQueryCmd()
 }
@@ -111,7 +111,7 @@ func (am AppModule) IsOnePerModuleType() {}
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
-// RegisterServices registers a the gRPC Query and Msg services for the x/builder
+// RegisterServices registers a the gRPC Query and Msg services for the x/auction
 // module.
 func (am AppModule) RegisterServices(cfc module.Configurator) {
 	types.RegisterMsgServer(cfc.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
@@ -125,7 +125,7 @@ func (a AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 // logic (most often the chain will be halted).
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// InitGenesis performs the module's genesis initialization for the builder
+// InitGenesis performs the module's genesis initialization for the auction
 // module. It returns no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
@@ -135,7 +135,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the builder module's exported genesis state as raw
+// ExportGenesis returns the auction module's exported genesis state as raw
 // JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := am.keeper.ExportGenesis(ctx)
@@ -165,7 +165,7 @@ type Inputs struct {
 type Outputs struct {
 	depinject.Out
 
-	BuilderKeeper keeper.Keeper
+	auctionkeeper keeper.Keeper
 	Module        appmodule.AppModule
 }
 
@@ -176,7 +176,7 @@ func ProvideModule(in Inputs) Outputs {
 		authority = authtypes.NewModuleAddressOrBech32Address(in.Config.Authority)
 	}
 
-	builderKeeper := keeper.NewKeeper(
+	auctionkeeper := keeper.NewKeeper(
 		in.Cdc,
 		in.Key,
 		in.AccountKeeper,
@@ -186,7 +186,7 @@ func ProvideModule(in Inputs) Outputs {
 		authority.String(),
 	)
 
-	m := NewAppModule(in.Cdc, builderKeeper)
+	m := NewAppModule(in.Cdc, auctionkeeper)
 
-	return Outputs{BuilderKeeper: builderKeeper, Module: m}
+	return Outputs{auctionkeeper: auctionkeeper, Module: m}
 }

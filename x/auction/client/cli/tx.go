@@ -15,12 +15,12 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-// NewTxCmd returns a root CLI command handler for all x/builder transaction
+// NewTxCmd returns a root CLI command handler for all x/auction transaction
 // commands.
 func NewTxCmd() *cobra.Command {
 	txCmd := &cobra.Command{
 		Use:                        types.ModuleName,
-		Short:                      "Builder transaction subcommands",
+		Short:                      "auction transaction subcommands",
 		DisableFlagParsing:         true,
 		SuggestionsMinimumDistance: 2,
 		RunE:                       client.ValidateCmd,

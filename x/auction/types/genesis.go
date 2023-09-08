@@ -20,12 +20,12 @@ func DefaultGenesisState() *GenesisState {
 	}
 }
 
-// Validate performs basic validation of the builder module genesis state.
+// Validate performs basic validation of the auction module genesis state.
 func (gs GenesisState) Validate() error {
 	return gs.Params.Validate()
 }
 
-// GetGenesisStateFromAppState returns x/builder GenesisState given raw application
+// GetGenesisStateFromAppState returns x/auction GenesisState given raw application
 // genesis state.
 func GetGenesisStateFromAppState(cdc codec.Codec, appState map[string]json.RawMessage) GenesisState {
 	var genesisState GenesisState

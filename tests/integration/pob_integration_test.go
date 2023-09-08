@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/tests/integration"
-	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (
@@ -71,7 +71,7 @@ func MakeEncodingConfig() *testutil.TestEncodingConfig {
 	cfg := cosmos.DefaultEncoding()
 
 	// register builder types
-	buildertypes.RegisterInterfaces(cfg.InterfaceRegistry)
+	auctiontypes.RegisterInterfaces(cfg.InterfaceRegistry)
 
 	return &cfg
 }

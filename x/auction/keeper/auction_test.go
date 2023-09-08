@@ -159,11 +159,11 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 
 			tc.malleate()
 
-			// Set up the new builder keeper with mocks customized for this test case
+			// Set up the new auction keeper with mocks customized for this test case
 			suite.bankKeeper.EXPECT().GetBalance(suite.ctx, bidder.Address, minBidIncrement.Denom).Return(balance).AnyTimes()
 			suite.bankKeeper.EXPECT().SendCoins(suite.ctx, bidder.Address, escrowAddress, reserveFee).Return(nil).AnyTimes()
 
-			suite.builderKeeper = keeper.NewKeeper(
+			suite.auctionkeeper = keeper.NewKeeper(
 				suite.encCfg.Codec,
 				suite.key,
 				suite.accountKeeper,
@@ -179,7 +179,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 				FrontRunningProtection: frontRunningProtection,
 				MinBidIncrement:        minBidIncrement,
 			}
-			suite.builderKeeper.SetParams(suite.ctx, params)
+			suite.auctionkeeper.SetParams(suite.ctx, params)
 
 			// Create the bundle of transactions ordered by accounts
 			bundle := make([][]byte, 0)
@@ -208,7 +208,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 				Signers:      signers,
 			}
 
-			err := suite.builderKeeper.ValidateBidInfo(suite.ctx, highestBid, bidInfo)
+			err := suite.auctionkeeper.ValidateBidInfo(suite.ctx, highestBid, bidInfo)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {
@@ -317,7 +317,7 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			}
 
 			// Validate the bundle
-			err := suite.builderKeeper.ValidateAuctionBundle(bidder.Address, signers)
+			err := suite.auctionkeeper.ValidateAuctionBundle(bidder.Address, signers)
 			if tc.pass {
 				suite.Require().NoError(err)
 			} else {

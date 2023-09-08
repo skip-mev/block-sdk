@@ -12,7 +12,7 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-var _ sdk.AnteDecorator = BuilderDecorator{}
+var _ sdk.AnteDecorator = AuctionDecorator{}
 
 type (
 	// MEVLane is an interface that defines the methods required to interact with the MEV
@@ -27,18 +27,18 @@ type (
 		Contains(tx sdk.Tx) bool
 	}
 
-	// BuilderDecorator is an AnteDecorator that validates the auction bid and bundled transactions.
-	BuilderDecorator struct {
-		builderKeeper keeper.Keeper
+	// AuctionDecorator is an AnteDecorator that validates the auction bid and bundled transactions.
+	AuctionDecorator struct {
+		auctionkeeper keeper.Keeper
 		txEncoder     sdk.TxEncoder
 		lane          MEVLane
 		mempool       Mempool
 	}
 )
 
-func NewBuilderDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane, mempool Mempool) BuilderDecorator {
-	return BuilderDecorator{
-		builderKeeper: ak,
+func NewAuctionDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane, mempool Mempool) AuctionDecorator {
+	return AuctionDecorator{
+		auctionkeeper: ak,
 		txEncoder:     txEncoder,
 		lane:          lane,
 		mempool:       mempool,
@@ -47,15 +47,15 @@ func NewBuilderDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane
 
 // AnteHandle validates that the auction bid is valid if one exists. If valid it will deduct the entrance fee from the
 // bidder's account.
-func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
+func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
 	// If comet is re-checking a transaction, we only need to check if the transaction is in the application-side mempool.
 	if ctx.IsReCheckTx() {
-		if !bd.mempool.Contains(tx) {
+		if !ad.mempool.Contains(tx) {
 			return ctx, fmt.Errorf("transaction not found in application-side mempool")
 		}
 	}
 
-	bidInfo, err := bd.lane.GetAuctionBidInfo(tx)
+	bidInfo, err := ad.lane.GetAuctionBidInfo(tx)
 	if err != nil {
 		return ctx, err
 	}
@@ -63,7 +63,7 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	// Validate the auction bid if one exists.
 	if bidInfo != nil {
 		// Auction transactions must have a timeout set to a valid block height.
-		if err := bd.ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
+		if err := ad.ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
 			return ctx, err
 		}
 
@@ -73,20 +73,20 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		// poor liveness guarantees.
 		topBid := sdk.Coin{}
 		if ctx.IsCheckTx() || ctx.IsReCheckTx() {
-			if topBidTx := bd.lane.GetTopAuctionTx(ctx); topBidTx != nil {
-				topBidBz, err := bd.txEncoder(topBidTx)
+			if topBidTx := ad.lane.GetTopAuctionTx(ctx); topBidTx != nil {
+				topBidBz, err := ad.txEncoder(topBidTx)
 				if err != nil {
 					return ctx, err
 				}
 
-				currentTxBz, err := bd.txEncoder(tx)
+				currentTxBz, err := ad.txEncoder(tx)
 				if err != nil {
 					return ctx, err
 				}
 
 				// Compare the bytes to see if the current transaction is the highest bidding transaction.
 				if !bytes.Equal(topBidBz, currentTxBz) {
-					topBidInfo, err := bd.lane.GetAuctionBidInfo(topBidTx)
+					topBidInfo, err := ad.lane.GetAuctionBidInfo(topBidTx)
 					if err != nil {
 						return ctx, err
 					}
@@ -96,7 +96,7 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			}
 		}
 
-		if err := bd.builderKeeper.ValidateBidInfo(ctx, topBid, bidInfo); err != nil {
+		if err := ad.auctionkeeper.ValidateBidInfo(ctx, topBid, bidInfo); err != nil {
 			return ctx, errors.Wrap(err, "failed to validate auction bid")
 		}
 	}
@@ -106,7 +106,7 @@ func (bd BuilderDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 // ValidateTimeout validates that the timeout is greater than or equal to the expected block height
 // the bid transaction will be executed in.
-func (bd BuilderDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
+func (ad AuctionDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
 	currentBlockHeight := ctx.BlockHeight()
 
 	// If the mode is CheckTx or ReCheckTx, we increment the current block height by one to

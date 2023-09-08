@@ -20,17 +20,17 @@ func init() {
 	sdk.RegisterLegacyAminoCodec(amino)
 }
 
-// RegisterLegacyAminoCodec registers the necessary x/builder interfaces and
+// RegisterLegacyAminoCodec registers the necessary x/auction interfaces and
 // concrete types on the provided LegacyAmino codec. These types are used for
 // Amino JSON serialization.
 func RegisterLegacyAminoCodec(cdc *codec.LegacyAmino) {
-	legacy.RegisterAminoMsg(cdc, &MsgAuctionBid{}, "block-sdk/x/builder/MsgAuctionBid")
-	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, "block-sdk/x/builder/MsgUpdateParams")
+	legacy.RegisterAminoMsg(cdc, &MsgAuctionBid{}, "block-sdk/x/auction/MsgAuctionBid")
+	legacy.RegisterAminoMsg(cdc, &MsgUpdateParams{}, "block-sdk/x/auction/MsgUpdateParams")
 
-	cdc.RegisterConcrete(Params{}, "block-sdk/x/builder/Params", nil)
+	cdc.RegisterConcrete(Params{}, "block-sdk/x/auction/Params", nil)
 }
 
-// RegisterInterfaces registers the x/builder interfaces types with the
+// RegisterInterfaces registers the x/auction interfaces types with the
 // interface registry.
 func RegisterInterfaces(registry types.InterfaceRegistry) {
 	registry.RegisterImplementations(

@@ -19,8 +19,8 @@ var (
 )
 
 func init() {
-	file_sdk_builder_module_v1_module_proto_init()
-	md_Module = File_sdk_builder_module_v1_module_proto.Messages().ByName("Module")
+	file_sdk_auction_module_v1_module_proto_init()
+	md_Module = File_sdk_auction_module_v1_module_proto.Messages().ByName("Module")
 	fd_Module_authority = md_Module.Fields().ByName("authority")
 }
 
@@ -33,7 +33,7 @@ func (x *Module) ProtoReflect() protoreflect.Message {
 }
 
 func (x *Module) slowProtoReflect() protoreflect.Message {
-	mi := &file_sdk_builder_module_v1_module_proto_msgTypes[0]
+	mi := &file_sdk_auction_module_v1_module_proto_msgTypes[0]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -110,13 +110,13 @@ func (x *fastReflection_Module) Range(f func(protoreflect.FieldDescriptor, proto
 // a repeated field is populated if it is non-empty.
 func (x *fastReflection_Module) Has(fd protoreflect.FieldDescriptor) bool {
 	switch fd.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
+	case "sdk.auction.module.v1.Module.authority":
 		return x.Authority != ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -128,13 +128,13 @@ func (x *fastReflection_Module) Has(fd protoreflect.FieldDescriptor) bool {
 // Clear is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Clear(fd protoreflect.FieldDescriptor) {
 	switch fd.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
+	case "sdk.auction.module.v1.Module.authority":
 		x.Authority = ""
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -146,14 +146,14 @@ func (x *fastReflection_Module) Clear(fd protoreflect.FieldDescriptor) {
 // of the value; to obtain a mutable reference, use Mutable.
 func (x *fastReflection_Module) Get(descriptor protoreflect.FieldDescriptor) protoreflect.Value {
 	switch descriptor.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
+	case "sdk.auction.module.v1.Module.authority":
 		value := x.Authority
 		return protoreflect.ValueOfString(value)
 	default:
 		if descriptor.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", descriptor.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", descriptor.FullName()))
 	}
 }
 
@@ -169,13 +169,13 @@ func (x *fastReflection_Module) Get(descriptor protoreflect.FieldDescriptor) pro
 // Set is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Set(fd protoreflect.FieldDescriptor, value protoreflect.Value) {
 	switch fd.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
+	case "sdk.auction.module.v1.Module.authority":
 		x.Authority = value.Interface().(string)
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -191,13 +191,13 @@ func (x *fastReflection_Module) Set(fd protoreflect.FieldDescriptor, value proto
 // Mutable is a mutating operation and unsafe for concurrent use.
 func (x *fastReflection_Module) Mutable(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
-		panic(fmt.Errorf("field authority of message sdk.builder.module.v1.Module is not mutable"))
+	case "sdk.auction.module.v1.Module.authority":
+		panic(fmt.Errorf("field authority of message sdk.auction.module.v1.Module is not mutable"))
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -206,13 +206,13 @@ func (x *fastReflection_Module) Mutable(fd protoreflect.FieldDescriptor) protore
 // For lists, maps, and messages, this returns a new, empty, mutable value.
 func (x *fastReflection_Module) NewField(fd protoreflect.FieldDescriptor) protoreflect.Value {
 	switch fd.FullName() {
-	case "sdk.builder.module.v1.Module.authority":
+	case "sdk.auction.module.v1.Module.authority":
 		return protoreflect.ValueOfString("")
 	default:
 		if fd.IsExtension() {
-			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.builder.module.v1.Module"))
+			panic(fmt.Errorf("proto3 declared messages do not support extensions: sdk.auction.module.v1.Module"))
 		}
-		panic(fmt.Errorf("message sdk.builder.module.v1.Module does not contain field %s", fd.FullName()))
+		panic(fmt.Errorf("message sdk.auction.module.v1.Module does not contain field %s", fd.FullName()))
 	}
 }
 
@@ -222,7 +222,7 @@ func (x *fastReflection_Module) NewField(fd protoreflect.FieldDescriptor) protor
 func (x *fastReflection_Module) WhichOneof(d protoreflect.OneofDescriptor) protoreflect.FieldDescriptor {
 	switch d.FullName() {
 	default:
-		panic(fmt.Errorf("%s is not a oneof field in sdk.builder.module.v1.Module", d.FullName()))
+		panic(fmt.Errorf("%s is not a oneof field in sdk.auction.module.v1.Module", d.FullName()))
 	}
 	panic("unreachable")
 }
@@ -437,7 +437,7 @@ func (x *fastReflection_Module) ProtoMethods() *protoiface.Methods {
 // versions:
 // 	protoc-gen-go v1.27.0
 // 	protoc        (unknown)
-// source: sdk/builder/module/v1/module.proto
+// source: sdk/auction/module/v1/module.proto
 
 const (
 	// Verify that this generated code is sufficiently up-to-date.
@@ -446,7 +446,7 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// Module is the config object of the builder module.
+// Module is the config object of the auction module.
 type Module struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -460,7 +460,7 @@ type Module struct {
 func (x *Module) Reset() {
 	*x = Module{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_sdk_builder_module_v1_module_proto_msgTypes[0]
+		mi := &file_sdk_auction_module_v1_module_proto_msgTypes[0]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -474,7 +474,7 @@ func (*Module) ProtoMessage() {}
 
 // Deprecated: Use Module.ProtoReflect.Descriptor instead.
 func (*Module) Descriptor() ([]byte, []int) {
-	return file_sdk_builder_module_v1_module_proto_rawDescGZIP(), []int{0}
+	return file_sdk_auction_module_v1_module_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Module) GetAuthority() string {
@@ -484,54 +484,54 @@ func (x *Module) GetAuthority() string {
 	return ""
 }
 
-var File_sdk_builder_module_v1_module_proto protoreflect.FileDescriptor
+var File_sdk_auction_module_v1_module_proto protoreflect.FileDescriptor
 
-var file_sdk_builder_module_v1_module_proto_rawDesc = []byte{
-	0x0a, 0x22, 0x73, 0x64, 0x6b, 0x2f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2f, 0x6d, 0x6f,
+var file_sdk_auction_module_v1_module_proto_rawDesc = []byte{
+	0x0a, 0x22, 0x73, 0x64, 0x6b, 0x2f, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2f, 0x6d, 0x6f,
 	0x64, 0x75, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x15, 0x73, 0x64, 0x6b, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65,
-	0x72, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x20, 0x63, 0x6f, 0x73,
+	0x72, 0x6f, 0x74, 0x6f, 0x12, 0x15, 0x73, 0x64, 0x6b, 0x2e, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x76, 0x31, 0x1a, 0x20, 0x63, 0x6f, 0x73,
 	0x6d, 0x6f, 0x73, 0x2f, 0x61, 0x70, 0x70, 0x2f, 0x76, 0x31, 0x61, 0x6c, 0x70, 0x68, 0x61, 0x31,
 	0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x22, 0x57, 0x0a,
 	0x06, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x12, 0x1c, 0x0a, 0x09, 0x61, 0x75, 0x74, 0x68, 0x6f,
 	0x72, 0x69, 0x74, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x09, 0x61, 0x75, 0x74, 0x68,
 	0x6f, 0x72, 0x69, 0x74, 0x79, 0x3a, 0x2f, 0xba, 0xc0, 0x96, 0xda, 0x01, 0x29, 0x0a, 0x27, 0x67,
 	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x73, 0x6b, 0x69, 0x70, 0x2d, 0x6d,
-	0x65, 0x76, 0x2f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x2d, 0x73, 0x64, 0x6b, 0x2f, 0x78, 0x2f, 0x62,
-	0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x42, 0xd0, 0x01, 0x0a, 0x19, 0x63, 0x6f, 0x6d, 0x2e, 0x73,
-	0x64, 0x6b, 0x2e, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c,
+	0x65, 0x76, 0x2f, 0x62, 0x6c, 0x6f, 0x63, 0x6b, 0x2d, 0x73, 0x64, 0x6b, 0x2f, 0x78, 0x2f, 0x61,
+	0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0xd0, 0x01, 0x0a, 0x19, 0x63, 0x6f, 0x6d, 0x2e, 0x73,
+	0x64, 0x6b, 0x2e, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x6d, 0x6f, 0x64, 0x75, 0x6c,
 	0x65, 0x2e, 0x76, 0x31, 0x42, 0x0b, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x50, 0x72, 0x6f, 0x74,
 	0x6f, 0x50, 0x01, 0x5a, 0x2f, 0x63, 0x6f, 0x73, 0x6d, 0x6f, 0x73, 0x73, 0x64, 0x6b, 0x2e, 0x69,
-	0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x73, 0x64, 0x6b, 0x2f, 0x62, 0x75, 0x69, 0x6c, 0x64, 0x65,
-	0x72, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6d, 0x6f, 0x64, 0x75,
-	0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x53, 0x42, 0x4d, 0xaa, 0x02, 0x15, 0x53, 0x64, 0x6b,
-	0x2e, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e,
-	0x56, 0x31, 0xca, 0x02, 0x15, 0x53, 0x64, 0x6b, 0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72,
+	0x6f, 0x2f, 0x61, 0x70, 0x69, 0x2f, 0x73, 0x64, 0x6b, 0x2f, 0x61, 0x75, 0x63, 0x74, 0x69, 0x6f,
+	0x6e, 0x2f, 0x6d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2f, 0x76, 0x31, 0x3b, 0x6d, 0x6f, 0x64, 0x75,
+	0x6c, 0x65, 0x76, 0x31, 0xa2, 0x02, 0x03, 0x53, 0x41, 0x4d, 0xaa, 0x02, 0x15, 0x53, 0x64, 0x6b,
+	0x2e, 0x41, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x2e, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x2e,
+	0x56, 0x31, 0xca, 0x02, 0x15, 0x53, 0x64, 0x6b, 0x5c, 0x41, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e,
 	0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c, 0x56, 0x31, 0xe2, 0x02, 0x21, 0x53, 0x64, 0x6b,
-	0x5c, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c,
+	0x5c, 0x41, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x5c, 0x4d, 0x6f, 0x64, 0x75, 0x6c, 0x65, 0x5c,
 	0x56, 0x31, 0x5c, 0x47, 0x50, 0x42, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61, 0xea, 0x02,
-	0x18, 0x53, 0x64, 0x6b, 0x3a, 0x3a, 0x42, 0x75, 0x69, 0x6c, 0x64, 0x65, 0x72, 0x3a, 0x3a, 0x4d,
+	0x18, 0x53, 0x64, 0x6b, 0x3a, 0x3a, 0x41, 0x75, 0x63, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x3a, 0x4d,
 	0x6f, 0x64, 0x75, 0x6c, 0x65, 0x3a, 0x3a, 0x56, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
 	0x33,
 }
 
 var (
-	file_sdk_builder_module_v1_module_proto_rawDescOnce sync.Once
-	file_sdk_builder_module_v1_module_proto_rawDescData = file_sdk_builder_module_v1_module_proto_rawDesc
+	file_sdk_auction_module_v1_module_proto_rawDescOnce sync.Once
+	file_sdk_auction_module_v1_module_proto_rawDescData = file_sdk_auction_module_v1_module_proto_rawDesc
 )
 
-func file_sdk_builder_module_v1_module_proto_rawDescGZIP() []byte {
-	file_sdk_builder_module_v1_module_proto_rawDescOnce.Do(func() {
-		file_sdk_builder_module_v1_module_proto_rawDescData = protoimpl.X.CompressGZIP(file_sdk_builder_module_v1_module_proto_rawDescData)
+func file_sdk_auction_module_v1_module_proto_rawDescGZIP() []byte {
+	file_sdk_auction_module_v1_module_proto_rawDescOnce.Do(func() {
+		file_sdk_auction_module_v1_module_proto_rawDescData = protoimpl.X.CompressGZIP(file_sdk_auction_module_v1_module_proto_rawDescData)
 	})
-	return file_sdk_builder_module_v1_module_proto_rawDescData
+	return file_sdk_auction_module_v1_module_proto_rawDescData
 }
 
-var file_sdk_builder_module_v1_module_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
-var file_sdk_builder_module_v1_module_proto_goTypes = []interface{}{
-	(*Module)(nil), // 0: sdk.builder.module.v1.Module
+var file_sdk_auction_module_v1_module_proto_msgTypes = make([]protoimpl.MessageInfo, 1)
+var file_sdk_auction_module_v1_module_proto_goTypes = []interface{}{
+	(*Module)(nil), // 0: sdk.auction.module.v1.Module
 }
-var file_sdk_builder_module_v1_module_proto_depIdxs = []int32{
+var file_sdk_auction_module_v1_module_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -539,13 +539,13 @@ var file_sdk_builder_module_v1_module_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_sdk_builder_module_v1_module_proto_init() }
-func file_sdk_builder_module_v1_module_proto_init() {
-	if File_sdk_builder_module_v1_module_proto != nil {
+func init() { file_sdk_auction_module_v1_module_proto_init() }
+func file_sdk_auction_module_v1_module_proto_init() {
+	if File_sdk_auction_module_v1_module_proto != nil {
 		return
 	}
 	if !protoimpl.UnsafeEnabled {
-		file_sdk_builder_module_v1_module_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
+		file_sdk_auction_module_v1_module_proto_msgTypes[0].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*Module); i {
 			case 0:
 				return &v.state
@@ -562,18 +562,18 @@ func file_sdk_builder_module_v1_module_proto_init() {
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: file_sdk_builder_module_v1_module_proto_rawDesc,
+			RawDescriptor: file_sdk_auction_module_v1_module_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   1,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_sdk_builder_module_v1_module_proto_goTypes,
-		DependencyIndexes: file_sdk_builder_module_v1_module_proto_depIdxs,
-		MessageInfos:      file_sdk_builder_module_v1_module_proto_msgTypes,
+		GoTypes:           file_sdk_auction_module_v1_module_proto_goTypes,
+		DependencyIndexes: file_sdk_auction_module_v1_module_proto_depIdxs,
+		MessageInfos:      file_sdk_auction_module_v1_module_proto_msgTypes,
 	}.Build()
-	File_sdk_builder_module_v1_module_proto = out.File
-	file_sdk_builder_module_v1_module_proto_rawDesc = nil
-	file_sdk_builder_module_v1_module_proto_goTypes = nil
-	file_sdk_builder_module_v1_module_proto_depIdxs = nil
+	File_sdk_auction_module_v1_module_proto = out.File
+	file_sdk_auction_module_v1_module_proto_rawDesc = nil
+	file_sdk_auction_module_v1_module_proto_goTypes = nil
+	file_sdk_auction_module_v1_module_proto_depIdxs = nil
 }

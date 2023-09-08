@@ -67,8 +67,8 @@ import (
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
-	builderkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
-	buildermodule "github.com/skip-mev/block-sdk/x/auction"
+	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
+	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
 const (
@@ -104,7 +104,7 @@ var (
 		groupmodule.AppModuleBasic{},
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
-		buildermodule.AppModuleBasic{},
+		auctionmodule.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 	)
 )
@@ -136,7 +136,7 @@ type TestApp struct {
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitBreakerKeeper  circuitkeeper.Keeper
-	BuilderKeeper         builderkeeper.Keeper
+	auctionkeeper         auctionkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -217,7 +217,7 @@ func New(
 		&app.ParamsKeeper,
 		&app.AuthzKeeper,
 		&app.GroupKeeper,
-		&app.BuilderKeeper,
+		&app.auctionkeeper,
 		&app.ConsensusParamsKeeper,
 		&app.FeeGrantKeeper,
 		&app.CircuitBreakerKeeper,
@@ -319,7 +319,7 @@ func New(
 	}
 	options := POBHandlerOptions{
 		BaseOptions:   handlerOptions,
-		BuilderKeeper: app.BuilderKeeper,
+		auctionkeeper: app.auctionkeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,

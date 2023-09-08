@@ -6,9 +6,9 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-// InitGenesis initializes the builder module's state from a given genesis state.
+// InitGenesis initializes the auction module's state from a given genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
-	// Set the builder module's parameters.
+	// Set the auction module's parameters.
 	if err := k.SetParams(ctx, gs.Params); err != nil {
 		panic(err)
 	}
@@ -16,7 +16,7 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 
 // ExportGenesis returns a GenesisState for a given context.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	// Get the builder module's parameters.
+	// Get the auction module's parameters.
 	params, err := k.GetParams(ctx)
 	if err != nil {
 		panic(err)

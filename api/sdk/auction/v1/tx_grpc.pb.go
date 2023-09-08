@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: sdk/builder/v1/tx.proto
+// source: sdk/auction/v1/tx.proto
 
-package builderv1
+package auctionv1
 
 import (
 	context "context"
@@ -19,17 +19,17 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Msg_AuctionBid_FullMethodName   = "/sdk.builder.v1.Msg/AuctionBid"
-	Msg_UpdateParams_FullMethodName = "/sdk.builder.v1.Msg/UpdateParams"
+	Msg_AuctionBid_FullMethodName   = "/sdk.auction.v1.Msg/AuctionBid"
+	Msg_UpdateParams_FullMethodName = "/sdk.auction.v1.Msg/UpdateParams"
 )
 
 // MsgClient is the client API for Msg service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type MsgClient interface {
-	// AuctionBid defines a method for sending bids to the x/builder module.
+	// AuctionBid defines a method for sending bids to the x/auction module.
 	AuctionBid(ctx context.Context, in *MsgAuctionBid, opts ...grpc.CallOption) (*MsgAuctionBidResponse, error)
-	// UpdateParams defines a governance operation for updating the x/builder
+	// UpdateParams defines a governance operation for updating the x/auction
 	// module parameters. The authority is hard-coded to the x/gov module account.
 	UpdateParams(ctx context.Context, in *MsgUpdateParams, opts ...grpc.CallOption) (*MsgUpdateParamsResponse, error)
 }
@@ -64,9 +64,9 @@ func (c *msgClient) UpdateParams(ctx context.Context, in *MsgUpdateParams, opts 
 // All implementations must embed UnimplementedMsgServer
 // for forward compatibility
 type MsgServer interface {
-	// AuctionBid defines a method for sending bids to the x/builder module.
+	// AuctionBid defines a method for sending bids to the x/auction module.
 	AuctionBid(context.Context, *MsgAuctionBid) (*MsgAuctionBidResponse, error)
-	// UpdateParams defines a governance operation for updating the x/builder
+	// UpdateParams defines a governance operation for updating the x/auction
 	// module parameters. The authority is hard-coded to the x/gov module account.
 	UpdateParams(context.Context, *MsgUpdateParams) (*MsgUpdateParamsResponse, error)
 	mustEmbedUnimplementedMsgServer()
@@ -135,7 +135,7 @@ func _Msg_UpdateParams_Handler(srv interface{}, ctx context.Context, dec func(in
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Msg_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sdk.builder.v1.Msg",
+	ServiceName: "sdk.auction.v1.Msg",
 	HandlerType: (*MsgServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -148,5 +148,5 @@ var Msg_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sdk/builder/v1/tx.proto",
+	Metadata: "sdk/auction/v1/tx.proto",
 }

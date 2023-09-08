@@ -48,7 +48,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 			malleate: func() {
 				params := types.DefaultParams()
 				params.MaxBundleSize = 2
-				suite.builderKeeper.SetParams(suite.ctx, params)
+				suite.auctionkeeper.SetParams(suite.ctx, params)
 			},
 			expectErr: true,
 		},
@@ -63,7 +63,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 				params := types.DefaultParams()
 				params.ProposerFee = math.LegacyZeroDec()
 				params.EscrowAccountAddress = escrow.Address
-				suite.builderKeeper.SetParams(suite.ctx, params)
+				suite.auctionkeeper.SetParams(suite.ctx, params)
 
 				suite.bankKeeper.EXPECT().
 					SendCoins(
@@ -88,7 +88,7 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 				params := types.DefaultParams()
 				params.ProposerFee = math.LegacyMustNewDecFromStr("0.30")
 				params.EscrowAccountAddress = escrow.Address
-				suite.builderKeeper.SetParams(suite.ctx, params)
+				suite.auctionkeeper.SetParams(suite.ctx, params)
 
 				suite.distrKeeper.EXPECT().
 					GetPreviousProposerConsAddr(suite.ctx).

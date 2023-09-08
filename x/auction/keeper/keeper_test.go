@@ -18,7 +18,7 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	builderKeeper    keeper.Keeper
+	auctionkeeper    keeper.Keeper
 	bankKeeper       *testutils.MockBankKeeper
 	accountKeeper    *testutils.MockAccountKeeper
 	distrKeeper      *testutils.MockDistributionKeeper
@@ -49,7 +49,7 @@ func (suite *KeeperTestSuite) SetupTest() {
 	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
 	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
-	suite.builderKeeper = keeper.NewKeeper(
+	suite.auctionkeeper = keeper.NewKeeper(
 		suite.encCfg.Codec,
 		suite.key,
 		suite.accountKeeper,
@@ -59,8 +59,8 @@ func (suite *KeeperTestSuite) SetupTest() {
 		suite.authorityAccount.String(),
 	)
 
-	err := suite.builderKeeper.SetParams(suite.ctx, types.DefaultParams())
+	err := suite.auctionkeeper.SetParams(suite.ctx, types.DefaultParams())
 	suite.Require().NoError(err)
 
-	suite.msgServer = keeper.NewMsgServerImpl(suite.builderKeeper)
+	suite.msgServer = keeper.NewMsgServerImpl(suite.auctionkeeper)
 }

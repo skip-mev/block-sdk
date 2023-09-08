@@ -65,9 +65,9 @@ func NewKeeperWithRewardsAddressProvider(
 		panic(err)
 	}
 
-	// Ensure that the builder module account exists.
+	// Ensure that the auction module account exists.
 	if accountKeeper.GetModuleAddress(types.ModuleName) == nil {
-		panic("builder module account has not been set")
+		panic("auction module account has not been set")
 	}
 
 	return Keeper{
@@ -79,7 +79,7 @@ func NewKeeperWithRewardsAddressProvider(
 	}
 }
 
-// Logger returns a builder module-specific logger.
+// Logger returns a auction module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
@@ -89,7 +89,7 @@ func (k Keeper) GetAuthority() string {
 	return k.authority
 }
 
-// GetParams returns the builder module's parameters.
+// GetParams returns the auction module's parameters.
 func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	store := ctx.KVStore(k.storeKey)
 
@@ -97,7 +97,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	bz := store.Get(key)
 
 	if len(bz) == 0 {
-		return types.Params{}, fmt.Errorf("no params found for the builder module")
+		return types.Params{}, fmt.Errorf("no params found for the auction module")
 	}
 
 	params := types.Params{}
@@ -108,7 +108,7 @@ func (k Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	return params, nil
 }
 
-// SetParams sets the builder module's parameters.
+// SetParams sets the auction module's parameters.
 func (k Keeper) SetParams(ctx sdk.Context, params types.Params) error {
 	store := ctx.KVStore(k.storeKey)
 
@@ -132,7 +132,7 @@ func (k Keeper) GetMaxBundleSize(ctx sdk.Context) (uint32, error) {
 	return params.MaxBundleSize, nil
 }
 
-// GetEscrowAccount returns the builder module's escrow account.
+// GetEscrowAccount returns the auction module's escrow account.
 func (k Keeper) GetEscrowAccount(ctx sdk.Context) (sdk.AccAddress, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -142,7 +142,7 @@ func (k Keeper) GetEscrowAccount(ctx sdk.Context) (sdk.AccAddress, error) {
 	return params.EscrowAccountAddress, nil
 }
 
-// GetReserveFee returns the reserve fee of the builder module.
+// GetReserveFee returns the reserve fee of the auction module.
 func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -152,7 +152,7 @@ func (k Keeper) GetReserveFee(ctx sdk.Context) (sdk.Coin, error) {
 	return params.ReserveFee, nil
 }
 
-// GetMinBidIncrement returns the minimum bid increment for the builder.
+// GetMinBidIncrement returns the minimum bid increment for the auction.
 func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coin, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {
@@ -162,7 +162,7 @@ func (k Keeper) GetMinBidIncrement(ctx sdk.Context) (sdk.Coin, error) {
 	return params.MinBidIncrement, nil
 }
 
-// GetProposerFee returns the proposer fee for the builder module.
+// GetProposerFee returns the proposer fee for the auction module.
 func (k Keeper) GetProposerFee(ctx sdk.Context) (math.LegacyDec, error) {
 	params, err := k.GetParams(ctx)
 	if err != nil {

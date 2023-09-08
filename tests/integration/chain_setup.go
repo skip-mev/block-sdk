@@ -26,7 +26,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	buildertypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 // ChainBuilderFromChainSpec creates an interchaintest chain builder factory given a ChainSpec
@@ -149,7 +149,7 @@ type Tx struct {
 }
 
 // CreateAuctionBidMsg creates a new AuctionBid tx signed by the given user, the order of txs in the MsgAuctionBid will be determined by the contents + order of the MessageForUsers
-func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*buildertypes.MsgAuctionBid, [][]byte) {
+func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*auctiontypes.MsgAuctionBid, [][]byte) {
 	// for each MessagesForUser get the signed bytes
 	txs := make([][]byte, len(txsPerUser))
 	for i, tx := range txsPerUser {
@@ -161,7 +161,7 @@ func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User
 	require.NoError(t, err)
 
 	// create a message auction bid
-	return buildertypes.NewMsgAuctionBid(
+	return auctiontypes.NewMsgAuctionBid(
 		accAddr,
 		bid,
 		txs,
@@ -221,8 +221,8 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 	return txs
 }
 
-// QueryBuilderParams queries the x/builder module's params
-func QueryBuilderParams(t *testing.T, chain ibc.Chain) buildertypes.Params {
+// QueryBuilderParams queries the x/auction module's params
+func QueryBuilderParams(t *testing.T, chain ibc.Chain) auctiontypes.Params {
 	// cast chain to cosmos-chain
 	cosmosChain, ok := chain.(*cosmos.CosmosChain)
 	require.True(t, ok)
@@ -234,7 +234,7 @@ func QueryBuilderParams(t *testing.T, chain ibc.Chain) buildertypes.Params {
 	require.NoError(t, err)
 
 	// unmarshal params
-	var params buildertypes.Params
+	var params auctiontypes.Params
 	err = json.Unmarshal(resp, &params)
 	require.NoError(t, err)
 	return params

@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: sdk/builder/v1/query.proto
+// source: sdk/auction/v1/query.proto
 
-package builderv1
+package auctionv1
 
 import (
 	context "context"
@@ -19,14 +19,14 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Query_Params_FullMethodName = "/sdk.builder.v1.Query/Params"
+	Query_Params_FullMethodName = "/sdk.auction.v1.Query/Params"
 )
 
 // QueryClient is the client API for Query service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type QueryClient interface {
-	// Params queries the parameters of the x/builder module.
+	// Params queries the parameters of the x/auction module.
 	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 }
 
@@ -51,7 +51,7 @@ func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts .
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
 type QueryServer interface {
-	// Params queries the parameters of the x/builder module.
+	// Params queries the parameters of the x/auction module.
 	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
@@ -98,7 +98,7 @@ func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interf
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var Query_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "sdk.builder.v1.Query",
+	ServiceName: "sdk.auction.v1.Query",
 	HandlerType: (*QueryServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -107,5 +107,5 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "sdk/builder/v1/query.proto",
+	Metadata: "sdk/auction/v1/query.proto",
 }
