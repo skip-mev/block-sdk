@@ -35,7 +35,6 @@ jobs:
         run: |
           make test
 
-<<<<<<< HEAD
   test-integration:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -52,25 +51,6 @@ jobs:
         with:
           go-version: "1.20"
           cache: true
-=======
-  # TODO: Add this back once we have a working version of v0.50.0 with ITS and v0.47.x
-  # test-integration:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 25
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: technote-space/get-diff-action@v6.1.2
-  #       with:
-  #         PATTERNS: |
-  #           **/**.go
-  #           go.mod
-  #           go.sum
-  #     - uses: actions/setup-go@v4
-  #       if: env.GIT_DIFF
-  #       with:
-  #         go-version: "1.20"
-  #         cache: true
->>>>>>> 0b36a2a (chore(deps): bump actions/checkout from 3 to 4 (#41))
 
       # In this step, this action saves a list of existing images, the cache is
       # created without them in the post run. It also restores the cache if it
