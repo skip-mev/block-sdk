@@ -8,8 +8,13 @@ require (
 	cosmossdk.io/core v0.10.0
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.0
+<<<<<<< HEAD
 	cosmossdk.io/log v1.2.0
 	cosmossdk.io/math v1.0.1
+=======
+	cosmossdk.io/log v1.2.1
+	cosmossdk.io/math v1.1.2
+>>>>>>> 0ef5c6f (chore(deps): bump cosmossdk.io/math from 1.0.1 to 1.1.2 (#46))
 	cosmossdk.io/store v1.0.0-alpha.1
 	cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd
