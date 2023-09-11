@@ -101,11 +101,11 @@ func (suite *KeeperTestSuite) TestMsgAuctionBid() {
 
 				suite.bankKeeper.EXPECT().
 					SendCoins(suite.ctx, bidder.Address, proposerOperator.Address, sdk.NewCoins(sdk.NewInt64Coin("stake", 1024))).
-					Return(nil)
+					Return(nil).AnyTimes()
 
 				suite.bankKeeper.EXPECT().
 					SendCoins(suite.ctx, bidder.Address, escrow.Address, sdk.NewCoins(sdk.NewInt64Coin("stake", 2392))).
-					Return(nil)
+					Return(nil).AnyTimes()
 			},
 			expectErr: false,
 		},
