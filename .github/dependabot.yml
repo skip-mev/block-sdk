@@ -15,8 +15,6 @@ updates:
     labels:
       - "A:automerge"
       - dependencies
-<<<<<<< HEAD
-=======
     open-pull-requests-limit: 5
     target-branch: "main"
 
@@ -39,4 +37,3 @@ updates:
       - dependencies
     open-pull-requests-limit: 5
     target-branch: "release/v2.x.x"
->>>>>>> 34d8adf (init (#67))
