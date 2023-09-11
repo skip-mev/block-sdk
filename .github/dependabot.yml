@@ -16,8 +16,24 @@ updates:
       - "A:automerge"
       - dependencies
     open-pull-requests-limit: 5
-    target:
-      # Specify the branches where you want to apply updates
-      branches:
-        - "release/*"
-        - "main"
+    target-branch: "main"
+
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: daily
+    labels:
+      - "A:automerge"
+      - dependencies
+    open-pull-requests-limit: 5
+    target-branch: "release/v1.x.x"
+  
+  - package-ecosystem: gomod
+    directory: "/"
+    schedule:
+      interval: daily
+    labels:
+      - "A:automerge"
+      - dependencies
+    open-pull-requests-limit: 5
+    target-branch: "release/v2.x.x"
