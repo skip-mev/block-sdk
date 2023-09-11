@@ -15,3 +15,7 @@ updates:
     labels:
       - "A:automerge"
       - dependencies
+    open-pull-requests-limit: 5
+    target-branches:
+      - "release/*"
+      - "main"
