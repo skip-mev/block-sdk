@@ -16,6 +16,8 @@ updates:
       - "A:automerge"
       - dependencies
     open-pull-requests-limit: 5
-    target-branches:
-      - "release/*"
-      - "main"
+    target:
+      # Specify the branches where you want to apply updates
+      branches:
+        - "release/*"
+        - "main"
