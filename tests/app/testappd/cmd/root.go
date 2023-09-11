@@ -14,7 +14,6 @@ import (
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
-
 	"github.com/skip-mev/block-sdk/tests/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
@@ -219,11 +218,11 @@ func initRootCmd(
 
 	// add keybase, auxiliary RPC, query, genesis, and tx child commands
 	rootCmd.AddCommand(
-		rpc.StatusCommand(),
+		server.StatusCommand(),
 		genesisCommand(txConfig, basicManager),
 		queryCommand(),
 		txCommand(),
-		keys.Commands(app.DefaultNodeHome),
+		keys.Commands(),
 	)
 }
 

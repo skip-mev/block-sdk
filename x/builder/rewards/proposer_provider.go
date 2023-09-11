@@ -37,5 +37,5 @@ func (p *ProposerRewardsAddressProvider) GetRewardsAddress(ctx sdk.Context) (sdk
 		return nil, err
 	}
 
-	return sdk.AccAddress(prevProposer.GetOperator()), nil
+	return sdk.AccAddressFromBech32(prevProposer.GetOperator())
 }
