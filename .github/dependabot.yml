@@ -15,3 +15,12 @@ updates:
     labels:
       - "A:automerge"
       - dependencies
+<<<<<<< HEAD
+=======
+    open-pull-requests-limit: 5
+    target:
+      # Specify the branches where you want to apply updates
+      branches:
+        - "release/*"
+        - "main"
+>>>>>>> 641fcf6 (fix on dependabot (#63))
