@@ -8,7 +8,7 @@ import (
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/utils"
-	"github.com/skip-mev/block-sdk/x/builder/types"
+	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 // PrepareLaneHandler will attempt to select the highest bid transaction that is valid

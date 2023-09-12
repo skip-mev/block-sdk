@@ -71,8 +71,8 @@ import (
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
-	buildermodule "github.com/skip-mev/block-sdk/x/builder"
-	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
+	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
+	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
 const (
@@ -113,7 +113,12 @@ var (
 		vesting.AppModuleBasic{},
 		nftmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
+<<<<<<< HEAD
 		buildermodule.AppModuleBasic{},
+=======
+		auctionmodule.AppModuleBasic{},
+		feegrantmodule.AppModuleBasic{},
+>>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 	)
 )
 
@@ -146,7 +151,13 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
+<<<<<<< HEAD
 	BuilderKeeper         builderkeeper.Keeper
+=======
+	CircuitBreakerKeeper  circuitkeeper.Keeper
+	auctionkeeper         auctionkeeper.Keeper
+	FeeGrantKeeper        feegrantkeeper.Keeper
+>>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 
 	// custom checkTx handler
 	checkTxHandler mev.CheckTx
@@ -226,7 +237,7 @@ func New(
 		&app.EvidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
-		&app.BuilderKeeper,
+		&app.auctionkeeper,
 		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
@@ -319,7 +330,7 @@ func New(
 	}
 	options := AnteHandlerOptions{
 		BaseOptions:   handlerOptions,
-		BuilderKeeper: app.BuilderKeeper,
+		auctionkeeper: app.auctionkeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,

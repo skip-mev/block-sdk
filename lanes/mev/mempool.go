@@ -51,7 +51,7 @@ func TxPriority(config Factory) base.TxPriority[string] {
 }
 
 // GetTopAuctionTx returns the highest bidding transaction in the auction mempool.
-// This is primarily a helper function for the x/builder module.
+// This is primarily a helper function for the x/auction module.
 func (l *MEVLane) GetTopAuctionTx(ctx context.Context) sdk.Tx {
 	iterator := l.Select(ctx, nil)
 	if iterator == nil {

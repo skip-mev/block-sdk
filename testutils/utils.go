@@ -16,7 +16,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/tx"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+<<<<<<< HEAD
 	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+=======
+	"github.com/cosmos/gogoproto/proto"
+
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+>>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 )
 
 type EncodingConfig struct {
@@ -32,7 +38,7 @@ func CreateTestEncodingConfig() EncodingConfig {
 
 	banktypes.RegisterInterfaces(interfaceRegistry)
 	cryptocodec.RegisterInterfaces(interfaceRegistry)
-	buildertypes.RegisterInterfaces(interfaceRegistry)
+	auctiontypes.RegisterInterfaces(interfaceRegistry)
 	stakingtypes.RegisterInterfaces(interfaceRegistry)
 
 	codec := codec.NewProtoCodec(interfaceRegistry)
@@ -183,7 +189,7 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 }
 
 func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) (authsigning.Tx, []authsigning.Tx, error) {
-	bidMsg := &buildertypes.MsgAuctionBid{
+	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
 		Transactions: make([][]byte, len(signers)),
@@ -230,7 +236,7 @@ func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce,
 }
 
 func CreateAuctionTxWithSigners(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) (authsigning.Tx, error) {
-	bidMsg := &buildertypes.MsgAuctionBid{
+	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
 		Transactions: make([][]byte, len(signers)),
@@ -299,8 +305,8 @@ func CreateRandomMsgs(acc sdk.AccAddress, numberMsgs int) []sdk.Msg {
 	return msgs
 }
 
-func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce uint64, numberMsgs int) (*buildertypes.MsgAuctionBid, error) {
-	bidMsg := &buildertypes.MsgAuctionBid{
+func CreateMsgAuctionBid(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce uint64, numberMsgs int) (*auctiontypes.MsgAuctionBid, error) {
+	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
 		Transactions: make([][]byte, numberMsgs),
