@@ -11,7 +11,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/tests/integration"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (
@@ -31,7 +31,7 @@ var (
 
 	genesisKV = []cosmos.GenesisKV{
 		{
-			Key:   "app_state.builder.params.max_bundle_size",
+			Key:   "app_state.auction.params.max_bundle_size",
 			Value: 3,
 		},
 	}
@@ -70,8 +70,8 @@ var (
 func MakeEncodingConfig() *testutil.TestEncodingConfig {
 	cfg := cosmos.DefaultEncoding()
 
-	// register builder types
-	buildertypes.RegisterInterfaces(cfg.InterfaceRegistry)
+	// register auction types
+	auctiontypes.RegisterInterfaces(cfg.InterfaceRegistry)
 
 	return &cfg
 }

@@ -18,7 +18,7 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 type BlockBusterTestSuite struct {
@@ -51,7 +51,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// General config for transactions and randomness for the test suite
 	suite.encodingConfig = testutils.CreateTestEncodingConfig()
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
-	key := storetypes.NewKVStoreKey(buildertypes.StoreKey)
+	key := storetypes.NewKVStoreKey(auctiontypes.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(suite.T(), key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx.WithBlockHeight(1)
 
