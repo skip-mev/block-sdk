@@ -221,8 +221,8 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 	return txs
 }
 
-// QueryBuilderParams queries the x/auction module's params
-func QueryBuilderParams(t *testing.T, chain ibc.Chain) auctiontypes.Params {
+// QueryAuctionParams queries the x/auction module's params
+func QueryAuctionParams(t *testing.T, chain ibc.Chain) auctiontypes.Params {
 	// cast chain to cosmos-chain
 	cosmosChain, ok := chain.(*cosmos.CosmosChain)
 	require.True(t, ok)
@@ -230,7 +230,7 @@ func QueryBuilderParams(t *testing.T, chain ibc.Chain) auctiontypes.Params {
 	nodes := cosmosChain.Nodes()
 	require.True(t, len(nodes) > 0)
 	// make params query to first node
-	resp, _, err := nodes[0].ExecQuery(context.Background(), "builder", "params")
+	resp, _, err := nodes[0].ExecQuery(context.Background(), "auction", "params")
 	require.NoError(t, err)
 
 	// unmarshal params

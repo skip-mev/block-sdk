@@ -31,7 +31,7 @@ var (
 
 	genesisKV = []cosmos.GenesisKV{
 		{
-			Key:   "app_state.builder.params.max_bundle_size",
+			Key:   "app_state.auction.params.max_bundle_size",
 			Value: 3,
 		},
 	}
@@ -70,7 +70,7 @@ var (
 func MakeEncodingConfig() *testutil.TestEncodingConfig {
 	cfg := cosmos.DefaultEncoding()
 
-	// register builder types
+	// register auction types
 	auctiontypes.RegisterInterfaces(cfg.InterfaceRegistry)
 
 	return &cfg
