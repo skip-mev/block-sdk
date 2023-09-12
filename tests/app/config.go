@@ -65,9 +65,9 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
-	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	_ "github.com/skip-mev/block-sdk/x/builder" // import for side-effects
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
+	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (
@@ -79,7 +79,7 @@ var (
 		{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
-		{Account: buildertypes.ModuleName, Permissions: []string{}},
+		{Account: auctiontypes.ModuleName, Permissions: []string{}},
 	}
 
 	// blocked account addresses
@@ -112,7 +112,7 @@ var (
 						stakingtypes.ModuleName,
 						genutiltypes.ModuleName,
 						authz.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					EndBlockers: []string{
@@ -121,7 +121,7 @@ var (
 						stakingtypes.ModuleName,
 						genutiltypes.ModuleName,
 						group.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
@@ -150,7 +150,7 @@ var (
 						vestingtypes.ModuleName,
 						consensustypes.ModuleName,
 						circuittypes.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					// When ExportGenesis is not specified, the export genesis module order
@@ -244,8 +244,8 @@ var (
 				Config: appconfig.WrapAny(&circuitmodulev1.Module{}),
 			},
 			{
-				Name:   buildertypes.ModuleName,
-				Config: appconfig.WrapAny(&buildermodulev1.Module{}),
+				Name:   auctiontypes.ModuleName,
+				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
 			},
 		},
 	}),
