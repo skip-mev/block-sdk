@@ -76,7 +76,7 @@ func (s *IntegrationTestSuite) SetupSubTest() {
 
 func (s *IntegrationTestSuite) TestQueryParams() {
 	// query params
-	params := QueryBuilderParams(s.T(), s.chain)
+	params := QueryAuctionParams(s.T(), s.chain)
 
 	// expect validate to pass
 	require.NoError(s.T(), params.Validate())
@@ -90,7 +90,7 @@ func (s *IntegrationTestSuite) TestQueryParams() {
 //  3. The balance of the escrow account should be updated correctly.
 //  4. Top of block bids will be included in block proposals before other transactions
 func (s *IntegrationTestSuite) TestValidBids() {
-	params := QueryBuilderParams(s.T(), s.chain)
+	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
 	s.Run("Valid Auction Bid", func() {
@@ -322,7 +322,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 //  5. If there is a block that has multiple valid bids with timeouts that are sufficiently far apart,
 //     the bids should be executed respecting the highest bids until the timeout is reached.
 func (s *IntegrationTestSuite) TestMultipleBids() {
-	params := QueryBuilderParams(s.T(), s.chain)
+	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
 	s.Run("broadcasting bids to two different validators (both should execute over several blocks) with same bid", func() {
@@ -664,7 +664,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 }
 
 func (s *IntegrationTestSuite) TestInvalidBids() {
-	params := QueryBuilderParams(s.T(), s.chain)
+	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
 	s.Run("searcher is attempting to submit a bundle that includes another bid tx", func() {
@@ -1001,7 +1001,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 
 	delegation := sdk.NewCoin(s.denom, sdk.NewInt(100))
 
-	params := QueryBuilderParams(s.T(), s.chain)
+	params := QueryAuctionParams(s.T(), s.chain)
 
 	s.Run("block with mev, free, and normal tx", func() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
