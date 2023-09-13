@@ -197,8 +197,8 @@ cosmossdk.io/client/v2 v2.0.0-20230724130706-5442197d6bcd h1:Xg/hp/Ml1YPCCxTklzg
 cosmossdk.io/client/v2 v2.0.0-20230724130706-5442197d6bcd/go.mod h1:cRYwwVgXhMpKrh6/oao3u+SW5Nb7RHQCGcF+jTsmcQQ=
 cosmossdk.io/collections v0.4.0 h1:PFmwj2W8szgpD5nOd8GWH6AbYNi1f2J6akWXJ7P5t9s=
 cosmossdk.io/collections v0.4.0/go.mod h1:oa5lUING2dP+gdDquow+QjlF45eL1t4TJDypgGd+tv0=
-cosmossdk.io/core v0.10.0 h1:NP28Ol9YyRODmZLJg2ko/mUl40hMegeMzhJnG+XPkcY=
-cosmossdk.io/core v0.10.0/go.mod h1:MygXNld9DvMgYY4yE76DM/mdZpgfeyRjy6FPjEEehlY=
+cosmossdk.io/core v0.12.0 h1:aFuvkG6eDv0IQC+UDjx86wxNWVAxdCFk7OABJ1Vh4RU=
+cosmossdk.io/core v0.12.0/go.mod h1:LaTtayWBSoacF5xNzoF8tmLhehqlA9z1SWiPuNC6X1w=
 cosmossdk.io/depinject v1.0.0-alpha.4 h1:PLNp8ZYAMPTUKyG9IK2hsbciDWqna2z1Wsl98okJopc=
 cosmossdk.io/depinject v1.0.0-alpha.4/go.mod h1:HeDk7IkR5ckZ3lMGs/o91AVUc7E596vMaOmslGFM3yU=
 cosmossdk.io/errors v1.0.0 h1:nxF07lmlBbB8NKQhtJ+sJm6ef5uV1XkvPXG2bUntb04=
@@ -369,8 +369,8 @@ github.com/cockroachdb/apd/v2 v2.0.2 h1:weh8u7Cneje73dDh+2tEVLUvyBc89iwepWCD8b80
 github.com/cockroachdb/apd/v2 v2.0.2/go.mod h1:DDxRlzC2lo3/vSlmSoS7JkqbbrARPuFOGr0B9pvN3Gw=
 github.com/cockroachdb/datadriven v0.0.0-20190809214429-80d97fb3cbaa/go.mod h1:zn76sxSg3SzpJ0PPJaLDCu+Bu0Lg3sKTORVIj19EIF8=
 github.com/cockroachdb/datadriven v1.0.3-0.20230413201302-be42291fc80f h1:otljaYPt5hWxV3MUfO5dFPFiOXg9CyG5/kCfayTqsJ4=
-github.com/cockroachdb/errors v1.10.0 h1:lfxS8zZz1+OjtV4MtNWgboi/W5tyLEB6VQZBXN+0VUU=
-github.com/cockroachdb/errors v1.10.0/go.mod h1:lknhIsEVQ9Ss/qKDBQS/UqFSvPQjOwNq2qyKAxtHRqE=
+github.com/cockroachdb/errors v1.11.1 h1:xSEW75zKaKCWzR3OfxXUxgrk/NtT4G1MiOv5lWZazG8=
+github.com/cockroachdb/errors v1.11.1/go.mod h1:8MUxA3Gi6b25tYlFEBGLf+D8aISL+M4MIpiWMSNRfxw=
 github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b h1:r6VH0faHjZeQy818SGhaone5OnYfxFR/+AzdY3sf5aE=
 github.com/cockroachdb/logtags v0.0.0-20230118201751-21c54148d20b/go.mod h1:Vz9DsVWQQhf3vs21MhPMZpMGSht7O/2vFW2xusFUVOs=
 github.com/cockroachdb/pebble v0.0.0-20230817233644-564b068800e0 h1:M4A5LioEhkZ/s+m0g0pWgiLBQr83p0jWnQUo320Qy+A=
@@ -1910,8 +1910,8 @@ google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5 h1:L6iMMGrtzgHsWof
 google.golang.org/genproto v0.0.0-20230803162519-f966b187b2e5/go.mod h1:oH/ZOT02u4kWEp7oYBGYFFkCdKS/uYR9Z7+0/xuuFp8=
 google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e h1:z3vDksarJxsAKM5dmEGv0GHwE2hKJ096wZra71Vs4sw=
 google.golang.org/genproto/googleapis/api v0.0.0-20230726155614-23370e0ffb3e/go.mod h1:rsr7RhLuwsDKL7RmgDDCUc6yaGr1iqceVb5Wv6f6YvQ=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20230815205213-6bfd019c3878 h1:lv6/DhyiFFGsmzxbsUUTOkN29II+zeWHxvT8Lpdxsv0=
-google.golang.org/genproto/googleapis/rpc v0.0.0-20230815205213-6bfd019c3878/go.mod h1:+Bk1OCOj40wS2hwAMA+aCW9ypzm63QTBBHp6lQ3p+9M=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d h1:uvYuEyMHKNt+lT4K3bN6fGswmK8qSvcreM3BwjDh+y4=
+google.golang.org/genproto/googleapis/rpc v0.0.0-20230822172742-b8732ec3820d/go.mod h1:+Bk1OCOj40wS2hwAMA+aCW9ypzm63QTBBHp6lQ3p+9M=
 google.golang.org/grpc v1.17.0/go.mod h1:6QZJwpn2B+Zp71q/5VxRsJ6NXXVCE5NRUHRo+f3cWCs=
 google.golang.org/grpc v1.19.0/go.mod h1:mqu4LbDTu4XGKhr4mRzUsmM4RtVoemTSY81AxZiDr8c=
 google.golang.org/grpc v1.20.0/go.mod h1:chYK+tFQF0nDUGJgXMSgLCQk3phJEuONr2DCgLDdAQM=
