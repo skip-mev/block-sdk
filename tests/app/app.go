@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -136,7 +137,7 @@ type TestApp struct {
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitBreakerKeeper  circuitkeeper.Keeper
-	auctionkeeper         auctionkeeper.Keeper
+	AuctionKeeper         auctionkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -217,7 +218,7 @@ func New(
 		&app.ParamsKeeper,
 		&app.AuthzKeeper,
 		&app.GroupKeeper,
-		&app.auctionkeeper,
+		&app.AuctionKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.FeeGrantKeeper,
 		&app.CircuitBreakerKeeper,
@@ -252,6 +253,8 @@ func New(
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
 	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
+
+	fmt.Println("\n\n\n\n\\nHERE ARE THE STORE KEYS", app.App.GetStoreKeys())
 
 	// ---------------------------------------------------------------------------- //
 	// ------------------------- Begin Custom Code -------------------------------- //
@@ -319,7 +322,7 @@ func New(
 	}
 	options := POBHandlerOptions{
 		BaseOptions:   handlerOptions,
-		auctionkeeper: app.auctionkeeper,
+		auctionkeeper: app.AuctionKeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,

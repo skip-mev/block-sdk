@@ -1,3 +1,8 @@
-go 1.20
+go 1.21
 
-use .
+toolchain go1.21.1
+
+use (
+	.
+	./tests/integration
+)

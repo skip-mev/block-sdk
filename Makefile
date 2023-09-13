@@ -86,42 +86,30 @@ build-and-start-app: build-test-app
 .PHONY: build-test-app build-and-start-app
 
 ###############################################################################
-##                                Workspaces                                 ##
-###############################################################################
-
-use-main:
-	go work edit -use .
-	go work edit -dropuse ./tests/integration
-
-use-integration:
-	go work edit -dropuse .
-	go work edit -use ./tests/integration
-
-.PHONY: docker-build docker-build-integration
-###############################################################################
 ##                                  Docker                                   ##
 ###############################################################################
 
-docker-build: use-main
+docker-build:
 	@echo "Building E2E Docker image..."
 	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/pob.e2e.Dockerfile .
 
-docker-build-integration: use-main
+docker-build-integration:
 	@echo "Building integration-test Docker image..."
 	@DOCKER_BUILDKIT=1 docker build -t pob-integration -f contrib/images/pob.integration.Dockerfile .
 
+.PHONY: docker-build docker-build-integration
 ###############################################################################
 ###                                  Tests                                  ###
 ###############################################################################
 
-TEST_INTEGRATION_DEPS = docker-build-integration use-integration
+TEST_INTEGRATION_DEPS = docker-build-integration
 TEST_INTEGRATION_TAGS = integration
 
 test-integration: $(TEST_INTEGRATION_DEPS)
 	@ echo "Running integration tests..."
 	@go test ./tests/integration/pob_integration_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
 
-test: use-main
+test:
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
 .PHONY: test test-integration
@@ -163,11 +151,11 @@ proto-update-deps:
 ###                                Linting                                  ###
 ###############################################################################
 
-lint: use-main
+lint:
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --out-format=tab
 
-lint-fix: use-main
+lint-fix:
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
@@ -181,7 +169,7 @@ lint-markdown:
 ###                                Formatting                               ###
 ###############################################################################
 
-format: use-main
+format:
 
 format:
 	@find . -name '*.go' -type f -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' -not -name '*.pulsar.go' -not -name '*.gw.go' | xargs go run mvdan.cc/gofumpt -w .

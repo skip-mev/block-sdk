@@ -99,7 +99,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 
 		// create bundle w/ a single tx
 		// create message send tx
-		tx := banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))
+		tx := banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
 
 		// create the MsgAuctioBid
 		bidAmt := params.ReserveFee
@@ -146,8 +146,8 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		// create the bundle w/ a single tx
 		// bank-send msg
 		msgs := make([]sdk.Msg, 2)
-		msgs[0] = banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))
-		msgs[1] = banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))
+		msgs[0] = banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
+		msgs[1] = banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
 
 		// create the MsgAuctionBid
 		bidAmt := params.ReserveFee
@@ -201,12 +201,12 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		txs := make([]Tx, 2)
 		txs[0] = Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		txs[1] = Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
 		// create bundle
@@ -271,11 +271,11 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		txs := make([]Tx, 2)
 		txs[0] = Tx{
 			User: s.user1,
-			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 		}
 		txs[1] = Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 
@@ -294,7 +294,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 			Height: height + 1,
 		}, {
 			User: s.user3,
-			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user1.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user1.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 		}})
 
 		// query next block
@@ -333,7 +333,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid1
@@ -343,7 +343,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// create bid 2
 		msg2 := Tx{
 			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid2 w/ higher bid than bid1
@@ -395,7 +395,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		tx := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid1
@@ -405,7 +405,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// create bid 2
 		tx2 := Tx{
 			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid2 w/ higher bid than bid1
@@ -451,7 +451,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid1
@@ -461,7 +461,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// create bid 2
 		msg2 := Tx{
 			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid2 w/ higher bid than bid1
@@ -507,7 +507,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid1
@@ -557,7 +557,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		msg := Tx{
 			User: s.user3,
-			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 		}
 
 		// create bid1
@@ -606,7 +606,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// bank-send msg
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		// create bid1
@@ -617,7 +617,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// create a second message
 		msg2 := Tx{
 			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 
@@ -671,7 +671,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
 		bidAmt := params.ReserveFee
@@ -705,10 +705,10 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(1000000000000000000))
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(1000000000000000000))
 		bid, _ := CreateAuctionBidMsg(s.T(), context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -722,16 +722,16 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 		msg2 := Tx{
 			User: s.user2,
-			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 		}
 		msg3 := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
 
@@ -749,7 +749,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
 		bidAmt := params.ReserveFee
@@ -773,12 +773,12 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 
 		// create bid smaller than reserve
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
 		bid, _ := CreateAuctionBidMsg(s.T(), context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -795,13 +795,13 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		for i := range msgs {
 			msgs[i] = Tx{
 				User:              s.user1,
-				Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+				Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 				SequenceIncrement: uint64(i + 1),
 			}
 		}
 
 		// create bid smaller than reserve
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
 		bid, _ := CreateAuctionBidMsg(s.T(), context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, msgs)
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -815,12 +815,12 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		// create bid tx
 		msg := Tx{
 			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
 			SequenceIncrement: 1,
 		}
 
 		// create bid smaller than reserve
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
 		bid, _ := CreateAuctionBidMsg(s.T(), context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// broadcast wrapped bid, and expect a failure
@@ -833,7 +833,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// create bundle w/ a single tx
 		// create message send tx
-		tx := banktypes.NewMsgSend(s.user2.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))
+		tx := banktypes.NewMsgSend(s.user2.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
 
 		// create the MsgAuctioBid (this should fail b.c same tx is repeated twice)
 		bidAmt := params.ReserveFee
@@ -881,8 +881,8 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 	})
 }
 
-func escrowAddressIncrement(bid math.Int, proposerFee sdk.Dec) int64 {
-	return int64(bid.Sub(sdk.NewDecFromInt(bid).Mul(proposerFee).RoundInt()).Int64())
+func escrowAddressIncrement(bid math.Int, proposerFee math.LegacyDec) int64 {
+	return int64(bid.Sub(math.LegacyNewDecFromInt(bid).Mul(proposerFee).RoundInt()).Int64())
 }
 
 // TestFreeLane tests that the application correctly handles free lanes. There are a few invariants that are tested:
@@ -893,7 +893,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 
-	delegation := sdk.NewCoin(s.denom, sdk.NewInt(100))
+	delegation := sdk.NewCoin(s.denom, math.NewInt(100))
 
 	s.Run("valid free lane transaction", func() {
 		// query balance of account before tx submission
@@ -905,8 +905,8 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				User: s.user1,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user1.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user1.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -929,8 +929,8 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				User: s.user1,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user1.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user1.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -942,7 +942,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 					banktypes.NewMsgSend(
 						sdk.AccAddress(s.user2.Address()),
 						sdk.AccAddress(s.user3.Address()),
-						sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+						sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 					),
 				},
 				GasPrice: 10,
@@ -968,8 +968,8 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				User: s.user1,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user1.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user1.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -978,8 +978,8 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 				User: s.user2,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user2.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user2.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -999,7 +999,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 
-	delegation := sdk.NewCoin(s.denom, sdk.NewInt(100))
+	delegation := sdk.NewCoin(s.denom, math.NewInt(100))
 
 	params := QueryAuctionParams(s.T(), s.chain)
 
@@ -1020,7 +1020,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 						&banktypes.MsgSend{
 							FromAddress: s.user1.FormattedAddress(),
 							ToAddress:   s.user1.FormattedAddress(),
-							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 						},
 					},
 					SequenceIncrement: 1,
@@ -1041,8 +1041,8 @@ func (s *IntegrationTestSuite) TestLanes() {
 				User: s.user2,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user2.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user2.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -1054,7 +1054,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 					&banktypes.MsgSend{
 						FromAddress: s.user3.FormattedAddress(),
 						ToAddress:   s.user3.FormattedAddress(),
-						Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+						Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 					},
 				},
 			},
@@ -1088,7 +1088,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 						&banktypes.MsgSend{
 							FromAddress: s.user1.FormattedAddress(),
 							ToAddress:   s.user1.FormattedAddress(),
-							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(user1Balance))),
+							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(user1Balance))),
 						},
 					},
 					SequenceIncrement: 2,
@@ -1099,7 +1099,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 						&banktypes.MsgSend{
 							FromAddress: s.user1.FormattedAddress(),
 							ToAddress:   s.user1.FormattedAddress(),
-							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(user1Balance))),
+							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(user1Balance))),
 						},
 					},
 					SequenceIncrement: 2,
@@ -1121,8 +1121,8 @@ func (s *IntegrationTestSuite) TestLanes() {
 				User: s.user2,
 				Msgs: []sdk.Msg{
 					stakingtypes.NewMsgDelegate(
-						sdk.AccAddress(s.user2.Address()),
-						sdk.ValAddress(validators[0]),
+						sdk.AccAddress(s.user2.Address()).String(),
+						sdk.ValAddress(validators[0]).String(),
 						delegation,
 					),
 				},
@@ -1134,7 +1134,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 					&banktypes.MsgSend{
 						FromAddress: s.user3.FormattedAddress(),
 						ToAddress:   s.user3.FormattedAddress(),
-						Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+						Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 					},
 				},
 			},
@@ -1180,7 +1180,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 						&banktypes.MsgSend{
 							FromAddress: s.user3.FormattedAddress(),
 							ToAddress:   s.user3.FormattedAddress(),
-							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 						},
 					},
 					SequenceIncrement: 1,
@@ -1257,7 +1257,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 						&banktypes.MsgSend{
 							FromAddress: s.user3.FormattedAddress(),
 							ToAddress:   s.user3.FormattedAddress(),
-							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))),
+							Amount:      sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))),
 						},
 					},
 					SequenceIncrement: 2,

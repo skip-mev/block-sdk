@@ -19,3 +19,6 @@ build/
 
 # IDE
 .idea/
+
+# go work
+go.work.sum
