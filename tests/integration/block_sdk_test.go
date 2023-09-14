@@ -21,7 +21,7 @@ var (
 	denom         = "stake"
 
 	image = ibc.DockerImage{
-		Repository: "pob-integration",
+		Repository: "block-sdk-integration",
 		Version:    "latest",
 		UidGid:     "1000:1000",
 	}

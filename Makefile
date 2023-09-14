@@ -91,11 +91,11 @@ build-and-start-app: build-test-app
 
 docker-build:
 	@echo "Building E2E Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/pob.e2e.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/blocksdk.Dockerfile .
 
 docker-build-integration:
 	@echo "Building integration-test Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t pob-integration -f contrib/images/pob.integration.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t pob-integration -f contrib/images/blocksdk.Dockerfile .
 
 .PHONY: docker-build docker-build-integration
 ###############################################################################
@@ -107,7 +107,7 @@ TEST_INTEGRATION_TAGS = integration
 
 test-integration: $(TEST_INTEGRATION_DEPS)
 	@ echo "Running integration tests..."
-	@go test ./tests/integration/pob_integration_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
+	@go test ./tests/integration/block_sdk_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
 
 test:
 	@go test -v -race $(shell go list ./... | grep -v tests/)
