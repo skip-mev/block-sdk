@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: 1.20.2
+          go-version: 1.21
           cache: true
           cache-dependency-path: go.sum
       - uses: technote-space/get-diff-action@v6.1.2
@@ -33,36 +33,37 @@ jobs:
       - name: Unit Tests
         if: env.GIT_DIFF
         run: |
+          go work init
           make test
 
-  # TODO: Add this back once we have a working version of v0.50.0 with ITS and v0.47.x
-  # test-integration:
-  #   runs-on: ubuntu-latest
-  #   timeout-minutes: 25
-  #   steps:
-  #     - uses: actions/checkout@v4
-  #     - uses: technote-space/get-diff-action@v6.1.2
-  #       with:
-  #         PATTERNS: |
-  #           **/**.go
-  #           go.mod
-  #           go.sum
-  #     - uses: actions/setup-go@v4
-  #       if: env.GIT_DIFF
-  #       with:
-  #         go-version: "1.20"
-  #         cache: true
+  test-integration:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: technote-space/get-diff-action@v6.1.2
+        with:
+          PATTERNS: |
+            **/**.go
+            go.mod
+            go.sum
+      - uses: actions/setup-go@v4
+        if: env.GIT_DIFF
+        with:
+          go-version: "1.21"
+          cache: true
 
-  #     # In this step, this action saves a list of existing images, the cache is
-  #     # created without them in the post run. It also restores the cache if it
-  #     # exists.
-  #     - name: cache docker layer
-  #       uses: satackey/action-docker-layer-caching@v0.0.11
-  #       if: env.GIT_DIFF
-  #       # Ignore the failure of a step and avoid terminating the job.
-  #       continue-on-error: true
+      # In this step, this action saves a list of existing images, the cache is
+      # created without them in the post run. It also restores the cache if it
+      # exists.
+      - name: cache docker layer
+        uses: satackey/action-docker-layer-caching@v0.0.11
+        if: env.GIT_DIFF
+        # Ignore the failure of a step and avoid terminating the job.
+        continue-on-error: true
 
-  #     - name: Integration Tests
-  #       if: env.GIT_DIFF
-  #       run: |
-  #         make test-integration
+      - name: Integration Tests
+        if: env.GIT_DIFF
+        run: |
+          go work init
+          make test-integration
