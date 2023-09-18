@@ -105,7 +105,7 @@ func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user
 	txBuilder, err := txf.BuildUnsignedTx(msgs...)
 	require.NoError(t, err)
 
-	require.NoError(t, tx.Sign(txf, cc.GetFromName(), txBuilder, true))
+	require.NoError(t, tx.Sign(ctx, txf, cc.GetFromName(), txBuilder, true))
 
 	// encode and return
 	bz, err := cc.TxConfig.TxEncoder()(txBuilder.GetTx())
@@ -274,7 +274,7 @@ func QueryAccountBalance(t *testing.T, chain ibc.Chain, address, denom string) i
 	// get nodes
 	balance, err := cosmosChain.GetBalance(context.Background(), address, denom)
 	require.NoError(t, err)
-	return balance
+	return balance.Int64()
 }
 
 // QueryAccountSequence
