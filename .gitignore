@@ -17,5 +17,8 @@ build/
 # Dependency directories (remove the comment below to include it)
 # vendor/
 
+# Workspace state
+go.work*
+
 # IDE
 .idea/

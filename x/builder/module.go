@@ -164,7 +164,11 @@ type Inputs struct {
 type Outputs struct {
 	depinject.Out
 
+<<<<<<< HEAD:x/builder/module.go
 	BuilderKeeper keeper.Keeper
+=======
+	Auctionkeeper keeper.Keeper
+>>>>>>> 454d2e5 (feat(e2e): add integration tests (#100)):x/auction/module.go
 	Module        appmodule.AppModule
 }
 
@@ -187,5 +191,9 @@ func ProvideModule(in Inputs) Outputs {
 
 	m := NewAppModule(in.Cdc, builderKeeper)
 
+<<<<<<< HEAD:x/builder/module.go
 	return Outputs{BuilderKeeper: builderKeeper, Module: m}
+=======
+	return Outputs{Auctionkeeper: auctionkeeper, Module: m}
+>>>>>>> 454d2e5 (feat(e2e): add integration tests (#100)):x/auction/module.go
 }

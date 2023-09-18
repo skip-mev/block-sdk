@@ -104,11 +104,15 @@ use-integration:
 
 docker-build: use-main
 	@echo "Building E2E Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/pob.e2e.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t skip-mev/block-sdk-e2e -f contrib/images/block-sdk.e2e.Dockerfile .
 
 docker-build-integration: use-main
 	@echo "Building integration-test Docker image..."
+<<<<<<< HEAD
 	@DOCKER_BUILDKIT=1 docker build -t block-sdk-integration -f contrib/images/pob.integration.Dockerfile .
+=======
+	@DOCKER_BUILDKIT=1 docker build -t block-sdk-integration -f contrib/images/block-sdk.integration.Dockerfile .
+>>>>>>> 454d2e5 (feat(e2e): add integration tests (#100))
 
 ###############################################################################
 ###                                  Tests                                  ###
@@ -119,7 +123,7 @@ TEST_INTEGRATION_TAGS = integration
 
 test-integration: $(TEST_INTEGRATION_DEPS)
 	@ echo "Running integration tests..."
-	@go test ./tests/integration/pob_integration_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
+	@go test ./tests/integration/block_sdk_integration_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
 
 test: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
