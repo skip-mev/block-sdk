@@ -62,6 +62,7 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/skip-mev/block-sdk/abci"
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -268,6 +269,7 @@ func New(
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(), // This means the lane has no limit on block space.
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxTxs:        0,                    // This means the lane has no limit on the number of transactions it can store.
 	}
 	mevLane := mev.NewMEVLane(
@@ -281,6 +283,7 @@ func New(
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxTxs:        0,
 	}
 	freeLane := free.NewFreeLane(
@@ -295,6 +298,7 @@ func New(
 		TxEncoder:     app.txConfig.TxEncoder(),
 		TxDecoder:     app.txConfig.TxDecoder(),
 		MaxBlockSpace: math.LegacyZeroDec(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxTxs:        0,
 	}
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig)

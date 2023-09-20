@@ -16,6 +16,7 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/abci"
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -738,6 +739,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
 		MaxBlockSpace: maxBlockSpace,
 	}
@@ -751,6 +753,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxBlockSpace: maxBlockSpace,
 	}
 
@@ -763,6 +766,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   s.setUpAnteHandler(expectedExecution),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxBlockSpace: maxBlockSpace,
 	}
 
@@ -774,13 +778,14 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 		Logger:        log.NewTestLogger(s.T()),
 		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxBlockSpace: maxBlockSpace,
 	}
 
 	lane := base.NewBaseLane(
 		cfg,
 		"panic",
-		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, 0),
+		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, signer_extraction.NewDefaultSignerExtractionAdapter(), 0),
 		base.DefaultMatchHandler(),
 	)
 

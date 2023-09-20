@@ -12,6 +12,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -63,6 +64,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
@@ -76,6 +78,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
@@ -90,6 +93,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		Logger:        log.NewNopLogger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		AnteHandler:   nil,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}

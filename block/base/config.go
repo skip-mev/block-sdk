@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 )
 
@@ -16,6 +17,10 @@ type LaneConfig struct {
 	TxEncoder   sdk.TxEncoder
 	TxDecoder   sdk.TxDecoder
 	AnteHandler sdk.AnteHandler
+
+	// SignerExtractor defines the interface used for extracting the expected signers of a transaction 
+	// from the transaction.
+	SignerExtractor signer_extraction.SignerExtractionAdapter
 
 	// MaxBlockSpace defines the relative percentage of block space that can be
 	// used by this lane. NOTE: If this is set to zero, then there is no limit
@@ -47,6 +52,7 @@ func NewLaneConfig(
 	txEncoder sdk.TxEncoder,
 	txDecoder sdk.TxDecoder,
 	anteHandler sdk.AnteHandler,
+	signerExtractor signer_extraction.SignerExtractionAdapter,
 	maxBlockSpace math.LegacyDec,
 ) LaneConfig {
 	return LaneConfig{
@@ -55,6 +61,7 @@ func NewLaneConfig(
 		TxDecoder:     txDecoder,
 		AnteHandler:   anteHandler,
 		MaxBlockSpace: maxBlockSpace,
+		SignerExtractor: signerExtractor,
 	}
 }
 
@@ -72,6 +79,10 @@ func (c *LaneConfig) ValidateBasic() error {
 		return fmt.Errorf("tx decoder cannot be nil")
 	}
 
+	if c.SignerExtractor == nil {
+		return fmt.Errorf("signer extractor cannot be nil")
+	}
+	
 	if c.MaxBlockSpace.IsNil() || c.MaxBlockSpace.IsNegative() || c.MaxBlockSpace.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("max block space must be set to a value between 0 and 1")
 	}

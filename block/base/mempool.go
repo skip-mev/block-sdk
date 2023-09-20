@@ -8,6 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
@@ -81,13 +82,14 @@ func DefaultTxPriority() TxPriority[string] {
 }
 
 // NewMempool returns a new Mempool.
-func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, maxTx int) *Mempool[C] {
+func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.SignerExtractionAdapter, maxTx int) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{
 				TxPriority: txPriority,
 				MaxTx:      maxTx,
 			},
+			extractor,
 		),
 		txPriority: txPriority,
 		txEncoder:  txEncoder,

@@ -13,6 +13,7 @@ import (
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/suite"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -89,6 +90,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		Logger:        suite.ctx.Logger(),
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		AnteHandler:   suite.anteHandler,
 		MaxBlockSpace: math.LegacyZeroDec(),
 	}
@@ -103,6 +105,7 @@ func (suite *AnteTestSuite) SetupTest() {
 		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:   suite.anteHandler,
+		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
 		MaxBlockSpace: math.LegacyZeroDec(),
 		IgnoreList:    []block.Lane{suite.mevLane},
 	}

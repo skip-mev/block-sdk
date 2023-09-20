@@ -21,7 +21,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 )
 
 var (
@@ -67,6 +67,7 @@ type (
 		senderIndices  map[string]*skiplist.SkipList
 		scores         map[txMeta[C]]txMeta[C]
 		cfg            PriorityNonceMempoolConfig[C]
+		signerExtractor signer_extraction.SignerExtractionAdapter
 	}
 
 	// PriorityNonceIterator defines an iterator that is used for mempool iteration
@@ -167,21 +168,22 @@ func skiplistComparable[C comparable](txPriority TxPriority[C]) skiplist.Compara
 
 // NewPriorityMempool returns the SDK's default mempool implementation which
 // returns txs in a partial order by 2 dimensions; priority, and sender-nonce.
-func NewPriorityMempool[C comparable](cfg PriorityNonceMempoolConfig[C]) *PriorityNonceMempool[C] {
+func NewPriorityMempool[C comparable](cfg PriorityNonceMempoolConfig[C], extractor signer_extraction.SignerExtractionAdapter) *PriorityNonceMempool[C] {
 	mp := &PriorityNonceMempool[C]{
 		priorityIndex:  skiplist.New(skiplistComparable(cfg.TxPriority)),
 		priorityCounts: make(map[C]int),
 		senderIndices:  make(map[string]*skiplist.SkipList),
 		scores:         make(map[txMeta[C]]txMeta[C]),
 		cfg:            cfg,
+		signerExtractor: extractor,
 	}
 
 	return mp
 }
 
 // DefaultPriorityMempool returns a priorityNonceMempool with no options.
-func DefaultPriorityMempool() *PriorityNonceMempool[int64] {
-	return NewPriorityMempool(DefaultPriorityNonceMempoolConfig())
+func DefaultPriorityMempool(extractor signer_extraction.DefaultSignerExtractionAdapter) *PriorityNonceMempool[int64] {
+	return NewPriorityMempool(DefaultPriorityNonceMempoolConfig(), extractor)
 }
 
 // NextSenderTx returns the next transaction for a given sender by nonce order,
@@ -213,18 +215,18 @@ func (mp *PriorityNonceMempool[C]) Insert(ctx context.Context, tx sdk.Tx) error 
 		return nil
 	}
 
-	sigs, err := tx.(signing.SigVerifiableTx).GetSignaturesV2()
+	signers, err := mp.signerExtractor.GetSigners(tx)
 	if err != nil {
 		return err
 	}
-	if len(sigs) == 0 {
+	if len(signers) == 0 {
 		return fmt.Errorf("tx must have at least one signer")
 	}
 
-	sig := sigs[0]
-	sender := sdk.AccAddress(sig.PubKey.Address()).String()
+	signer := signers[0]
+	sender := signer.Signer.String()
 	priority := mp.cfg.TxPriority.GetTxPriority(ctx, tx)
-	nonce := sig.Sequence
+	nonce := signer.Sequence
 	key := txMeta[C]{nonce: nonce, priority: priority, sender: sender}
 
 	senderIndex, ok := mp.senderIndices[sender]
@@ -427,16 +429,16 @@ func (mp *PriorityNonceMempool[C]) CountTx() int {
 // Remove removes a transaction from the mempool in O(log n) time, returning an
 // error if unsuccessful.
 func (mp *PriorityNonceMempool[C]) Remove(tx sdk.Tx) error {
-	sigs, err := tx.(signing.SigVerifiableTx).GetSignaturesV2()
+	signers, err := mp.signerExtractor.GetSigners(tx)
 	if err != nil {
 		return err
 	}
-	if len(sigs) == 0 {
+	if len(signers) == 0 {
 		return fmt.Errorf("attempted to remove a tx with no signatures")
 	}
 
-	sig := sigs[0]
-	sender := sdk.AccAddress(sig.PubKey.Address()).String()
+	sig := signers[0]
+	sender := sig.Signer.String()
 	nonce := sig.Sequence
 
 	scoreKey := txMeta[C]{nonce: nonce, sender: sender}
