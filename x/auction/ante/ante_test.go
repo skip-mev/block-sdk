@@ -87,12 +87,12 @@ func (suite *AnteTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	mevConfig := base.LaneConfig{
-		Logger:        suite.ctx.Logger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          suite.ctx.Logger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     suite.anteHandler,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
@@ -101,13 +101,13 @@ func (suite *AnteTestSuite) SetupTest() {
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:        suite.ctx.Logger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
-		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList:    []block.Lane{suite.mevLane},
+		Logger:          suite.ctx.Logger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     suite.anteHandler,
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxBlockSpace:   math.LegacyZeroDec(),
+		IgnoreList:      []block.Lane{suite.mevLane},
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(baseConfig)
 

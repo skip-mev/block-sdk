@@ -1,33 +1,34 @@
-package signer_extraction
+package signerextraction
 
 import (
 	"fmt"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 )
 
 type SignerData struct {
-	Signer sdk.AccAddress
+	Signer   sdk.AccAddress
 	Sequence uint64
 }
 
 // SignerExtractionAdapter is an interface used to determine how the signers of a transaction should be extracted
 // from the transaction.
-type SignerExtractionAdapter interface {	
+type Adapter interface {
 	GetSigners(sdk.Tx) ([]SignerData, error)
 }
 
-var _ SignerExtractionAdapter = DefaultSignerExtractionAdapter{}
+var _ Adapter = DefaultAdapter{}
 
 // DefaultSignerExtractionAdapter is the default implementation of SignerExtractionAdapter. It extracts the signers
 // from a cosmos-sdk tx via GetSignaturesV2.
-type DefaultSignerExtractionAdapter struct {}
+type DefaultAdapter struct{}
 
-func NewDefaultSignerExtractionAdapter() DefaultSignerExtractionAdapter {
-	return DefaultSignerExtractionAdapter{}
+func NewDefaultAdapter() DefaultAdapter {
+	return DefaultAdapter{}
 }
 
-func (DefaultSignerExtractionAdapter) GetSigners(tx sdk.Tx) ([]SignerData, error) {
+func (DefaultAdapter) GetSigners(tx sdk.Tx) ([]SignerData, error) {
 	sigTx, ok := tx.(signing.SigVerifiableTx)
 	if !ok {
 		return nil, fmt.Errorf("tx of type %T does not implement SigVerifiableTx", tx)
@@ -41,7 +42,7 @@ func (DefaultSignerExtractionAdapter) GetSigners(tx sdk.Tx) ([]SignerData, error
 	signers := make([]SignerData, len(sigs))
 	for i, sig := range sigs {
 		signers[i] = SignerData{
-			Signer: sig.PubKey.Address().Bytes(),
+			Signer:   sig.PubKey.Address().Bytes(),
 			Sequence: sig.Sequence,
 		}
 	}

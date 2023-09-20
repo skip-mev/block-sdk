@@ -18,9 +18,9 @@ type LaneConfig struct {
 	TxDecoder   sdk.TxDecoder
 	AnteHandler sdk.AnteHandler
 
-	// SignerExtractor defines the interface used for extracting the expected signers of a transaction 
+	// SignerExtractor defines the interface used for extracting the expected signers of a transaction
 	// from the transaction.
-	SignerExtractor signer_extraction.SignerExtractionAdapter
+	SignerExtractor signer_extraction.Adapter
 
 	// MaxBlockSpace defines the relative percentage of block space that can be
 	// used by this lane. NOTE: If this is set to zero, then there is no limit
@@ -52,15 +52,15 @@ func NewLaneConfig(
 	txEncoder sdk.TxEncoder,
 	txDecoder sdk.TxDecoder,
 	anteHandler sdk.AnteHandler,
-	signerExtractor signer_extraction.SignerExtractionAdapter,
+	signerExtractor signer_extraction.Adapter,
 	maxBlockSpace math.LegacyDec,
 ) LaneConfig {
 	return LaneConfig{
-		Logger:        logger,
-		TxEncoder:     txEncoder,
-		TxDecoder:     txDecoder,
-		AnteHandler:   anteHandler,
-		MaxBlockSpace: maxBlockSpace,
+		Logger:          logger,
+		TxEncoder:       txEncoder,
+		TxDecoder:       txDecoder,
+		AnteHandler:     anteHandler,
+		MaxBlockSpace:   maxBlockSpace,
 		SignerExtractor: signerExtractor,
 	}
 }
@@ -82,7 +82,7 @@ func (c *LaneConfig) ValidateBasic() error {
 	if c.SignerExtractor == nil {
 		return fmt.Errorf("signer extractor cannot be nil")
 	}
-	
+
 	if c.MaxBlockSpace.IsNil() || c.MaxBlockSpace.IsNegative() || c.MaxBlockSpace.GT(math.LegacyOneDec()) {
 		return fmt.Errorf("max block space must be set to a value between 0 and 1")
 	}

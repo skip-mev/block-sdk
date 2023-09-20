@@ -82,7 +82,7 @@ func DefaultTxPriority() TxPriority[string] {
 }
 
 // NewMempool returns a new Mempool.
-func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.SignerExtractionAdapter, maxTx int) *Mempool[C] {
+func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{

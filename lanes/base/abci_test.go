@@ -510,7 +510,7 @@ func (s *BaseTestSuite) initLane(
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),
-		signer_extraction.NewDefaultSignerExtractionAdapter(),
+		signer_extraction.NewDefaultAdapter(),
 		maxBlockSpace,
 	)
 

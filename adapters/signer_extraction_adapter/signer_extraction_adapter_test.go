@@ -1,4 +1,4 @@
-package signer_extraction_test
+package signerextraction_test
 
 import (
 	"math/rand"
@@ -7,31 +7,30 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/stretchr/testify/suite"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
+	testutils "github.com/skip-mev/block-sdk/testutils"
+	"github.com/stretchr/testify/suite"
 )
-
 
 type SignerExtractionAdapterTestSuite struct {
 	suite.Suite
 	txConfig client.TxConfig
-	accts []testutils.Account
-	adapter signer_extraction.DefaultSignerExtractionAdapter
+	accts    []testutils.Account
+	adapter  signer_extraction.DefaultAdapter
 }
 
 func TestSignerExtractionAdapterTestSuite(t *testing.T) {
 	suite.Run(t, new(SignerExtractionAdapterTestSuite))
 }
 
-func (suite *SignerExtractionAdapterTestSuite) SetupTest() {
+func (s *SignerExtractionAdapterTestSuite) SetupTest() {
 	encodingConfig := testutils.CreateTestEncodingConfig()
-	suite.txConfig = encodingConfig.TxConfig
+	s.txConfig = encodingConfig.TxConfig
 
 	accts := testutils.RandomAccounts(rand.New(rand.NewSource(1)), 2)
 
-	suite.accts = accts
+	s.accts = accts
 }
 
 func (s *SignerExtractionAdapterTestSuite) TestGetSigners() {

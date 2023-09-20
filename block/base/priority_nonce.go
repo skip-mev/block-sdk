@@ -62,12 +62,12 @@ type (
 	// priority to other sender txs and must be partially ordered by both sender-nonce
 	// and priority.
 	PriorityNonceMempool[C comparable] struct {
-		priorityIndex  *skiplist.SkipList
-		priorityCounts map[C]int
-		senderIndices  map[string]*skiplist.SkipList
-		scores         map[txMeta[C]]txMeta[C]
-		cfg            PriorityNonceMempoolConfig[C]
-		signerExtractor signer_extraction.SignerExtractionAdapter
+		priorityIndex   *skiplist.SkipList
+		priorityCounts  map[C]int
+		senderIndices   map[string]*skiplist.SkipList
+		scores          map[txMeta[C]]txMeta[C]
+		cfg             PriorityNonceMempoolConfig[C]
+		signerExtractor signer_extraction.Adapter
 	}
 
 	// PriorityNonceIterator defines an iterator that is used for mempool iteration
@@ -168,13 +168,13 @@ func skiplistComparable[C comparable](txPriority TxPriority[C]) skiplist.Compara
 
 // NewPriorityMempool returns the SDK's default mempool implementation which
 // returns txs in a partial order by 2 dimensions; priority, and sender-nonce.
-func NewPriorityMempool[C comparable](cfg PriorityNonceMempoolConfig[C], extractor signer_extraction.SignerExtractionAdapter) *PriorityNonceMempool[C] {
+func NewPriorityMempool[C comparable](cfg PriorityNonceMempoolConfig[C], extractor signer_extraction.Adapter) *PriorityNonceMempool[C] {
 	mp := &PriorityNonceMempool[C]{
-		priorityIndex:  skiplist.New(skiplistComparable(cfg.TxPriority)),
-		priorityCounts: make(map[C]int),
-		senderIndices:  make(map[string]*skiplist.SkipList),
-		scores:         make(map[txMeta[C]]txMeta[C]),
-		cfg:            cfg,
+		priorityIndex:   skiplist.New(skiplistComparable(cfg.TxPriority)),
+		priorityCounts:  make(map[C]int),
+		senderIndices:   make(map[string]*skiplist.SkipList),
+		scores:          make(map[txMeta[C]]txMeta[C]),
+		cfg:             cfg,
 		signerExtractor: extractor,
 	}
 
@@ -182,7 +182,7 @@ func NewPriorityMempool[C comparable](cfg PriorityNonceMempoolConfig[C], extract
 }
 
 // DefaultPriorityMempool returns a priorityNonceMempool with no options.
-func DefaultPriorityMempool(extractor signer_extraction.DefaultSignerExtractionAdapter) *PriorityNonceMempool[int64] {
+func DefaultPriorityMempool(extractor signer_extraction.DefaultAdapter) *PriorityNonceMempool[int64] {
 	return NewPriorityMempool(DefaultPriorityNonceMempoolConfig(), extractor)
 }
 

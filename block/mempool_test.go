@@ -61,12 +61,12 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
 	mevConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
@@ -75,12 +75,12 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Free lane set up
 	freeConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
@@ -90,12 +90,12 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultSignerExtractionAdapter(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,
