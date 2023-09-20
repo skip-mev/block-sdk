@@ -757,7 +757,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 		MaxBlockSpace:   maxBlockSpace,
 	}
 
-	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder))
+	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder, signer_extraction.NewDefaultAdapter()))
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
@@ -32,7 +33,7 @@ func TestMempoolTestSuite(t *testing.T) {
 func (suite *MEVTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
-	suite.config = mev.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder())
+	suite.config = mev.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewTestLogger(suite.T()))
 
 	// Init accounts

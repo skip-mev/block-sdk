@@ -70,7 +70,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Free lane set up
