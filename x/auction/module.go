@@ -18,20 +18,12 @@ import (
 	govtypes "github.com/cosmos/cosmos-sdk/x/gov/types"
 	"github.com/gorilla/mux"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
-<<<<<<< HEAD:x/builder/module.go
-	modulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	"github.com/skip-mev/block-sdk/x/builder/client/cli"
-	"github.com/skip-mev/block-sdk/x/builder/keeper"
-	"github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/spf13/cobra"
-=======
 	"github.com/spf13/cobra"
 
 	modulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	"github.com/skip-mev/block-sdk/x/auction/client/cli"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/module.go
 )
 
 var (
@@ -173,7 +165,7 @@ type Inputs struct {
 type Outputs struct {
 	depinject.Out
 
-	auctionkeeper keeper.Keeper
+	AuctionKeeper keeper.Keeper
 	Module        appmodule.AppModule
 }
 
@@ -196,5 +188,5 @@ func ProvideModule(in Inputs) Outputs {
 
 	m := NewAppModule(in.Cdc, auctionkeeper)
 
-	return Outputs{auctionkeeper: auctionkeeper, Module: m}
+	return Outputs{AuctionKeeper: auctionkeeper, Module: m}
 }

@@ -8,14 +8,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD:x/builder/keeper/keeper.go
-	"github.com/skip-mev/block-sdk/x/builder/rewards"
-	"github.com/skip-mev/block-sdk/x/builder/types"
-=======
-
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/skip-mev/block-sdk/x/auction/rewards"
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/keeper/keeper.go
 )
 
 type Keeper struct {
@@ -83,14 +78,11 @@ func NewKeeperWithRewardsAddressProvider(
 	}
 }
 
-<<<<<<< HEAD:x/builder/keeper/keeper.go
-=======
 // Logger returns a auction module-specific logger.
 func (k Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/keeper/keeper.go
 // GetAuthority returns the address that is capable of executing a MsgUpdateParams message.
 func (k Keeper) GetAuthority() string {
 	return k.authority

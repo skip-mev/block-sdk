@@ -19,3 +19,6 @@ build/
 
 # IDE
 .idea/
+
+# Workspace
+go.work*

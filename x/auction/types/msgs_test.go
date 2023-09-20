@@ -5,12 +5,8 @@ import (
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD:x/builder/types/msgs_test.go
-	"github.com/skip-mev/block-sdk/x/builder/types"
-=======
 
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/types/msgs_test.go
 )
 
 // TestMsgAuctionBid tests the ValidateBasic method of MsgAuctionBid

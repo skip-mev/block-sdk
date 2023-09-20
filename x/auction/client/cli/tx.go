@@ -10,14 +10,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/client/flags"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD:x/builder/client/cli/tx.go
-	"github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/spf13/cobra"
-=======
 	"github.com/spf13/cobra"
 
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/client/cli/tx.go
 )
 
 // NewTxCmd returns a root CLI command handler for all x/auction transaction

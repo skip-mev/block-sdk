@@ -17,16 +17,10 @@ import (
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-<<<<<<< HEAD:x/builder/ante/ante_test.go
-	"github.com/skip-mev/block-sdk/x/builder/ante"
-	"github.com/skip-mev/block-sdk/x/builder/keeper"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/stretchr/testify/suite"
-=======
 	"github.com/skip-mev/block-sdk/x/auction/ante"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/ante/ante_test.go
+	"github.com/stretchr/testify/suite"
 )
 
 type AnteTestSuite struct {

@@ -4,12 +4,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD:x/builder/rewards/fixed_provider.go
-	"github.com/skip-mev/block-sdk/x/builder/types"
-=======
 
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/rewards/fixed_provider.go
 )
 
 var _ types.RewardsAddressProvider = (*FixedAddressRewardsAddressProvider)(nil)

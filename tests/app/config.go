@@ -41,35 +41,12 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-	"google.golang.org/protobuf/types/known/durationpb"
-=======
 	"google.golang.org/protobuf/types/known/durationpb"
 
-	_ "cosmossdk.io/x/circuit"                        // import for side-effects
-	_ "cosmossdk.io/x/upgrade"                        // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/auth/vesting"   // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/authz/module"   // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/bank"           // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/consensus"      // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/crisis"         // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/distribution"   // import for side-effects
-	"github.com/cosmos/cosmos-sdk/x/genutil"
-	"github.com/cosmos/cosmos-sdk/x/gov"
-	_ "github.com/cosmos/cosmos-sdk/x/group/module" // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/mint"         // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/params"       // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
-	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
-	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 var (
@@ -85,7 +62,7 @@ var (
 		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
 		minttypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, group.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
-		vestingtypes.ModuleName, consensustypes.ModuleName, buildertypes.ModuleName,
+		vestingtypes.ModuleName, consensustypes.ModuleName, auctiontypes.ModuleName,
 	}
 
 	// module account permissions
@@ -136,15 +113,11 @@ var (
 						crisistypes.ModuleName,
 						genutiltypes.ModuleName,
 						authz.ModuleName,
-<<<<<<< HEAD
-=======
-						auctiontypes.ModuleName,
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 						feegrant.ModuleName,
 						group.ModuleName,
 						paramstypes.ModuleName,
 						vestingtypes.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 						consensustypes.ModuleName,
 					},
 					EndBlockers: []string{
@@ -158,20 +131,15 @@ var (
 						slashingtypes.ModuleName,
 						minttypes.ModuleName,
 						genutiltypes.ModuleName,
-<<<<<<< HEAD
-						evidencetypes.ModuleName,
 						authz.ModuleName,
-=======
-						group.ModuleName,
-						auctiontypes.ModuleName,
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
+						evidencetypes.ModuleName,
 						feegrant.ModuleName,
 						group.ModuleName,
 						paramstypes.ModuleName,
 						consensustypes.ModuleName,
 						upgradetypes.ModuleName,
 						vestingtypes.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
 						{
@@ -179,33 +147,7 @@ var (
 							KvStoreKey: "acc",
 						},
 					},
-<<<<<<< HEAD
 					InitGenesis: genesisModuleOrder,
-=======
-					// NOTE: The genutils module must occur after staking so that pools are
-					// properly initialized with tokens from genesis accounts.
-					// NOTE: The genutils module must also occur after auth so that it can access the params from auth.
-					InitGenesis: []string{
-						authtypes.ModuleName,
-						banktypes.ModuleName,
-						distrtypes.ModuleName,
-						stakingtypes.ModuleName,
-						slashingtypes.ModuleName,
-						govtypes.ModuleName,
-						minttypes.ModuleName,
-						crisistypes.ModuleName,
-						genutiltypes.ModuleName,
-						authz.ModuleName,
-						group.ModuleName,
-						paramstypes.ModuleName,
-						upgradetypes.ModuleName,
-						vestingtypes.ModuleName,
-						consensustypes.ModuleName,
-						circuittypes.ModuleName,
-						auctiontypes.ModuleName,
-						feegrant.ModuleName,
-					},
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 					// When ExportGenesis is not specified, the export genesis module order
 					// is equal to the init genesis order
 					// ExportGenesis: genesisModuleOrder,
@@ -297,17 +239,8 @@ var (
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 			{
-<<<<<<< HEAD
-				Name:   buildertypes.ModuleName,
-				Config: appconfig.WrapAny(&buildermodulev1.Module{}),
-=======
-				Name:   circuittypes.ModuleName,
-				Config: appconfig.WrapAny(&circuitmodulev1.Module{}),
-			},
-			{
 				Name:   auctiontypes.ModuleName,
 				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 			},
 		},
 	})

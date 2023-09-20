@@ -6,17 +6,12 @@ import (
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/skip-mev/block-sdk/tests/integration"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 	"github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/suite"
-<<<<<<< HEAD
-=======
 
-	"github.com/skip-mev/block-sdk/tests/integration"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 )
 
 var (

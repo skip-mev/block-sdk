@@ -113,12 +113,8 @@ var (
 		vesting.AppModuleBasic{},
 		nftmodule.AppModuleBasic{},
 		consensus.AppModuleBasic{},
-<<<<<<< HEAD
-		buildermodule.AppModuleBasic{},
-=======
 		auctionmodule.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 	)
 )
 
@@ -148,16 +144,10 @@ type TestApp struct {
 	ParamsKeeper          paramskeeper.Keeper
 	AuthzKeeper           authzkeeper.Keeper
 	EvidenceKeeper        evidencekeeper.Keeper
-	FeeGrantKeeper        feegrantkeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
-<<<<<<< HEAD
-	BuilderKeeper         builderkeeper.Keeper
-=======
-	CircuitBreakerKeeper  circuitkeeper.Keeper
-	auctionkeeper         auctionkeeper.Keeper
+	Auctionkeeper         auctionkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
 
 	// custom checkTx handler
 	checkTxHandler mev.CheckTx
@@ -237,7 +227,7 @@ func New(
 		&app.EvidenceKeeper,
 		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
-		&app.auctionkeeper,
+		&app.Auctionkeeper,
 		&app.ConsensusParamsKeeper,
 	); err != nil {
 		panic(err)
@@ -330,7 +320,7 @@ func New(
 	}
 	options := AnteHandlerOptions{
 		BaseOptions:   handlerOptions,
-		auctionkeeper: app.auctionkeeper,
+		auctionkeeper: app.Auctionkeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,

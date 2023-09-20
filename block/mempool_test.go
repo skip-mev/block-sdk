@@ -17,12 +17,8 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-<<<<<<< HEAD
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/stretchr/testify/suite"
-=======
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55))
+	"github.com/stretchr/testify/suite"
 )
 
 type BlockBusterTestSuite struct {

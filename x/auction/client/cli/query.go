@@ -6,14 +6,9 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/flags"
-<<<<<<< HEAD:x/builder/client/cli/query.go
-	"github.com/skip-mev/block-sdk/x/builder/types"
-	"github.com/spf13/cobra"
-=======
 	"github.com/spf13/cobra"
 
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/client/cli/query.go
 )
 
 // GetQueryCmd returns the cli query commands for the auction module.

@@ -2,12 +2,8 @@ package keeper
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD:x/builder/keeper/genesis.go
-	"github.com/skip-mev/block-sdk/x/builder/types"
-=======
 
 	"github.com/skip-mev/block-sdk/x/auction/types"
->>>>>>> 3c6f319 (feat(docs): rename x/builder -> x/auction (#55)):x/auction/keeper/genesis.go
 )
 
 // InitGenesis initializes the auction module's state from a given genesis state.
