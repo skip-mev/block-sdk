@@ -23,7 +23,7 @@ var _ MEVLaneI = (*MEVLane)(nil)
 // next block.
 type (
 	// MEVLaneI defines the interface for the mev auction lane. This interface
-	// is utilized by both the x/builder module and the checkTx handler.
+	// is utilized by both the x/auction module and the checkTx handler.
 	MEVLaneI interface { //nolint
 		block.Lane
 		Factory

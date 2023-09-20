@@ -5,17 +5,17 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/utils"
-	builderante "github.com/skip-mev/block-sdk/x/builder/ante"
-	builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
+	auctionante "github.com/skip-mev/block-sdk/x/auction/ante"
+	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
 type AnteHandlerOptions struct {
 	BaseOptions   ante.HandlerOptions
 	Mempool       block.Mempool
-	MEVLane       builderante.MEVLane
+	MEVLane       auctionante.MEVLane
 	TxDecoder     sdk.TxDecoder
 	TxEncoder     sdk.TxEncoder
-	BuilderKeeper builderkeeper.Keeper
+	auctionkeeper auctionkeeper.Keeper
 	FreeLane      block.Lane
 }
 
@@ -54,7 +54,7 @@ func NewAnteHandler(options AnteHandlerOptions) sdk.AnteHandler {
 		ante.NewSigGasConsumeDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.BaseOptions.AccountKeeper),
-		builderante.NewBuilderDecorator(options.BuilderKeeper, options.TxEncoder, options.MEVLane, options.Mempool),
+		auctionante.NewAuctionDecorator(options.auctionkeeper, options.TxEncoder, options.MEVLane, options.Mempool),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...)

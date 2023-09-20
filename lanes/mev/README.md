@@ -16,10 +16,10 @@ $ go install github.com/skip-mev/block-sdk
 ## 📚 Usage
 
 1. This guide assumes you have already set up the [Block SDK (and the default lane)](https://docs.skip.money/chains/overview)
-2. You will need to instantiate the `x/builder` module into your application. This
+2. You will need to instantiate the `x/auction` module into your application. This
 module is responsible for processing auction transactions and distributing revenue
-to the auction house. The `x/builder` module is also responsible for ensuring the
-validity of auction transactions. *The `x/builder` module should not exist on its
+to the auction house. The `x/auction` module is also responsible for ensuring the
+validity of auction transactions. *The `x/auction` module should not exist on its
 own. **This is the most intensive part of the set up process.**
 3. Next, add the MEV lane into the `lane` object on your `app.go`. The first 
 lane is the highest priority lane and the last lane is the lowest priority lane.
@@ -34,7 +34,7 @@ lanes in the `LanedMempool`.
 NOTE: This example walks through setting up the MEV and Default lanes.
 
 1. Import the necessary dependencies into your application. This includes the
-   Block SDK proposal handlers + mempool, keeper, builder types, and builder 
+   Block SDK proposal handlers + mempool, keeper, auction types, and auction 
    module. This tutorial will go into more detail into each of the dependencies.
 
    ```go
@@ -43,10 +43,10 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     "github.com/skip-mev/block-sdk/abci"
     "github.com/skip-mev/block-sdk/lanes/mev"
     "github.com/skip-mev/block-sdk/lanes/base"
-    buildermodule "github.com/skip-mev/block-sdk/x/builder"
-    builderkeeper "github.com/skip-mev/block-sdk/x/builder/keeper"
-    buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
-    builderante "github.com/skip-mev/block-sdk/x/builder/ante"
+    auctionmodule "github.com/skip-mev/block-sdk/x/auction"
+    auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+    auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+    auctionante "github.com/skip-mev/block-sdk/x/auction/ante"
      ...
    )
    ```
@@ -64,13 +64,13 @@ NOTE: This example walks through setting up the MEV and Default lanes.
    var (
      ModuleBasics = module.NewBasicManager(
        ...
-       buildermodule.AppModuleBasic{},
+       auctionmodule.AppModuleBasic{},
      )
      ...
    )
    ```
 
-3. The builder `Keeper` is MEV lane's gateway to processing special `MsgAuctionBid`
+3. The auction `Keeper` is MEV lane's gateway to processing special `MsgAuctionBid`
    messages that allow users to participate in the top of block auction, distribute
    revenue to the auction house, and ensure the validity of auction transactions.
 
@@ -84,20 +84,20 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     ```go
     type App struct {
     ...
-    // BuilderKeeper is the keeper that handles processing auction transactions
-    BuilderKeeper         builderkeeper.Keeper
+    // auctionkeeper is the keeper that handles processing auction transactions
+    auctionkeeper         auctionkeeper.Keeper
 
     // Custom checkTx handler
     checkTxHandler mev.CheckTx
     }
     ```
 
-    b. Add the builder module to the list of module account permissions. This will
-    instantiate the builder module account on genesis.
+    b. Add the auction module to the list of module account permissions. This will
+    instantiate the auction module account on genesis.
 
     ```go
     maccPerms = map[string][]string{
-    builder.ModuleName: nil,
+    auction.ModuleName: nil,
     ...
     }
     ```
@@ -148,7 +148,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     app.App.SetMempool(mempool)
     ```
 
-    d. Add the `x/builder` module's `AuctionDecorator` to the ante-handler 
+    d. Add the `x/auction` module's `AuctionDecorator` to the ante-handler 
     chain. The `AuctionDecorator` is an AnteHandler decorator that enforces 
     various chain configurable MEV rules.
 
@@ -156,8 +156,8 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     anteDecorators := []sdk.AnteDecorator{
         ante.NewSetUpContextDecorator(), 
         ...
-        builderante.NewBuilderDecorator(
-        options.BuilderKeeper, 
+        auctionante.NewAuctionDecorator(
+        options.auctionkeeper, 
         options.TxEncoder, 
         options.TOBLane, 
         options.Mempool,
@@ -177,19 +177,19 @@ NOTE: This example walks through setting up the MEV and Default lanes.
     app.App.SetAnteHandler(anteHandler)
     ```
 
-    e. Instantiate the builder keeper, store keys, and module manager. Note, be
+    e. Instantiate the auction keeper, store keys, and module manager. Note, be
     sure to do this after all the required keeper dependencies have been instantiated.
 
     ```go
     keys := storetypes.NewKVStoreKeys(
-        buildertypes.StoreKey,
+        auctiontypes.StoreKey,
         ...
     )
 
     ...
-    app.BuilderKeeper := builderkeeper.NewKeeper(
+    app.auctionkeeper := auctionkeeper.NewKeeper(
         appCodec,
-        keys[buildertypes.StoreKey],
+        keys[auctiontypes.StoreKey],
         app.AccountKeeper,
         app.BankKeeper,
         app.DistrKeeper,
@@ -199,7 +199,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
 
     
     app.ModuleManager = module.NewManager(
-        builder.NewAppModule(appCodec, app.BuilderKeeper),
+        auction.NewAppModule(appCodec, app.auctionkeeper),
         ...
     )
     ```
@@ -245,7 +245,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
 
     ```go
     genesisModuleOrder := []string{
-        buildertypes.ModuleName,
+        auctiontypes.ModuleName,
         ...,
     }
     ```

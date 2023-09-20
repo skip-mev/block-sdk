@@ -33,6 +33,7 @@ jobs:
       - name: Unit Tests
         if: env.GIT_DIFF
         run: |
+          go work init
           make test
 
   test-integration:
@@ -64,4 +65,5 @@ jobs:
       - name: Integration Tests
         if: env.GIT_DIFF
         run: |
+          go work init
           make test-integration

@@ -41,10 +41,12 @@ import (
 	paramstypes "github.com/cosmos/cosmos-sdk/x/params/types"
 	slashingtypes "github.com/cosmos/cosmos-sdk/x/slashing/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
-	buildermodulev1 "github.com/skip-mev/block-sdk/api/sdk/builder/module/v1"
-	buildertypes "github.com/skip-mev/block-sdk/x/builder/types"
 	"google.golang.org/protobuf/types/known/durationpb"
+
+
+	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 )
 
 var (
@@ -60,7 +62,7 @@ var (
 		distrtypes.ModuleName, stakingtypes.ModuleName, slashingtypes.ModuleName, govtypes.ModuleName,
 		minttypes.ModuleName, crisistypes.ModuleName, genutiltypes.ModuleName, evidencetypes.ModuleName, authz.ModuleName,
 		feegrant.ModuleName, group.ModuleName, paramstypes.ModuleName, upgradetypes.ModuleName,
-		vestingtypes.ModuleName, consensustypes.ModuleName, buildertypes.ModuleName,
+		vestingtypes.ModuleName, consensustypes.ModuleName, auctiontypes.ModuleName,
 	}
 
 	// module account permissions
@@ -71,7 +73,7 @@ var (
 		{Account: stakingtypes.BondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: stakingtypes.NotBondedPoolName, Permissions: []string{authtypes.Burner, stakingtypes.ModuleName}},
 		{Account: govtypes.ModuleName, Permissions: []string{authtypes.Burner}},
-		{Account: buildertypes.ModuleName, Permissions: []string{}},
+		{Account: auctiontypes.ModuleName, Permissions: []string{}},
 	}
 
 	// blocked account addresses
@@ -115,7 +117,7 @@ var (
 						group.ModuleName,
 						paramstypes.ModuleName,
 						vestingtypes.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 						consensustypes.ModuleName,
 					},
 					EndBlockers: []string{
@@ -129,15 +131,15 @@ var (
 						slashingtypes.ModuleName,
 						minttypes.ModuleName,
 						genutiltypes.ModuleName,
-						evidencetypes.ModuleName,
 						authz.ModuleName,
+						evidencetypes.ModuleName,
 						feegrant.ModuleName,
 						group.ModuleName,
 						paramstypes.ModuleName,
 						consensustypes.ModuleName,
 						upgradetypes.ModuleName,
 						vestingtypes.ModuleName,
-						buildertypes.ModuleName,
+						auctiontypes.ModuleName,
 					},
 					OverrideStoreKeys: []*runtimev1alpha1.StoreKeyConfig{
 						{
@@ -237,8 +239,8 @@ var (
 				Config: appconfig.WrapAny(&consensusmodulev1.Module{}),
 			},
 			{
-				Name:   buildertypes.ModuleName,
-				Config: appconfig.WrapAny(&buildermodulev1.Module{}),
+				Name:   auctiontypes.ModuleName,
+				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
 			},
 		},
 	})
