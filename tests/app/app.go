@@ -66,6 +66,7 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
 	"github.com/skip-mev/block-sdk/abci"
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -268,22 +269,26 @@ func New(
 	// lane and the last lane is the lowest priority lane.
 	// MEV lane allows transactions to bid for inclusion at the top of the next block.
 	mevConfig := base.LaneConfig{
-		Logger:        app.Logger(),
-		TxEncoder:     app.txConfig.TxEncoder(),
-		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: sdk.ZeroDec(),
+		Logger:          app.Logger(),
+		TxEncoder:       app.txConfig.TxEncoder(),
+		TxDecoder:       app.txConfig.TxDecoder(),
+		MaxBlockSpace:   sdk.ZeroDec(), // This means the lane has no limit on block space.
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxTxs:          0, // This means the lane has no limit on the number of transactions it can store.
 	}
 	mevLane := mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
 	freeConfig := base.LaneConfig{
-		Logger:        app.Logger(),
-		TxEncoder:     app.txConfig.TxEncoder(),
-		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: sdk.ZeroDec(),
+		Logger:          app.Logger(),
+		TxEncoder:       app.txConfig.TxEncoder(),
+		TxDecoder:       app.txConfig.TxDecoder(),
+		MaxBlockSpace:   sdk.ZeroDec(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxTxs:          0,
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
@@ -293,10 +298,12 @@ func New(
 
 	// Default lane accepts all other transactions.
 	defaultConfig := base.LaneConfig{
-		Logger:        app.Logger(),
-		TxEncoder:     app.txConfig.TxEncoder(),
-		TxDecoder:     app.txConfig.TxDecoder(),
-		MaxBlockSpace: sdk.ZeroDec(),
+		Logger:          app.Logger(),
+		TxEncoder:       app.txConfig.TxEncoder(),
+		TxDecoder:       app.txConfig.TxDecoder(),
+		MaxBlockSpace:   sdk.ZeroDec(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxTxs:          0,
 	}
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 

@@ -11,6 +11,9 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -18,7 +21,6 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type BlockBusterTestSuite struct {
@@ -60,24 +62,26 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
 	mevConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Free lane set up
 	freeConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
@@ -87,11 +91,12 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:        log.NewNopLogger(),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   nil,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,

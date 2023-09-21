@@ -15,6 +15,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/abci"
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -717,11 +718,12 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace: maxBlockSpace,
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:   maxBlockSpace,
 	}
 
 	return defaultlane.NewDefaultLane(cfg)
@@ -729,23 +731,25 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace: maxBlockSpace,
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     s.setUpAnteHandler(expectedExecution),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxBlockSpace:   maxBlockSpace,
 	}
 
-	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder))
+	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder, signer_extraction.NewDefaultAdapter()))
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace: maxBlockSpace,
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     s.setUpAnteHandler(expectedExecution),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxBlockSpace:   maxBlockSpace,
 	}
 
 	return free.NewFreeLane(cfg, base.DefaultTxPriority(), free.DefaultMatchHandler())
@@ -753,16 +757,17 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 
 func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     s.encodingConfig.TxConfig.TxDecoder(),
-		MaxBlockSpace: maxBlockSpace,
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxBlockSpace:   maxBlockSpace,
 	}
 
 	lane := base.NewBaseLane(
 		cfg,
 		"panic",
-		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, 0),
+		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, signer_extraction.NewDefaultAdapter(), 0),
 		base.DefaultMatchHandler(),
 	)
 

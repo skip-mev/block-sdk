@@ -30,6 +30,7 @@ func NewDefaultLane(cfg base.LaneConfig) *DefaultLane {
 		base.NewMempool[string](
 			base.DefaultTxPriority(),
 			cfg.TxEncoder,
+			cfg.SignerExtractor,
 			cfg.MaxTxs,
 		),
 		base.DefaultMatchHandler(),
