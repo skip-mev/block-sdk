@@ -1,32 +1,14 @@
 package block
 
 import (
-	"crypto/sha256"
-	"encoding/hex"
 	"fmt"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
-
-	"github.com/skip-mev/block-sdk/block/utils"
+	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 var _ BlockProposal = (*Proposal)(nil)
 
 type (
-	// LaneProposal defines the interface/APIs that are required for the proposal to interact
-	// with a lane.
-	LaneProposal interface {
-		// Logger returns the lane's logger.
-		Logger() log.Logger
-
-		// GetMaxBlockSpace returns the maximum block space for the lane as a relative percentage.
-		GetMaxBlockSpace() math.LegacyDec
-
-		// Name returns the name of the lane.
-		Name() string
-	}
-
 	// BlockProposal is the interface/APIs that are required for proposal creation + interacting with
 	// and updating proposals. BlockProposals are iteratively updated as each lane prepares its
 	// partial proposal. Each lane must call UpdateProposal with its partial proposal in PrepareLane. BlockProposals
@@ -37,22 +19,16 @@ type (
 		//  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 		//  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 		//     the lane.
-		UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte) error
+		UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error
 
-		// GetMaxTxBytes returns the maximum number of bytes that can be included in the proposal.
-		GetMaxTxBytes() int64
-
-		// GetTotalTxBytes returns the total number of bytes currently included in the proposal.
-		GetTotalTxBytes() int64
+		// GetProposalStatistics returns the statistics / info of the proposal.
+		GetProposalStatistics() ProposalStatistics
 
 		// GetTxs returns the transactions in the proposal.
 		GetTxs() [][]byte
 
-		// GetNumTxs returns the number of transactions in the proposal.
-		GetNumTxs() int
-
 		// Contains returns true if the proposal contains the given transaction.
-		Contains(tx []byte) bool
+		Contains(txHash string) bool
 
 		// AddVoteExtension adds a vote extension to the proposal.
 		AddVoteExtension(voteExtension []byte)
@@ -81,16 +57,45 @@ type (
 
 		// maxTxBytes is the maximum number of bytes that can be included in the proposal.
 		maxTxBytes int64
+
+		// totalGasLimit is the total gas limit currently included in the proposal.
+		totalGasLimit uint64
+
+		// maxGasLimit is the maximum gas limit that can be included in the proposal.
+		maxGasLimit uint64
+
+		// txEncoder is the transaction encoder.
+		txEncoder sdk.TxEncoder
+	}
+
+	// ProposalStatistics defines the basic info/statistics of a proposal.
+	ProposalStatistics struct {
+		// NumTxs is the number of transactions in the proposal.
+		NumTxs int
+
+		// TotalTxBytes is the total number of bytes currently included in the proposal.
+		TotalTxBytes int64
+
+		// MaxTxBytes is the maximum number of bytes that can be included in the proposal.
+		MaxTxBytes int64
+
+		// TotalGasLimit is the total gas limit currently included in the proposal.
+		TotalGasLimit uint64
+
+		// MaxGasLimit is the maximum gas limit that can be included in the proposal.
+		MaxGasLimit uint64
 	}
 )
 
 // NewProposal returns a new empty proposal.
-func NewProposal(maxTxBytes int64) *Proposal {
+func NewProposal(txEncoder sdk.TxEncoder, maxTxBytes int64, maxGasLimit uint64) *Proposal {
 	return &Proposal{
+		txEncoder:      txEncoder,
+		maxTxBytes:     maxTxBytes,
+		maxGasLimit:    maxGasLimit,
 		txs:            make([][]byte, 0),
 		voteExtensions: make([][]byte, 0),
 		cache:          make(map[string]struct{}),
-		maxTxBytes:     maxTxBytes,
 	}
 }
 
@@ -99,24 +104,51 @@ func NewProposal(maxTxBytes int64) *Proposal {
 //  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 //  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 //     the lane.
-func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte) error {
+func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error {
 	if len(partialProposalTxs) == 0 {
 		return nil
 	}
 
+	hashes := make(map[string]struct{})
+	txs := make([][]byte, len(partialProposalTxs))
 	partialProposalSize := int64(0)
-	for _, tx := range partialProposalTxs {
-		partialProposalSize += int64(len(tx))
+	partialProposalGasLimit := uint64(0)
+
+	for index, tx := range partialProposalTxs {
+		txInfo, err := GetTxInfo(p.txEncoder, tx)
+		if err != nil {
+			return fmt.Errorf("err retriveing transaction info: %s", err)
+		}
+
+		hashes[txInfo.Hash] = struct{}{}
+		partialProposalSize += txInfo.Size
+		partialProposalGasLimit += txInfo.GasLimit
+		txs[index] = txInfo.TxBytes
 	}
 
+	laneLimit := GetLaneLimit(
+		p.maxTxBytes, p.totalTxBytes,
+		p.maxGasLimit, p.totalGasLimit,
+		lane.GetMaxBlockSpace(),
+	)
+
 	// Invarient check: Ensure that the lane did not prepare a partial proposal that is too large.
-	maxTxBytesForLane := utils.GetMaxTxBytesForLane(p.GetMaxTxBytes(), p.GetTotalTxBytes(), lane.GetMaxBlockSpace())
-	if partialProposalSize > maxTxBytesForLane {
+	if partialProposalSize > laneLimit.MaxTxBytesLimit {
 		return fmt.Errorf(
 			"%s lane prepared a partial proposal that is too large: %d > %d",
 			lane.Name(),
 			partialProposalSize,
-			maxTxBytesForLane,
+			laneLimit.MaxTxBytesLimit,
+		)
+	}
+
+	// Invarient check: Ensure that the lane did not prepare a partial proposal that consumes too much gas.
+	if partialProposalGasLimit > laneLimit.MaxGasLimit {
+		return fmt.Errorf(
+			"%s lane prepared a partial proposal that consumes too much gas: %d > %d",
+			lane.Name(),
+			partialProposalGasLimit,
+			laneLimit.MaxGasLimit,
 		)
 	}
 
@@ -126,25 +158,34 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 		return fmt.Errorf(
 			"lane %s prepared a block proposal that is too large: %d > %d",
 			lane.Name(),
-			p.totalTxBytes,
+			updatedSize,
 			p.maxTxBytes,
 		)
 	}
+
+	// Invarient check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
+	updatedGasLimit := p.totalGasLimit + partialProposalGasLimit
+	if updatedGasLimit > p.maxGasLimit {
+		return fmt.Errorf(
+			"lane %s prepared a block proposal that consumes too much gas: %d > %d",
+			lane.Name(),
+			updatedGasLimit,
+			p.maxGasLimit,
+		)
+	}
+
+	// Update the proposal
 	p.totalTxBytes = updatedSize
+	p.totalGasLimit = updatedGasLimit
+	p.txs = append(p.txs, txs...)
 
-	p.txs = append(p.txs, partialProposalTxs...)
-
-	for _, tx := range partialProposalTxs {
-		txHash := sha256.Sum256(tx)
-		txHashStr := hex.EncodeToString(txHash[:])
-
-		p.cache[txHashStr] = struct{}{}
+	for hash := range hashes {
+		p.cache[hash] = struct{}{}
 
 		lane.Logger().Info(
 			"adding transaction to proposal",
 			"lane", lane.Name(),
-			"tx_hash", txHashStr,
-			"tx_bytes", len(tx),
+			"tx_hash", hash,
 		)
 	}
 
@@ -175,14 +216,15 @@ func (p *Proposal) GetVoteExtensions() [][]byte {
 	return p.voteExtensions
 }
 
-// GetMaxTxBytes returns the maximum number of bytes that can be included in the proposal.
-func (p *Proposal) GetMaxTxBytes() int64 {
-	return p.maxTxBytes
-}
-
-// GetTotalTxBytes returns the total number of bytes currently included in the proposal.
-func (p *Proposal) GetTotalTxBytes() int64 {
-	return p.totalTxBytes
+// GetProposalStatus returns the status of the proposal.
+func (p *Proposal) GetProposalStatistics() ProposalStatistics {
+	return ProposalStatistics{
+		NumTxs:        len(p.txs),
+		TotalTxBytes:  p.totalTxBytes,
+		MaxTxBytes:    p.maxTxBytes,
+		TotalGasLimit: p.totalGasLimit,
+		MaxGasLimit:   p.maxGasLimit,
+	}
 }
 
 // GetTxs returns the transactions in the proposal.
@@ -190,16 +232,8 @@ func (p *Proposal) GetTxs() [][]byte {
 	return p.txs
 }
 
-// GetNumTxs returns the number of transactions in the proposal.
-func (p *Proposal) GetNumTxs() int {
-	return len(p.txs)
-}
-
 // Contains returns true if the proposal contains the given transaction.
-func (p *Proposal) Contains(tx []byte) bool {
-	txHash := sha256.Sum256(tx)
-	txHashStr := hex.EncodeToString(txHash[:])
-
-	_, ok := p.cache[txHashStr]
+func (p *Proposal) Contains(txHash string) bool {
+	_, ok := p.cache[txHash]
 	return ok
 }

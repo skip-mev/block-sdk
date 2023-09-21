@@ -8,7 +8,6 @@ import (
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -17,11 +16,11 @@ import (
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
 func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimit) ([]sdk.Tx, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
-			txs         [][]byte
-			txsToRemove []sdk.Tx
+			txsToInclude []sdk.Tx
+			txsToRemove  []sdk.Tx
 		)
 
 		// Attempt to select the highest bid transaction that is valid and whose
@@ -32,7 +31,7 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 			cacheCtx, write := ctx.CacheContext()
 			tmpBidTx := bidTxIterator.Tx()
 
-			bidTxBz, hash, err := utils.GetTxHashStr(l.TxEncoder(), tmpBidTx)
+			txInfo, err := block.GetTxInfo(l.TxEncoder(), tmpBidTx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of auction bid tx", "err", err)
 
@@ -41,24 +40,23 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 			}
 
 			// if the transaction is already in the (partial) block proposal, we skip it.
-			if proposal.Contains(bidTxBz) {
+			if proposal.Contains(txInfo.Hash) {
 				l.Logger().Info(
 					"failed to select auction bid tx for lane; tx is already in proposal",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 				)
 
 				continue selectBidTxLoop
 			}
 
-			bidTxSize := int64(len(bidTxBz))
-			if bidTxSize <= maxTxBytes {
+			if txInfo.Size <= limit.MaxTxBytesLimit {
 				// Build the partial proposal by selecting the bid transaction and all of
 				// its bundled transactions.
 				bidInfo, err := l.GetAuctionBidInfo(tmpBidTx)
 				if err != nil {
 					l.Logger().Info(
 						"failed to get auction bid info",
-						"tx_hash", hash,
+						"tx_hash", txInfo.Hash,
 						"err", err,
 					)
 
@@ -72,7 +70,7 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				if err := l.VerifyTx(cacheCtx, tmpBidTx, bidInfo); err != nil {
 					l.Logger().Info(
 						"failed to verify auction bid tx",
-						"tx_hash", hash,
+						"tx_hash", txInfo.Hash,
 						"err", err,
 					)
 
@@ -81,13 +79,13 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				}
 
 				// store the bytes of each ref tx as sdk.Tx bytes in order to build a valid proposal
-				bundledTxBz := make([][]byte, len(bidInfo.Transactions))
+				bundledTxBz := make([]sdk.Tx, len(bidInfo.Transactions))
 				for index, rawRefTx := range bidInfo.Transactions {
 					sdkTx, err := l.WrapBundleTransaction(rawRefTx)
 					if err != nil {
 						l.Logger().Info(
 							"failed to wrap bundled tx",
-							"tx_hash", hash,
+							"tx_hash", txInfo.Hash,
 							"err", err,
 						)
 
@@ -95,11 +93,11 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 						continue selectBidTxLoop
 					}
 
-					sdkTxBz, _, err := utils.GetTxHashStr(l.TxEncoder(), sdkTx)
+					bundledTxInfo, err := block.GetTxInfo(l.TxEncoder(), sdkTx)
 					if err != nil {
 						l.Logger().Info(
 							"failed to get hash of bundled tx",
-							"tx_hash", hash,
+							"tx_hash", txInfo.Hash,
 							"err", err,
 						)
 
@@ -108,26 +106,26 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 					}
 
 					// if the transaction is already in the (partial) block proposal, we skip it.
-					if proposal.Contains(sdkTxBz) {
+					if proposal.Contains(bundledTxInfo.Hash) {
 						l.Logger().Info(
 							"failed to select auction bid tx for lane; tx is already in proposal",
-							"tx_hash", hash,
+							"tx_hash", bundledTxInfo.Hash,
 						)
 
 						continue selectBidTxLoop
 					}
 
-					bundleTxBz := make([]byte, len(sdkTxBz))
-					copy(bundleTxBz, sdkTxBz)
-					bundledTxBz[index] = sdkTxBz
+					bundleTxBz := make([]byte, bundledTxInfo.Size)
+					copy(bundleTxBz, bundledTxInfo.TxBytes)
+					bundledTxBz[index] = sdkTx
 				}
 
 				// At this point, both the bid transaction itself and all the bundled
 				// transactions are valid. So we select the bid transaction along with
 				// all the bundled transactions. We also mark these transactions as seen and
 				// update the total size selected thus far.
-				txs = append(txs, bidTxBz)
-				txs = append(txs, bundledTxBz...)
+				txsToInclude = append(txsToInclude, tmpBidTx)
+				txsToInclude = append(txsToInclude, bundledTxBz...)
 
 				// Write the cache context to the original context when we know we have a
 				// valid bundle.
@@ -138,12 +136,12 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 
 			l.Logger().Info(
 				"failed to select auction bid tx for lane; tx size is too large",
-				"tx_size", bidTxSize,
-				"max_size", maxTxBytes,
+				"tx_size", txInfo.Size,
+				"max_size", limit.MaxTxBytesLimit,
 			)
 		}
 
-		return txs, txsToRemove, nil
+		return txsToInclude, txsToRemove, nil
 	}
 }
 

@@ -456,6 +456,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
+			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
 		).PrepareProposalHandler()
 
@@ -491,6 +492,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
+			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
 		).PrepareProposalHandler()
 
@@ -527,6 +529,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
+			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
 		).PrepareProposalHandler()
 
@@ -563,6 +566,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
+			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
 		).PrepareProposalHandler()
 
@@ -796,6 +800,7 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxDecoder(),
+		s.encodingConfig.TxConfig.TxEncoder(),
 		mempool,
 	)
 }

@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // PrepareLane will prepare a partial proposal for the lane. It will select transactions from the
@@ -14,16 +13,16 @@ import (
 func (l *BaseLane) PrepareLane(
 	ctx sdk.Context,
 	proposal block.BlockProposal,
-	maxTxBytes int64,
+	limit block.LaneLimit,
 	next block.PrepareLanesHandler,
 ) (block.BlockProposal, error) {
-	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, maxTxBytes)
+	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
 	if err != nil {
 		return proposal, err
 	}
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
-	if err := utils.RemoveTxsFromLane(txsToRemove, l); err != nil {
+	if err := block.RemoveTxsFromLane(txsToRemove, l); err != nil {
 		l.Logger().Error(
 			"failed to remove transactions from lane",
 			"lane", l.Name(),

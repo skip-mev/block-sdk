@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // DefaultPrepareLaneHandler returns a default implementation of the PrepareLaneHandler. It
@@ -14,11 +13,12 @@ import (
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
 func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimit) ([]sdk.Tx, []sdk.Tx, error) {
 		var (
-			totalSize   int64
-			txs         [][]byte
-			txsToRemove []sdk.Tx
+			totalSize    int64
+			totalGas     uint64
+			txsToInclude []sdk.Tx
+			txsToRemove  []sdk.Tx
 		)
 
 		// Select all transactions in the mempool that are valid and not already in the
@@ -26,7 +26,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			tx := iterator.Tx()
 
-			txBytes, hash, err := utils.GetTxHashStr(l.TxEncoder(), tx)
+			txInfo, err := block.GetTxInfo(l.TxEncoder(), tx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of tx", "err", err)
 
@@ -38,7 +38,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			if !l.Match(ctx, tx) {
 				l.Logger().Info(
 					"failed to select tx for lane; tx does not belong to lane",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"lane", l.Name(),
 				)
 
@@ -47,10 +47,10 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// if the transaction is already in the (partial) block proposal, we skip it.
-			if proposal.Contains(txBytes) {
+			if proposal.Contains(txInfo.Hash) {
 				l.Logger().Info(
 					"failed to select tx for lane; tx is already in proposal",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"lane", l.Name(),
 				)
 
@@ -58,15 +58,28 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// If the transaction is too large, we break and do not attempt to include more txs.
-			txSize := int64(len(txBytes))
-			if updatedSize := totalSize + txSize; updatedSize > maxTxBytes {
+			if updatedSize := totalSize + int64(txInfo.Size); updatedSize > limit.MaxTxBytesLimit {
 				l.Logger().Info(
 					"tx bytes above the maximum allowed",
 					"lane", l.Name(),
-					"tx_size", txSize,
+					"tx_size", txInfo.Size,
 					"total_size", totalSize,
-					"max_tx_bytes", maxTxBytes,
-					"tx_hash", hash,
+					"max_tx_bytes", limit.MaxTxBytesLimit,
+					"tx_hash", txInfo.Hash,
+				)
+
+				break
+			}
+
+			// If the gas limit of the transaction is too large, we break and do not attempt to include more txs.
+			if updatedGas := totalGas + txInfo.GasLimit; updatedGas > limit.MaxGasLimit {
+				l.Logger().Info(
+					"gas limit above the maximum allowed",
+					"lane", l.Name(),
+					"tx_gas", txInfo.GasLimit,
+					"total_gas", totalGas,
+					"max_gas", limit.MaxGasLimit,
+					"tx_hash", txInfo.Hash,
 				)
 
 				break
@@ -76,7 +89,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			if ctx, err = l.AnteVerifyTx(ctx, tx, false); err != nil {
 				l.Logger().Info(
 					"failed to verify tx",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"err", err,
 				)
 
@@ -84,11 +97,12 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 				continue
 			}
 
-			totalSize += txSize
-			txs = append(txs, txBytes)
+			totalSize += txInfo.Size
+			totalGas += txInfo.GasLimit
+			txsToInclude = append(txsToInclude, tx)
 		}
 
-		return txs, txsToRemove, nil
+		return txsToInclude, txsToRemove, nil
 	}
 }
 

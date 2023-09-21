@@ -151,25 +151,25 @@ func (_m *Lane) Name() string {
 	return r0
 }
 
-// PrepareLane provides a mock function with given fields: ctx, proposal, maxTxBytes, next
-func (_m *Lane) PrepareLane(ctx types.Context, proposal block.BlockProposal, maxTxBytes int64, next block.PrepareLanesHandler) (block.BlockProposal, error) {
-	ret := _m.Called(ctx, proposal, maxTxBytes, next)
+// PrepareLane provides a mock function with given fields: ctx, proposal, limit, next
+func (_m *Lane) PrepareLane(ctx types.Context, proposal block.BlockProposal, limit block.LaneLimit, next block.PrepareLanesHandler) (block.BlockProposal, error) {
+	ret := _m.Called(ctx, proposal, limit, next)
 
 	var r0 block.BlockProposal
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.Context, block.BlockProposal, int64, block.PrepareLanesHandler) (block.BlockProposal, error)); ok {
-		return rf(ctx, proposal, maxTxBytes, next)
+	if rf, ok := ret.Get(0).(func(types.Context, block.BlockProposal, block.LaneLimit, block.PrepareLanesHandler) (block.BlockProposal, error)); ok {
+		return rf(ctx, proposal, limit, next)
 	}
-	if rf, ok := ret.Get(0).(func(types.Context, block.BlockProposal, int64, block.PrepareLanesHandler) block.BlockProposal); ok {
-		r0 = rf(ctx, proposal, maxTxBytes, next)
+	if rf, ok := ret.Get(0).(func(types.Context, block.BlockProposal, block.LaneLimit, block.PrepareLanesHandler) block.BlockProposal); ok {
+		r0 = rf(ctx, proposal, limit, next)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(block.BlockProposal)
 		}
 	}
 
-	if rf, ok := ret.Get(1).(func(types.Context, block.BlockProposal, int64, block.PrepareLanesHandler) error); ok {
-		r1 = rf(ctx, proposal, maxTxBytes, next)
+	if rf, ok := ret.Get(1).(func(types.Context, block.BlockProposal, block.LaneLimit, block.PrepareLanesHandler) error); ok {
+		r1 = rf(ctx, proposal, limit, next)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -246,8 +246,7 @@ func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
 func NewLane(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *Lane {
+}) *Lane {
 	mock := &Lane{}
 	mock.Mock.Test(t)
 

@@ -42,13 +42,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		// Create a proposal
-		maxTxBytes := int64(len(txBz) - 1)
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz) - 1),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, stats.NumTxs)
+		s.Require().Equal(int64(0), stats.TotalTxBytes)
+		s.Require().Equal(uint64(0), stats.TotalGasLimit)
 	})
 
 	s.Run("should not build a proposal when box space configured to lane is too small", func() {
@@ -76,13 +88,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		// Create a proposal
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
-		s.Require().Error(err)
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz)),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
+
+		stats := finalProposal.GetProposalStatistics()
 
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, stats.NumTxs)
+		s.Require().Equal(int64(0), stats.TotalTxBytes)
+		s.Require().Equal(uint64(0), stats.TotalGasLimit)
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {
@@ -110,14 +134,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		// Create a proposal
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz)),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is not empty and contains the transaction
-		s.Require().Equal(1, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal(txBz, proposal.GetTxs()[0])
+		s.Require().Equal(1, stats.NumTxs)
+		s.Require().Equal(limit.MaxTxBytesLimit, stats.TotalTxBytes)
+		s.Require().Equal(txBz, finalProposal.GetTxs()[0])
 	})
 
 	s.Run("should not build a proposal with a that fails verify tx", func() {
@@ -141,17 +176,28 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
 
-		// Create a proposal
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		// Create a proposal
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz)),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, stats.NumTxs)
+		s.Require().Equal(int64(0), stats.TotalTxBytes)
 
 		// Ensure the transaction is removed from the lane
 		s.Require().False(lane.Contains(tx))
@@ -197,14 +243,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz1)) + int64(len(txBz2)),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(2, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz1, txBz2}, proposal.GetTxs())
+		s.Require().Equal(2, stats.NumTxs)
+		s.Require().Equal(limit.MaxTxBytesLimit, stats.TotalTxBytes)
+		s.Require().Equal([][]byte{txBz1, txBz2}, finalProposal.GetTxs())
 	})
 
 	s.Run("should order transactions correctly in the proposal (with different insertion)", func() {
@@ -246,14 +303,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz1)) + int64(len(txBz2)),
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(2, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz2, txBz1}, proposal.GetTxs())
+		s.Require().Equal(2, stats.NumTxs)
+		s.Require().Equal(limit.MaxTxBytesLimit, stats.TotalTxBytes)
+		s.Require().Equal([][]byte{txBz2, txBz1}, finalProposal.GetTxs())
 	})
 
 	s.Run("should include tx that fits in proposal when other does not", func() {
@@ -295,14 +363,25 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2)) - 1
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := block.LaneLimit{
+			MaxTxBytesLimit: int64(len(txBz1)) + int64(len(txBz2)) - 1,
+			MaxGasLimit:     10000000000000,
+		}
+		emptyProposal := block.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytesLimit,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
+		stats := finalProposal.GetProposalStatistics()
+
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(1, proposal.GetNumTxs())
-		s.Require().Equal(int64(len(txBz1)), proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz1}, proposal.GetTxs())
+		s.Require().Equal(1, stats.NumTxs)
+		s.Require().Equal(int64(len(txBz1)), stats.TotalTxBytes)
+		s.Require().Equal([][]byte{txBz1}, finalProposal.GetTxs())
 	})
 }
 

@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
 
@@ -18,6 +17,7 @@ type (
 	ProposalHandler struct {
 		logger              log.Logger
 		txDecoder           sdk.TxDecoder
+		txEncoder           sdk.TxEncoder
 		prepareLanesHandler block.PrepareLanesHandler
 		processLanesHandler block.ProcessLanesHandler
 		mempool             block.Mempool
@@ -26,10 +26,16 @@ type (
 
 // NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
 // iteratively call each of the lanes in the chain to prepare and process the proposal.
-func NewProposalHandler(logger log.Logger, txDecoder sdk.TxDecoder, mempool block.Mempool) *ProposalHandler {
+func NewProposalHandler(
+	logger log.Logger,
+	txDecoder sdk.TxDecoder,
+	txEncoder sdk.TxEncoder,
+	mempool block.Mempool,
+) *ProposalHandler {
 	return &ProposalHandler{
 		logger:              logger,
 		txDecoder:           txDecoder,
+		txEncoder:           txEncoder,
 		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()...),
 		processLanesHandler: ChainProcessLanes(mempool.Registry()...),
 		mempool:             mempool,
@@ -53,23 +59,32 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
 
-		proposal, err := h.prepareLanesHandler(ctx, block.NewProposal(req.MaxTxBytes))
+		maxTxBytes := req.MaxTxBytes
+		maxGasLimit := ctx.ConsensusParams().Block.MaxGas
+		emptyProposal := block.NewProposal(h.txEncoder, maxTxBytes, uint64(maxGasLimit))
+
+		finalProposal, err := h.prepareLanesHandler(ctx, emptyProposal)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
+		stats := finalProposal.GetProposalStatistics()
+
 		h.logger.Info(
 			"prepared proposal",
-			"num_txs", proposal.GetNumTxs(),
-			"total_tx_bytes", proposal.GetTotalTxBytes(),
+			"num_txs", stats.NumTxs,
+			"total_tx_bytes", stats.TotalTxBytes,
+			"max_tx_bytes", stats.MaxTxBytes,
+			"total_gas_limit", stats.TotalGasLimit,
+			"max_gas_limit", stats.MaxGasLimit,
 			"height", req.Height,
 		)
 
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
 		return &abci.ResponsePrepareProposal{
-			Txs: proposal.GetProposal(),
+			Txs: finalProposal.GetProposal(),
 		}, nil
 	}
 }
@@ -97,7 +112,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}
 
 		// Decode the transactions from the proposal.
-		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, txs)
+		decodedTxs, err := block.GetDecodedTxs(h.txDecoder, txs)
 		if err != nil {
 			h.logger.Error("failed to decode transactions", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
@@ -169,16 +184,17 @@ func ChainPrepareLanes(chain ...block.Lane) block.PrepareLanesHandler {
 		}()
 
 		// Get the maximum number of bytes that can be included in the proposal for this lane.
-		maxTxBytesForLane := utils.GetMaxTxBytesForLane(
-			partialProposal.GetMaxTxBytes(),
-			partialProposal.GetTotalTxBytes(),
+		stats := partialProposal.GetProposalStatistics()
+		limit := block.GetLaneLimit(
+			stats.MaxTxBytes, stats.TotalTxBytes,
+			stats.MaxGasLimit, stats.TotalGasLimit,
 			lane.GetMaxBlockSpace(),
 		)
 
 		return lane.PrepareLane(
 			cacheCtx,
 			partialProposal,
-			maxTxBytesForLane,
+			limit,
 			ChainPrepareLanes(chain[1:]...),
 		)
 	}

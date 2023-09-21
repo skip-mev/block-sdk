@@ -17,8 +17,8 @@ type (
 	PrepareLaneHandler func(
 		ctx sdk.Context,
 		proposal block.BlockProposal,
-		maxTxBytes int64,
-	) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error)
+		limit block.LaneLimit,
+	) (txsToInclude []sdk.Tx, txsToRemove []sdk.Tx, err error)
 
 	// ProcessLaneHandler is responsible for processing transactions that are included in a block and
 	// belong to a given lane. ProcessLaneHandler is executed after CheckOrderHandler so the transactions
@@ -37,7 +37,7 @@ type (
 // NoOpPrepareLaneHandler returns a no-op prepare lane handler.
 // This should only be used for testing.
 func NoOpPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error) {
+	return func(sdk.Context, block.BlockProposal, block.LaneLimit) ([]sdk.Tx, []sdk.Tx, error) {
 		return nil, nil, nil
 	}
 }
@@ -45,7 +45,7 @@ func NoOpPrepareLaneHandler() PrepareLaneHandler {
 // PanicPrepareLaneHandler returns a prepare lane handler that panics.
 // This should only be used for testing.
 func PanicPrepareLaneHandler() PrepareLaneHandler {
-	return func(sdk.Context, block.BlockProposal, int64) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error) {
+	return func(sdk.Context, block.BlockProposal, block.LaneLimit) ([]sdk.Tx, []sdk.Tx, error) {
 		panic("panic prepare lanes handler")
 	}
 }

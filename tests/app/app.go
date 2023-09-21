@@ -338,6 +338,7 @@ func New(
 	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
+		app.TxConfig().TxEncoder(),
 		mempool,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
