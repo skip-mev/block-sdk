@@ -11,6 +11,11 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
 
+const (
+	// MaxUint64 is the maximum value of a uint64.
+	MaxUint64 = 1<<64 - 1
+)
+
 type (
 	// ProposalHandler is a wrapper around the ABCI++ PrepareProposal and ProcessProposal
 	// handlers.
@@ -59,12 +64,22 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
 
+		// This is a footgun in the SDK. If the max gas is set to 0, then the max gas limit
+		// for the block can be infinite. Otherwise we use the max gas limit casted as a uint64 which
+		// is how gas limits are extracted from sdk.Tx's.
+		var maxGasLimit uint64
+		if maxGas := ctx.ConsensusParams().Block.MaxGas; maxGas > 0 {
+			maxGasLimit = uint64(maxGas)
+		} else {
+			maxGasLimit = MaxUint64
+		}
+
 		proposal, err := h.prepareLanesHandler(
 			ctx,
 			block.NewProposal(
 				h.txEncoder,
 				req.MaxTxBytes,
-				uint64(ctx.ConsensusParams().Block.MaxGas),
+				maxGasLimit,
 			),
 		)
 		if err != nil {
