@@ -52,12 +52,10 @@ func (s *ProposalsTestSuite) SetupTest() {
 	s.key = storetypes.NewKVStoreKey("test")
 	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
 	s.ctx = testCtx.Ctx.WithIsCheckTx(true)
-	s.ctx = s.ctx.WithConsensusParams(tmprototypes.ConsensusParams{
-		Block: &tmprototypes.BlockParams{
-			MaxBytes: 10000000000,
-			MaxGas:   10000000000,
-		},
-	})
+}
+
+func (s *ProposalsTestSuite) SetupSubTest() {
+	s.setBlockParams(1000000000000, 1000000000000)
 }
 
 func (s *ProposalsTestSuite) TestPrepareProposal() {
@@ -91,7 +89,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 		s.Require().NoError(err)
 
@@ -131,7 +129,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 		s.Require().NoError(err)
 
@@ -171,7 +169,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 		s.Require().NoError(err)
 
@@ -217,7 +215,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -256,7 +254,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -296,7 +294,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -338,7 +336,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0])
 		size := int64(len(proposal[0]) - 1)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: size})
+		s.setBlockParams(10000000, size)
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -374,7 +373,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposal := s.getTxBytes(freeTx)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -441,7 +440,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -451,13 +450,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 	s.Run("can build a proposal where first lane does not have enough gas but second lane does", func() {
 		// set up the gas block limit for the proposal
-		s.ctx = s.ctx.WithConsensusParams(
-			tmprototypes.ConsensusParams{
-				Block: &tmprototypes.BlockParams{
-					MaxGas: 100,
-				},
-			},
-		)
+		s.setBlockParams(100, 1000000000)
 
 		// Create a bid tx that includes a single bundled tx
 		tx, bundleTxs, err := testutils.CreateAuctionTx(
@@ -499,7 +492,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0], normalTx)
 
 		// Should be theoretically sufficient to fit the bid tx and the bundled tx + normal tx
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -545,7 +538,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -582,7 +575,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -620,7 +613,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -658,7 +651,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
@@ -908,4 +901,15 @@ func (s *ProposalsTestSuite) getTxBytes(txs ...sdk.Tx) [][]byte {
 		txBytes[i] = bz
 	}
 	return txBytes
+}
+
+func (s *ProposalsTestSuite) setBlockParams(maxGasLimit, maxBlockSize int64) {
+	s.ctx = s.ctx.WithConsensusParams(
+		tmprototypes.ConsensusParams{
+			Block: &tmprototypes.BlockParams{
+				MaxBytes: maxBlockSize,
+				MaxGas:   maxGasLimit,
+			},
+		},
+	)
 }

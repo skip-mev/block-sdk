@@ -48,7 +48,11 @@ type Lane interface {
 	// ProcessLane verifies this lane's portion of a proposed block. It inputs the transactions
 	// that may belong to this lane and a function to call the next lane in the chain. The next
 	// lane in the chain will be called with the updated context and filtered down transactions.
-	ProcessLane(ctx sdk.Context, proposalTxs []sdk.Tx, next ProcessLanesHandler) (sdk.Context, error)
+	ProcessLane(
+		ctx sdk.Context,
+		proposalTxs []sdk.Tx,
+		next ProcessLanesHandler,
+	) (sdk.Context, error)
 
 	// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
 	GetMaxBlockSpace() math.LegacyDec

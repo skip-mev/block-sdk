@@ -64,11 +64,13 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
 
+		blockParams := ctx.ConsensusParams().Block
+
 		// If the max gas is set to 0, then the max gas limit for the block can be infinite.
 		// Otherwise we use the max gas limit casted as a uint64 which is how gas limits are
 		// extracted from sdk.Tx's.
 		var maxGasLimit uint64
-		if maxGas := ctx.ConsensusParams().Block.MaxGas; maxGas > 0 {
+		if maxGas := blockParams.MaxGas; maxGas > 0 {
 			maxGasLimit = uint64(maxGas)
 		} else {
 			maxGasLimit = MaxUint64
@@ -78,7 +80,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			ctx,
 			block.NewProposal(
 				h.txEncoder,
-				req.MaxTxBytes,
+				blockParams.MaxBytes,
 				maxGasLimit,
 			),
 		)
