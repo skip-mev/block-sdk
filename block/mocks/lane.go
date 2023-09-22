@@ -177,23 +177,23 @@ func (_m *Lane) PrepareLane(ctx types.Context, proposal block.BlockProposal, lim
 	return r0, r1
 }
 
-// ProcessLane provides a mock function with given fields: ctx, proposalTxs, next
-func (_m *Lane) ProcessLane(ctx types.Context, proposalTxs []types.Tx, next block.ProcessLanesHandler) (types.Context, error) {
-	ret := _m.Called(ctx, proposalTxs, next)
+// ProcessLane provides a mock function with given fields: ctx, proposalTxs, limit, next
+func (_m *Lane) ProcessLane(ctx types.Context, proposalTxs []types.Tx, limit block.LaneLimits, next block.ProcessLanesHandler) (types.Context, error) {
+	ret := _m.Called(ctx, proposalTxs, limit, next)
 
 	var r0 types.Context
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.Context, []types.Tx, block.ProcessLanesHandler) (types.Context, error)); ok {
-		return rf(ctx, proposalTxs, next)
+	if rf, ok := ret.Get(0).(func(types.Context, []types.Tx, block.LaneLimits, block.ProcessLanesHandler) (types.Context, error)); ok {
+		return rf(ctx, proposalTxs, limit, next)
 	}
-	if rf, ok := ret.Get(0).(func(types.Context, []types.Tx, block.ProcessLanesHandler) types.Context); ok {
-		r0 = rf(ctx, proposalTxs, next)
+	if rf, ok := ret.Get(0).(func(types.Context, []types.Tx, block.LaneLimits, block.ProcessLanesHandler) types.Context); ok {
+		r0 = rf(ctx, proposalTxs, limit, next)
 	} else {
 		r0 = ret.Get(0).(types.Context)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.Context, []types.Tx, block.ProcessLanesHandler) error); ok {
-		r1 = rf(ctx, proposalTxs, next)
+	if rf, ok := ret.Get(1).(func(types.Context, []types.Tx, block.LaneLimits, block.ProcessLanesHandler) error); ok {
+		r1 = rf(ctx, proposalTxs, limit, next)
 	} else {
 		r1 = ret.Error(1)
 	}

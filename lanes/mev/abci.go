@@ -179,7 +179,7 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 // ProcessLaneHandler will ensure that block proposals that include transactions from
 // the mev lane are valid.
 func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
+	return func(ctx sdk.Context, txs []sdk.Tx, limit block.LaneLimits) ([]sdk.Tx, error) {
 		if len(txs) == 0 {
 			return txs, nil
 		}
@@ -189,13 +189,64 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 			return txs, nil
 		}
 
+		txInfo, err := block.GetTxInfo(l.TxEncoder(), bidTx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to get info of auction bid tx: %w", err)
+		}
+
 		bidInfo, err := l.GetAuctionBidInfo(bidTx)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get bid info for lane %s: %w", l.Name(), err)
 		}
 
-		if err := l.VerifyTx(ctx, bidTx, bidInfo); err != nil {
-			return nil, fmt.Errorf("invalid bid tx: %w", err)
+		if txInfo.GasLimit > limit.MaxGas {
+			return nil, fmt.Errorf(
+				"invalid gas limit for bid tx in lane %s; expected at most %d, got %d",
+				l.Name(),
+				limit.MaxGas,
+				txInfo.GasLimit,
+			)
+		}
+
+		if txInfo.Size > limit.MaxTxBytes {
+			return nil, fmt.Errorf(
+				"invalid tx size for bid tx in lane %s; expected at most %d, got %d",
+				l.Name(),
+				limit.MaxTxBytes,
+				txInfo.Size,
+			)
+		}
+
+		// verify the top-level bid transaction
+		if ctx, err = l.AnteVerifyTx(ctx, bidTx, false); err != nil {
+			return nil, fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
+		}
+
+		// verify all of the bundled transactions
+		totalGas := txInfo.GasLimit
+		for _, tx := range bidInfo.Transactions {
+			bundledTx, err := l.WrapBundleTransaction(tx)
+			if err != nil {
+				return nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
+			}
+
+			bundledTxInfo, err := block.GetTxInfo(l.TxEncoder(), bundledTx)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get info of bundled tx: %w", err)
+			}
+
+			if totalGas += bundledTxInfo.GasLimit; totalGas > limit.MaxGas {
+				return nil, fmt.Errorf(
+					"invalid gas limit with bundled tx in lane %s; expected at most %d, got %d",
+					l.Name(),
+					limit.MaxGas,
+					totalGas,
+				)
+			}
+
+			if ctx, err = l.AnteVerifyTx(ctx, bundledTx, false); err != nil {
+				return nil, fmt.Errorf("invalid bid tx; failed to execute bundled transaction: %w", err)
+			}
 		}
 
 		return txs[len(bidInfo.Transactions)+1:], nil

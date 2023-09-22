@@ -50,7 +50,7 @@ func (t Terminator) CheckOrder(sdk.Context, []sdk.Tx) error {
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ block.ProcessLanesHandler) (sdk.Context, error) {
+func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ block.LaneLimits, _ block.ProcessLanesHandler) (sdk.Context, error) {
 	return ctx, nil
 }
 

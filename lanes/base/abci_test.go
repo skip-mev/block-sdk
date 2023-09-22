@@ -514,7 +514,8 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1: true,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		limit := block.NewLaneLimits(100000, 100000)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
 
@@ -537,7 +538,8 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1: false,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		limit := block.NewLaneLimits(100000, 100000)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -584,7 +586,132 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx3: true,
 		})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		limit := block.NewLaneLimits(100000, 100000)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds too large of a partial block", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+		}
+
+		lane := s.initLane(map[sdk.Tx]bool{
+			tx1: true,
+		})
+
+		maxSize := s.getTxSize(tx1) - 1
+		limit := block.NewLaneLimits(maxSize, 100000)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too gas consumptive", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+		}
+
+		lane := s.initLane(map[sdk.Tx]bool{
+			tx1: true,
+		})
+
+		maxSize := s.getTxSize(tx1)
+		limit := block.NewLaneLimits(maxSize, 9)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too gas consumptive p2", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+		}
+
+		lane := s.initLane(map[sdk.Tx]bool{
+			tx1: true,
+			tx2: true,
+		})
+
+		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2)
+		limit := block.NewLaneLimits(maxSize, 19)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too large p2", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+		}
+
+		lane := s.initLane(map[sdk.Tx]bool{
+			tx1: true,
+			tx2: true,
+		})
+
+		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2) - 1
+		limit := block.NewLaneLimits(maxSize, 20)
+		_, err = lane.ProcessLane(sdk.Context{}, proposal, limit, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 }
@@ -744,4 +871,11 @@ func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.
 	}
 
 	return anteHandler
+}
+
+func (s *BaseTestSuite) getTxSize(tx sdk.Tx) int64 {
+	txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+	s.Require().NoError(err)
+
+	return int64(len(txBz))
 }

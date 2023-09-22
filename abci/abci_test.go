@@ -789,6 +789,109 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
 	})
+
+	s.Run("can process a invalid proposal where a lane consumes too much gas", func() {
+		s.setBlockParams(1000, 10000000)
+
+		bidTx, _, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			1,
+			s.accounts[0:0],
+			10000000000, // This should consume too much gas for the lane
+		)
+		s.Require().NoError(err)
+
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
+		)
+		s.Require().NoError(err)
+
+		normalTx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		// Set up the default lane
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0"), nil)
+
+		// Set up the TOB lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0000000001"), nil)
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, normalTx, normalTx2)})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+	})
+
+	s.Run("can process a invalid proposal where a lane consumes too much block space", func() {
+		bidTx, _, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			1,
+			s.accounts[0:0],
+			1,
+		)
+		s.Require().NoError(err)
+
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
+		)
+		s.Require().NoError(err)
+
+		normalTx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		proposal := s.getTxBytes(bidTx, normalTx, normalTx2)
+
+		s.setBlockParams(1000, int64(len(proposal[0])+len(proposal[1])+len(proposal[2])-1))
+
+		// Set up the default lane
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			normalTx:  true,
+			normalTx2: true,
+		})
+
+		// Set up the TOB lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			bidTx: true,
+		})
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, normalTx, normalTx2)})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+	})
 }
 
 func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {

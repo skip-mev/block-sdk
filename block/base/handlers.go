@@ -114,14 +114,37 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 // that does not match the lane's matcher, it will return the remaining transactions in the
 // proposal.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
-		var err error
+	return func(ctx sdk.Context, txs []sdk.Tx, limit block.LaneLimits) ([]sdk.Tx, error) {
+		var (
+			totalGas  uint64
+			totalSize int64
+		)
 
 		// Process all transactions that match the lane's matcher.
 		for index, tx := range txs {
 			if l.Match(ctx, tx) {
+				txInfo, err := block.GetTxInfo(l.TxEncoder(), tx)
+				if err != nil {
+					return nil, fmt.Errorf("failed to get info on tx: %w", err)
+				}
+
 				if ctx, err = l.AnteVerifyTx(ctx, tx, false); err != nil {
 					return nil, fmt.Errorf("failed to verify tx: %w", err)
+				}
+
+				totalGas += txInfo.GasLimit
+				totalSize += txInfo.Size
+
+				// invariant: the transactions must consume less than the maximum allowed gas and size.
+				if totalGas > limit.MaxGas || totalSize > limit.MaxTxBytes {
+					return nil, fmt.Errorf(
+						"lane %s has exceeded its gas or size limit; max_gas=%d, max_size=%d, total_gas=%d, total_size=%d",
+						l.Name(),
+						limit.MaxGas,
+						limit.MaxTxBytes,
+						totalGas,
+						totalSize,
+					)
 				}
 			} else {
 				return txs[index:], nil

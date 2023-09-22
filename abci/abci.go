@@ -246,6 +246,24 @@ func ChainProcessLanes(chain ...block.Lane) block.ProcessLanesHandler {
 			return ctx, err
 		}
 
-		return chain[0].ProcessLane(ctx, proposalTxs, ChainProcessLanes(chain[1:]...))
+		blockParams := ctx.ConsensusParams().Block
+
+		// If the max gas is set to 0, then the max gas limit for the block can be infinite.
+		// Otherwise we use the max gas limit casted as a uint64 which is how gas limits are
+		// extracted from sdk.Tx's.
+		var maxGasLimit uint64
+		if maxGas := blockParams.MaxGas; maxGas > 0 {
+			maxGasLimit = uint64(maxGas)
+		} else {
+			maxGasLimit = MaxUint64
+		}
+
+		limit := block.GetLaneLimits(
+			blockParams.MaxBytes, 0,
+			maxGasLimit, 0,
+			chain[0].GetMaxBlockSpace(),
+		)
+
+		return chain[0].ProcessLane(ctx, proposalTxs, limit, ChainProcessLanes(chain[1:]...))
 	}
 }

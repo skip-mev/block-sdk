@@ -48,8 +48,13 @@ func (l *BaseLane) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 // the verification logic of the lane (processLaneHandler). If the transactions are valid, we
 // return the transactions that do not belong to this lane to the next lane. If the transactions
 // are invalid, we return an error.
-func (l *BaseLane) ProcessLane(ctx sdk.Context, txs []sdk.Tx, next block.ProcessLanesHandler) (sdk.Context, error) {
-	remainingTxs, err := l.processLaneHandler(ctx, txs)
+func (l *BaseLane) ProcessLane(
+	ctx sdk.Context,
+	txs []sdk.Tx,
+	limit block.LaneLimits,
+	next block.ProcessLanesHandler,
+) (sdk.Context, error) {
+	remainingTxs, err := l.processLaneHandler(ctx, txs, limit)
 	if err != nil {
 		return ctx, err
 	}

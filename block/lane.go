@@ -11,7 +11,7 @@ import (
 // is the same as the sdk.Mempool, but it also includes a Compare function that is used
 // to determine the relative priority of two transactions belonging in the same lane.
 //
-//go:generate mockery --name LaneMempool --output ./utils/mocks --outpkg mocks --case underscore
+//go:generate mockery --name LaneMempool --output ./mocks --outpkg mocks --case underscore
 type LaneMempool interface {
 	sdkmempool.Mempool
 
@@ -27,7 +27,7 @@ type LaneMempool interface {
 // Lane defines an interface used for matching transactions to lanes, storing transactions,
 // and constructing partial blocks.
 //
-//go:generate mockery --name Lane --output ./utils/mocks --outpkg mocks --case underscore
+//go:generate mockery --name Lane --output ./mocks --outpkg mocks --case underscore
 type Lane interface {
 	LaneMempool
 
@@ -51,6 +51,7 @@ type Lane interface {
 	ProcessLane(
 		ctx sdk.Context,
 		proposalTxs []sdk.Tx,
+		limit LaneLimits,
 		next ProcessLanesHandler,
 	) (sdk.Context, error)
 
