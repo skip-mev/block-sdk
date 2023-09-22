@@ -59,32 +59,35 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
 
-		maxTxBytes := req.MaxTxBytes
-		maxGasLimit := ctx.ConsensusParams().Block.MaxGas
-		emptyProposal := block.NewProposal(h.txEncoder, maxTxBytes, uint64(maxGasLimit))
-
-		finalProposal, err := h.prepareLanesHandler(ctx, emptyProposal)
+		proposal, err := h.prepareLanesHandler(
+			ctx,
+			block.NewProposal(
+				h.txEncoder,
+				req.MaxTxBytes,
+				uint64(ctx.ConsensusParams().Block.MaxGas),
+			),
+		)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
-		stats := finalProposal.GetProposalStatistics()
+		stats := proposal.GetStatistics()
 
 		h.logger.Info(
 			"prepared proposal",
 			"num_txs", stats.NumTxs,
-			"total_tx_bytes", stats.TotalTxBytes,
+			"total_tx_bytes", stats.TotalTxBytesUsed,
 			"max_tx_bytes", stats.MaxTxBytes,
-			"total_gas_limit", stats.TotalGasLimit,
-			"max_gas_limit", stats.MaxGasLimit,
+			"total_gas_limit", stats.TotalGasLimitUsed,
+			"max_gas_limit", stats.MaxGas,
 			"height", req.Height,
 		)
 
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
 		return &abci.ResponsePrepareProposal{
-			Txs: finalProposal.GetProposal(),
+			Txs: proposal.GetProposal(),
 		}, nil
 	}
 }
@@ -184,10 +187,10 @@ func ChainPrepareLanes(chain ...block.Lane) block.PrepareLanesHandler {
 		}()
 
 		// Get the maximum number of bytes that can be included in the proposal for this lane.
-		stats := partialProposal.GetProposalStatistics()
-		limit := block.GetLaneLimit(
-			stats.MaxTxBytes, stats.TotalTxBytes,
-			stats.MaxGasLimit, stats.TotalGasLimit,
+		stats := partialProposal.GetStatistics()
+		limit := block.GetLaneLimits(
+			stats.MaxTxBytes, stats.TotalTxBytesUsed,
+			stats.MaxGas, stats.TotalGasLimitUsed,
 			lane.GetMaxBlockSpace(),
 		)
 

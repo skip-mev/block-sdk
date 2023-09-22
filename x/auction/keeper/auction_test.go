@@ -184,7 +184,7 @@ func (suite *KeeperTestSuite) TestValidateBidInfo() {
 			// Create the bundle of transactions ordered by accounts
 			bundle := make([][]byte, 0)
 			for _, acc := range accounts {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 100)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 100, 100)
 				suite.Require().NoError(err)
 
 				txBz, err := suite.encCfg.TxConfig.TxEncoder()(tx)

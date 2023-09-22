@@ -22,13 +22,6 @@ type (
 		// TxBytes is the bytes of the transaction.
 		TxBytes []byte
 	}
-
-	// GasTx is the interface to retrieve the gas limit of a transaction.
-	//
-	// TODO: Do we need to add an adapter to make this work with EVM transactions?
-	GasTx interface {
-		GetGas() uint64
-	}
 )
 
 // GetTxHashStr returns the hex-encoded hash of the transaction alongside the
@@ -42,7 +35,8 @@ func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
 	txHash := sha256.Sum256(txBz)
 	txHashStr := hex.EncodeToString(txHash[:])
 
-	gasTx, ok := tx.(GasTx)
+	// TODO: Does anything need to be done to support EVM transactions?
+	gasTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return TxInfo{}, fmt.Errorf("failed to cast transaction to GasTx")
 	}
@@ -81,13 +75,13 @@ func RemoveTxsFromLane(txs []sdk.Tx, mempool sdkmempool.Mempool) error {
 	return nil
 }
 
-// GetLaneLimit returns the maximum number of bytes and gas limit that can be
+// GetLaneLimits returns the maximum number of bytes and gas limit that can be
 // included/consumed in the proposal for the given lane.
-func GetLaneLimit(
+func GetLaneLimits(
 	maxTxBytes, consumedTxBytes int64,
 	maxGaslimit, consumedGasLimit uint64,
 	ratio math.LegacyDec,
-) LaneLimit {
+) LaneLimits {
 	var (
 		txBytes  int64
 		gasLimit uint64
@@ -98,19 +92,24 @@ func GetLaneLimit(
 	// will have no limit on the number of transactions it can include in a block and is only
 	// limited by the maxTxBytes included in the PrepareProposalRequest.
 	if ratio.IsZero() {
-		txBytesRemaning := maxTxBytes - consumedTxBytes
-		if txBytesRemaning < 0 {
+		txBytes := maxTxBytes - consumedTxBytes
+		if txBytes < 0 {
 			txBytes = 0
 		}
 
-		txBytes = txBytesRemaning
+		// Unsigned subtraction needs an additional check
+		if consumedGasLimit >= maxGaslimit {
+			gasLimit = 0
+		} else {
+			gasLimit = maxGaslimit - consumedGasLimit
+		}
 
-		return NewLaneLimit(txBytes, maxGaslimit-consumedGasLimit)
+		return NewLaneLimits(txBytes, gasLimit)
 	}
 
 	// Otherwise, we calculate the max tx bytes / gas limit for the lane based on the ratio.
 	txBytes = ratio.MulInt64(maxTxBytes).TruncateInt().Int64()
-	gasLimit = ratio.MulInt64(int64(maxGaslimit)).TruncateInt().Uint64()
+	gasLimit = ratio.MulInt(math.NewIntFromUint64(maxGaslimit)).TruncateInt().Uint64()
 
-	return NewLaneLimit(txBytes, gasLimit)
+	return NewLaneLimits(txBytes, gasLimit)
 }

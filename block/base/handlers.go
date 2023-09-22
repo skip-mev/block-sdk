@@ -13,7 +13,7 @@ import (
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
 func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimit) ([]sdk.Tx, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		var (
 			totalSize    int64
 			totalGas     uint64
@@ -58,31 +58,33 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// If the transaction is too large, we break and do not attempt to include more txs.
-			if updatedSize := totalSize + int64(txInfo.Size); updatedSize > limit.MaxTxBytesLimit {
+			if updatedSize := totalSize + txInfo.Size; updatedSize > limit.MaxTxBytes {
 				l.Logger().Info(
-					"tx bytes above the maximum allowed",
+					"failed to select tx for lane; tx bytes above the maximum allowed",
 					"lane", l.Name(),
 					"tx_size", txInfo.Size,
 					"total_size", totalSize,
-					"max_tx_bytes", limit.MaxTxBytesLimit,
+					"max_tx_bytes", limit.MaxTxBytes,
 					"tx_hash", txInfo.Hash,
 				)
 
-				break
+				// TODO: Determine if there is any trade off with breaking or continuing here.
+				continue
 			}
 
 			// If the gas limit of the transaction is too large, we break and do not attempt to include more txs.
-			if updatedGas := totalGas + txInfo.GasLimit; updatedGas > limit.MaxGasLimit {
+			if updatedGas := totalGas + txInfo.GasLimit; updatedGas > limit.MaxGas {
 				l.Logger().Info(
-					"gas limit above the maximum allowed",
+					"failed to select tx for lane; gas limit above the maximum allowed",
 					"lane", l.Name(),
 					"tx_gas", txInfo.GasLimit,
 					"total_gas", totalGas,
-					"max_gas", limit.MaxGasLimit,
+					"max_gas", limit.MaxGas,
 					"tx_hash", txInfo.Hash,
 				)
 
-				break
+				// TODO: Determine if there is any trade off with breaking or continuing here.
+				continue
 			}
 
 			// Verify the transaction.

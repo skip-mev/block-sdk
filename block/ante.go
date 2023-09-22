@@ -1,16 +1,10 @@
-package utils
+package block
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
 type (
-	// Lane defines the required API dependencies for the IgnoreDecorator. The ignore decorator
-	// will check if a transaction belongs to a lane by calling the Match function.
-	Lane interface {
-		Match(ctx sdk.Context, tx sdk.Tx) bool
-	}
-
 	// IgnoreDecorator is an AnteDecorator that wraps an existing AnteDecorator. It allows
 	// for the AnteDecorator to be ignored for specified lanes.
 	IgnoreDecorator struct {

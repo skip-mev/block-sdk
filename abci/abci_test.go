@@ -15,6 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+	tmprototypes "github.com/cometbft/cometbft/proto/tendermint/types"
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
@@ -51,6 +52,12 @@ func (s *ProposalsTestSuite) SetupTest() {
 	s.key = storetypes.NewKVStoreKey("test")
 	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
 	s.ctx = testCtx.Ctx.WithIsCheckTx(true)
+	s.ctx = s.ctx.WithConsensusParams(tmprototypes.ConsensusParams{
+		Block: &tmprototypes.BlockParams{
+			MaxBytes: 10000000000,
+			MaxGas:   10000000000,
+		},
+	})
 }
 
 func (s *ProposalsTestSuite) TestPrepareProposal() {
@@ -74,6 +81,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -100,6 +108,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -111,6 +120,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			1,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
 		)
 		s.Require().NoError(err)
@@ -138,6 +148,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -149,6 +160,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			1,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
 		)
 		s.Require().NoError(err)
@@ -190,6 +202,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			100,
 		)
 		s.Require().NoError(err)
 
@@ -222,6 +235,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			100,
 		)
 		s.Require().NoError(err)
 
@@ -251,7 +265,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().Equal(proposal, resp.Txs)
 	})
 
-	s.Run("can build a proposal where first lane has too large of a tx and second lane has a valid tx", func() {
+	s.Run("can build a proposal where first lane has failing tx and second lane has a valid tx", func() {
 		// Create a bid tx that includes a single bundled tx
 		tx, bundleTxs, err := testutils.CreateAuctionTx(
 			s.encodingConfig.TxConfig,
@@ -260,6 +274,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			100,
 		)
 		s.Require().NoError(err)
 
@@ -271,7 +286,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
 
 		// Set up the default lane with the bid tx and the bundled tx
-		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0"), map[sdk.Tx]bool{
 			// Even though this passes it should not include it in the proposal because it is in the ignore list
 			tx:           true,
 			bundleTxs[0]: true,
@@ -299,6 +314,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			100,
 		)
 		s.Require().NoError(err)
 
@@ -375,6 +391,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:4],
+			100,
 		)
 		s.Require().NoError(err)
 
@@ -385,6 +402,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -430,6 +448,72 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().Equal(7, len(resp.Txs))
 		s.Require().Equal(proposal, resp.Txs)
 	})
+
+	s.Run("can build a proposal where first lane does not have enough gas but second lane does", func() {
+		// set up the gas block limit for the proposal
+		s.ctx = s.ctx.WithConsensusParams(
+			tmprototypes.ConsensusParams{
+				Block: &tmprototypes.BlockParams{
+					MaxGas: 100,
+				},
+			},
+		)
+
+		// Create a bid tx that includes a single bundled tx
+		tx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[0:1],
+			51,
+		)
+		s.Require().NoError(err)
+
+		// Set up the TOB lane with the bid tx and the bundled tx
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			tx:           true,
+			bundleTxs[0]: true,
+		})
+		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
+
+		// create a random tx to be included in the default lane
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			0,
+			0,
+			100, // This should consume all of the block limit
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			normalTx: true,
+		})
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, normalTx))
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
+		proposal := s.getTxBytes(tx, bundleTxs[0], normalTx)
+
+		// Should be theoretically sufficient to fit the bid tx and the bundled tx + normal tx
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000000})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal[2:], resp.Txs)
+
+		// reset
+		s.ctx = s.ctx.WithConsensusParams(tmprototypes.ConsensusParams{
+			Block: &tmprototypes.BlockParams{
+				MaxBytes: 10000000000,
+				MaxGas:   10000000000,
+			},
+		})
+	})
 }
 
 func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
@@ -442,6 +526,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -478,6 +563,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -515,6 +601,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -552,6 +639,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -616,6 +704,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			0,
 			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -633,6 +722,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -644,6 +734,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
 		)
 		s.Require().NoError(err)
@@ -666,6 +757,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			s.accounts[0:2],
+			10,
 		)
 		s.Require().NoError(err)
 
@@ -675,6 +767,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
 		)
 		s.Require().NoError(err)
@@ -685,6 +778,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
 		)
 		s.Require().NoError(err)

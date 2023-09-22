@@ -37,7 +37,7 @@ type Lane interface {
 	PrepareLane(
 		ctx sdk.Context,
 		proposal BlockProposal,
-		limit LaneLimit,
+		limit LaneLimits,
 		next PrepareLanesHandler,
 	) (BlockProposal, error)
 
@@ -69,17 +69,17 @@ type Lane interface {
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 }
 
-// LaneLimit defines the total number of bytes and units of gas that can be included in a block proposal
+// LaneLimits defines the total number of bytes and units of gas that can be included in a block proposal
 // for a given lane.
-type LaneLimit struct {
-	MaxTxBytesLimit int64
-	MaxGasLimit     uint64
+type LaneLimits struct {
+	MaxTxBytes int64
+	MaxGas     uint64
 }
 
-// NewLaneLimit returns a new lane limit.
-func NewLaneLimit(maxTxBytesLimit int64, maxGasLimit uint64) LaneLimit {
-	return LaneLimit{
-		MaxTxBytesLimit: maxTxBytesLimit,
-		MaxGasLimit:     maxGasLimit,
+// NewLaneLimits returns a new lane limit.
+func NewLaneLimits(maxTxBytesLimit int64, maxGasLimit uint64) LaneLimits {
+	return LaneLimits{
+		MaxTxBytes: maxTxBytesLimit,
+		MaxGas:     maxGasLimit,
 	}
 }

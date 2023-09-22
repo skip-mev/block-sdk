@@ -13,7 +13,7 @@ import (
 func (l *BaseLane) PrepareLane(
 	ctx sdk.Context,
 	proposal block.BlockProposal,
-	limit block.LaneLimit,
+	limit block.LaneLimits,
 	next block.PrepareLanesHandler,
 ) (block.BlockProposal, error) {
 	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)

@@ -18,6 +18,7 @@ func (s *BaseTestSuite) TestGetTxPriority() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -33,6 +34,7 @@ func (s *BaseTestSuite) TestGetTxPriority() {
 			0,
 			0,
 			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -47,6 +49,7 @@ func (s *BaseTestSuite) TestGetTxPriority() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin("random", math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -94,6 +97,7 @@ func (s *BaseTestSuite) TestInsert() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -111,6 +115,7 @@ func (s *BaseTestSuite) TestInsert() {
 				uint64(i),
 				0,
 				0,
+				1,
 				sdk.NewCoin(s.gasTokenDenom, math.NewInt(int64(100*i))),
 			)
 			s.Require().NoError(err)
@@ -126,6 +131,7 @@ func (s *BaseTestSuite) TestInsert() {
 			10,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -146,6 +152,7 @@ func (s *BaseTestSuite) TestRemove() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -165,6 +172,7 @@ func (s *BaseTestSuite) TestRemove() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -183,6 +191,7 @@ func (s *BaseTestSuite) TestSelect() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)
@@ -193,6 +202,7 @@ func (s *BaseTestSuite) TestSelect() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200)),
 		)
 		s.Require().NoError(err)
@@ -222,6 +232,7 @@ func (s *BaseTestSuite) TestSelect() {
 			0,
 			0,
 			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
 		)
 		s.Require().NoError(err)

@@ -40,7 +40,7 @@ type Terminator struct{}
 var _ block.Lane = (*Terminator)(nil)
 
 // PrepareLane is a no-op
-func (t Terminator) PrepareLane(_ sdk.Context, proposal block.BlockProposal, _ block.LaneLimit, _ block.PrepareLanesHandler) (block.BlockProposal, error) {
+func (t Terminator) PrepareLane(_ sdk.Context, proposal block.BlockProposal, _ block.LaneLimits, _ block.PrepareLanesHandler) (block.BlockProposal, error) {
 	return proposal, nil
 }
 

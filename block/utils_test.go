@@ -9,14 +9,14 @@ import (
 
 func TestGetMaxTxBytesForLane(t *testing.T) {
 	testCases := []struct {
-		name             string
-		maxTxBytes       int64
-		totalTxBytes     int64
-		maxGasLimit      uint64
-		totalGasLimit    uint64
-		ratio            math.LegacyDec
-		expectedTxBytes  int64
-		expectedGasLimit uint64
+		name              string
+		maxTxBytes        int64
+		totalTxBytesUsed  int64
+		maxGasLimit       uint64
+		totalGasLimitUsed uint64
+		ratio             math.LegacyDec
+		expectedTxBytes   int64
+		expectedGasLimit  uint64
 	}{
 		{
 			"ratio is zero",
@@ -32,18 +32,18 @@ func TestGetMaxTxBytesForLane(t *testing.T) {
 			"ratio is zero",
 			100,
 			100,
-			0,
-			0,
+			50,
+			25,
 			math.LegacyZeroDec(),
 			0,
-			0,
+			25,
 		},
 		{
 			"ratio is zero",
 			100,
 			150,
-			0,
-			0,
+			100,
+			150,
 			math.LegacyZeroDec(),
 			0,
 			0,
@@ -51,59 +51,69 @@ func TestGetMaxTxBytesForLane(t *testing.T) {
 		{
 			"ratio is 1",
 			100,
-			50,
 			0,
+			75,
 			0,
 			math.LegacyOneDec(),
 			100,
-			0,
+			75,
 		},
 		{
 			"ratio is 10%",
 			100,
-			50,
 			0,
+			75,
 			0,
 			math.LegacyMustNewDecFromStr("0.1"),
 			10,
-			0,
+			7,
 		},
 		{
 			"ratio is 25%",
 			100,
-			50,
 			0,
+			80,
 			0,
 			math.LegacyMustNewDecFromStr("0.25"),
 			25,
-			0,
+			20,
 		},
 		{
 			"ratio is 50%",
 			101,
-			50,
 			0,
+			75,
 			0,
 			math.LegacyMustNewDecFromStr("0.5"),
 			50,
+			37,
+		},
+		{
+			"ratio is 33%",
+			100,
 			0,
+			75,
+			0,
+			math.LegacyMustNewDecFromStr("0.33"),
+			33,
+			24,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := block.GetLaneLimit(
-				tc.maxTxBytes, tc.totalTxBytes,
-				tc.maxGasLimit, tc.totalGasLimit,
+			actual := block.GetLaneLimits(
+				tc.maxTxBytes, tc.totalTxBytesUsed,
+				tc.maxGasLimit, tc.totalGasLimitUsed,
 				tc.ratio,
 			)
 
-			if actual.MaxTxBytesLimit != tc.expectedTxBytes {
-				t.Errorf("expected %d, got %d", tc.expectedGasLimit, actual.MaxTxBytesLimit)
+			if actual.MaxTxBytes != tc.expectedTxBytes {
+				t.Errorf("expected tx bytes %d, got %d", tc.expectedTxBytes, actual.MaxTxBytes)
 			}
 
-			if actual.MaxGasLimit != tc.expectedGasLimit {
-				t.Errorf("expected %d, got %d", tc.expectedGasLimit, actual.MaxGasLimit)
+			if actual.MaxGas != tc.expectedGasLimit {
+				t.Errorf("expected gas limit %d, got %d", tc.expectedGasLimit, actual.MaxGas)
 			}
 		})
 	}

@@ -5,7 +5,6 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/utils"
 	auctionante "github.com/skip-mev/block-sdk/x/auction/ante"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
@@ -41,7 +40,7 @@ func NewPOBAnteHandler(options POBHandlerOptions) sdk.AnteHandler {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.BaseOptions.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.BaseOptions.AccountKeeper),
-		utils.NewIgnoreDecorator(
+		block.NewIgnoreDecorator(
 			ante.NewDeductFeeDecorator(
 				options.BaseOptions.AccountKeeper,
 				options.BaseOptions.BankKeeper,

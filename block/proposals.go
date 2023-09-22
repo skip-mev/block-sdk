@@ -19,10 +19,13 @@ type (
 		//  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 		//  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 		//     the lane.
+		//  3. The total gas limit of the proposal must be less than the maximum gas limit allowed.
+		//  4. The total gas limit of the partial proposal must be less than the maximum gas limit allowed for
+		//     the lane.
 		UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error
 
-		// GetProposalStatistics returns the statistics / info of the proposal.
-		GetProposalStatistics() ProposalStatistics
+		// GetStatistics returns the statistics / info of the proposal.
+		GetStatistics() ProposalStatistics
 
 		// GetTxs returns the transactions in the proposal.
 		GetTxs() [][]byte
@@ -45,45 +48,36 @@ type (
 	Proposal struct {
 		// txs is the list of transactions in the proposal.
 		txs [][]byte
-
 		// voteExtensions is the list of vote extensions in the proposal.
 		voteExtensions [][]byte
-
 		// cache is a cache of the selected transactions in the proposal.
 		cache map[string]struct{}
-
-		// totalTxBytes is the total number of bytes currently included in the proposal.
-		totalTxBytes int64
-
+		// totalTxBytesUsed is the total number of bytes currently included in the proposal.
+		totalTxBytesUsed int64
 		// maxTxBytes is the maximum number of bytes that can be included in the proposal.
 		maxTxBytes int64
-
-		// totalGasLimit is the total gas limit currently included in the proposal.
-		totalGasLimit uint64
-
+		// totalGasLimitUsed is the total gas limit currently included in the proposal.
+		totalGasLimitUsed uint64
 		// maxGasLimit is the maximum gas limit that can be included in the proposal.
 		maxGasLimit uint64
-
 		// txEncoder is the transaction encoder.
 		txEncoder sdk.TxEncoder
 	}
 
 	// ProposalStatistics defines the basic info/statistics of a proposal.
 	ProposalStatistics struct {
+		// NumVoteExtensions is the number of vote extensions in the proposal.
+		NumVoteExtensions int
 		// NumTxs is the number of transactions in the proposal.
 		NumTxs int
-
-		// TotalTxBytes is the total number of bytes currently included in the proposal.
-		TotalTxBytes int64
-
+		// TotalTxBytesUsed is the total number of bytes currently included in the proposal.
+		TotalTxBytesUsed int64
 		// MaxTxBytes is the maximum number of bytes that can be included in the proposal.
 		MaxTxBytes int64
-
-		// TotalGasLimit is the total gas limit currently included in the proposal.
-		TotalGasLimit uint64
-
-		// MaxGasLimit is the maximum gas limit that can be included in the proposal.
-		MaxGasLimit uint64
+		// TotalGasLimitUsed is the total gas limit currently included in the proposal.
+		TotalGasLimitUsed uint64
+		// MaxGas is the maximum gas limit that can be included in the proposal.
+		MaxGas uint64
 	}
 )
 
@@ -104,6 +98,9 @@ func NewProposal(txEncoder sdk.TxEncoder, maxTxBytes int64, maxGasLimit uint64) 
 //  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 //  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 //     the lane.
+//  3. The total gas limit of the proposal must be less than the maximum gas limit allowed.
+//  4. The total gas limit of the partial proposal must be less than the maximum gas limit allowed for
+//     the lane.
 func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error {
 	if len(partialProposalTxs) == 0 {
 		return nil
@@ -114,6 +111,7 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error 
 	partialProposalSize := int64(0)
 	partialProposalGasLimit := uint64(0)
 
+	// Aggregate info from the transactions.
 	for index, tx := range partialProposalTxs {
 		txInfo, err := GetTxInfo(p.txEncoder, tx)
 		if err != nil {
@@ -126,34 +124,34 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error 
 		txs[index] = txInfo.TxBytes
 	}
 
-	laneLimit := GetLaneLimit(
-		p.maxTxBytes, p.totalTxBytes,
-		p.maxGasLimit, p.totalGasLimit,
+	limits := GetLaneLimits(
+		p.maxTxBytes, p.totalTxBytesUsed,
+		p.maxGasLimit, p.totalGasLimitUsed,
 		lane.GetMaxBlockSpace(),
 	)
 
 	// Invarient check: Ensure that the lane did not prepare a partial proposal that is too large.
-	if partialProposalSize > laneLimit.MaxTxBytesLimit {
+	if partialProposalSize > limits.MaxTxBytes {
 		return fmt.Errorf(
 			"%s lane prepared a partial proposal that is too large: %d > %d",
 			lane.Name(),
 			partialProposalSize,
-			laneLimit.MaxTxBytesLimit,
+			limits.MaxTxBytes,
 		)
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a partial proposal that consumes too much gas.
-	if partialProposalGasLimit > laneLimit.MaxGasLimit {
+	if partialProposalGasLimit > limits.MaxGas {
 		return fmt.Errorf(
 			"%s lane prepared a partial proposal that consumes too much gas: %d > %d",
 			lane.Name(),
 			partialProposalGasLimit,
-			laneLimit.MaxGasLimit,
+			limits.MaxGas,
 		)
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.
-	updatedSize := p.totalTxBytes + partialProposalSize
+	updatedSize := p.totalTxBytesUsed + partialProposalSize
 	if updatedSize > p.maxTxBytes {
 		return fmt.Errorf(
 			"lane %s prepared a block proposal that is too large: %d > %d",
@@ -164,7 +162,7 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error 
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
-	updatedGasLimit := p.totalGasLimit + partialProposalGasLimit
+	updatedGasLimit := p.totalGasLimitUsed + partialProposalGasLimit
 	if updatedGasLimit > p.maxGasLimit {
 		return fmt.Errorf(
 			"lane %s prepared a block proposal that consumes too much gas: %d > %d",
@@ -175,8 +173,8 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error 
 	}
 
 	// Update the proposal
-	p.totalTxBytes = updatedSize
-	p.totalGasLimit = updatedGasLimit
+	p.totalTxBytesUsed = updatedSize
+	p.totalGasLimitUsed = updatedGasLimit
 	p.txs = append(p.txs, txs...)
 
 	for hash := range hashes {
@@ -195,6 +193,8 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposalTxs []sdk.Tx) error 
 		"num_txs", len(partialProposalTxs),
 		"partial_proposal_size", partialProposalSize,
 		"cumulative_proposal_size", updatedSize,
+		"partial_proposal_gas_limit", partialProposalGasLimit,
+		"cumulative_proposal_gas_limit", updatedGasLimit,
 	)
 
 	return nil
@@ -216,14 +216,15 @@ func (p *Proposal) GetVoteExtensions() [][]byte {
 	return p.voteExtensions
 }
 
-// GetProposalStatus returns the status of the proposal.
-func (p *Proposal) GetProposalStatistics() ProposalStatistics {
+// GetStatistics returns the various statistics of the proposal.
+func (p *Proposal) GetStatistics() ProposalStatistics {
 	return ProposalStatistics{
-		NumTxs:        len(p.txs),
-		TotalTxBytes:  p.totalTxBytes,
-		MaxTxBytes:    p.maxTxBytes,
-		TotalGasLimit: p.totalGasLimit,
-		MaxGasLimit:   p.maxGasLimit,
+		NumVoteExtensions: len(p.voteExtensions),
+		NumTxs:            len(p.txs),
+		TotalTxBytesUsed:  p.totalTxBytesUsed,
+		MaxTxBytes:        p.maxTxBytes,
+		TotalGasLimitUsed: p.totalGasLimitUsed,
+		MaxGas:            p.maxGasLimit,
 	}
 }
 
