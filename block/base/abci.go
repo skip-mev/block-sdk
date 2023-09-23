@@ -4,6 +4,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // PrepareLane will prepare a partial proposal for the lane. It will select transactions from the
@@ -12,17 +14,17 @@ import (
 // error. The proposal will only be modified if it passes all of the invarient checks.
 func (l *BaseLane) PrepareLane(
 	ctx sdk.Context,
-	proposal block.BlockProposal,
-	limit block.LaneLimits,
+	proposal proposals.Proposal,
+	limit proposals.LaneLimits,
 	next block.PrepareLanesHandler,
-) (block.BlockProposal, error) {
+) (proposals.Proposal, error) {
 	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
 	if err != nil {
 		return proposal, err
 	}
 
 	// Remove all transactions that were invalid during the creation of the partial proposal.
-	if err := block.RemoveTxsFromLane(txsToRemove, l); err != nil {
+	if err := utils.RemoveTxsFromLane(txsToRemove, l); err != nil {
 		l.Logger().Error(
 			"failed to remove transactions from lane",
 			"lane", l.Name(),
@@ -30,8 +32,14 @@ func (l *BaseLane) PrepareLane(
 		)
 	}
 
+	// Aggregate the transactions into a partial proposal.
+	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), txs)
+	if err != nil {
+		return proposal, err
+	}
+
 	// Update the proposal with the selected transactions.
-	if err := proposal.UpdateProposal(l, txs); err != nil {
+	if err := proposal.UpdateProposal(l.Name(), limit, partialProposal); err != nil {
 		return proposal, err
 	}
 
@@ -51,7 +59,7 @@ func (l *BaseLane) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 func (l *BaseLane) ProcessLane(
 	ctx sdk.Context,
 	txs []sdk.Tx,
-	limit block.LaneLimits,
+	limit proposals.LaneLimits,
 	next block.ProcessLanesHandler,
 ) (sdk.Context, error) {
 	remainingTxs, err := l.processLaneHandler(ctx, txs, limit)

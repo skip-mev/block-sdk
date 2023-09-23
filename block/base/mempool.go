@@ -8,7 +8,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 type (
@@ -101,7 +101,7 @@ func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
 
-	txInfo, err := block.GetTxInfo(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		cm.Remove(tx)
 		return err
@@ -118,7 +118,7 @@ func (cm *Mempool[C]) Remove(tx sdk.Tx) error {
 		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
 	}
 
-	txInfo, err := block.GetTxInfo(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx hash string: %w", err)
 	}
@@ -143,7 +143,7 @@ func (cm *Mempool[C]) CountTx() int {
 
 // Contains returns true if the transaction is contained in the mempool.
 func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
-	txInfo, err := block.GetTxInfo(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		return false
 	}

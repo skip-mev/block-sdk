@@ -5,6 +5,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
 // LaneMempool defines the interface a lane's mempool should implement. The basic API
@@ -36,10 +37,10 @@ type Lane interface {
 	// lane in the chain. The next lane in the chain will be called with the updated proposal and context.
 	PrepareLane(
 		ctx sdk.Context,
-		proposal BlockProposal,
-		limit LaneLimits,
+		proposal proposals.Proposal,
+		limit proposals.LaneLimits,
 		next PrepareLanesHandler,
-	) (BlockProposal, error)
+	) (proposals.Proposal, error)
 
 	// CheckOrder validates that transactions belonging to this lane are not misplaced
 	// in the block proposal and respect the ordering rules of the lane.
@@ -51,7 +52,6 @@ type Lane interface {
 	ProcessLane(
 		ctx sdk.Context,
 		proposalTxs []sdk.Tx,
-		limit LaneLimits,
 		next ProcessLanesHandler,
 	) (sdk.Context, error)
 
@@ -72,19 +72,4 @@ type Lane interface {
 
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
-}
-
-// LaneLimits defines the total number of bytes and units of gas that can be included in a block proposal
-// for a given lane.
-type LaneLimits struct {
-	MaxTxBytes int64
-	MaxGas     uint64
-}
-
-// NewLaneLimits returns a new lane limit.
-func NewLaneLimits(maxTxBytesLimit int64, maxGasLimit uint64) LaneLimits {
-	return LaneLimits{
-		MaxTxBytes: maxTxBytesLimit,
-		MaxGas:     maxGasLimit,
-	}
 }

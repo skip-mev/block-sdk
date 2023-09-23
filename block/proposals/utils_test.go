@@ -1,10 +1,10 @@
-package block_test
+package proposals_test
 
 import (
 	"testing"
 
 	"cosmossdk.io/math"
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
 func TestGetMaxTxBytesForLane(t *testing.T) {
@@ -102,7 +102,7 @@ func TestGetMaxTxBytesForLane(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			actual := block.GetLaneLimits(
+			actual := proposals.GetLaneLimits(
 				tc.maxTxBytes, tc.totalTxBytesUsed,
 				tc.maxGasLimit, tc.totalGasLimitUsed,
 				tc.ratio,

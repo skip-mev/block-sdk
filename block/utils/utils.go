@@ -1,11 +1,10 @@
-package block
+package utils
 
 import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
 
-	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
@@ -73,43 +72,4 @@ func RemoveTxsFromLane(txs []sdk.Tx, mempool sdkmempool.Mempool) error {
 	}
 
 	return nil
-}
-
-// GetLaneLimits returns the maximum number of bytes and gas limit that can be
-// included/consumed in the proposal for the given lane.
-func GetLaneLimits(
-	maxTxBytes, consumedTxBytes int64,
-	maxGaslimit, consumedGasLimit uint64,
-	ratio math.LegacyDec,
-) LaneLimits {
-	var (
-		txBytes  int64
-		gasLimit uint64
-	)
-
-	// In the case where the ratio is zero, we return the max tx bytes remaining. Note, the only
-	// lane that should have a ratio of zero is the default lane. This means the default lane
-	// will have no limit on the number of transactions it can include in a block and is only
-	// limited by the maxTxBytes included in the PrepareProposalRequest.
-	if ratio.IsZero() {
-		txBytes := maxTxBytes - consumedTxBytes
-		if txBytes < 0 {
-			txBytes = 0
-		}
-
-		// Unsigned subtraction needs an additional check
-		if consumedGasLimit >= maxGaslimit {
-			gasLimit = 0
-		} else {
-			gasLimit = maxGaslimit - consumedGasLimit
-		}
-
-		return NewLaneLimits(txBytes, gasLimit)
-	}
-
-	// Otherwise, we calculate the max tx bytes / gas limit for the lane based on the ratio.
-	txBytes = ratio.MulInt64(maxTxBytes).TruncateInt().Int64()
-	gasLimit = ratio.MulInt(math.NewIntFromUint64(maxGaslimit)).TruncateInt().Uint64()
-
-	return NewLaneLimits(txBytes, gasLimit)
 }

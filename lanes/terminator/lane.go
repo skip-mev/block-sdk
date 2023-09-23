@@ -9,6 +9,7 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
 const (
@@ -40,7 +41,7 @@ type Terminator struct{}
 var _ block.Lane = (*Terminator)(nil)
 
 // PrepareLane is a no-op
-func (t Terminator) PrepareLane(_ sdk.Context, proposal block.BlockProposal, _ block.LaneLimits, _ block.PrepareLanesHandler) (block.BlockProposal, error) {
+func (t Terminator) PrepareLane(_ sdk.Context, proposal proposals.Proposal, _ proposals.LaneLimits, _ block.PrepareLanesHandler) (proposals.Proposal, error) {
 	return proposal, nil
 }
 
@@ -50,7 +51,7 @@ func (t Terminator) CheckOrder(sdk.Context, []sdk.Tx) error {
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ block.LaneLimits, _ block.ProcessLanesHandler) (sdk.Context, error) {
+func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ proposals.LaneLimits, _ block.ProcessLanesHandler) (sdk.Context, error) {
 	return ctx, nil
 }
 

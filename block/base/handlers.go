@@ -5,7 +5,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // DefaultPrepareLaneHandler returns a default implementation of the PrepareLaneHandler. It
@@ -13,7 +14,7 @@ import (
 // proposal. It will continue to reap transactions until the maximum block space for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
 func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		var (
 			totalSize    int64
 			totalGas     uint64
@@ -26,7 +27,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			tx := iterator.Tx()
 
-			txInfo, err := block.GetTxInfo(l.TxEncoder(), tx)
+			txInfo, err := utils.GetTxInfo(l.TxEncoder(), tx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of tx", "err", err)
 
@@ -114,7 +115,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 // that does not match the lane's matcher, it will return the remaining transactions in the
 // proposal.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx, limit block.LaneLimits) ([]sdk.Tx, error) {
+	return func(ctx sdk.Context, txs []sdk.Tx, limit proposals.LaneLimits) ([]sdk.Tx, error) {
 		var (
 			totalGas  uint64
 			totalSize int64
@@ -123,7 +124,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 		// Process all transactions that match the lane's matcher.
 		for index, tx := range txs {
 			if l.Match(ctx, tx) {
-				txInfo, err := block.GetTxInfo(l.TxEncoder(), tx)
+				txInfo, err := utils.GetTxInfo(l.TxEncoder(), tx)
 				if err != nil {
 					return nil, fmt.Errorf("failed to get info on tx: %w", err)
 				}
