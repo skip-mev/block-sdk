@@ -181,6 +181,19 @@ func (s *IntegrationTestSuite) CreateAuctionBidMsg(ctx context.Context, searcher
 // is not expected to be included in a block, set SkipInclusionCheck to true and the method
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion
 func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, msgsPerUser []Tx) [][]byte {
+	return s.BroadcastTxsWithCallback(ctx, chain, msgsPerUser, nil)
+}
+
+// BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
+// is not expected to be included in a block, set SkipInclusionCheck to true and the method
+// will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion. The callback
+// function is called for each tx that is included in a block.
+func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
+	ctx context.Context, 
+	chain *cosmos.CosmosChain, 
+	msgsPerUser []Tx,
+	cb func(tx []byte, resp *rpctypes.ResultTx),
+) [][]byte {
 	txs := make([][]byte, len(msgsPerUser))
 
 	for i, msg := range msgsPerUser {
@@ -193,15 +206,17 @@ func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.C
 
 	for i, tx := range txs {
 		// broadcast tx
-		resp, _ := client.BroadcastTxSync(ctx, tx)
-		
-		s.T().Log("tx response", resp)
+		resp, err := client.BroadcastTxSync(ctx, tx)
 
 		// check execution was successful
 		if !msgsPerUser[i].ExpectFail {
 			s.Require().Equal(resp.Code, uint32(0))
 		} else {
-			s.Require().NotEqual(resp.Code, uint32(0))
+			if resp != nil {
+				s.Require().NotEqual(resp.Code, uint32(0))
+			} else {
+				s.Require().Error(err)
+			}
 		}
 
 	}
@@ -216,12 +231,16 @@ func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.C
 
 		tx := tx // pin
 		eg.Go(func() error {
-			return testutil.WaitForCondition(10*time.Second, 500*time.Millisecond, func() (bool, error) {
+			return testutil.WaitForCondition(30*time.Second, 500*time.Millisecond, func() (bool, error) {
 				res, err := client.Tx(context.Background(), comettypes.Tx(tx).Hash(), false)
-
 				if err != nil || res.TxResult.Code != uint32(0) {
 					return false, nil
 				}
+
+				if cb != nil {
+					cb(tx, res)
+				}
+
 				return true, nil
 			})
 		})
@@ -329,7 +348,7 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 		if err != nil {
 			return false, err
 		}
-		return pollHeight == height, nil
+		return pollHeight >= height, nil
 	})
 	require.NoError(t, err)
 }

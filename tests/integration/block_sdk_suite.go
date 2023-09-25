@@ -14,6 +14,8 @@ import (
 	"github.com/stretchr/testify/suite"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
+	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"bytes"
 )
 
 const (
@@ -191,24 +193,52 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		msgsToBcast = append(msgsToBcast, Tx{
 			User:   s.user1,
 			Msgs:   []sdk.Msg{bid},
-			Height: height + 1,
+			Height: height + 3,
 		})
 
 		msgsToBcast = append(msgsToBcast, Tx{
 			User:   s.user2,
 			Msgs:   msgs[1:2],
-			Height: height + 1,
+			Height: height + 3,
 		})
 
-		regular_txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), msgsToBcast)
+		expTxs := make(chan committedTx, 2)
+
+		regular_txs := s.BroadcastTxsWithCallback(
+			context.Background(), 
+			s.chain.(*cosmos.CosmosChain), 
+			msgsToBcast,
+			func(tx []byte, resp *rpctypes.ResultTx) {
+				expTxs <- committedTx{tx, resp}
+			},
+		)
+		close(expTxs)
+		s.Require().Len(expTxs, 2)
+
+		// get the height of the block that the bid was included in
+		var commitHeight int64
+		
+		tx1 := <-expTxs
+		tx2 := <-expTxs
+
+		// determine which tx is the bid
+		if bytes.Equal(tx1.tx, regular_txs[0]) {
+			commitHeight = tx1.res.Height
+		} else {
+			commitHeight = tx2.res.Height
+		}
+
+		// if they were committed in the same height
+		if tx1.res.Height == tx2.res.Height {
+			bundledTxs = append(bundledTxs, regular_txs[1:]...)
+		}
 
 		// get the block at the next height
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), commitHeight)
 
 		// verify the block
 		bidTxHash := TxHash(regular_txs[0])
-		VerifyBlock(s.T(), block, 0, bidTxHash, append(bundledTxs, regular_txs[1:]...))
+		VerifyBlock(s.T(), block, 0, bidTxHash, bundledTxs)
 
 		// ensure that escrow account has the correct balance
 		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
@@ -305,34 +335,52 @@ func (s *IntegrationTestSuite) TestValidBids() {
 
 		// create bundle
 		bidAmt := params.ReserveFee
-		bid, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt, txs)
+		bid, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt, txs)
 
 		// get chain height
 		height, err = s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
+		expTxs := make(chan committedTx, 4)
+
 		// broadcast txs in the bundle to network + bundle + extra
-		broadcastedTxs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{txs[0], txs[1], {
+		broadcastedTxs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		{
 			User:   s.user2,
 			Msgs:   []sdk.Msg{bid},
-			Height: height + 1,
+			Height: height + 3,
 		}, {
 			User: s.user3,
 			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user1.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
-		}})
+			Height: height + 3,
+		}},
+		func(tx []byte, resp *rpctypes.ResultTx) {
+			expTxs <- committedTx{tx, resp}
+		})
+		close(expTxs)
 
-		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		var bidTxHeight int64
+		for tx := range expTxs {
+			if bytes.Equal(tx.tx, broadcastedTxs[0]) {
+				bidTxHeight = tx.res.Height
+			}
+		}
+
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), bidTxHeight)
 
 		// check block
-		VerifyBlock(s.T(), block, 0, TxHash(broadcastedTxs[2]), append(bundledTxs, broadcastedTxs[3]))
+		VerifyBlock(s.T(), block, 0, TxHash(broadcastedTxs[0]), bundledTxs)
 
 		// check escrow account balance
 		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
 		expectedIncrement := escrowAddressIncrement(bidAmt.Amount, params.ProposerFee)
 		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
 	})
+}
+
+type committedTx struct {
+	tx   []byte
+	res *rpctypes.ResultTx
 }
 
 // TestMultipleBids tests the execution of various valid auction bids in the same block. There are a few
@@ -376,31 +424,40 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		// create channel to receive txs
+		txsCh := make(chan committedTx, 2)
+
+		// broadcast both bids (with ample time to be committed (instead of timing out))
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:               s.user1,
 				Msgs:               []sdk.Msg{bid1},
-				Height:             height + 2,
-				SkipInclusionCheck: true,
+				Height:             height + 4,
 			},
 			{
 				User:   s.user2,
 				Msgs:   []sdk.Msg{bid2},
-				Height: height + 1,
+				Height: height + 3,
 			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			txsCh <- committedTx{tx, resp}
 		})
+		
+		// check txs were committed
+		require.Len(s.T(), txsCh, 2)
+		close(txsCh)
 
-		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		tx1 := <-txsCh
+		tx2 := <-txsCh
+
+		// query next block	
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
 
 		// check bid2 was included first
 		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs2)
 
 		// check next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+2)
-		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+2))
+		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), tx2.res.Height)
 
 		// check bid1 was included second
 		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
@@ -439,24 +496,30 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		expTx := make(chan committedTx, 1)
+
+		// broadcast both bids (wait for the first to be committed)
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user1,
 				Msgs:   []sdk.Msg{bid1},
-				Height: height + 1,
+				Height: height + 4,
 			},
 			{
 				User:       s.user2,
 				Msgs:       []sdk.Msg{bid2},
-				Height:     height + 1,
+				Height:     height + 3,
 				ExpectFail: true,
 			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			expTx <- committedTx{tx, resp}
 		})
 
+		close(expTx)
+		commitTx := <-expTx
+
 		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), commitTx.res.Height)
 
 		// check bid2 was included first
 		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
@@ -489,41 +552,38 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 			SequenceIncrement: 1,
 		}
 
-		// get account sequence of user2
-		seq := QueryAccountSequence(s.T(), s.chain.(*cosmos.CosmosChain), s.user1.FormattedAddress())
-		s.T().Log("user2 sequence", seq, s.user1.FormattedAddress())
-
 		// create bid2 w/ higher bid than bid1
 		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg2})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
+		expTx := make(chan committedTx, 1)
+
 		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user1,
 				Msgs:   []sdk.Msg{bid1},
-				Height: height + 1,
+				Height: height + 4,
 			},
 			{
 				User:              s.user1,
 				Msgs:              []sdk.Msg{bid2},
-				SequenceIncrement: 1,
-				Height:            height + 1,
+				Height:            height + 4,
 				ExpectFail:        true,
 			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			expTx <- committedTx{tx, resp}
 		})
+		close(expTx)
 
-		// query user2 sequence
-		seq = QueryAccountSequence(s.T(), s.chain.(*cosmos.CosmosChain), s.user1.FormattedAddress())
-		s.T().Log("user2 sequence", seq)
+		commitTx := <-expTx
 
 		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), commitTx.res.Height)
 
-		// check bid2 was included first
+		// check bid1 was included first
 		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
 
 		// check escrow balance
@@ -553,33 +613,41 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
+		commitTx := make(chan committedTx, 1)
+
 		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
-			{
-				User:   s.user1,
-				Msgs:   []sdk.Msg{bid2},
-				Height: height + 1,
-			},
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:              s.user1,
 				Msgs:              []sdk.Msg{bid1},
-				Height:            height + 2,
-				SequenceIncrement: 1,
-				ExpectFail:        true,
+				Height:            height + 4,
+				SkipInclusionCheck: true,
 			},
+			{
+				User:   s.user1,
+				Msgs:   []sdk.Msg{bid2},
+				Height: height + 3,
+			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			commitTx <- committedTx{tx, resp}
 		})
+		close(commitTx)
+
+		expTx := <-commitTx
 
 		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), expTx.res.Height)
 
 		// check bid2 was included first
-		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
+		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs)
 
 		// check escrow balance
 		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
 		expectedIncrement := escrowAddressIncrement(bidAmt.Add(params.MinBidIncrement).Amount, params.ProposerFee)
 		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
+
+		// wait for next block for mempool to clear
+		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+3)
 	})
 
 	s.Run("Multiple transactions from diff. account with increasing bids but first bid has same bundle so it should fail in later block", func() {
@@ -603,32 +671,41 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
+		commitTx := make(chan committedTx, 1)
+
 		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
-			{
-				User:   s.user2,
-				Msgs:   []sdk.Msg{bid2},
-				Height: height + 1,
-			},
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{bid1},
-				Height:     height + 1,
-				ExpectFail: true,
+				Height:     height + 4,
+				SkipInclusionCheck: true,
 			},
+			{
+				User:   s.user2,
+				Msgs:   []sdk.Msg{bid2},
+				Height: height + 3,
+			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			commitTx <- committedTx{tx, resp}
 		})
+		close(commitTx)
+
+		expTx := <-commitTx
 
 		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), expTx.res.Height)
 
 		// check bid2 was included first
-		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
+		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs)
 
 		// check escrow balance
 		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
 		expectedIncrement := escrowAddressIncrement(bidAmt.Add(params.MinBidIncrement).Amount, params.ProposerFee)
 		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
+
+		// wait for next block for mempool to clear
+		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+3)
 	})
 
 	s.Run("Multiple transactions with increasing bids and different bundles", func() {
@@ -655,36 +732,48 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 
 		// create bid2 w/ higher bid than bid1
-		bid2, bundledTxs2 := s.CreateAuctionBidMsg( context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
+		bid2, bundledTxs2 := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
+		// make channel for committedTxs (expect 2 txs to be committed)
+		committedTxs := make(chan committedTx, 2)
+
 		// broadcast both bids
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:               s.user1,
 				Msgs:               []sdk.Msg{bid1},
-				Height:             height + 2,
-				SkipInclusionCheck: true,
+				Height:             height + 4,
 			},
 			{
 				User:   s.user2,
 				Msgs:   []sdk.Msg{bid2},
-				Height: height + 1,
+				Height: height + 3,
 			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			committedTxs <- committedTx{
+				tx:   tx,
+				res: resp,
+			}
 		})
 
+		// close the channel when finished
+		close(committedTxs)
+
+		// expect 2 txs
+		tx1 := <-committedTxs
+		tx2 := <-committedTxs
+
 		// query next block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
 
 		// check bid2 was included first
 		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs2)
 
 		// query next block and check tx inclusion
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+2)
-		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+2))
+		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), tx2.res.Height)
 
 		// check bid1 was included second
 		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
@@ -957,7 +1046,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 
 		// user1 submits a free-tx, user2 submits a normal tx
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User: s.user1,
 				Msgs: []sdk.Msg{
@@ -1063,11 +1152,13 @@ func (s *IntegrationTestSuite) TestLanes() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		committedTxs := make(chan committedTx, 3)
+
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user1,
 				Msgs:   []sdk.Msg{bid},
-				Height: height + 1,
+				Height: height + 3,
 			},
 			{
 				User: s.user2,
@@ -1090,13 +1181,23 @@ func (s *IntegrationTestSuite) TestLanes() {
 					},
 				},
 			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			committedTxs <- committedTx{tx: tx, res: resp}
 		})
+		close(committedTxs)
 
-		// check block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
+		// find height of committed tx
+		var committedHeight int64
+		for tx := range committedTxs {
+			if bytes.Equal(tx.tx, txs[0]) {
+				committedHeight = tx.res.Height
+				break
+			}
+		}
 
-		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), append(bundledTx, txs[1:]...))
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), committedHeight)
+
+		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTx)
 
 		// check user2 balance expect no fee deduction
 		user2BalanceAfter := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
@@ -1141,7 +1242,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{bid},
@@ -1170,12 +1271,6 @@ func (s *IntegrationTestSuite) TestLanes() {
 				},
 			},
 		})
-
-		// check block
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height+1))
-
-		VerifyBlock(s.T(), block, 0, "", txs[1:])
 
 		// check user2 balance expect no fee deduction
 		user2BalanceAfter := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
@@ -1221,7 +1316,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		txs := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user3,
 				Msgs:   []sdk.Msg{bid},

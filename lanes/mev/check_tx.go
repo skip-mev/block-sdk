@@ -118,7 +118,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), err
+			), nil
 		}
 
 		// Attempt to get the bid info of the transaction.
@@ -135,7 +135,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), err
+			), nil
 		}
 
 		// If this is not a bid transaction, we just execute it normally.
@@ -162,7 +162,19 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 			handler.baseApp.Logger().Info(
 				"invalid bid tx",
 				"err", err,
+				"tx", req.Tx,
+				"removing tx from mempool", true,
 			)
+
+			// attempt to remove the bid from the MEVLane (if it exists)
+			if handler.mevLane.Contains(tx) {
+				if err := handler.mevLane.Remove(tx); err != nil {
+					handler.baseApp.Logger().Error(
+						"failed to remove bid transaction from mev-lane",
+						"err", err,
+					)
+				}
+			}
 
 			return sdkerrors.ResponseCheckTxWithEvents(
 				fmt.Errorf("invalid bid tx: %w", err),
@@ -170,8 +182,14 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				gasInfo.GasUsed,
 				nil,
 				false,
-			), err
+			), nil
 		}
+
+		handler.baseApp.Logger().Info(
+			"valid bid tx",
+			"tx", req.Tx,
+			"inserting tx into mempool", true,
+		)
 
 		// If the bid transaction is valid, we know we can insert it into the mempool for consideration in the next block.
 		if err := handler.mevLane.Insert(ctx, tx); err != nil {
@@ -186,7 +204,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				gasInfo.GasUsed,
 				nil,
 				false,
-			), err
+			), nil
 		}
 
 		return &cometabci.ResponseCheckTx{

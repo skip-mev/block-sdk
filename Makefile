@@ -119,7 +119,7 @@ TEST_INTEGRATION_TAGS = integration
 
 test-integration: $(TEST_INTEGRATION_DEPS)
 	@ echo "Running integration tests..."
-	@go test ./tests/integration/block_sdk_integration_test.go -timeout 30m -race -v -tags='$(TEST_INTEGRATION_TAGS)'
+	@go test ./tests/integration/block_sdk_integration_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_INTEGRATION_TAGS)'
 
 test: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
