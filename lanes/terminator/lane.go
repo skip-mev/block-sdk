@@ -45,14 +45,9 @@ func (t Terminator) PrepareLane(_ sdk.Context, proposal proposals.Proposal, _ pr
 	return proposal, nil
 }
 
-// ValidateLaneBasic is a no-op
-func (t Terminator) CheckOrder(sdk.Context, []sdk.Tx) error {
-	return nil
-}
-
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, _ []sdk.Tx, _ proposals.LaneLimits, _ block.ProcessLanesHandler) (sdk.Context, error) {
-	return ctx, nil
+func (t Terminator) ProcessLane(ctx sdk.Context, p proposals.Proposal, _ [][]byte, _ block.ProcessLanesHandler) (proposals.Proposal, error) {
+	return p, nil
 }
 
 // GetMaxBlockSpace is a no-op

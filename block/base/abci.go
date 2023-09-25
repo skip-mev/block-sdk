@@ -52,14 +52,39 @@ func (l *BaseLane) PrepareLane(
 // are invalid, we return an error.
 func (l *BaseLane) ProcessLane(
 	ctx sdk.Context,
-	txs []sdk.Tx,
+	proposal proposals.Proposal,
+	txs [][]byte,
 	next block.ProcessLanesHandler,
-) (sdk.Context, error) {
-	if err := l.processLaneHandler(ctx, txs); err != nil {
-		return ctx, err
+) (proposals.Proposal, error) {
+	decodedTxs, err := utils.GetDecodedTxs(l.TxDecoder(), txs)
+	if err != nil {
+		return proposal, err
 	}
 
-	return next(ctx)
+	// Get the limits for this lane.
+	metaData := proposal.GetMetaData()
+	limit := proposals.GetLaneLimits(
+		proposal.GetMaxTxBytes(), metaData.TotalTxBytes,
+		proposal.GetMaxGasLimit(), metaData.TotalGasLimit,
+		l.cfg.MaxBlockSpace,
+	)
+
+	// Create a partial proposal from the transactions that belong to this lane.
+	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), decodedTxs, limit)
+	if err != nil {
+		return proposal, err
+	}
+
+	if err := l.processLaneHandler(ctx, partialProposal); err != nil {
+		return proposal, err
+	}
+
+	// Update the proposal with the partial proposal. If this fails, the proposal is invalid.
+	if err := proposal.UpdateProposal(l.Name(), partialProposal); err != nil {
+		return proposal, err
+	}
+
+	return next(ctx, proposal)
 }
 
 // AnteVerifyTx verifies that the transaction is valid respecting the ante verification logic of

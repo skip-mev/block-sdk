@@ -47,9 +47,10 @@ type Lane interface {
 	// lane in the chain will be called with the updated context and filtered down transactions.
 	ProcessLane(
 		ctx sdk.Context,
-		partialProposal []sdk.Tx,
+		proposal proposals.Proposal,
+		partialProposal [][]byte,
 		next ProcessLanesHandler,
-	) (sdk.Context, error)
+	) (proposals.Proposal, error)
 
 	// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
 	GetMaxBlockSpace() math.LegacyDec

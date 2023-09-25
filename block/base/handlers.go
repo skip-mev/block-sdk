@@ -115,16 +115,18 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 // 2. All transactions respect the priority defined by the mempool.
 // 3. All transactions are valid respecting the verification logic of the lane.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
+	return func(ctx sdk.Context, partialProposal proposals.PartialProposal) error {
+		txs := partialProposal.SdkTxs
+
 		// Process all transactions that match the lane's matcher.
-		for index, tx := range partialProposal {
+		for index, tx := range txs {
 			if !l.Match(ctx, tx) {
 				return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())
 			}
 
 			// If the transactions do not respect the priority defined by the mempool, we consider the proposal
 			// to be invalid
-			if index > 0 && l.Compare(ctx, partialProposal[index-1], tx) == -1 {
+			if index > 0 && l.Compare(ctx, txs[index-1], tx) == -1 {
 				return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
 			}
 

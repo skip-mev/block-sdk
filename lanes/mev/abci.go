@@ -6,8 +6,9 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
+	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -16,7 +17,7 @@ import (
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
 func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, limit block.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
 			txsToInclude []sdk.Tx
@@ -31,7 +32,7 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 			cacheCtx, write := ctx.CacheContext()
 			bidTx := bidTxIterator.Tx()
 
-			txInfo, err := block.GetTxInfo(l.TxEncoder(), bidTx)
+			txInfo, err := utils.GetTxInfo(l.TxEncoder(), bidTx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of auction bid tx", "err", err)
 
@@ -119,7 +120,7 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 					continue selectBidTxLoop
 				}
 
-				bundledTxInfo, err := block.GetTxInfo(l.TxEncoder(), bundleTx)
+				bundledTxInfo, err := utils.GetTxInfo(l.TxEncoder(), bundleTx)
 				if err != nil {
 					l.Logger().Info(
 						"failed to get hash of bundled tx",
@@ -179,140 +180,53 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 // ProcessLaneHandler will ensure that block proposals that include transactions from
 // the mev lane are valid.
 func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx, limit block.LaneLimits) ([]sdk.Tx, error) {
+	return func(ctx sdk.Context, partialProposal proposals.PartialProposal) error {
+		txs := partialProposal.SdkTxs
+
 		if len(txs) == 0 {
-			return txs, nil
+			return nil
 		}
 
+		// If the first transaction does not match the lane, then we return an error.
 		bidTx := txs[0]
 		if !l.Match(ctx, bidTx) {
-			return txs, nil
-		}
-
-		txInfo, err := block.GetTxInfo(l.TxEncoder(), bidTx)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get info of auction bid tx: %w", err)
+			return fmt.Errorf("expected first transaction in lane %s to be a bid transaction", l.Name())
 		}
 
 		bidInfo, err := l.GetAuctionBidInfo(bidTx)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get bid info for lane %s: %w", l.Name(), err)
+			return fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
 		}
 
-		if txInfo.GasLimit > limit.MaxGas {
-			return nil, fmt.Errorf(
-				"invalid gas limit for bid tx in lane %s; expected at most %d, got %d",
-				l.Name(),
-				limit.MaxGas,
-				txInfo.GasLimit,
-			)
+		// Check that all bundled transactions were included.
+		if len(bidInfo.Transactions)+1 != len(txs) {
+			return fmt.Errorf("expected %d transactions in lane %s but got %d", len(bidInfo.Transactions)+1, l.Name(), len(txs))
 		}
 
-		if txInfo.Size > limit.MaxTxBytes {
-			return nil, fmt.Errorf(
-				"invalid tx size for bid tx in lane %s; expected at most %d, got %d",
-				l.Name(),
-				limit.MaxTxBytes,
-				txInfo.Size,
-			)
-		}
-
-		// verify the top-level bid transaction
+		// Cerify the top-level bid transaction.
 		if ctx, err = l.AnteVerifyTx(ctx, bidTx, false); err != nil {
-			return nil, fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
+			return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 		}
 
-		// verify all of the bundled transactions
-		totalGas := txInfo.GasLimit
-		for _, tx := range bidInfo.Transactions {
-			bundledTx, err := l.WrapBundleTransaction(tx)
+		// Verify all of the bundled transactions.
+		for index, bundledTxBz := range bidInfo.Transactions {
+			bundledTx, err := l.WrapBundleTransaction(bundledTxBz)
 			if err != nil {
-				return nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
+				return fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 			}
 
-			bundledTxInfo, err := block.GetTxInfo(l.TxEncoder(), bundledTx)
+			// Verify that the bundled transaction matches the transaction in the block proposal.
+			txBz, err := l.TxEncoder()(txs[index+1])
 			if err != nil {
-				return nil, fmt.Errorf("failed to get info of bundled tx: %w", err)
+				return fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
 			}
 
-			if totalGas += bundledTxInfo.GasLimit; totalGas > limit.MaxGas {
-				return nil, fmt.Errorf(
-					"invalid gas limit with bundled tx in lane %s; expected at most %d, got %d",
-					l.Name(),
-					limit.MaxGas,
-					totalGas,
-				)
+			if !bytes.Equal(bundledTxBz, txBz) {
+				return fmt.Errorf("invalid bid tx; bundled tx does not match tx in block proposal")
 			}
 
 			if ctx, err = l.AnteVerifyTx(ctx, bundledTx, false); err != nil {
-				return nil, fmt.Errorf("invalid bid tx; failed to execute bundled transaction: %w", err)
-			}
-		}
-
-		return txs[len(bidInfo.Transactions)+1:], nil
-	}
-}
-
-// CheckOrderHandler ensures that if a bid transaction is present in a proposal,
-//   - it is the first transaction in the partial proposal
-//   - all of the bundled transactions are included after the bid transaction in the order
-//     they were included in the bid transaction.
-//   - there are no other bid transactions in the proposal
-//   - transactions from other lanes are not interleaved with transactions from the bid
-//     transaction.
-func (l *MEVLane) CheckOrderHandler() base.CheckOrderHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) error {
-		if len(txs) == 0 {
-			return nil
-		}
-
-		bidTx := txs[0]
-
-		// If there is a bid transaction, it must be the first transaction in the block proposal.
-		if !l.Match(ctx, bidTx) {
-			for _, tx := range txs[1:] {
-				if l.Match(ctx, tx) {
-					return fmt.Errorf("misplaced bid transactions in lane %s", l.Name())
-				}
-			}
-
-			return nil
-		}
-
-		bidInfo, err := l.GetAuctionBidInfo(bidTx)
-		if err != nil {
-			return fmt.Errorf("failed to get bid info for lane %s: %w", l.Name(), err)
-		}
-
-		if len(txs) < len(bidInfo.Transactions)+1 {
-			return fmt.Errorf(
-				"invalid number of transactions in lane %s; expected at least %d, got %d",
-				l.Name(),
-				len(bidInfo.Transactions)+1,
-				len(txs),
-			)
-		}
-
-		// Ensure that the order of transactions in the bundle is preserved.
-		for i, bundleTx := range txs[1 : len(bidInfo.Transactions)+1] {
-			if l.Match(ctx, bundleTx) {
-				return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
-			}
-
-			txBz, err := l.TxEncoder()(bundleTx)
-			if err != nil {
-				return fmt.Errorf("failed to encode bundled tx in lane %s: %w", l.Name(), err)
-			}
-
-			if !bytes.Equal(txBz, bidInfo.Transactions[i]) {
-				return fmt.Errorf("invalid order of transactions in lane %s", l.Name())
-			}
-		}
-
-		// Ensure that there are no more bid transactions in the block proposal.
-		for _, tx := range txs[len(bidInfo.Transactions)+1:] {
-			if l.Match(ctx, tx) {
-				return fmt.Errorf("multiple bid transactions in lane %s", l.Name())
+				return fmt.Errorf("invalid bid tx; failed to execute bundled transaction: %w", err)
 			}
 		}
 

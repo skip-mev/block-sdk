@@ -24,21 +24,21 @@ func (p *Proposal) UpdateProposal(
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.
 	updatedSize := p.metaData.TotalTxBytes + partialProposal.Size
-	if updatedSize > p.maxTxBytes {
+	if updatedSize > p.info.MaxTxBytes {
 		return fmt.Errorf(
 			"block proposal is too large: %d > %d",
 			updatedSize,
-			p.maxTxBytes,
+			p.info.MaxTxBytes,
 		)
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
 	updatedGasLimit := p.metaData.TotalGasLimit + partialProposal.GasLimit
-	if updatedGasLimit > p.maxGasLimit {
+	if updatedGasLimit > p.info.MaxGas {
 		return fmt.Errorf(
 			"block proposal consumes too much gas: %d > %d",
 			updatedGasLimit,
-			p.maxGasLimit,
+			p.info.MaxGas,
 		)
 	}
 

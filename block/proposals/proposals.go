@@ -12,26 +12,39 @@ type (
 		txs [][]byte
 		// cache is a cache of the selected transactions in the proposal.
 		cache map[string]struct{}
-		// maxTxBytes is the maximum number of bytes that can be included in the proposal.
-		maxTxBytes int64
-		// maxGasLimit is the maximum gas limit that can be included in the proposal.
-		maxGasLimit uint64
+		// limit contains the block limits.
+		info BlockInfo
 		// txEncoder is the transaction encoder.
 		txEncoder sdk.TxEncoder
 		// metaData is the metadata of the proposal.
 		metaData types.ProposalMetaData
+	}
+
+	// BlockLimits defines the total number of bytes and units of gas that can be included in a block proposal.
+	BlockInfo struct {
+		MaxTxBytes  int64
+		MaxGas      uint64
+		CurrentSize int64
+		CurrentGas  uint64
 	}
 )
 
 // NewProposal returns a new empty proposal.
 func NewProposal(txEncoder sdk.TxEncoder, maxTxBytes int64, maxGasLimit uint64) Proposal {
 	return Proposal{
-		txEncoder:   txEncoder,
-		maxTxBytes:  maxTxBytes,
-		maxGasLimit: maxGasLimit,
-		txs:         make([][]byte, 0),
-		cache:       make(map[string]struct{}),
-		metaData:    NewProposalMetaData(),
+		txEncoder: txEncoder,
+		info:      NewBlockLimits(maxTxBytes, maxGasLimit),
+		txs:       make([][]byte, 0),
+		cache:     make(map[string]struct{}),
+		metaData:  NewProposalMetaData(),
+	}
+}
+
+// NewBlockLimits returns a new block limits.
+func NewBlockLimits(maxTxBytes int64, maxGasLimit uint64) BlockInfo {
+	return BlockInfo{
+		MaxTxBytes: maxTxBytes,
+		MaxGas:     maxGasLimit,
 	}
 }
 
@@ -65,12 +78,12 @@ func (p *Proposal) GetMetaData() *types.ProposalMetaData {
 
 // GetMaxGasLimit returns the maximum gas limit that can be included in the proposal.
 func (p *Proposal) GetMaxGasLimit() uint64 {
-	return p.maxGasLimit
+	return p.info.MaxGas
 }
 
 // GetMaxTxBytes returns the maximum number of bytes that can be included in the proposal.
 func (p *Proposal) GetMaxTxBytes() int64 {
-	return p.maxTxBytes
+	return p.info.MaxTxBytes
 }
 
 // GetTxs returns the transactions in the proposal.

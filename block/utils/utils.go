@@ -63,6 +63,21 @@ func GetDecodedTxs(txDecoder sdk.TxDecoder, txs [][]byte) ([]sdk.Tx, error) {
 	return decodedTxs, nil
 }
 
+// GetEncodedTxs returns the encoded transactions from the given bytes.
+func GetEncodedTxs(txEncoder sdk.TxEncoder, txs []sdk.Tx) ([][]byte, error) {
+	var encodedTxs [][]byte
+	for _, tx := range txs {
+		txBz, err := txEncoder(tx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode transaction: %w", err)
+		}
+
+		encodedTxs = append(encodedTxs, txBz)
+	}
+
+	return encodedTxs, nil
+}
+
 // RemoveTxsFromLane removes the transactions from the given lane's mempool.
 func RemoveTxsFromLane(txs []sdk.Tx, mempool sdkmempool.Mempool) error {
 	for _, tx := range txs {
