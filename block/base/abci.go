@@ -18,7 +18,7 @@ func (l *BaseLane) PrepareLane(
 	limit proposals.LaneLimits,
 	next block.PrepareLanesHandler,
 ) (proposals.Proposal, error) {
-	txs, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
+	txsToInclude, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
 	if err != nil {
 		return proposal, err
 	}
@@ -33,23 +33,17 @@ func (l *BaseLane) PrepareLane(
 	}
 
 	// Aggregate the transactions into a partial proposal.
-	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), txs)
+	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), txsToInclude, limit)
 	if err != nil {
 		return proposal, err
 	}
 
 	// Update the proposal with the selected transactions.
-	if err := proposal.UpdateProposal(l.Name(), limit, partialProposal); err != nil {
+	if err := proposal.UpdateProposal(l.Name(), partialProposal); err != nil {
 		return proposal, err
 	}
 
 	return next(ctx, proposal)
-}
-
-// CheckOrder checks that the ordering logic of the lane is respected given the set of transactions
-// in the block proposal. If the ordering logic is not respected, we return an error.
-func (l *BaseLane) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
-	return l.checkOrderHandler(ctx, txs)
 }
 
 // ProcessLane verifies that the transactions included in the block proposal are valid respecting
@@ -59,15 +53,13 @@ func (l *BaseLane) CheckOrder(ctx sdk.Context, txs []sdk.Tx) error {
 func (l *BaseLane) ProcessLane(
 	ctx sdk.Context,
 	txs []sdk.Tx,
-	limit proposals.LaneLimits,
 	next block.ProcessLanesHandler,
 ) (sdk.Context, error) {
-	remainingTxs, err := l.processLaneHandler(ctx, txs, limit)
-	if err != nil {
+	if err := l.processLaneHandler(ctx, txs); err != nil {
 		return ctx, err
 	}
 
-	return next(ctx, remainingTxs)
+	return next(ctx)
 }
 
 // AnteVerifyTx verifies that the transaction is valid respecting the ante verification logic of

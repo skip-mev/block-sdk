@@ -16,29 +16,10 @@ import (
 //     the lane.
 func (p *Proposal) UpdateProposal(
 	lane string,
-	limit LaneLimits,
 	partialProposal PartialProposal,
 ) error {
 	if len(partialProposal.Txs) == 0 {
 		return nil
-	}
-
-	// Invarient check: Ensure that the lane did not prepare a partial proposal that is too large.
-	if partialProposal.Size > limit.MaxTxBytes {
-		return fmt.Errorf(
-			"partial proposal is too large: %d > %d",
-			partialProposal.Size,
-			limit.MaxTxBytes,
-		)
-	}
-
-	// Invarient check: Ensure that the lane did not prepare a partial proposal that consumes too much gas.
-	if partialProposal.GasLimit > limit.MaxGas {
-		return fmt.Errorf(
-			"partial proposal consumes too much gas: %d > %d",
-			partialProposal.GasLimit,
-			limit.MaxGas,
-		)
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.

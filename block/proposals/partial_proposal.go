@@ -10,6 +10,8 @@ import (
 // PartialProposal defines the transactions, size, and more
 // of a partial proposal.
 type PartialProposal struct {
+	// SdkTxs is the list of transactions in the proposal.
+	SdkTxs []sdk.Tx
 	// txs is the list of transactions in the proposal.
 	Txs [][]byte
 	// hashes is the list of hashes of transactions in the proposal.
@@ -18,18 +20,25 @@ type PartialProposal struct {
 	Size int64
 	// gasLimit is the total gas limit of the proposal.
 	GasLimit uint64
+	// Limit contains the partial proposal constaints.
+	Limit LaneLimits
 }
 
 // NewPartialProposal returns a new empty partial proposal.
-func NewPartialProposal() *PartialProposal {
-	return &PartialProposal{
+func NewPartialProposal(limit LaneLimits) PartialProposal {
+	return PartialProposal{
 		Txs:    make([][]byte, 0),
 		Hashes: make(map[string]struct{}),
+		Limit:  limit,
 	}
 }
 
 // NewPartialProposalFromTxs returns a new partial proposal from a list of transactions.
-func NewPartialProposalFromTxs(txEncoder sdk.TxEncoder, partialProposalTxs []sdk.Tx) (PartialProposal, error) {
+func NewPartialProposalFromTxs(
+	txEncoder sdk.TxEncoder,
+	partialProposalTxs []sdk.Tx,
+	limit LaneLimits,
+) (PartialProposal, error) {
 	// Aggregate info from the transactions.
 	hashes := make(map[string]struct{})
 	txs := make([][]byte, len(partialProposalTxs))
@@ -48,10 +57,30 @@ func NewPartialProposalFromTxs(txEncoder sdk.TxEncoder, partialProposalTxs []sdk
 		txs[index] = txInfo.TxBytes
 	}
 
-	return PartialProposal{
+	proposal := PartialProposal{
+		SdkTxs:   partialProposalTxs,
 		Txs:      txs,
 		Hashes:   hashes,
 		Size:     partialProposalSize,
 		GasLimit: partialProposalGasLimit,
-	}, nil
+		Limit:    limit,
+	}
+
+	if err := proposal.ValidateBasic(); err != nil {
+		return PartialProposal{}, err
+	}
+
+	return proposal, nil
+}
+
+func (p *PartialProposal) ValidateBasic() error {
+	if p.Limit.MaxGas < p.GasLimit {
+		return fmt.Errorf("partial proposal gas limit is above the maximum allowed")
+	}
+
+	if p.Limit.MaxTxBytes < p.Size {
+		return fmt.Errorf("partial proposal size is above the maximum allowed")
+	}
+
+	return nil
 }

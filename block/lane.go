@@ -42,16 +42,12 @@ type Lane interface {
 		next PrepareLanesHandler,
 	) (proposals.Proposal, error)
 
-	// CheckOrder validates that transactions belonging to this lane are not misplaced
-	// in the block proposal and respect the ordering rules of the lane.
-	CheckOrder(ctx sdk.Context, txs []sdk.Tx) error
-
 	// ProcessLane verifies this lane's portion of a proposed block. It inputs the transactions
 	// that may belong to this lane and a function to call the next lane in the chain. The next
 	// lane in the chain will be called with the updated context and filtered down transactions.
 	ProcessLane(
 		ctx sdk.Context,
-		proposalTxs []sdk.Tx,
+		partialProposal []sdk.Tx,
 		next ProcessLanesHandler,
 	) (sdk.Context, error)
 

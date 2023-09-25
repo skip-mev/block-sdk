@@ -24,10 +24,7 @@ type (
 	// belong to a given lane. ProcessLaneHandler is executed after CheckOrderHandler so the transactions
 	// passed into this function SHOULD already be in order respecting the ordering rules of the lane and
 	// respecting the ordering rules of mempool relative to the lanes it has.
-	ProcessLaneHandler func(
-		ctx sdk.Context,
-		txs []sdk.Tx,
-	) ([]sdk.Tx, error)
+	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) error
 )
 
 // NoOpPrepareLaneHandler returns a no-op prepare lane handler.
@@ -49,15 +46,15 @@ func PanicPrepareLaneHandler() PrepareLaneHandler {
 // NoOpProcessLaneHandler returns a no-op process lane handler.
 // This should only be used for testing.
 func NoOpProcessLaneHandler() ProcessLaneHandler {
-	return func(_ sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
-		return txs, nil
+	return func(sdk.Context, []sdk.Tx) error {
+		return nil
 	}
 }
 
 // PanicProcessLanesHandler returns a process lanes handler that panics.
 // This should only be used for testing.
 func PanicProcessLaneHandler() ProcessLaneHandler {
-	return func(sdk.Context, []sdk.Tx) ([]sdk.Tx, error) {
+	return func(sdk.Context, []sdk.Tx) error {
 		panic("panic process lanes handler")
 	}
 }
