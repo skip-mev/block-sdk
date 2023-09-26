@@ -7,15 +7,7 @@ option go_package = "github.com/skip-mev/block-sdk/block/proposals/types";
 // the block-sdk. This is used to verify and consilidate proposal data across 
 // the network.
 message ProposalInfo {
-    // Lanes contains information about how each partial proposal
+    // TxsByLane contains information about how each partial proposal
     // was constructed by the block-sdk lanes.
-    map<string, LaneInfo> lanes = 1;
-}
-
-// LaneInfo contains the metadata about a given lane that was included in a 
-// proposal.
-message LaneInfo {
-    // NumTxs is the number of transactions in the proposal that were included
-    // from this lane.
-    uint64 num_txs = 1;
+    map<string, uint64> txs_by_lane = 1;
 }

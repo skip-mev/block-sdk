@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
@@ -85,7 +84,7 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 	}
 
 	// Invarient check: Ensure we have not already prepared a partial proposal for this lane.
-	if _, ok := p.Info.Lanes[lane]; ok {
+	if _, ok := p.Info.TxsByLane[lane]; ok {
 		return fmt.Errorf("lane %s already prepared a partial proposal", lane)
 	}
 
@@ -94,7 +93,7 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 	p.GasLimt = updatedGasLimit
 
 	// Update the lane info.
-	p.Info.Lanes[lane] = &types.LaneInfo{NumTxs: uint64(len(partialProposal))}
+	p.Info.TxsByLane[lane] = uint64(len(partialProposal))
 
 	// Update the proposal.
 	p.Txs = append(p.Txs, txs...)

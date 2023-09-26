@@ -13,7 +13,6 @@ import (
 )
 
 func TestUpdateProposal(t *testing.T) {
-
 	encodingConfig := testutils.CreateTestEncodingConfig()
 
 	// Create a few random accounts
@@ -35,7 +34,7 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 0, len(proposal.Txs))
 		require.Equal(t, int64(0), proposal.BlockSize)
 		require.Equal(t, uint64(0), proposal.GasLimt)
-		require.Equal(t, 0, len(proposal.Info.Lanes))
+		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		block, err := proposal.GetProposalWithInfo()
 		require.NoError(t, err)
@@ -73,8 +72,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 1, len(proposal.Txs))
 		require.Equal(t, int64(size), proposal.BlockSize)
 		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
-		require.Equal(t, 1, len(proposal.Info.Lanes))
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test"].NumTxs)
+		require.Equal(t, 1, len(proposal.Info.TxsByLane))
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -126,7 +125,7 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, len(txs), len(proposal.Txs))
 		require.Equal(t, int64(size), proposal.BlockSize)
 		require.Equal(t, gasLimit, proposal.GasLimt)
-		require.Equal(t, uint64(10), proposal.Info.Lanes["test"].NumTxs)
+		require.Equal(t, uint64(10), proposal.Info.TxsByLane["test"])
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -169,8 +168,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 1, len(proposal.Txs))
 		require.Equal(t, int64(size), proposal.BlockSize)
 		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
-		require.Equal(t, 1, len(proposal.Info.Lanes))
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test"].NumTxs)
+		require.Equal(t, 1, len(proposal.Info.TxsByLane))
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
 		// Attempt to add the same transaction again.
 		err = proposal.UpdateProposal("test2", []sdk.Tx{tx}, limit)
@@ -179,8 +178,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 1, len(proposal.Txs))
 		require.Equal(t, int64(size), proposal.BlockSize)
 		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
-		require.Equal(t, 1, len(proposal.Info.Lanes))
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test"].NumTxs)
+		require.Equal(t, 1, len(proposal.Info.TxsByLane))
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -233,8 +232,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 1, len(proposal.Txs))
 		require.Equal(t, int64(len(txBzs[0])), proposal.BlockSize)
 		require.Equal(t, uint64(100), proposal.GasLimt)
-		require.Equal(t, 1, len(proposal.Info.Lanes))
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test"].NumTxs)
+		require.Equal(t, 1, len(proposal.Info.TxsByLane))
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -274,7 +273,7 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 0, len(proposal.Txs))
 		require.Equal(t, int64(0), proposal.BlockSize)
 		require.Equal(t, uint64(0), proposal.GasLimt)
-		require.Equal(t, 0, len(proposal.Info.Lanes))
+		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -312,7 +311,7 @@ func TestUpdateProposal(t *testing.T) {
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
 		require.Equal(t, int64(0), proposal.BlockSize)
-		require.Equal(t, 0, len(proposal.Info.Lanes))
+		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(0), proposal.GasLimt)
 
 		// Ensure that the proposal can be marshalled.
@@ -352,7 +351,7 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 0, len(proposal.Txs))
 		require.Equal(t, int64(0), proposal.BlockSize)
 		require.Equal(t, uint64(0), proposal.GasLimt)
-		require.Equal(t, 0, len(proposal.Info.Lanes))
+		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -391,7 +390,7 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 0, len(proposal.Txs))
 		require.Equal(t, int64(0), proposal.BlockSize)
 		require.Equal(t, uint64(0), proposal.GasLimt)
-		require.Equal(t, 0, len(proposal.Info.Lanes))
+		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -443,9 +442,9 @@ func TestUpdateProposal(t *testing.T) {
 		require.Equal(t, 2, len(proposal.Txs))
 		require.Equal(t, int64(size), proposal.BlockSize)
 		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
-		require.Equal(t, 2, len(proposal.Info.Lanes))
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test"].NumTxs)
-		require.Equal(t, uint64(1), proposal.Info.Lanes["test2"].NumTxs)
+		require.Equal(t, 2, len(proposal.Info.TxsByLane))
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
+		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test2"])
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()

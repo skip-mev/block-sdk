@@ -36,7 +36,7 @@ func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64
 		MaxGasLimit:  maxGasLimit,
 		Txs:          make([][]byte, 0),
 		Cache:        make(map[string]struct{}),
-		Info:         types.ProposalInfo{Lanes: make(map[string]*types.LaneInfo)},
+		Info:         types.ProposalInfo{TxsByLane: make(map[string]uint64)},
 	}
 }
 
