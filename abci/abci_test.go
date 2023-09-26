@@ -968,7 +968,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		// modify the block size to be 1
 		info := s.getProposalInfo(proposal[0])
-		info.BlockSize -= 1
+		info.BlockSize--
 		infoBz, err := info.Marshal()
 		s.Require().NoError(err)
 		proposal[0] = infoBz
@@ -1000,7 +1000,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		// modify the block size to be 1
 		info := s.getProposalInfo(proposal[0])
-		info.GasLimit -= 1
+		info.GasLimit--
 		infoBz, err := info.Marshal()
 		s.Require().NoError(err)
 		proposal[0] = infoBz
@@ -1286,7 +1286,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info}
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().NoError(err)
 		s.Require().Equal(3, len(partialProposals))
 
@@ -1299,21 +1299,21 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, _, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate proposal without info", func() {
 		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, _, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate completely empty proposal", func() {
 		proposal := [][]byte{}
 
-		_, _, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, _, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().Error(err)
 	})
 
@@ -1321,7 +1321,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, _, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().Error(err)
 	})
 
@@ -1351,7 +1351,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1398,7 +1398,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1459,7 +1459,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(s.ctx, proposal)
+		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))

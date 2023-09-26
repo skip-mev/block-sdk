@@ -46,7 +46,7 @@ func (t Terminator) PrepareLane(_ sdk.Context, proposal proposals.Proposal, _ bl
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(ctx sdk.Context, p proposals.Proposal, _ [][]byte, _ block.ProcessLanesHandler) (proposals.Proposal, error) {
+func (t Terminator) ProcessLane(_ sdk.Context, p proposals.Proposal, _ [][]byte, _ block.ProcessLanesHandler) (proposals.Proposal, error) {
 	return p, nil
 }
 
