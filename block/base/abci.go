@@ -15,9 +15,11 @@ import (
 func (l *BaseLane) PrepareLane(
 	ctx sdk.Context,
 	proposal proposals.Proposal,
-	limit proposals.LaneLimits,
 	next block.PrepareLanesHandler,
 ) (proposals.Proposal, error) {
+	limit := proposal.GetLaneLimits(l.cfg.MaxBlockSpace)
+
+	// Get the partial block constraints for this lane and create a partial proposal.
 	txsToInclude, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
 	if err != nil {
 		return proposal, err
@@ -32,14 +34,9 @@ func (l *BaseLane) PrepareLane(
 		)
 	}
 
-	// Aggregate the transactions into a partial proposal.
-	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), txsToInclude, limit)
-	if err != nil {
-		return proposal, err
-	}
-
-	// Update the proposal with the selected transactions.
-	if err := proposal.UpdateProposal(l.Name(), partialProposal); err != nil {
+	// Update the proposal with the selected transactions. This fails if the lane attempted to add
+	// more transactions than the max block space for the lane.
+	if err := proposal.UpdateProposal(l.Name(), txsToInclude, limit); err != nil {
 		return proposal, err
 	}
 
@@ -56,31 +53,22 @@ func (l *BaseLane) ProcessLane(
 	txs [][]byte,
 	next block.ProcessLanesHandler,
 ) (proposals.Proposal, error) {
+	// Assume that this lane is processing sdk.Tx's and decode the transactions.
 	decodedTxs, err := utils.GetDecodedTxs(l.TxDecoder(), txs)
 	if err != nil {
 		return proposal, err
 	}
 
-	// Get the limits for this lane.
-	metaData := proposal.GetMetaData()
-	limit := proposals.GetLaneLimits(
-		proposal.GetMaxTxBytes(), metaData.TotalTxBytes,
-		proposal.GetMaxGasLimit(), metaData.TotalGasLimit,
-		l.cfg.MaxBlockSpace,
-	)
+	limit := proposal.GetLaneLimits(l.cfg.MaxBlockSpace)
 
-	// Create a partial proposal from the transactions that belong to this lane.
-	partialProposal, err := proposals.NewPartialProposalFromTxs(l.TxEncoder(), decodedTxs, limit)
-	if err != nil {
+	// Optimistically update the proposal with the partial proposal. This fails if the lane attempted to add more
+	// transactions than the allocated max block space for the lane.
+	if err := proposal.UpdateProposal(l.Name(), decodedTxs, limit); err != nil {
 		return proposal, err
 	}
 
-	if err := l.processLaneHandler(ctx, partialProposal); err != nil {
-		return proposal, err
-	}
-
-	// Update the proposal with the partial proposal. If this fails, the proposal is invalid.
-	if err := proposal.UpdateProposal(l.Name(), partialProposal); err != nil {
+	// Verify the transactions that belong to this lane according to the verification logic of the lane.
+	if err := l.processLaneHandler(ctx, decodedTxs); err != nil {
 		return proposal, err
 	}
 

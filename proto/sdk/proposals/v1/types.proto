@@ -3,30 +3,19 @@ package sdk.proposals.v1;
 
 option go_package = "github.com/skip-mev/block-sdk/block/proposals/types";
 
-// ProposalMetaData contains the metadata about a given proposal
-// that was built by the block-sdk. This is used to verify and consilidate
-// proposal data across the network.
-message ProposalMetaData {
-    // NumTxs is the total number of transactions in the proposal.
-    uint64 num_txs = 1;
-    // TotalTxBytes is the total number of bytes in the proposal.
-    int64 total_tx_bytes = 2;
-    // TotalGasLimit is the total gas limit of the proposal.
-    uint64 total_gas_limit = 3;
-    // LaneStatistics contains information about how each partial proposal
+// ProposalInfo contains the metadata about a given proposal that was built by 
+// the block-sdk. This is used to verify and consilidate proposal data across 
+// the network.
+message ProposalInfo {
+    // Lanes contains information about how each partial proposal
     // was constructed by the block-sdk lanes.
-    map<string, LaneMetaData> lanes = 4;
+    map<string, LaneInfo> lanes = 1;
 }
 
-// ProposalStatisticsByLane contains the statistics about how a given partial
-// proposal was constructed.
-message LaneMetaData {
-    // NumTxs is the number of transactions in the proposal
+// LaneInfo contains the metadata about a given lane that was included in a 
+// proposal.
+message LaneInfo {
+    // NumTxs is the number of transactions in the proposal that were included
+    // from this lane.
     uint64 num_txs = 1;
-    // TotalTxBytes is the total number of bytes in the partial proposal.
-    int64 total_tx_bytes = 2;
-    // TotalGasLimit is the total gas limit of the partial proposal.
-    uint64 total_gas_limit = 3;
-    // AppHash is the application hash of the partial proposal.
-    bytes app_hash = 4;
 }

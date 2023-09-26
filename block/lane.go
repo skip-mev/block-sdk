@@ -32,19 +32,21 @@ type LaneMempool interface {
 type Lane interface {
 	LaneMempool
 
-	// PrepareLane builds a portion of the block. It inputs the lane limits - maximum number of bytes and
-	// gas - that can be consumed by a given lane, the partial proposal, and a function to call the next
-	// lane in the chain. The next lane in the chain will be called with the updated proposal and context.
+	// PrepareLane builds a portion of the block. It inputs the current context, proposal, and a
+	// function to call the next lane in the chain. This handler should update the context as needed
+	// and add transactions to the proposal. Note, the lane should only add transactions up to the
+	// max block space for the lane.
 	PrepareLane(
 		ctx sdk.Context,
 		proposal proposals.Proposal,
-		limit proposals.LaneLimits,
 		next PrepareLanesHandler,
 	) (proposals.Proposal, error)
 
-	// ProcessLane verifies this lane's portion of a proposed block. It inputs the transactions
-	// that may belong to this lane and a function to call the next lane in the chain. The next
-	// lane in the chain will be called with the updated context and filtered down transactions.
+	// ProcessLane verifies this lane's portion of a proposed block. It inputs the current context,
+	// proposal, transactions that belong to this lane, and a function to call the next lane in the
+	// chain. This handler should update the context as needed and add transactions to the proposal.
+	// The entire process lane chain should end up constructing the same proposal as the prepare lane
+	// chain.
 	ProcessLane(
 		ctx sdk.Context,
 		proposal proposals.Proposal,

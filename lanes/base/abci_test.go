@@ -41,25 +41,22 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz) - 1),
-			MaxGas:     10000000000000,
-		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
-			limit.MaxTxBytes,
-			limit.MaxGas,
+			int64(len(txBz)-1),
+			10000000000000,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
-		stats := finalProposal.GetMetaData()
+		stats := finalProposal.GetInfo()
+		txs := finalProposal.GetTxs()
 
 		// Ensure the proposal is empty
-		s.Require().Equal(0, stats.NumTxs)
-		s.Require().Equal(int64(0), stats.TotalGasLimit)
-		s.Require().Equal(uint64(0), stats.TotalGasLimit)
+		s.Require().Equal(0, len(txs))
+		s.Require().Equal(int64(0), stats.BlockSize)
+		s.Require().Equal(uint64(0), stats.GasLimt)
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small", func() {
@@ -87,13 +84,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz)),
-			MaxGas:     9,
+			MaxTxBytes:  int64(len(txBz)),
+			MaxGasLimit: 9,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -133,13 +130,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Create a proposal
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz)) * 10, // have enough space for 10 of these txs
-			MaxGas:     9,
+			MaxTxBytes:  int64(len(txBz)) * 10, // have enough space for 10 of these txs
+			MaxGasLimit: 9,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -178,13 +175,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz)),
-			MaxGas:     10,
+			MaxTxBytes:  int64(len(txBz)),
+			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -224,13 +221,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz)),
-			MaxGas:     10,
+			MaxTxBytes:  int64(len(txBz)),
+			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -287,13 +284,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz1)) + int64(len(txBz2)),
-			MaxGas:     20,
+			MaxTxBytes:  int64(len(txBz1)) + int64(len(txBz2)),
+			MaxGasLimit: 20,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -347,13 +344,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz1)) + int64(len(txBz2)),
-			MaxGas:     2,
+			MaxTxBytes:  int64(len(txBz1)) + int64(len(txBz2)),
+			MaxGasLimit: 2,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -410,13 +407,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz1)) + int64(len(txBz2)) - 1,
-			MaxGas:     3,
+			MaxTxBytes:  int64(len(txBz1)) + int64(len(txBz2)) - 1,
+			MaxGasLimit: 3,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -473,13 +470,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		limit := proposals.LaneLimits{
-			MaxTxBytes: int64(len(txBz1)) + int64(len(txBz2)) - 1,
-			MaxGas:     1,
+			MaxTxBytes:  int64(len(txBz1)) + int64(len(txBz2)) - 1,
+			MaxGasLimit: 1,
 		}
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, limit, block.NoOpPrepareLanesHandler())
@@ -784,7 +781,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
@@ -818,7 +815,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
@@ -864,7 +861,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
@@ -910,7 +907,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		emptyProposal := proposals.NewProposal(
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
-			limit.MaxGas,
+			limit.MaxGasLimit,
 		)
 
 		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())

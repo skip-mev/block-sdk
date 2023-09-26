@@ -1,6 +1,7 @@
 package proposals
 
 import (
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 )
@@ -9,90 +10,89 @@ type (
 	// Proposal defines a block proposal type.
 	Proposal struct {
 		// txs is the list of transactions in the proposal.
-		txs [][]byte
+		Txs [][]byte
 		// cache is a cache of the selected transactions in the proposal.
-		cache map[string]struct{}
-		// limit contains the block limits.
-		info BlockInfo
+		Cache map[string]struct{}
+		// MaxBlockSize corresponds to the maximum number of bytes allowed in the block.
+		MaxBlockSize int64
+		// MaxGasLimit corresponds to the maximum gas limit allowed in the block.
+		MaxGasLimit uint64
+		// BlockSize corresponds to the current size of the block.
+		BlockSize int64
+		// GasLimt corresponds to the current gas limit of the block.
+		GasLimt uint64
 		// txEncoder is the transaction encoder.
-		txEncoder sdk.TxEncoder
-		// metaData is the metadata of the proposal.
-		metaData types.ProposalMetaData
-	}
-
-	// BlockLimits defines the total number of bytes and units of gas that can be included in a block proposal.
-	BlockInfo struct {
-		MaxTxBytes  int64
-		MaxGas      uint64
-		CurrentSize int64
-		CurrentGas  uint64
+		TxEncoder sdk.TxEncoder
+		// laneInfo contains information about the various lanes that built the proposal.
+		Info types.ProposalInfo
 	}
 )
 
 // NewProposal returns a new empty proposal.
-func NewProposal(txEncoder sdk.TxEncoder, maxTxBytes int64, maxGasLimit uint64) Proposal {
+func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
 	return Proposal{
-		txEncoder: txEncoder,
-		info:      NewBlockLimits(maxTxBytes, maxGasLimit),
-		txs:       make([][]byte, 0),
-		cache:     make(map[string]struct{}),
-		metaData:  NewProposalMetaData(),
+		TxEncoder:    txEncoder,
+		MaxBlockSize: maxBlockSize,
+		MaxGasLimit:  maxGasLimit,
+		Txs:          make([][]byte, 0),
+		Cache:        make(map[string]struct{}),
+		Info:         types.ProposalInfo{Lanes: make(map[string]*types.LaneInfo)},
 	}
 }
 
-// NewBlockLimits returns a new block limits.
-func NewBlockLimits(maxTxBytes int64, maxGasLimit uint64) BlockInfo {
-	return BlockInfo{
-		MaxTxBytes: maxTxBytes,
-		MaxGas:     maxGasLimit,
-	}
-}
-
-// NewProposalMetaData returns a new proposal metadata.
-func NewProposalMetaData() types.ProposalMetaData {
-	return types.ProposalMetaData{
-		Lanes: make(map[string]*types.LaneMetaData),
-	}
-}
-
-// GetProposal returns all of the transactions in the proposal along with the vote extensions
-// at the top of the proposal.
-func (p *Proposal) GetProposal() [][]byte {
-	// marshall the metadata into the first slot of the proposal.
-	metaData, err := p.metaData.Marshal()
+// GetProposalWithInfo returns all of the transactions in the proposal along with information
+// about the lanes that built the proposal.
+func (p *Proposal) GetProposalWithInfo() ([][]byte, error) {
+	// Marshall the laneInfo into the first slot of the proposal.
+	laneInfo, err := p.Info.Marshal()
 	if err != nil {
-		// This should never happen
-		panic(err)
+		return nil, err
 	}
 
-	proposal := [][]byte{metaData}
-	proposal = append(proposal, p.txs...)
+	proposal := [][]byte{laneInfo}
+	proposal = append(proposal, p.Txs...)
 
-	return proposal
+	return proposal, nil
 }
 
-// GetStatistics returns the various statistics of the proposal.
-func (p *Proposal) GetMetaData() *types.ProposalMetaData {
-	return &p.metaData
-}
+// GetLaneLimits returns the maximum number of bytes and gas limit that can be
+// included/consumed in the proposal for the given lane.
+func (p *Proposal) GetLaneLimits(ratio math.LegacyDec) LaneLimits {
+	var (
+		txBytes  int64
+		gasLimit uint64
+	)
 
-// GetMaxGasLimit returns the maximum gas limit that can be included in the proposal.
-func (p *Proposal) GetMaxGasLimit() uint64 {
-	return p.info.MaxGas
-}
+	// In the case where the ratio is zero, we return the max tx bytes remaining. Note, the only
+	// lane that should have a ratio of zero is the default lane. This means the default lane
+	// will have no limit on the number of transactions it can include in a block and is only
+	// limited by the maxTxBytes included in the PrepareProposalRequest.
+	if ratio.IsZero() {
+		txBytes = p.MaxBlockSize - p.BlockSize
+		if txBytes < 0 {
+			txBytes = 0
+		}
 
-// GetMaxTxBytes returns the maximum number of bytes that can be included in the proposal.
-func (p *Proposal) GetMaxTxBytes() int64 {
-	return p.info.MaxTxBytes
-}
+		// Unsigned subtraction needs an additional check
+		if p.GasLimt >= p.MaxGasLimit {
+			gasLimit = 0
+		} else {
+			gasLimit = p.MaxGasLimit - p.GasLimt
+		}
+	} else {
+		// Otherwise, we calculate the max tx bytes / gas limit for the lane based on the ratio.
+		txBytes = ratio.MulInt64(p.MaxBlockSize).TruncateInt().Int64()
+		gasLimit = ratio.MulInt(math.NewIntFromUint64(p.MaxGasLimit)).TruncateInt().Uint64()
+	}
 
-// GetTxs returns the transactions in the proposal.
-func (p *Proposal) GetTxs() [][]byte {
-	return p.txs
+	return LaneLimits{
+		MaxTxBytes:  txBytes,
+		MaxGasLimit: gasLimit,
+	}
 }
 
 // Contains returns true if the proposal contains the given transaction.
 func (p *Proposal) Contains(txHash string) bool {
-	_, ok := p.cache[txHash]
+	_, ok := p.Cache[txHash]
 	return ok
 }

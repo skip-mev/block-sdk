@@ -56,32 +56,36 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (resp *abci.ResponsePrepareProposal, err error) {
 		// In the case where there is a panic, we recover here and return an empty proposal.
 		defer func() {
-			if err := recover(); err != nil {
+			if rec := recover(); rec != nil {
 				h.logger.Error("failed to prepare proposal", "err", err)
+
 				resp = &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
+				err = fmt.Errorf("failed to prepare proposal: %v", rec)
 			}
 		}()
 
 		h.logger.Info("mempool distribution before proposal creation", "distribution", h.mempool.GetTxDistribution())
 
 		// Build an empty placeholder proposal with the maximum block size and gas limit.
-		maxBlockSize, maxGasLimit := getBlockLimits(ctx)
+		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(ctx)
 		emptyProposal := proposals.NewProposal(h.txEncoder, maxBlockSize, maxGasLimit)
 
-		// Fill the proposal with transactions from each lane.
+		// Fill the proposal with transactions from each lane respecting the maximum block size and gas limit.
 		finalProposal, err := h.prepareLanesHandler(ctx, emptyProposal)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
-		metaData := finalProposal.GetMetaData()
+		// Retrieve the proposal with metadata and transactions.
+		proposal := finalProposal.GetProposal()
+
 		h.logger.Info(
 			"prepared proposal",
-			"num_txs", metaData.NumTxs,
-			"total_tx_bytes", metaData.TotalTxBytes,
+			"num_txs", len(proposal),
+			"total_tx_bytes", finalProposal.BlockSize,
 			"max_tx_bytes", maxBlockSize,
-			"total_gas_limit", metaData.TotalGasLimit,
+			"total_gas_limit", finalProposal.GasLimt,
 			"max_gas_limit", maxGasLimit,
 			"height", req.Height,
 		)
@@ -89,7 +93,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
 		return &abci.ResponsePrepareProposal{
-			Txs: finalProposal.GetProposal(),
+			Txs: proposal,
 		}, nil
 	}
 }
@@ -119,24 +123,27 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
 
 		// Build an empty placeholder proposal with the maximum block size and gas limit.
-		maxBlockSize, maxGasLimit := getBlockLimits(ctx)
+		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(ctx)
 		emptyProposal := proposals.NewProposal(h.txEncoder, maxBlockSize, maxGasLimit)
 
 		// Verify the proposal according to the verification logic from each lane.
-		proposal, err := processLanesHandler(ctx, emptyProposal)
+		finalProposal, err := processLanesHandler(ctx, emptyProposal)
 		if err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
+		// Retrieve the proposal with metadata and transactions.
+		proposal := finalProposal.GetProposal()
+
 		h.logger.Info(
-			"validated proposal",
-			"height", req.Height,
-			"num_txs", proposal.GetMetaData().NumTxs,
-			"total_tx_bytes", proposal.GetMetaData().TotalTxBytes,
-			"total_gas_limit", proposal.GetMetaData().TotalGasLimit,
+			"processed proposal",
+			"num_txs", len(proposal),
+			"total_tx_bytes", finalProposal.BlockSize,
 			"max_tx_bytes", maxBlockSize,
+			"total_gas_limit", finalProposal.GasLimt,
 			"max_gas_limit", maxGasLimit,
+			"height", req.Height,
 		)
 
 		return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
@@ -156,13 +163,21 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 	metaDataBz, txs := proposal[MetaDataIndex], proposal[1:]
 
 	// Retrieve the metadata from the proposal.
-	var metaData types.ProposalMetaData
+	var metaData types.ProposalInfo
 	if err := metaData.Unmarshal(metaDataBz); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
 	}
 
 	lanes := h.mempool.Registry()
 	partialProposals := make([][][]byte, len(lanes))
+
+	if metaData.Lanes == nil {
+		if len(txs) > 0 {
+			return nil, fmt.Errorf("proposal contains invalid number of transactions")
+		}
+
+		return partialProposals, nil
+	}
 
 	// Iterate through all of the lanes and match the corresponding transactions to the lane.
 	for index, lane := range lanes {

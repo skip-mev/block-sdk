@@ -7,11 +7,6 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
 
-const (
-	// MaxUint64 is the maximum value of a uint64.
-	MaxUint64 = 1<<64 - 1
-)
-
 // ChainPrepareLanes chains together the proposal preparation logic from each lane
 // into a single function. The first lane in the chain is the first lane to be prepared and
 // the last lane in the chain is the last lane to be prepared.
@@ -65,18 +60,9 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 			}
 		}()
 
-		// Get the maximum number of bytes that can be included in the proposal for this lane.
-		metaData := partialProposal.GetMetaData()
-		limit := proposals.GetLaneLimits(
-			partialProposal.GetMaxTxBytes(), metaData.TotalTxBytes,
-			partialProposal.GetMaxGasLimit(), metaData.TotalGasLimit,
-			lane.GetMaxBlockSpace(),
-		)
-
 		return lane.PrepareLane(
 			cacheCtx,
 			partialProposal,
-			limit,
 			ChainPrepareLanes(chain[1:]),
 		)
 	}
@@ -108,20 +94,4 @@ func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.Pr
 
 		return lane.ProcessLane(ctx, proposal, partialProposal, ChainProcessLanes(partialProposals[1:], chain[1:]))
 	}
-}
-
-func getBlockLimits(ctx sdk.Context) (int64, uint64) {
-	blockParams := ctx.ConsensusParams().Block
-
-	// If the max gas is set to 0, then the max gas limit for the block can be infinite.
-	// Otherwise we use the max gas limit casted as a uint64 which is how gas limits are
-	// extracted from sdk.Tx's.
-	var maxGasLimit uint64
-	if maxGas := blockParams.MaxGas; maxGas > 0 {
-		maxGasLimit = uint64(maxGas)
-	} else {
-		maxGasLimit = MaxUint64
-	}
-
-	return blockParams.MaxBytes, maxGasLimit
 }
