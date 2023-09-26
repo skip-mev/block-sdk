@@ -64,11 +64,11 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				continue selectBidTxLoop
 			}
 
-			if txInfo.GasLimit > limit.MaxGas {
+			if txInfo.GasLimit > limit.MaxGasLimit {
 				l.Logger().Info(
 					"failed to select auction bid tx for lane; tx gas limit is too large",
 					"tx_gas_limit", txInfo.GasLimit,
-					"max_gas_limit", limit.MaxGas,
+					"max_gas_limit", limit.MaxGasLimit,
 					"tx_hash", txInfo.Hash,
 				)
 
@@ -142,11 +142,11 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 					continue selectBidTxLoop
 				}
 
-				if gasLimitSum += bundledTxInfo.GasLimit; gasLimitSum > limit.MaxGas {
+				if gasLimitSum += bundledTxInfo.GasLimit; gasLimitSum > limit.MaxGasLimit {
 					l.Logger().Info(
 						"failed to select auction bid tx for lane; tx gas limit is too large",
 						"tx_gas_limit", gasLimitSum,
-						"max_gas_limit", limit.MaxGas,
+						"max_gas_limit", limit.MaxGasLimit,
 						"tx_hash", txInfo.Hash,
 					)
 
@@ -178,17 +178,20 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 }
 
 // ProcessLaneHandler will ensure that block proposals that include transactions from
-// the mev lane are valid.
+// the mev lane are valid. In particular, the invariant checks that we perform are:
+//  1. The first transaction in the block proposal must be a bid transaction.
+//  2. The bid transaction must be valid.
+//  3. The bundled transactions must be valid.
+//  4. The bundled transactions must match the transactions in the block proposal in the
+//     same order they were defined in the bid transaction.
 func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
-	return func(ctx sdk.Context, partialProposal proposals.PartialProposal) error {
-		txs := partialProposal.SdkTxs
-
-		if len(txs) == 0 {
+	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
+		if len(partialProposal) == 0 {
 			return nil
 		}
 
 		// If the first transaction does not match the lane, then we return an error.
-		bidTx := txs[0]
+		bidTx := partialProposal[0]
 		if !l.Match(ctx, bidTx) {
 			return fmt.Errorf("expected first transaction in lane %s to be a bid transaction", l.Name())
 		}
@@ -199,11 +202,16 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 		}
 
 		// Check that all bundled transactions were included.
-		if len(bidInfo.Transactions)+1 != len(txs) {
-			return fmt.Errorf("expected %d transactions in lane %s but got %d", len(bidInfo.Transactions)+1, l.Name(), len(txs))
+		if len(bidInfo.Transactions)+1 != len(partialProposal) {
+			return fmt.Errorf(
+				"expected %d transactions in lane %s but got %d",
+				len(bidInfo.Transactions)+1,
+				l.Name(),
+				len(partialProposal),
+			)
 		}
 
-		// Cerify the top-level bid transaction.
+		// Verify the top-level bid transaction.
 		if ctx, err = l.AnteVerifyTx(ctx, bidTx, false); err != nil {
 			return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 		}
@@ -216,7 +224,7 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 			}
 
 			// Verify that the bundled transaction matches the transaction in the block proposal.
-			txBz, err := l.TxEncoder()(txs[index+1])
+			txBz, err := l.TxEncoder()(partialProposal[index+1])
 			if err != nil {
 				return fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
 			}

@@ -186,7 +186,7 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 	lanes := h.mempool.Registry()
 	partialProposals := make([][][]byte, len(lanes))
 
-	if metaData.Lanes == nil {
+	if metaData.TxsByLane == nil {
 		if len(txs) > 0 {
 			return nil, fmt.Errorf("proposal contains invalid number of transactions")
 		}
@@ -196,18 +196,18 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 
 	// Iterate through all of the lanes and match the corresponding transactions to the lane.
 	for index, lane := range lanes {
-		laneMetaData := metaData.Lanes[lane.Name()]
-		if laneMetaData.NumTxs > uint64(len(txs)) {
+		numTxs := metaData.TxsByLane[lane.Name()]
+		if numTxs > uint64(len(txs)) {
 			return nil, fmt.Errorf(
 				"proposal metadata contains invalid number of transactions for lane %s; got %d, expected %d",
 				lane.Name(),
 				len(txs),
-				laneMetaData.NumTxs,
+				numTxs,
 			)
 		}
 
-		partialProposals[index] = txs[:laneMetaData.NumTxs]
-		txs = txs[laneMetaData.NumTxs:]
+		partialProposals[index] = txs[:numTxs]
+		txs = txs[numTxs:]
 	}
 
 	// If there are any transactions remaining in the proposal, then the proposal is invalid.

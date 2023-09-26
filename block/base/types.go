@@ -21,9 +21,8 @@ type (
 	) (txsToInclude []sdk.Tx, txsToRemove []sdk.Tx, err error)
 
 	// ProcessLaneHandler is responsible for processing transactions that are included in a block and
-	// belong to a given lane. ProcessLaneHandler is executed after CheckOrderHandler so the transactions
-	// passed into this function SHOULD already be in order respecting the ordering rules of the lane and
-	// respecting the ordering rules of mempool relative to the lanes it has.
+	// belong to a given lane. This handler must return an error if the transactions are not correctly
+	// ordered, do not belong to this lane, or any other relevant error.
 	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) error
 )
 

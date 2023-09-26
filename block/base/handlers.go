@@ -11,7 +11,7 @@ import (
 
 // DefaultPrepareLaneHandler returns a default implementation of the PrepareLaneHandler. It
 // selects all transactions in the mempool that are valid and not already in the partial
-// proposal. It will continue to reap transactions until the maximum block space for this
+// proposal. It will continue to reap transactions until the maximum blockspace/gas for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
 func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
@@ -133,7 +133,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 			}
 		}
 
-		// This means we have processed all transactions in the proposal.
+		// This means we have processed all transactions in the partial proposal.
 		return nil
 	}
 }
