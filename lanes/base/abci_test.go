@@ -51,8 +51,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is empty
 		s.Require().Equal(0, len(finalProposal.Txs))
-		s.Require().Equal(int64(0), finalProposal.BlockSize)
-		s.Require().Equal(uint64(0), finalProposal.GasLimt)
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small", func() {
@@ -94,8 +94,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is empty
 		s.Require().Equal(0, len(finalProposal.Txs))
-		s.Require().Equal(int64(0), finalProposal.BlockSize)
-		s.Require().Equal(uint64(0), finalProposal.GasLimt)
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small p2", func() {
@@ -138,8 +138,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is empty
 		s.Require().Equal(0, len(finalProposal.Txs))
-		s.Require().Equal(int64(0), finalProposal.BlockSize)
-		s.Require().Equal(uint64(0), finalProposal.GasLimt)
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {
@@ -181,8 +181,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is not empty and contains the transaction
 		s.Require().Equal(1, len(finalProposal.Txs))
-		s.Require().Equal(limit.MaxTxBytes, finalProposal.BlockSize)
-		s.Require().Equal(uint64(10), finalProposal.GasLimt)
+		s.Require().Equal(limit.MaxTxBytes, finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(10), finalProposal.Info.GasLimit)
 		s.Require().Equal(txBz, finalProposal.Txs[0])
 	})
 
@@ -221,8 +221,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is empty
 		s.Require().Equal(0, len(finalProposal.Txs))
-		s.Require().Equal(int64(0), finalProposal.BlockSize)
-		s.Require().Equal(uint64(0), finalProposal.GasLimt)
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 
 		// Ensure the transaction is removed from the lane
 		s.Require().False(lane.Contains(tx))
@@ -280,8 +280,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is ordered correctly
 		s.Require().Equal(2, len(finalProposal.Txs))
-		s.Require().Equal(size, finalProposal.BlockSize)
-		s.Require().Equal(gasLimit, finalProposal.GasLimt)
+		s.Require().Equal(size, finalProposal.Info.BlockSize)
+		s.Require().Equal(gasLimit, finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz1, txBz2}, finalProposal.Txs)
 	})
 
@@ -336,8 +336,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is ordered correctly
 		s.Require().Equal(2, len(finalProposal.Txs))
-		s.Require().Equal(size, finalProposal.BlockSize)
-		s.Require().Equal(gasLimit, finalProposal.GasLimt)
+		s.Require().Equal(size, finalProposal.Info.BlockSize)
+		s.Require().Equal(gasLimit, finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz2, txBz1}, finalProposal.Txs)
 	})
 
@@ -395,8 +395,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is ordered correctly
 		s.Require().Equal(1, len(finalProposal.Txs))
-		s.Require().Equal(int64(len(txBz1)), finalProposal.BlockSize)
-		s.Require().Equal(uint64(2), finalProposal.GasLimt)
+		s.Require().Equal(int64(len(txBz1)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(2), finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz1}, finalProposal.Txs)
 	})
 
@@ -454,8 +454,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is ordered correctly
 		s.Require().Equal(1, len(finalProposal.Txs))
-		s.Require().Equal(int64(len(txBz2)), finalProposal.BlockSize)
-		s.Require().Equal(uint64(1), finalProposal.GasLimt)
+		s.Require().Equal(int64(len(txBz2)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(1), finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz2}, finalProposal.Txs)
 	})
 
@@ -498,8 +498,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Ensure the proposal is ordered correctly
 		s.Require().Equal(1, len(finalProposal.Txs))
-		s.Require().Equal(int64(len(txBz)), finalProposal.BlockSize)
-		s.Require().Equal(uint64(2), finalProposal.GasLimt)
+		s.Require().Equal(int64(len(txBz)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(2), finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz}, finalProposal.Txs)
 	})
 }

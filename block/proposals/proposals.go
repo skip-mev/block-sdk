@@ -13,14 +13,6 @@ type (
 		Txs [][]byte
 		// cache is a cache of the selected transactions in the proposal.
 		Cache map[string]struct{}
-		// MaxBlockSize corresponds to the maximum number of bytes allowed in the block.
-		MaxBlockSize int64
-		// MaxGasLimit corresponds to the maximum gas limit allowed in the block.
-		MaxGasLimit uint64
-		// BlockSize corresponds to the current size of the block.
-		BlockSize int64
-		// GasLimt corresponds to the current gas limit of the block.
-		GasLimt uint64
 		// txEncoder is the transaction encoder.
 		TxEncoder sdk.TxEncoder
 		// laneInfo contains information about the various lanes that built the proposal.
@@ -31,12 +23,14 @@ type (
 // NewProposal returns a new empty proposal.
 func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
 	return Proposal{
-		TxEncoder:    txEncoder,
-		MaxBlockSize: maxBlockSize,
-		MaxGasLimit:  maxGasLimit,
-		Txs:          make([][]byte, 0),
-		Cache:        make(map[string]struct{}),
-		Info:         types.ProposalInfo{TxsByLane: make(map[string]uint64)},
+		TxEncoder: txEncoder,
+		Txs:       make([][]byte, 0),
+		Cache:     make(map[string]struct{}),
+		Info: types.ProposalInfo{
+			TxsByLane:    make(map[string]uint64),
+			MaxBlockSize: maxBlockSize,
+			MaxGasLimit:  maxGasLimit,
+		},
 	}
 }
 
@@ -68,21 +62,21 @@ func (p *Proposal) GetLaneLimits(ratio math.LegacyDec) LaneLimits {
 	// will have no limit on the number of transactions it can include in a block and is only
 	// limited by the maxTxBytes included in the PrepareProposalRequest.
 	if ratio.IsZero() {
-		txBytes = p.MaxBlockSize - p.BlockSize
+		txBytes = p.Info.MaxBlockSize - p.Info.BlockSize
 		if txBytes < 0 {
 			txBytes = 0
 		}
 
 		// Unsigned subtraction needs an additional check
-		if p.GasLimt >= p.MaxGasLimit {
+		if p.Info.GasLimit >= p.Info.MaxGasLimit {
 			gasLimit = 0
 		} else {
-			gasLimit = p.MaxGasLimit - p.GasLimt
+			gasLimit = p.Info.MaxGasLimit - p.Info.GasLimit
 		}
 	} else {
 		// Otherwise, we calculate the max tx bytes / gas limit for the lane based on the ratio.
-		txBytes = ratio.MulInt64(p.MaxBlockSize).TruncateInt().Int64()
-		gasLimit = ratio.MulInt(math.NewIntFromUint64(p.MaxGasLimit)).TruncateInt().Uint64()
+		txBytes = ratio.MulInt64(p.Info.MaxBlockSize).TruncateInt().Int64()
+		gasLimit = ratio.MulInt(math.NewIntFromUint64(p.Info.MaxGasLimit)).TruncateInt().Uint64()
 	}
 
 	return LaneLimits{

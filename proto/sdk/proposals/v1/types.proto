@@ -10,4 +10,14 @@ message ProposalInfo {
     // TxsByLane contains information about how each partial proposal
     // was constructed by the block-sdk lanes.
     map<string, uint64> txs_by_lane = 1;
+    // MaxBlockSize corresponds to the upper bound on the size of the
+    // block that was used to construct this block proposal.
+    int64 max_block_size = 2;
+    // MaxGasLimit corresponds to the upper bound on the gas limit of the
+    // block that was used to construct this block proposal.
+    uint64 max_gas_limit = 3;
+    // BlockSize corresponds to the size of this block proposal.
+    int64 block_size = 4;
+    // GasLimit corresponds to the gas limit of this block proposal.
+    uint64 gas_limit = 5;
 }

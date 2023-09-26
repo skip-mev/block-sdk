@@ -64,22 +64,22 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.
-	updatedSize := p.BlockSize + partialProposalSize
-	if updatedSize > p.MaxBlockSize {
+	updatedSize := p.Info.BlockSize + partialProposalSize
+	if updatedSize > p.Info.MaxBlockSize {
 		return fmt.Errorf(
 			"block proposal is too large: %d > %d",
 			updatedSize,
-			p.MaxBlockSize,
+			p.Info.MaxBlockSize,
 		)
 	}
 
 	// Invarient check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
-	updatedGasLimit := p.GasLimt + partialProposalGasLimit
-	if updatedGasLimit > p.MaxGasLimit {
+	updatedGasLimit := p.Info.GasLimit + partialProposalGasLimit
+	if updatedGasLimit > p.Info.MaxGasLimit {
 		return fmt.Errorf(
 			"block proposal consumes too much gas: %d > %d",
 			updatedGasLimit,
-			p.MaxGasLimit,
+			p.Info.MaxGasLimit,
 		)
 	}
 
@@ -89,8 +89,8 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 	}
 
 	// Update the proposal.
-	p.BlockSize = updatedSize
-	p.GasLimt = updatedGasLimit
+	p.Info.BlockSize = updatedSize
+	p.Info.GasLimit = updatedGasLimit
 
 	// Update the lane info.
 	p.Info.TxsByLane[lane] = uint64(len(partialProposal))

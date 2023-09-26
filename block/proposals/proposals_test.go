@@ -7,6 +7,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/testutils"
 	"github.com/stretchr/testify/require"
@@ -32,8 +33,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
-		require.Equal(t, int64(0), proposal.BlockSize)
-		require.Equal(t, uint64(0), proposal.GasLimt)
+		require.Equal(t, int64(0), proposal.Info.BlockSize)
+		require.Equal(t, uint64(0), proposal.Info.GasLimit)
 		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		block, err := proposal.GetProposalWithInfo()
@@ -70,8 +71,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is not empty.
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
+		require.Equal(t, int64(size), proposal.Info.BlockSize)
+		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -123,8 +124,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is not empty.
 		require.Equal(t, len(txs), len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.BlockSize)
-		require.Equal(t, gasLimit, proposal.GasLimt)
+		require.Equal(t, int64(size), proposal.Info.BlockSize)
+		require.Equal(t, gasLimit, proposal.Info.GasLimit)
 		require.Equal(t, uint64(10), proposal.Info.TxsByLane["test"])
 
 		// Ensure that the proposal can be marshalled.
@@ -166,8 +167,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
+		require.Equal(t, int64(size), proposal.Info.BlockSize)
+		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -176,8 +177,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Error(t, err)
 
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
+		require.Equal(t, int64(size), proposal.Info.BlockSize)
+		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -230,8 +231,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is not empty.
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(len(txBzs[0])), proposal.BlockSize)
-		require.Equal(t, uint64(100), proposal.GasLimt)
+		require.Equal(t, int64(len(txBzs[0])), proposal.Info.BlockSize)
+		require.Equal(t, uint64(100), proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -271,8 +272,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
-		require.Equal(t, int64(0), proposal.BlockSize)
-		require.Equal(t, uint64(0), proposal.GasLimt)
+		require.Equal(t, int64(0), proposal.Info.BlockSize)
+		require.Equal(t, uint64(0), proposal.Info.GasLimit)
 		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
@@ -310,9 +311,9 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
-		require.Equal(t, int64(0), proposal.BlockSize)
+		require.Equal(t, int64(0), proposal.Info.BlockSize)
 		require.Equal(t, 0, len(proposal.Info.TxsByLane))
-		require.Equal(t, uint64(0), proposal.GasLimt)
+		require.Equal(t, uint64(0), proposal.Info.GasLimit)
 
 		// Ensure that the proposal can be marshalled.
 		block, err := proposal.GetProposalWithInfo()
@@ -349,8 +350,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
-		require.Equal(t, int64(0), proposal.BlockSize)
-		require.Equal(t, uint64(0), proposal.GasLimt)
+		require.Equal(t, int64(0), proposal.Info.BlockSize)
+		require.Equal(t, uint64(0), proposal.Info.GasLimit)
 		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
@@ -388,8 +389,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 0, len(proposal.Txs))
-		require.Equal(t, int64(0), proposal.BlockSize)
-		require.Equal(t, uint64(0), proposal.GasLimt)
+		require.Equal(t, int64(0), proposal.Info.BlockSize)
+		require.Equal(t, uint64(0), proposal.Info.GasLimit)
 		require.Equal(t, 0, len(proposal.Info.TxsByLane))
 
 		// Ensure that the proposal can be marshalled.
@@ -440,8 +441,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is not empty.
 		require.Equal(t, 2, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.GasLimt)
+		require.Equal(t, int64(size), proposal.Info.BlockSize)
+		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
 		require.Equal(t, 2, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test2"])
@@ -551,10 +552,12 @@ func TestGetLaneLimits(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			proposal := proposals.Proposal{
-				MaxBlockSize: tc.maxTxBytes,
-				BlockSize:    tc.totalTxBytesUsed,
-				MaxGasLimit:  tc.maxGasLimit,
-				GasLimt:      tc.totalGasLimitUsed,
+				Info: types.ProposalInfo{
+					MaxBlockSize: tc.maxTxBytes,
+					BlockSize:    tc.totalTxBytesUsed,
+					MaxGasLimit:  tc.maxGasLimit,
+					GasLimit:     tc.totalGasLimitUsed,
+				},
 			}
 
 			res := proposal.GetLaneLimits(tc.ratio)

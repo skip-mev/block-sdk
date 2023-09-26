@@ -88,9 +88,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		h.logger.Info(
 			"prepared proposal",
 			"num_txs", len(proposal),
-			"total_tx_bytes", finalProposal.BlockSize,
+			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", maxBlockSize,
-			"total_gas_limit", finalProposal.GasLimt,
+			"total_gas_limit", finalProposal.Info.GasLimit,
 			"max_gas_limit", maxGasLimit,
 			"height", req.Height,
 		)
@@ -122,7 +122,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}()
 
 		// Validate the proposal against the basic invariants that are required for the proposal to be valid.
-		partialProposals, err := h.ValidateBasic(ctx, req.Txs)
+		proposalInfo, partialProposals, err := h.ValidateBasic(ctx, req.Txs)
 		if err != nil {
 			h.logger.Error("failed to validate proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
@@ -144,19 +144,35 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		// Retrieve the proposal with metadata and transactions.
-		proposal, err := finalProposal.GetProposalWithInfo()
-		if err != nil {
-			h.logger.Error("failed to get proposal with metadata", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		// Conduct final checks on block size and gas limit.
+		if finalProposal.Info.BlockSize != proposalInfo.BlockSize {
+			h.logger.Error(
+				"proposal block size does not match",
+				"expected", proposalInfo.BlockSize,
+				"got", finalProposal.Info.BlockSize,
+			)
+
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
+				fmt.Errorf("proposal block size does not match")
+		}
+
+		if finalProposal.Info.GasLimit != proposalInfo.GasLimit {
+			h.logger.Error(
+				"proposal gas limit does not match",
+				"expected", proposalInfo.GasLimit,
+				"got", finalProposal.Info.GasLimit,
+			)
+
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
+				fmt.Errorf("proposal gas limit does not match")
 		}
 
 		h.logger.Info(
 			"processed proposal",
-			"num_txs", len(proposal),
-			"total_tx_bytes", finalProposal.BlockSize,
+			"num_txs", len(req.Txs),
+			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", maxBlockSize,
-			"total_gas_limit", finalProposal.GasLimt,
+			"total_gas_limit", finalProposal.Info.GasLimit,
 			"max_gas_limit", maxGasLimit,
 			"height", req.Height,
 		)
@@ -169,10 +185,10 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 // for the proposal to be valid. This includes:
 //  1. The proposal must contain the proposal information and must be valid.
 //  2. The proposal must contain the correct number of transactions for each lane.
-func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][][]byte, error) {
+func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
 	// If the proposal is empty, then the metadata was not included.
 	if len(proposal) == 0 {
-		return nil, fmt.Errorf("proposal does not contain proposal metadata")
+		return types.ProposalInfo{}, nil, fmt.Errorf("proposal does not contain proposal metadata")
 	}
 
 	metaDataBz, txs := proposal[ProposalInfoIndex], proposal[1:]
@@ -180,7 +196,7 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 	// Retrieve the metadata from the proposal.
 	var metaData types.ProposalInfo
 	if err := metaData.Unmarshal(metaDataBz); err != nil {
-		return nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
+		return types.ProposalInfo{}, nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
 	}
 
 	lanes := h.mempool.Registry()
@@ -188,17 +204,26 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 
 	if metaData.TxsByLane == nil {
 		if len(txs) > 0 {
-			return nil, fmt.Errorf("proposal contains invalid number of transactions")
+			return types.ProposalInfo{}, nil, fmt.Errorf("proposal contains invalid number of transactions")
 		}
 
-		return partialProposals, nil
+		return types.ProposalInfo{}, partialProposals, nil
 	}
+
+	h.logger.Info(
+		"received proposal with metadata",
+		"max_block_size", metaData.MaxBlockSize,
+		"max_gas_limit", metaData.MaxGasLimit,
+		"gas_limit", metaData.GasLimit,
+		"block_size", metaData.BlockSize,
+		"lanes_with_txs", metaData.TxsByLane,
+	)
 
 	// Iterate through all of the lanes and match the corresponding transactions to the lane.
 	for index, lane := range lanes {
 		numTxs := metaData.TxsByLane[lane.Name()]
 		if numTxs > uint64(len(txs)) {
-			return nil, fmt.Errorf(
+			return types.ProposalInfo{}, nil, fmt.Errorf(
 				"proposal metadata contains invalid number of transactions for lane %s; got %d, expected %d",
 				lane.Name(),
 				len(txs),
@@ -212,8 +237,8 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 
 	// If there are any transactions remaining in the proposal, then the proposal is invalid.
 	if len(txs) > 0 {
-		return nil, fmt.Errorf("proposal contains invalid number of transactions")
+		return types.ProposalInfo{}, nil, fmt.Errorf("proposal contains invalid number of transactions")
 	}
 
-	return partialProposals, nil
+	return metaData, partialProposals, nil
 }
