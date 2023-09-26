@@ -25,6 +25,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -58,6 +59,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			s.accounts[0],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
@@ -93,6 +95,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -127,6 +130,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			s.accounts[0],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
@@ -166,6 +170,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
@@ -175,6 +180,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
@@ -215,6 +221,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -224,6 +231,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
@@ -264,6 +272,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -273,6 +282,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			s.accounts[1],
 			0,
 			10, // This tx is too large to fit in the proposal
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
@@ -314,6 +324,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -335,6 +346,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			s.accounts[0],
 			0,
 			1,
+			0,
 			0,
 		)
 		s.Require().NoError(err)
@@ -358,6 +370,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -367,6 +380,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -375,6 +389,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			s.accounts[2],
 			0,
 			1,
+			0,
 			0,
 		)
 		s.Require().NoError(err)
@@ -404,6 +419,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
@@ -413,6 +429,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
@@ -437,6 +454,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -446,6 +464,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
@@ -470,6 +489,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			2,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -479,6 +499,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)

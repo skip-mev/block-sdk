@@ -10,6 +10,45 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 )
 
+type (
+	// TxInfo is the information about a transaction.
+	TxInfo struct {
+		// Hash is the hex-encoded hash of the transaction.
+		Hash string
+		// Size is the size of the transaction in bytes.
+		Size int64
+		// Gas is the gas limit of the transaction.
+		GasLimit uint64
+		// TxBytes is the bytes of the transaction.
+		TxBytes []byte
+	}
+)
+
+// GetTxHashStr returns the hex-encoded hash of the transaction alongside the
+// transaction bytes.
+func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
+	txBz, err := txEncoder(tx)
+	if err != nil {
+		return TxInfo{}, fmt.Errorf("failed to encode transaction: %w", err)
+	}
+
+	txHash := sha256.Sum256(txBz)
+	txHashStr := hex.EncodeToString(txHash[:])
+
+	// TODO: Does anything need to be done to support EVM transactions?
+	gasTx, ok := tx.(sdk.FeeTx)
+	if !ok {
+		return TxInfo{}, fmt.Errorf("failed to cast transaction to GasTx")
+	}
+
+	return TxInfo{
+		Hash:     txHashStr,
+		Size:     int64(len(txBz)),
+		GasLimit: gasTx.GetGas(),
+		TxBytes:  txBz,
+	}, nil
+}
+
 // GetTxHashStr returns the hex-encoded hash of the transaction alongside the
 // transaction bytes.
 func GetTxHashStr(txEncoder sdk.TxEncoder, tx sdk.Tx) ([]byte, string, error) {
@@ -37,6 +76,21 @@ func GetDecodedTxs(txDecoder sdk.TxDecoder, txs [][]byte) ([]sdk.Tx, error) {
 	}
 
 	return decodedTxs, nil
+}
+
+// GetEncodedTxs returns the encoded transactions from the given bytes.
+func GetEncodedTxs(txEncoder sdk.TxEncoder, txs []sdk.Tx) ([][]byte, error) {
+	var encodedTxs [][]byte
+	for _, tx := range txs {
+		txBz, err := txEncoder(tx)
+		if err != nil {
+			return nil, fmt.Errorf("failed to encode transaction: %w", err)
+		}
+
+		encodedTxs = append(encodedTxs, txBz)
+	}
+
+	return encodedTxs, nil
 }
 
 // RemoveTxsFromLane removes the transactions from the given lane's mempool.

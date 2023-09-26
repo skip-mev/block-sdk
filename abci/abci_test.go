@@ -74,6 +74,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -100,6 +101,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -110,6 +112,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			s.accounts[1],
 			1,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
 		)
@@ -138,6 +141,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -148,6 +152,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			s.accounts[1],
 			1,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200000000)),
 		)
@@ -190,6 +195,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -222,6 +228,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -260,6 +267,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -299,6 +307,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:1],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -375,6 +384,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 			0,
 			0,
 			s.accounts[0:4],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -382,6 +392,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		normalTx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[1],
+			0,
 			0,
 			0,
 			0,
@@ -442,6 +453,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -474,6 +486,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
+			0,
 			0,
 			0,
 			0,
@@ -513,6 +526,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			0,
 			0,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -546,6 +560,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
+			0,
 			0,
 			0,
 			0,
@@ -612,6 +627,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			0,
 			0,
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -629,6 +645,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			0,
+			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
@@ -639,6 +656,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			s.accounts[2],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
 		)
@@ -662,6 +680,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			0,
 			1,
 			s.accounts[0:2],
+			0,
 		)
 		s.Require().NoError(err)
 
@@ -670,6 +689,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			s.accounts[1],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
 		)
@@ -680,6 +700,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			s.accounts[2],
 			0,
 			1,
+			0,
 			0,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
 		)
