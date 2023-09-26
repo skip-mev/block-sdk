@@ -11,21 +11,21 @@ import (
 )
 
 type (
-	// TxInfo is the information about a transaction.
+	// TxInfo contains the information required for a transaction to be
+	// included in a proposal.
 	TxInfo struct {
 		// Hash is the hex-encoded hash of the transaction.
 		Hash string
 		// Size is the size of the transaction in bytes.
 		Size int64
-		// Gas is the gas limit of the transaction.
+		// GasLimit is the gas limit of the transaction.
 		GasLimit uint64
 		// TxBytes is the bytes of the transaction.
 		TxBytes []byte
 	}
 )
 
-// GetTxHashStr returns the hex-encoded hash of the transaction alongside the
-// transaction bytes.
+// GetTxHashStr returns the TxInfo of a given transaction.
 func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
 	txBz, err := txEncoder(tx)
 	if err != nil {
@@ -35,7 +35,7 @@ func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
 	txHash := sha256.Sum256(txBz)
 	txHashStr := hex.EncodeToString(txHash[:])
 
-	// TODO: Does anything need to be done to support EVM transactions?
+	// TODO: Add an adapter to lanes so that this can be flexible to support EVM, etc.
 	gasTx, ok := tx.(sdk.FeeTx)
 	if !ok {
 		return TxInfo{}, fmt.Errorf("failed to cast transaction to GasTx")

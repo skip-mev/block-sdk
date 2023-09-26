@@ -9,18 +9,19 @@ import (
 type (
 	// Proposal defines a block proposal type.
 	Proposal struct {
-		// txs is the list of transactions in the proposal.
+		// Txs is the list of transactions in the proposal.
 		Txs [][]byte
-		// cache is a cache of the selected transactions in the proposal.
+		// Cache is a cache of the selected transactions in the proposal.
 		Cache map[string]struct{}
-		// txEncoder is the transaction encoder.
+		// TxEncoder is the transaction encoder.
 		TxEncoder sdk.TxEncoder
-		// laneInfo contains information about the various lanes that built the proposal.
+		// Info contains information about the state of the proposal.
 		Info types.ProposalInfo
 	}
 )
 
-// NewProposal returns a new empty proposal.
+// NewProposal returns a new empty proposal. Any transactions added to the proposal
+// will be subject to the given max block size and max gas limit.
 func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
 	return Proposal{
 		TxEncoder: txEncoder,
@@ -37,30 +38,31 @@ func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64
 // GetProposalWithInfo returns all of the transactions in the proposal along with information
 // about the lanes that built the proposal.
 func (p *Proposal) GetProposalWithInfo() ([][]byte, error) {
-	// Marshall the laneInfo into the first slot of the proposal.
-	laneInfo, err := p.Info.Marshal()
+	// Marshall the proposal info into the first slot of the proposal.
+	infoBz, err := p.Info.Marshal()
 	if err != nil {
 		return nil, err
 	}
 
-	proposal := [][]byte{laneInfo}
+	proposal := [][]byte{infoBz}
 	proposal = append(proposal, p.Txs...)
 
 	return proposal, nil
 }
 
 // GetLaneLimits returns the maximum number of bytes and gas limit that can be
-// included/consumed in the proposal for the given lane.
+// included/consumed in the proposal for the given block space ratio. Lane's
+// must first call this function to determine the maximum number of bytes and
+// gas limit they can include in the proposal before constructing a partial
+// proposal.
 func (p *Proposal) GetLaneLimits(ratio math.LegacyDec) LaneLimits {
 	var (
 		txBytes  int64
 		gasLimit uint64
 	)
 
-	// In the case where the ratio is zero, we return the max tx bytes remaining. Note, the only
-	// lane that should have a ratio of zero is the default lane. This means the default lane
-	// will have no limit on the number of transactions it can include in a block and is only
-	// limited by the maxTxBytes included in the PrepareProposalRequest.
+	// In the case where the ratio is zero, we return the max tx bytes remaining.
+	// Note, the only lane that should have a ratio of zero is the default lane.
 	if ratio.IsZero() {
 		txBytes = p.Info.MaxBlockSize - p.Info.BlockSize
 		if txBytes < 0 {
