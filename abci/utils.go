@@ -70,7 +70,8 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 
 // ChainProcessLanes chains together the proposal verification logic from each lane
 // into a single function. The first lane in the chain is the first lane to be verified and
-// the last lane in the chain is the last lane to be verified.
+// the last lane in the chain is the last lane to be verified. Each lane will validate
+// the transactions that it selected in the prepare phase.
 func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.ProcessLanesHandler {
 	if len(chain) == 0 {
 		return nil

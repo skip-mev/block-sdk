@@ -13,8 +13,8 @@ import (
 )
 
 const (
-	// MetaDataIndex is the index of the proposal metadata in the proposal.
-	MetaDataIndex = 0
+	// ProposalInfoIndex is the index of the proposal metadata in the proposal.
+	ProposalInfoIndex = 0
 )
 
 type (
@@ -25,12 +25,11 @@ type (
 		txDecoder           sdk.TxDecoder
 		txEncoder           sdk.TxEncoder
 		prepareLanesHandler block.PrepareLanesHandler
-		processLanesHandler block.ProcessLanesHandler
 		mempool             block.Mempool
 	}
 )
 
-// NewProposalHandler returns a new abci++ proposal handler. This proposal handler will
+// NewProposalHandler returns a new ABCI++ proposal handler. This proposal handler will
 // iteratively call each of the lanes in the chain to prepare and process the proposal.
 func NewProposalHandler(
 	logger log.Logger,
@@ -48,10 +47,11 @@ func NewProposalHandler(
 }
 
 // PrepareProposalHandler prepares the proposal by selecting transactions from each lane
-// according to each lane's selection logic. We select transactions in a greedy fashion. Note that
-// each lane has an boundary on the number of bytes that can be included in the proposal. By default,
-// the default lane will not have a boundary on the number of bytes that can be included in the proposal and
-// will include all valid transactions in the proposal (up to MaxTxBytes).
+// according to each lane's selection logic. We select transactions in the order in which the
+// lanes are configured on the chain. Note that each lane has an boundary on the number of
+// bytes/gas that can be included in the proposal. By default, the default lane will not have
+// a boundary on the number of bytes that can be included in the proposal and will include all
+// valid transactions in the proposal (up to MaxBlockSize, MaxGasLimit).
 func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (resp *abci.ResponsePrepareProposal, err error) {
 		// In the case where there is a panic, we recover here and return an empty proposal.
@@ -59,6 +59,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			if rec := recover(); rec != nil {
 				h.logger.Error("failed to prepare proposal", "err", err)
 
+				// TODO: Should we attempt to return a empty proposal here with empty proposal info?
 				resp = &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 				err = fmt.Errorf("failed to prepare proposal: %v", rec)
 			}
@@ -78,7 +79,11 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		}
 
 		// Retrieve the proposal with metadata and transactions.
-		proposal := finalProposal.GetProposal()
+		proposal, err := finalProposal.GetProposalWithInfo()
+		if err != nil {
+			h.logger.Error("failed to get proposal with metadata", "err", err)
+			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
+		}
 
 		h.logger.Info(
 			"prepared proposal",
@@ -99,9 +104,11 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 }
 
 // ProcessProposalHandler processes the proposal by verifying all transactions in the proposal
-// according to each lane's verification logic. We verify proposals in a greedy fashion.
-// If a lane's portion of the proposal is invalid, we reject the proposal. After a lane's portion
-// of the proposal is verified, we pass the remaining transactions to the next lane in the chain.
+// according to each lane's verification logic. Proposals are verified similar to how they are
+// constructed. After a proposal is processed, it should be the same proposal that was prepared.
+// Each proposal will first be broken down by the lanes that prepared each partial proposal. Each
+// lane will iteratively verify the transactions that it prepared. If any lane fails to verify the
+// transactions, then the proposal is rejected.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		// In the case where any of the lanes panic, we recover here and return a reject status.
@@ -114,15 +121,19 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
+		// Validate the proposal against the basic invariants that are required for the proposal to be valid.
 		partialProposals, err := h.ValidateBasic(ctx, req.Txs)
 		if err != nil {
 			h.logger.Error("failed to validate proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
+		// Build the process lanes handler that will verify the proposal according to each lane's
+		// verification logic.
 		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
 
-		// Build an empty placeholder proposal with the maximum block size and gas limit.
+		// Build an empty placeholder proposal with the maximum block size and gas limit to replicate
+		// the proposal that was prepared.
 		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(ctx)
 		emptyProposal := proposals.NewProposal(h.txEncoder, maxBlockSize, maxGasLimit)
 
@@ -134,7 +145,11 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}
 
 		// Retrieve the proposal with metadata and transactions.
-		proposal := finalProposal.GetProposal()
+		proposal, err := finalProposal.GetProposalWithInfo()
+		if err != nil {
+			h.logger.Error("failed to get proposal with metadata", "err", err)
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		}
 
 		h.logger.Info(
 			"processed proposal",
@@ -152,7 +167,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 // ValidateBasic validates the proposal against the basic invariants that are required
 // for the proposal to be valid. This includes:
-//  1. The proposal must contain the proposal metadata and must be valid.
+//  1. The proposal must contain the proposal information and must be valid.
 //  2. The proposal must contain the correct number of transactions for each lane.
 func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][][]byte, error) {
 	// If the proposal is empty, then the metadata was not included.
@@ -160,7 +175,7 @@ func (h *ProposalHandler) ValidateBasic(ctx sdk.Context, proposal [][]byte) ([][
 		return nil, fmt.Errorf("proposal does not contain proposal metadata")
 	}
 
-	metaDataBz, txs := proposal[MetaDataIndex], proposal[1:]
+	metaDataBz, txs := proposal[ProposalInfoIndex], proposal[1:]
 
 	// Retrieve the metadata from the proposal.
 	var metaData types.ProposalInfo
