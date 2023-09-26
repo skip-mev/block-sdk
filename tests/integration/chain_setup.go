@@ -182,6 +182,11 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 	require.True(t, len(chain.Nodes()) > 0)
 	client := chain.Nodes()[0].Client
 
+	statusResp, err := client.Status(context.Background())
+	require.NoError(t, err)
+
+	t.Logf("broadcasting transactions at latest height of %d", statusResp.SyncInfo.LatestBlockHeight)
+
 	for i, tx := range txs {
 		// broadcast tx
 		_, err := client.BroadcastTxSync(ctx, tx)
@@ -327,13 +332,13 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHash string, txs [][]byte) {
 	// verify the block
 	if bidTxHash != "" {
-		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset]))
+		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset+1]))
 		offset += 1
 	}
 
 	// verify the txs in sequence
 	for i, tx := range txs {
-		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset]))
+		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset+1]))
 	}
 }
 
