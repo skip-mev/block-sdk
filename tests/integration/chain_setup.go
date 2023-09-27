@@ -7,6 +7,14 @@ import (
 	"strings"
 	"testing"
 	"time"
+	"os"
+	"io"
+	"path"
+	"archive/tar"
+	"bytes"
+	"github.com/cosmos/cosmos-sdk/client"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 
 	"cosmossdk.io/math"
 	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -28,6 +36,11 @@ import (
 
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
+
+type KeyringOverride struct {
+	keyringOptions keyring.Option
+	cdc codec.Codec
+}
 
 // ChainBuilderFromChainSpec creates an interchaintest chain builder factory given a ChainSpec
 // and returns the associated chain
@@ -73,19 +86,18 @@ func BuildInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *interc
 }
 
 // CreateTx creates a new transaction to be signed by the given user, including a provided set of messages
-func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height uint64, GasPrice int64, msgs ...sdk.Msg) []byte {
-	// create a broadcaster
-	broadcaster := cosmos.NewBroadcaster(t, chain)
-
+func (s *IntegrationTestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height uint64, GasPrice int64, msgs ...sdk.Msg) []byte {
 	// create tx factory + Client Context
-	txf, err := broadcaster.GetFactory(ctx, user)
-	require.NoError(t, err)
+	txf, err := s.bc.GetFactory(ctx, user)
+	s.Require().NoError(err)
 
-	cc, err := broadcaster.GetClientContext(ctx, user)
-	require.NoError(t, err)
+	cc, err := s.bc.GetClientContext(ctx, user)
+	s.Require().NoError(err)
+
+	txf = txf.WithSimulateAndExecute(true)
 
 	txf, err = txf.Prepare(cc)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	// set timeout height
 	if height != 0 {
@@ -94,7 +106,7 @@ func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user
 
 	// get gas for tx
 	_, gas, err := tx.CalculateGas(cc, txf, msgs...)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 	txf.WithGas(gas)
 
 	// update sequence number
@@ -103,30 +115,27 @@ func CreateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user
 
 	// sign the tx
 	txBuilder, err := txf.BuildUnsignedTx(msgs...)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
-	require.NoError(t, tx.Sign(txf, cc.GetFromName(), txBuilder, true))
+	s.Require().NoError(tx.Sign(txf, cc.GetFromName(), txBuilder, true))
 
 	// encode and return
 	bz, err := cc.TxConfig.TxEncoder()(txBuilder.GetTx())
-	require.NoError(t, err)
+	s.Require().NoError(err)
 	return bz
 }
 
 // SimulateTx simulates the provided messages, and checks whether the provided failure condition is met
-func SimulateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
-	// create a broadcaster
-	broadcaster := cosmos.NewBroadcaster(t, chain)
-
+func (s *IntegrationTestSuite) SimulateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
 	// create tx factory + Client Context
-	txf, err := broadcaster.GetFactory(ctx, user)
-	require.NoError(t, err)
+	txf, err := s.bc.GetFactory(ctx, user)
+	s.Require().NoError(err)
 
-	cc, err := broadcaster.GetClientContext(ctx, user)
-	require.NoError(t, err)
+	cc, err := s.bc.GetClientContext(ctx, user)
+	s.Require().NoError(err)
 
 	txf, err = txf.Prepare(cc)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	// set timeout height
 	if height != 0 {
@@ -135,7 +144,7 @@ func SimulateTx(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, us
 
 	// get gas for tx
 	_, _, err = tx.CalculateGas(cc, txf, msgs...)
-	require.Equal(t, err != nil, expectFail)
+	s.Require().Equal(err != nil, expectFail)
 }
 
 type Tx struct {
@@ -149,16 +158,16 @@ type Tx struct {
 }
 
 // CreateAuctionBidMsg creates a new AuctionBid tx signed by the given user, the order of txs in the MsgAuctionBid will be determined by the contents + order of the MessageForUsers
-func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*auctiontypes.MsgAuctionBid, [][]byte) {
+func (s *IntegrationTestSuite) CreateAuctionBidMsg(ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*auctiontypes.MsgAuctionBid, [][]byte) {
 	// for each MessagesForUser get the signed bytes
 	txs := make([][]byte, len(txsPerUser))
 	for i, tx := range txsPerUser {
-		txs[i] = CreateTx(t, ctx, chain, tx.User, tx.SequenceIncrement, tx.Height, tx.GasPrice, tx.Msgs...)
+		txs[i] = s.CreateTx(ctx, chain, tx.User, tx.SequenceIncrement, tx.Height, tx.GasPrice, tx.Msgs...)
 	}
 
 	bech32SearcherAddress := searcher.FormattedAddress()
 	accAddr, err := sdk.AccAddressFromBech32(bech32SearcherAddress)
-	require.NoError(t, err)
+	s.Require().NoError(err)
 
 	// create a message auction bid
 	return auctiontypes.NewMsgAuctionBid(
@@ -171,26 +180,43 @@ func CreateAuctionBidMsg(t *testing.T, ctx context.Context, searcher cosmos.User
 // BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
 // is not expected to be included in a block, set SkipInclusionCheck to true and the method
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion
-func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, msgsPerUser []Tx) [][]byte {
+func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, msgsPerUser []Tx) [][]byte {
+	return s.BroadcastTxsWithCallback(ctx, chain, msgsPerUser, nil)
+}
+
+// BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
+// is not expected to be included in a block, set SkipInclusionCheck to true and the method
+// will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion. The callback
+// function is called for each tx that is included in a block.
+func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
+	ctx context.Context, 
+	chain *cosmos.CosmosChain, 
+	msgsPerUser []Tx,
+	cb func(tx []byte, resp *rpctypes.ResultTx),
+) [][]byte {
 	txs := make([][]byte, len(msgsPerUser))
 
 	for i, msg := range msgsPerUser {
-		txs[i] = CreateTx(t, ctx, chain, msg.User, msg.SequenceIncrement, msg.Height, msg.GasPrice, msg.Msgs...)
+		txs[i] = s.CreateTx(ctx, chain, msg.User, msg.SequenceIncrement, msg.Height, msg.GasPrice, msg.Msgs...)
 	}
 
 	// broadcast each tx
-	require.True(t, len(chain.Nodes()) > 0)
+	s.Require().True(len(chain.Nodes()) > 0)
 	client := chain.Nodes()[0].Client
 
 	for i, tx := range txs {
 		// broadcast tx
-		resp, _ := client.BroadcastTxSync(ctx, tx)
+		resp, err := client.BroadcastTxSync(ctx, tx)
 
 		// check execution was successful
 		if !msgsPerUser[i].ExpectFail {
-			require.Equal(t, resp.Code, uint32(0))
+			s.Require().Equal(resp.Code, uint32(0))
 		} else {
-			require.NotEqual(t, resp.Code, uint32(0))
+			if resp != nil {
+				s.Require().NotEqual(resp.Code, uint32(0))
+			} else {
+				s.Require().Error(err)
+			}
 		}
 
 	}
@@ -205,18 +231,22 @@ func BroadcastTxs(t *testing.T, ctx context.Context, chain *cosmos.CosmosChain, 
 
 		tx := tx // pin
 		eg.Go(func() error {
-			return testutil.WaitForCondition(4*time.Second, 500*time.Millisecond, func() (bool, error) {
+			return testutil.WaitForCondition(30*time.Second, 500*time.Millisecond, func() (bool, error) {
 				res, err := client.Tx(context.Background(), comettypes.Tx(tx).Hash(), false)
-
 				if err != nil || res.TxResult.Code != uint32(0) {
 					return false, nil
 				}
+
+				if cb != nil {
+					cb(tx, res)
+				}
+
 				return true, nil
 			})
 		})
 	}
 
-	require.NoError(t, eg.Wait())
+	s.Require().NoError(eg.Wait())
 
 	return txs
 }
@@ -274,7 +304,7 @@ func QueryAccountBalance(t *testing.T, chain ibc.Chain, address, denom string) i
 	// get nodes
 	balance, err := cosmosChain.GetBalance(context.Background(), address, denom)
 	require.NoError(t, err)
-	return balance
+	return balance.Int64()
 }
 
 // QueryAccountSequence
@@ -313,12 +343,12 @@ func Block(t *testing.T, chain *cosmos.CosmosChain, height int64) *rpctypes.Resu
 // WaitForHeight waits for the chain to reach the given height
 func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 	// wait for next height
-	err := testutil.WaitForCondition(30*time.Second, time.Second, func() (bool, error) {
+	err := testutil.WaitForCondition(30*time.Second, 100 * time.Millisecond, func() (bool, error) {
 		pollHeight, err := chain.Height(context.Background())
 		if err != nil {
 			return false, err
 		}
-		return pollHeight == height, nil
+		return pollHeight >= height, nil
 	})
 	require.NoError(t, err)
 }
@@ -339,4 +369,74 @@ func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHas
 
 func TxHash(tx []byte) string {
 	return strings.ToUpper(hex.EncodeToString(comettypes.Tx(tx).Hash()))
+}
+
+func (s *IntegrationTestSuite) setupBroadcaster() {
+	bc := cosmos.NewBroadcaster(s.T(), s.chain.(*cosmos.CosmosChain))
+
+	if s.broadcasterOverrides == nil {
+		s.bc = bc
+		return
+	}
+
+	// get the key-ring-dir from the node locally
+	keyringDir := s.keyringDirFromNode()
+
+	// create a new keyring
+	kr, err := keyring.New("", keyring.BackendTest, keyringDir, os.Stdin, s.broadcasterOverrides.cdc, s.broadcasterOverrides.keyringOptions)
+	s.Require().NoError(err)
+
+	// override factory + client context keyrings
+	bc.ConfigureFactoryOptions(
+		func(factory tx.Factory) tx.Factory {
+			return factory.WithKeybase(kr)
+		},
+	)
+
+	bc.ConfigureClientContextOptions(
+		func(cc client.Context) client.Context {
+			return cc.WithKeyring(kr)
+		},
+	)
+
+	s.bc = bc
+}
+
+// sniped from here: https://github.com/strangelove-ventures/interchaintest ref: 9341b001214d26be420f1ca1ab0f15bad17faee6
+func (s *IntegrationTestSuite) keyringDirFromNode() (string) {
+	node := s.chain.(*cosmos.CosmosChain).Nodes()[0]
+
+	// create a temp-dir
+	localDir := s.T().TempDir()
+
+	containerKeyringDir := path.Join(node.HomeDir(), "keyring-test")
+	reader, _, err := node.DockerClient.CopyFromContainer(context.Background(), node.ContainerID(), containerKeyringDir)
+	s.Require().NoError(err)
+
+	s.Require().NoError(os.Mkdir(path.Join(localDir, "keyring-test"), os.ModePerm))
+
+	tr := tar.NewReader(reader)
+	for {
+		hdr, err := tr.Next()
+		if err == io.EOF {
+			break // End of archive
+		}
+		s.Require().NoError(err)
+
+		var fileBuff bytes.Buffer
+		_, err = io.Copy(&fileBuff, tr)
+		s.Require().NoError(err)
+
+		name := hdr.Name
+		extractedFileName := path.Base(name)
+		isDirectory := extractedFileName == ""
+		if isDirectory {
+			continue
+		}
+
+		filePath := path.Join(localDir, "keyring-test", extractedFileName)
+		s.Require().NoError(os.WriteFile(filePath, fileBuff.Bytes(), os.ModePerm))
+	}
+
+	return localDir
 }

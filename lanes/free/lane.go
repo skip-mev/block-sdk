@@ -32,6 +32,7 @@ func NewFreeLane(
 		base.NewMempool[string](
 			txPriority,
 			cfg.TxEncoder,
+			cfg.SignerExtractor,
 			cfg.MaxTxs,
 		),
 		matchFn,
