@@ -96,7 +96,7 @@ func (suite *AnteTestSuite) SetupTest() {
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Base lane set up

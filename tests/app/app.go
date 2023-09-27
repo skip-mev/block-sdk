@@ -274,7 +274,7 @@ func New(
 	}
 	mevLane := mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Free lane allows transactions to be included in the next block for free.
