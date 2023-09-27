@@ -33,7 +33,7 @@ type (
 	// can also include vote extensions, which are included at the top of the proposal.
 	BlockProposal interface { //nolint
 		// UpdateProposal updates the proposal with the given transactions. There are a
-		// few invarients that are checked:
+		// few invariants that are checked:
 		//  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 		//  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 		//     the lane.
@@ -95,7 +95,7 @@ func NewProposal(maxTxBytes int64) *Proposal {
 }
 
 // UpdateProposal updates the proposal with the given transactions and total size. There are a
-// few invarients that are checked:
+// few invariants that are checked:
 //  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 //  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 //     the lane.
@@ -109,7 +109,7 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 		partialProposalSize += int64(len(tx))
 	}
 
-	// Invarient check: Ensure that the lane did not prepare a partial proposal that is too large.
+	// Invariant check: Ensure that the lane did not prepare a partial proposal that is too large.
 	maxTxBytesForLane := utils.GetMaxTxBytesForLane(p.GetMaxTxBytes(), p.GetTotalTxBytes(), lane.GetMaxBlockSpace())
 	if partialProposalSize > maxTxBytesForLane {
 		return fmt.Errorf(
@@ -120,7 +120,7 @@ func (p *Proposal) UpdateProposal(lane LaneProposal, partialProposalTxs [][]byte
 		)
 	}
 
-	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.
+	// Invariant check: Ensure that the lane did not prepare a block proposal that is too large.
 	updatedSize := p.totalTxBytes + partialProposalSize
 	if updatedSize > p.maxTxBytes {
 		return fmt.Errorf(
