@@ -48,13 +48,6 @@ func NewAuctionDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane
 // AnteHandle validates that the auction bid is valid if one exists. If valid it will deduct the entrance fee from the
 // bidder's account.
 func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler) (sdk.Context, error) {
-	// If comet is re-checking a transaction, we only need to check if the transaction is in the application-side mempool.
-	if ctx.IsReCheckTx() {
-		if !ad.mempool.Contains(tx) {
-			return ctx, fmt.Errorf("transaction not found in application-side mempool")
-		}
-	}
-
 	bidInfo, err := ad.lane.GetAuctionBidInfo(tx)
 	if err != nil {
 		return ctx, err
@@ -62,6 +55,13 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	// Validate the auction bid if one exists.
 	if bidInfo != nil {
+		// If comet is re-checking a transaction, we only need to check if the transaction is in the application-side mempool.
+		if ctx.IsReCheckTx() {
+			if !ad.mempool.Contains(tx) {
+				return ctx, fmt.Errorf("transaction not found in application-side mempool")
+			}
+		}
+
 		// Auction transactions must have a timeout set to a valid block height.
 		if err := ad.ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
 			return ctx, err
@@ -71,6 +71,7 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 		// is checkTx or recheckTx. Otherwise, the ABCI handlers (VerifyVoteExtension, ExtendVoteExtension, etc.)
 		// will always compare the auction bid to the highest bidding transaction in the mempool leading to
 		// poor liveness guarantees.
+		// TODO(nikhil/david): refactor this logic (is this necessary?)
 		topBid := sdk.Coin{}
 		if ctx.IsCheckTx() || ctx.IsReCheckTx() {
 			if topBidTx := ad.lane.GetTopAuctionTx(ctx); topBidTx != nil {
