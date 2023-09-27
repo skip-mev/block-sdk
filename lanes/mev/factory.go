@@ -4,8 +4,8 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cosmos/cosmos-sdk/x/auth/signing"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
@@ -30,7 +30,8 @@ type (
 
 	// DefaultAuctionFactory defines a default implmentation for the auction factory interface for processing auction transactions.
 	DefaultAuctionFactory struct {
-		txDecoder sdk.TxDecoder
+		txDecoder       sdk.TxDecoder
+		signerExtractor signer_extraction.Adapter
 	}
 
 	// TxWithTimeoutHeight is used to extract timeouts from sdk.Tx transactions. In the case where,
@@ -45,9 +46,10 @@ type (
 var _ Factory = (*DefaultAuctionFactory)(nil)
 
 // NewDefaultAuctionFactory returns a default auction factory interface implementation.
-func NewDefaultAuctionFactory(txDecoder sdk.TxDecoder) Factory {
+func NewDefaultAuctionFactory(txDecoder sdk.TxDecoder, extractor signer_extraction.Adapter) Factory {
 	return &DefaultAuctionFactory{
-		txDecoder: txDecoder,
+		txDecoder:       txDecoder,
+		signerExtractor: extractor,
 	}
 }
 
@@ -115,20 +117,15 @@ func (config *DefaultAuctionFactory) getBundleSigners(bundle [][]byte) ([]map[st
 			return nil, err
 		}
 
-		sigTx, ok := sdkTx.(signing.SigVerifiableTx)
-		if !ok {
-			return nil, fmt.Errorf("transaction is not valid")
-		}
-
 		txSigners := make(map[string]struct{})
 
-		signers, err := sigTx.GetSigners()
+		signers, err := config.signerExtractor.GetSigners(sdkTx)
 		if err != nil {
 			return nil, err
 		}
 
 		for _, signer := range signers {
-			txSigners[sdk.AccAddress(signer).String()] = struct{}{}
+			txSigners[signer.Signer.String()] = struct{}{}
 		}
 
 		bundleSigners = append(bundleSigners, txSigners)
