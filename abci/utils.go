@@ -7,12 +7,11 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
 
-// ChainPrepareLanes chains together the proposal preparation logic from each lane
-// into a single function. The first lane in the chain is the first lane to be prepared and
-// the last lane in the chain is the last lane to be prepared.
-//
-// In the case where any of the lanes fail to prepare the partial proposal, the lane that failed
-// will be skipped and the next lane in the chain will be called to prepare the proposal.
+// ChainPrepareLanes chains together the proposal preparation logic from each lane into a
+// single function. The first lane in the chain is the first lane to be prepared and the
+// last lane in the chain is the last lane to be prepared.In the case where any of the lanes
+// fail to prepare the partial proposal, the lane that failed will be skipped and the next
+// lane in the chain will be called to prepare the proposal.
 func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 	if len(chain) == 0 {
 		return nil
