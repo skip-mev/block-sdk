@@ -179,11 +179,12 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 
 // ProcessLaneHandler will ensure that block proposals that include transactions from
 // the mev lane are valid. In particular, the invariant checks that we perform are:
-//  1. The first transaction in the block proposal must be a bid transaction.
+//  1. The first transaction in the partial block proposal must be a bid transaction.
 //  2. The bid transaction must be valid.
 //  3. The bundled transactions must be valid.
 //  4. The bundled transactions must match the transactions in the block proposal in the
 //     same order they were defined in the bid transaction.
+//  5. The bundled transactions must not be bid transactions.
 func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
 		if len(partialProposal) == 0 {
@@ -223,14 +224,19 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 				return fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 			}
 
-			// Verify that the bundled transaction matches the transaction in the block proposal.
 			txBz, err := l.TxEncoder()(partialProposal[index+1])
 			if err != nil {
 				return fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
 			}
 
+			// Verify that the bundled transaction matches the transaction in the block proposal.
 			if !bytes.Equal(bundledTxBz, txBz) {
 				return fmt.Errorf("invalid bid tx; bundled tx does not match tx in block proposal")
+			}
+
+			// Verify this is not another bid transaction.
+			if l.Match(ctx, bundledTx) {
+				return fmt.Errorf("invalid bid tx; bundled tx is another bid transaction")
 			}
 
 			if ctx, err = l.AnteVerifyTx(ctx, bundledTx, false); err != nil {
