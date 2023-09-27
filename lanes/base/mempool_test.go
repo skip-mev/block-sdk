@@ -4,6 +4,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/base"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
@@ -85,7 +86,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 }
 
 func (s *BaseTestSuite) TestInsert() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 	s.Run("should be able to insert a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -137,7 +138,7 @@ func (s *BaseTestSuite) TestInsert() {
 }
 
 func (s *BaseTestSuite) TestRemove() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 	s.Run("should be able to remove a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -175,7 +176,7 @@ func (s *BaseTestSuite) TestRemove() {
 
 func (s *BaseTestSuite) TestSelect() {
 	s.Run("should be able to select transactions in the correct order", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -214,7 +215,7 @@ func (s *BaseTestSuite) TestSelect() {
 	})
 
 	s.Run("should be able to select a single transaction", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), 3)
+		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
