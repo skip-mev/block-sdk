@@ -149,8 +149,8 @@ func TestUpdateProposal(t *testing.T) {
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.Info.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
+		require.Equal(t, size, proposal.Info.BlockSize)
+		require.Equal(t, gasLimit, proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -164,8 +164,8 @@ func TestUpdateProposal(t *testing.T) {
 		require.Error(t, err)
 
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.Info.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
+		require.Equal(t, size, proposal.Info.BlockSize)
+		require.Equal(t, gasLimit, proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
