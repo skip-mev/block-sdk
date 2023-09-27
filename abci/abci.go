@@ -71,7 +71,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(ctx)
 		emptyProposal := proposals.NewProposal(h.txEncoder, maxBlockSize, maxGasLimit)
 
-		// Fill the proposal with transactions from each lane respecting the maximum block size and gas limit.
+		// Fill the proposal with transactions from each lane.
 		finalProposal, err := h.prepareLanesHandler(ctx, emptyProposal)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
@@ -79,7 +79,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		}
 
 		// Retrieve the proposal with metadata and transactions.
-		proposal, err := finalProposal.GetProposalWithInfo()
+		txs, err := finalProposal.GetProposalWithInfo()
 		if err != nil {
 			h.logger.Error("failed to get proposal with metadata", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
@@ -87,7 +87,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info(
 			"prepared proposal",
-			"num_txs", len(proposal),
+			"num_txs", len(txs),
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", maxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,
@@ -98,16 +98,16 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
 		return &abci.ResponsePrepareProposal{
-			Txs: proposal,
+			Txs: txs,
 		}, nil
 	}
 }
 
 // ProcessProposalHandler processes the proposal by verifying all transactions in the proposal
 // according to each lane's verification logic. Proposals are verified similar to how they are
-// constructed. After a proposal is processed, it should be the same proposal that was prepared.
-// Each proposal will first be broken down by the lanes that prepared each partial proposal. Each
-// lane will iteratively verify the transactions that it prepared. If any lane fails to verify the
+// constructed. After a proposal is processed, it should amount to the same proposal that was prepared.
+// Each proposal will first be broken down by the lanes that prepared each partial proposal. Then, each
+// lane will iteratively verify the transactions that it belong to it. If any lane fails to verify the
 // transactions, then the proposal is rejected.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
@@ -128,12 +128,10 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		// Build the process lanes handler that will verify the proposal according to each lane's
-		// verification logic.
+		// Build handler that will verify the partial proposals according to each lane's verification logic.
 		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
 
-		// Build an empty placeholder proposal with the maximum block size and gas limit to replicate
-		// the proposal that was prepared.
+		// Build an empty placeholder proposal.
 		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(ctx)
 		emptyProposal := proposals.NewProposal(h.txEncoder, maxBlockSize, maxGasLimit)
 
@@ -144,27 +142,10 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		// Conduct final checks on block size and gas limit.
-		if finalProposal.Info.BlockSize != proposalInfo.BlockSize {
-			h.logger.Error(
-				"proposal block size does not match",
-				"expected", proposalInfo.BlockSize,
-				"got", finalProposal.Info.BlockSize,
-			)
-
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
-				fmt.Errorf("proposal block size does not match")
-		}
-
-		if finalProposal.Info.GasLimit != proposalInfo.GasLimit {
-			h.logger.Error(
-				"proposal gas limit does not match",
-				"expected", proposalInfo.GasLimit,
-				"got", finalProposal.Info.GasLimit,
-			)
-
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT},
-				fmt.Errorf("proposal gas limit does not match")
+		// Ensure block size and gas limit are correct.
+		if err := h.ValidateBlockLimits(finalProposal, proposalInfo); err != nil {
+			h.logger.Error("failed to validate the proposal", "err", err)
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		h.logger.Info(
@@ -241,4 +222,31 @@ func (h *ProposalHandler) ValidateBasic(proposal [][]byte) (types.ProposalInfo, 
 	}
 
 	return metaData, partialProposals, nil
+}
+
+// ValidateBlockLimits validates the block limits of the proposal against the block limits
+// of the chain.
+func (h *ProposalHandler) ValidateBlockLimits(finalProposal proposals.Proposal, proposalInfo types.ProposalInfo) error {
+	// Conduct final checks on block size and gas limit.
+	if finalProposal.Info.BlockSize != proposalInfo.BlockSize {
+		h.logger.Error(
+			"proposal block size does not match",
+			"expected", proposalInfo.BlockSize,
+			"got", finalProposal.Info.BlockSize,
+		)
+
+		return fmt.Errorf("proposal block size does not match")
+	}
+
+	if finalProposal.Info.GasLimit != proposalInfo.GasLimit {
+		h.logger.Error(
+			"proposal gas limit does not match",
+			"expected", proposalInfo.GasLimit,
+			"got", finalProposal.Info.GasLimit,
+		)
+
+		return fmt.Errorf("proposal gas limit does not match")
+	}
+
+	return nil
 }

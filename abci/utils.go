@@ -87,11 +87,7 @@ func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.Pr
 		lane := chain[0]
 		partialProposal := partialProposals[0]
 
-		lane.Logger().Info(
-			"processing lane",
-			"lane", chain[0].Name(),
-			"num_txs", len(partialProposal),
-		)
+		lane.Logger().Info("processing lane", "lane", chain[0].Name())
 
 		return lane.ProcessLane(ctx, proposal, partialProposal, ChainProcessLanes(partialProposals[1:], chain[1:]))
 	}
