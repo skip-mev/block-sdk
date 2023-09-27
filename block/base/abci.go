@@ -11,7 +11,7 @@ import (
 // PrepareLane will prepare a partial proposal for the lane. It will select transactions from the
 // lane respecting the selection logic of the prepareLaneHandler. It will then update the partial
 // proposal with the selected transactions. If the proposal is unable to be updated, we return an
-// error. The proposal will only be modified if it passes all of the invarient checks.
+// error. The proposal will only be modified if it passes all of the invariant checks.
 func (l *BaseLane) PrepareLane(
 	ctx sdk.Context,
 	proposal proposals.Proposal,

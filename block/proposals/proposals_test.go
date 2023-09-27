@@ -9,6 +9,7 @@ import (
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
+	"github.com/skip-mev/block-sdk/block/utils/mocks"
 	"github.com/skip-mev/block-sdk/testutils"
 	"github.com/stretchr/testify/require"
 )
@@ -20,15 +21,15 @@ func TestUpdateProposal(t *testing.T) {
 	random := rand.New(rand.NewSource(1))
 	accounts := testutils.RandomAccounts(random, 5)
 
+	lane := mocks.NewLane(t)
+
+	lane.On("Name").Return("test").Maybe()
+	lane.On("GetMaxBlockSpace").Return(math.LegacyNewDec(1)).Maybe()
+
 	t.Run("can update with no transactions", func(t *testing.T) {
 		proposal := proposals.NewProposal(nil, 100, 100)
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  100,
-			MaxGasLimit: 100,
-		}
-
-		err := proposal.UpdateProposal("test", nil, limit)
+		err := proposal.UpdateProposal(lane, nil)
 		require.NoError(t, err)
 
 		// Ensure that the proposal is empty.
@@ -58,15 +59,9 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
-
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -105,21 +100,14 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := 0
 		gasLimit := uint64(0)
-
 		for _, txBz := range txBzs {
 			size += len(txBz)
 			gasLimit += 100
 		}
 
-		// This should be just enough to store all of the txs
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: gasLimit,
-		}
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
 
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 1000000, 10000000)
-
-		err = proposal.UpdateProposal("test", txs, limit)
+		err = proposal.UpdateProposal(lane, txs)
 		require.NoError(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -152,33 +140,32 @@ func TestUpdateProposal(t *testing.T) {
 		txBzs, err := utils.GetEncodedTxs(encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx})
 		require.NoError(t, err)
 
-		size := len(txBzs[0])
-		gasLimit := 100
+		size := int64(len(txBzs[0]))
+		gasLimit := uint64(100)
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
-
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
 
 		// Ensure that the proposal is empty.
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.Info.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
+		require.Equal(t, size, proposal.Info.BlockSize)
+		require.Equal(t, gasLimit, proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
+		otherlane := mocks.NewLane(t)
+
+		otherlane.On("Name").Return("test").Maybe()
+		otherlane.On("GetMaxBlockSpace").Return(math.LegacyNewDec(1)).Maybe()
+
 		// Attempt to add the same transaction again.
-		err = proposal.UpdateProposal("test2", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(otherlane, []sdk.Tx{tx})
 		require.Error(t, err)
 
 		require.Equal(t, 1, len(proposal.Txs))
-		require.Equal(t, int64(size), proposal.Info.BlockSize)
-		require.Equal(t, uint64(gasLimit), proposal.Info.GasLimit)
+		require.Equal(t, size, proposal.Info.BlockSize)
+		require.Equal(t, gasLimit, proposal.Info.GasLimit)
 		require.Equal(t, 1, len(proposal.Info.TxsByLane))
 		require.Equal(t, uint64(1), proposal.Info.TxsByLane["test"])
 
@@ -215,18 +202,12 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0]) + len(txBzs[1])
 		gasLimit := 200
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
-
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
 
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx2}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx2})
 		require.Error(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -257,17 +238,16 @@ func TestUpdateProposal(t *testing.T) {
 		txBzs, err := utils.GetEncodedTxs(encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx})
 		require.NoError(t, err)
 
-		size := len(txBzs[0]) - 1
+		size := len(txBzs[0])
 		gasLimit := 100
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
+		lane := mocks.NewLane(t)
 
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
+		lane.On("Name").Return("test").Maybe()
+		lane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("0.5")).Maybe()
 
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -297,16 +277,15 @@ func TestUpdateProposal(t *testing.T) {
 		require.NoError(t, err)
 
 		size := len(txBzs[0])
-		gasLimit := 100 - 1
+		gasLimit := 100
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
+		lane := mocks.NewLane(t)
 
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
+		lane.On("Name").Return("test").Maybe()
+		lane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("0.5")).Maybe()
 
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -337,15 +316,9 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), limit.MaxTxBytes-1, 10000)
-
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -376,15 +349,9 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
+		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
 
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
-		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, limit.MaxGasLimit-1)
-
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -423,21 +390,20 @@ func TestUpdateProposal(t *testing.T) {
 		txBzs, err := utils.GetEncodedTxs(encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx, tx2})
 		require.NoError(t, err)
 
-		size := len(txBzs[0]) + len(txBzs[1])
-		gasLimit := 200
-
-		limit := proposals.LaneLimits{
-			MaxTxBytes:  int64(size),
-			MaxGasLimit: uint64(gasLimit),
-		}
-
 		proposal := proposals.NewProposal(encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
 
-		err = proposal.UpdateProposal("test", []sdk.Tx{tx}, limit)
+		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
 
-		err = proposal.UpdateProposal("test2", []sdk.Tx{tx2}, limit)
+		otherlane := mocks.NewLane(t)
+		otherlane.On("Name").Return("test2")
+		otherlane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("1.0"))
+
+		err = proposal.UpdateProposal(otherlane, []sdk.Tx{tx2})
 		require.NoError(t, err)
+
+		size := len(txBzs[0]) + len(txBzs[1])
+		gasLimit := 200
 
 		// Ensure that the proposal is not empty.
 		require.Equal(t, 2, len(proposal.Txs))
