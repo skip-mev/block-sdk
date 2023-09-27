@@ -12,6 +12,7 @@ import (
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
+	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/utils"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -491,7 +492,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			1000000,
 		)
 
-		err = emptyProposal.UpdateProposal("test", []sdk.Tx{tx}, proposals.LaneLimits{MaxTxBytes: 10000000, MaxGasLimit: 10000000})
+		mockLane := mocks.NewLane(s.T())
+
+		mockLane.On("Name").Return("test")
+		mockLane.On("GetMaxBlockSpace").Return(math.LegacyOneDec())
+
+		err = emptyProposal.UpdateProposal(mockLane, []sdk.Tx{tx})
 		s.Require().NoError(err)
 
 		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())

@@ -29,7 +29,7 @@ type ProposalsTestSuite struct {
 	gasTokenDenom  string
 }
 
-func TestBlockBusterTestSuite(t *testing.T) {
+func TestProposalsTestSuite(t *testing.T) {
 	suite.Run(t, new(ProposalsTestSuite))
 }
 
