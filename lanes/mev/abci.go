@@ -142,6 +142,17 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 					continue selectBidTxLoop
 				}
 
+				// If the bundled transaction is a bid transaction, we skip it.
+				if l.Match(ctx, bundleTx) {
+					l.Logger().Info(
+						"failed to select auction bid tx for lane; bundled tx is another bid transaction",
+						"tx_hash", bundledTxInfo.Hash,
+					)
+
+					txsToRemove = append(txsToRemove, bidTx)
+					continue selectBidTxLoop
+				}
+
 				if gasLimitSum += bundledTxInfo.GasLimit; gasLimitSum > limit.MaxGasLimit {
 					l.Logger().Info(
 						"failed to select auction bid tx for lane; tx gas limit is too large",
