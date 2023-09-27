@@ -12,6 +12,9 @@ import (
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/golang/mock/gomock"
+	"github.com/stretchr/testify/suite"
+
+	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
@@ -20,7 +23,6 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/ante"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type AnteTestSuite struct {
@@ -86,25 +88,27 @@ func (suite *AnteTestSuite) SetupTest() {
 	//
 	// TOB lane set up
 	mevConfig := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(),
+		Logger:          suite.ctx.Logger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     suite.anteHandler,
+		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder()),
+		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
 	)
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:        log.NewTMLogger(os.Stdout),
-		TxEncoder:     suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:     suite.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:   suite.anteHandler,
-		MaxBlockSpace: math.LegacyZeroDec(),
-		IgnoreList:    []block.Lane{suite.mevLane},
+		Logger:          suite.ctx.Logger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     suite.anteHandler,
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		MaxBlockSpace:   math.LegacyZeroDec(),
+		IgnoreList:      []block.Lane{suite.mevLane},
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(baseConfig)
 

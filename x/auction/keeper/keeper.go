@@ -5,10 +5,10 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/codec"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/cometbft/cometbft/libs/log"
 	"github.com/skip-mev/block-sdk/x/auction/rewards"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
