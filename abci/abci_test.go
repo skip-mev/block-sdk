@@ -1286,7 +1286,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info}
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().NoError(err)
 		s.Require().Equal(3, len(partialProposals))
 
@@ -1299,21 +1299,21 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate proposal without info", func() {
 		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate completely empty proposal", func() {
 		proposal := [][]byte{}
 
-		_, _, err := proposalHandlers.ValidateBasic(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
 
@@ -1321,7 +1321,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ValidateBasic(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
 
@@ -1351,7 +1351,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1398,7 +1398,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1459,7 +1459,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ValidateBasic(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))

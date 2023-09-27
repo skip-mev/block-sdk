@@ -3,12 +3,19 @@ package proposals
 import (
 	"fmt"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
+// Lane defines the contract interface for a lane.
+type Lane interface {
+	GetMaxBlockSpace() math.LegacyDec
+	Name() string
+}
+
 // UpdateProposal updates the proposal with the given transactions and lane limits. There are a
-// few invarients that are checked:
+// few invariants that are checked:
 //  1. The total size of the proposal must be less than the maximum number of bytes allowed.
 //  2. The total size of the partial proposal must be less than the maximum number of bytes allowed for
 //     the lane.
@@ -17,9 +24,14 @@ import (
 //     the lane.
 //  5. The lane must not have already prepared a partial proposal.
 //  6. The transaction must not already be in the proposal.
-func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit LaneLimits) error {
+func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 	if len(partialProposal) == 0 {
 		return nil
+	}
+
+	// invariant check: Ensure we have not already prepared a partial proposal for this lane.
+	if _, ok := p.Info.TxsByLane[lane.Name()]; ok {
+		return fmt.Errorf("lane %s already prepared a partial proposal", lane)
 	}
 
 	// Aggregate info from the transactions.
@@ -31,10 +43,10 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 	for index, tx := range partialProposal {
 		txInfo, err := utils.GetTxInfo(p.TxEncoder, tx)
 		if err != nil {
-			return fmt.Errorf("err retriveing transaction info: %s", err)
+			return fmt.Errorf("err retrieving transaction info: %s", err)
 		}
 
-		// Invarient check: Ensure that the transaction is not already in the proposal.
+		// invariant check: Ensure that the transaction is not already in the proposal.
 		if _, ok := p.Cache[txInfo.Hash]; ok {
 			return fmt.Errorf("transaction %s is already in the proposal", txInfo.Hash)
 		}
@@ -45,7 +57,9 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 		txs[index] = txInfo.TxBytes
 	}
 
-	// Invarient check: Ensure that the partial proposal is not too large.
+	// invariant check: Ensure that the partial proposal is not too large.
+	limit := p.GetLaneLimits(lane.GetMaxBlockSpace())
+	fmt.Println(limit, lane.GetMaxBlockSpace())
 	if partialProposalSize > limit.MaxTxBytes {
 		return fmt.Errorf(
 			"partial proposal is too large: %d > %d",
@@ -54,7 +68,7 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 		)
 	}
 
-	// Invarient check: Ensure that the partial proposal does not consume too much gas.
+	// invariant check: Ensure that the partial proposal does not consume too much gas.
 	if partialProposalGasLimit > limit.MaxGasLimit {
 		return fmt.Errorf(
 			"partial proposal consumes too much gas: %d > %d",
@@ -63,7 +77,7 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 		)
 	}
 
-	// Invarient check: Ensure that the lane did not prepare a block proposal that is too large.
+	// invariant check: Ensure that the lane did not prepare a block proposal that is too large.
 	updatedSize := p.Info.BlockSize + partialProposalSize
 	if updatedSize > p.Info.MaxBlockSize {
 		return fmt.Errorf(
@@ -73,7 +87,7 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 		)
 	}
 
-	// Invarient check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
+	// invariant check: Ensure that the lane did not prepare a block proposal that consumes too much gas.
 	updatedGasLimit := p.Info.GasLimit + partialProposalGasLimit
 	if updatedGasLimit > p.Info.MaxGasLimit {
 		return fmt.Errorf(
@@ -83,17 +97,12 @@ func (p *Proposal) UpdateProposal(lane string, partialProposal []sdk.Tx, limit L
 		)
 	}
 
-	// Invarient check: Ensure we have not already prepared a partial proposal for this lane.
-	if _, ok := p.Info.TxsByLane[lane]; ok {
-		return fmt.Errorf("lane %s already prepared a partial proposal", lane)
-	}
-
 	// Update the proposal.
 	p.Info.BlockSize = updatedSize
 	p.Info.GasLimit = updatedGasLimit
 
 	// Update the lane info.
-	p.Info.TxsByLane[lane] = uint64(len(partialProposal))
+	p.Info.TxsByLane[lane.Name()] = uint64(len(partialProposal))
 
 	// Update the proposal.
 	p.Txs = append(p.Txs, txs...)

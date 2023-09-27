@@ -53,6 +53,7 @@ func NewMEVLane(
 			base.NewMempool[string](
 				TxPriority(factory),
 				cfg.TxEncoder,
+				cfg.SignerExtractor,
 				cfg.MaxTxs,
 			),
 			factory.MatchHandler(),

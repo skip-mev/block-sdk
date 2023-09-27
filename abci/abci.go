@@ -121,8 +121,8 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
-		// Validate the proposal against the basic invariants that are required for the proposal to be valid.
-		proposalInfo, partialProposals, err := h.ValidateBasic(req.Txs)
+		// Extract all of the lanes and their corresponding transactions from the proposal.
+		proposalInfo, partialProposals, err := h.ExtractLanes(req.Txs)
 		if err != nil {
 			h.logger.Error("failed to validate proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
@@ -162,17 +162,17 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	}
 }
 
-// ValidateBasic validates the proposal against the basic invariants that are required
+// ExtractLanes validates the proposal against the basic invariants that are required
 // for the proposal to be valid. This includes:
 //  1. The proposal must contain the proposal information and must be valid.
 //  2. The proposal must contain the correct number of transactions for each lane.
-func (h *ProposalHandler) ValidateBasic(proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
+func (h *ProposalHandler) ExtractLanes(proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
 	// If the proposal is empty, then the metadata was not included.
 	if len(proposal) == 0 {
 		return types.ProposalInfo{}, nil, fmt.Errorf("proposal does not contain proposal metadata")
 	}
 
-	metaDataBz, txs := proposal[ProposalInfoIndex], proposal[1:]
+	metaDataBz, txs := proposal[ProposalInfoIndex], proposal[ProposalInfoIndex+1:]
 
 	// Retrieve the metadata from the proposal.
 	var metaData types.ProposalInfo
