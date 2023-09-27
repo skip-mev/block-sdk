@@ -37,16 +37,13 @@ func (l *BaseLane) PrepareLane(
 
 	// Update the proposal with the selected transactions. This fails if the lane attempted to add
 	// more transactions than the allocated max block space for the lane.
-	if err := proposal.UpdateProposal(l.Name(), txsToInclude, limit); err != nil {
+	if err := proposal.UpdateProposal(l, txsToInclude); err != nil {
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),
 			"err", err,
 			"num_txs_to_add", len(txsToInclude),
 			"num_txs_to_remove", len(txsToRemove),
-			"max_lane_size", limit.MaxTxBytes,
-			"max_lane_gas_limit", limit.MaxGasLimit,
-			"max_block_size", l.cfg.MaxBlockSpace,
 		)
 
 		return proposal, err
@@ -89,16 +86,12 @@ func (l *BaseLane) ProcessLane(
 	}
 
 	// Optimistically update the proposal with the partial proposal.
-	limit := proposal.GetLaneLimits(l.cfg.MaxBlockSpace)
-	if err := proposal.UpdateProposal(l.Name(), decodedTxs, limit); err != nil {
+	if err := proposal.UpdateProposal(l, decodedTxs); err != nil {
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),
 			"err", err,
 			"num_txs_to_verify", len(decodedTxs),
-			"max_lane_size", limit.MaxTxBytes,
-			"max_lane_gas_limit", limit.MaxGasLimit,
-			"max_block_size", l.cfg.MaxBlockSpace,
 		)
 
 		return proposal, err
