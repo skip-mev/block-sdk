@@ -321,7 +321,7 @@ func New(
 		SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		SignModeHandler: app.txConfig.SignModeHandler(),
 	}
-	options := POBHandlerOptions{
+	options := BSDKHandlerOptions{
 		BaseOptions:   handlerOptions,
 		auctionkeeper: app.auctionkeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -330,7 +330,7 @@ func New(
 		MEVLane:       mevLane,
 		Mempool:       mempool,
 	}
-	anteHandler := NewPOBAnteHandler(options)
+	anteHandler := NewBSDKAnteHandler(options)
 
 	// Set the lane config on the lanes.
 	for _, lane := range lanes {
@@ -342,6 +342,7 @@ func New(
 	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
+		app.TxConfig().TxEncoder(),
 		mempool,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())

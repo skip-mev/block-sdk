@@ -12,7 +12,9 @@ import (
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/utils/mocks"
+	"github.com/skip-mev/block-sdk/block/mocks"
+	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
@@ -26,34 +28,36 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
-
-		// Insert the transaction into the lane
+		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
-		// Create a proposal
-		maxTxBytes := int64(len(txBz) - 1)
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			int64(len(txBz)),
+			1,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, len(finalProposal.Txs))
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 	})
 
-	s.Run("should not build a proposal when box space configured to lane is too small", func() {
+	s.Run("should not build a proposal when gas configured to lane is too small", func() {
 		// Create a basic transaction that should not in the proposal
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -61,16 +65,58 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			10,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("0.000001"), expectedExecution)
+		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
+
+		// Insert the transaction into the lane
+		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+
+		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		limit := proposals.LaneLimits{
+			MaxTxBytes:  int64(len(txBz)) * 10,
+			MaxGasLimit: 10,
+		}
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytes,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
+
+		// Ensure the proposal is empty
+		s.Require().Equal(0, len(finalProposal.Txs))
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+	})
+
+	s.Run("should not build a proposal when gas configured to lane is too small p2", func() {
+		// Create a basic transaction that should not in the proposal
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		expectedExecution := map[sdk.Tx]bool{
+			tx: true,
+		}
+		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
@@ -79,49 +125,67 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		// Create a proposal
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
-		s.Require().Error(err)
+		limit := proposals.LaneLimits{
+			MaxTxBytes:  int64(len(txBz)) * 10, // have enough space for 10 of these txs
+			MaxGasLimit: 10,
+		}
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytes,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, len(finalProposal.Txs))
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {
-		// Create a basic transaction that should not in the proposal
+		// Create a basic transaction that should just fit in with the gas limit
+		// and max size
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
 			0,
 			1,
 			0,
-			0,
+			10,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
-		// Create a proposal
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		limit := proposals.LaneLimits{
+			MaxTxBytes:  int64(len(txBz)),
+			MaxGasLimit: 10,
+		}
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			limit.MaxTxBytes,
+			limit.MaxGasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is not empty and contains the transaction
-		s.Require().Equal(1, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal(txBz, proposal.GetTxs()[0])
+		s.Require().Equal(1, len(finalProposal.Txs))
+		s.Require().Equal(limit.MaxTxBytes, finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(10), finalProposal.Info.GasLimit)
+		s.Require().Equal(txBz, finalProposal.Txs[0])
 	})
 
 	s.Run("should not build a proposal with a that fails verify tx", func() {
@@ -132,31 +196,35 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			10,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
+		// We expect the transaction to fail verify tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx: false,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
 
-		// Create a proposal
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			int64(len(txBz)),
+			10,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
-		s.Require().Equal(0, proposal.GetNumTxs())
-		s.Require().Equal(int64(0), proposal.GetTotalTxBytes())
+		s.Require().Equal(0, len(finalProposal.Txs))
+		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
 
 		// Ensure the transaction is removed from the lane
 		s.Require().False(lane.Contains(tx))
@@ -164,14 +232,13 @@ func (s *BaseTestSuite) TestPrepareLane() {
 	})
 
 	s.Run("should order transactions correctly in the proposal", func() {
-		// Create a basic transaction that should not in the proposal
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
 			0,
 			1,
 			0,
-			0,
+			10,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
@@ -182,19 +249,17 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			10,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx1: true,
 			tx2: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
 
@@ -204,25 +269,32 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		size := int64(len(txBz1)) + int64(len(txBz2))
+		gasLimit := uint64(20)
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			size,
+			gasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(2, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz1, txBz2}, proposal.GetTxs())
+		s.Require().Equal(2, len(finalProposal.Txs))
+		s.Require().Equal(size, finalProposal.Info.BlockSize)
+		s.Require().Equal(gasLimit, finalProposal.Info.GasLimit)
+		s.Require().Equal([][]byte{txBz1, txBz2}, finalProposal.Txs)
 	})
 
 	s.Run("should order transactions correctly in the proposal (with different insertion)", func() {
-		// Create a basic transaction that should not in the proposal
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -233,19 +305,17 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
 
-		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx1: true,
 			tx2: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
 		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
 
@@ -255,14 +325,22 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2))
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		size := int64(len(txBz1)) + int64(len(txBz2))
+		gasLimit := uint64(2)
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			size,
+			gasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(2, proposal.GetNumTxs())
-		s.Require().Equal(maxTxBytes, proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz2, txBz1}, proposal.GetTxs())
+		s.Require().Equal(2, len(finalProposal.Txs))
+		s.Require().Equal(size, finalProposal.Info.BlockSize)
+		s.Require().Equal(gasLimit, finalProposal.Info.GasLimit)
+		s.Require().Equal([][]byte{txBz2, txBz1}, finalProposal.Txs)
 	})
 
 	s.Run("should include tx that fits in proposal when other does not", func() {
@@ -273,7 +351,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			1,
 			0,
-			0,
+			2,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -284,7 +362,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			0,
 			10, // This tx is too large to fit in the proposal
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -294,7 +372,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			tx1: true,
 			tx2: true,
 		}
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), expectedExecution)
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(sdk.Context{}.WithPriority(10), tx1))
@@ -306,14 +384,130 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
 		s.Require().NoError(err)
 
-		maxTxBytes := int64(len(txBz1)) + int64(len(txBz2)) - 1
-		proposal, err := lane.PrepareLane(sdk.Context{}, block.NewProposal(maxTxBytes), maxTxBytes, block.NoOpPrepareLanesHandler())
+		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
+		gasLimit := uint64(3)
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			size,
+			gasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
-		s.Require().Equal(1, proposal.GetNumTxs())
-		s.Require().Equal(int64(len(txBz1)), proposal.GetTotalTxBytes())
-		s.Require().Equal([][]byte{txBz1}, proposal.GetTxs())
+		s.Require().Equal(1, len(finalProposal.Txs))
+		s.Require().Equal(int64(len(txBz1)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(2), finalProposal.Info.GasLimit)
+		s.Require().Equal([][]byte{txBz1}, finalProposal.Txs)
+	})
+
+	s.Run("should include tx that consumes all gas in proposal while other cannot", func() {
+		// Create a basic transaction that should not in the proposal
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			2,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			10, // This tx is too large to fit in the proposal
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
+		expectedExecution := map[sdk.Tx]bool{
+			tx1: true,
+			tx2: true,
+		}
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
+
+		// Insert the transaction into the lane
+		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
+		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
+
+		txBz1, err := s.encodingConfig.TxConfig.TxEncoder()(tx1)
+		s.Require().NoError(err)
+
+		txBz2, err := s.encodingConfig.TxConfig.TxEncoder()(tx2)
+		s.Require().NoError(err)
+
+		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
+		gasLimit := uint64(1)
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			size,
+			gasLimit,
+		)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
+
+		// Ensure the proposal is ordered correctly
+		s.Require().Equal(1, len(finalProposal.Txs))
+		s.Require().Equal(int64(len(txBz2)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(1), finalProposal.Info.GasLimit)
+		s.Require().Equal([][]byte{txBz2}, finalProposal.Txs)
+	})
+
+	s.Run("should not attempt to include transaction already included in the proposal", func() {
+		// Create a basic transaction that should not in the proposal
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			2,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
+		expectedExecution := map[sdk.Tx]bool{
+			tx: true,
+		}
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
+
+		// Insert the transaction into the lane
+		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+
+		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			int64(len(txBz))*10,
+			1000000,
+		)
+
+		mockLane := mocks.NewLane(s.T())
+
+		mockLane.On("Name").Return("test")
+		mockLane.On("GetMaxBlockSpace").Return(math.LegacyOneDec())
+
+		err = emptyProposal.UpdateProposal(mockLane, []sdk.Tx{tx})
+		s.Require().NoError(err)
+
+		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
+
+		// Ensure the proposal is ordered correctly
+		s.Require().Equal(1, len(finalProposal.Txs))
+		s.Require().Equal(int64(len(txBz)), finalProposal.Info.BlockSize)
+		s.Require().Equal(uint64(2), finalProposal.Info.GasLimit)
+		s.Require().Equal([][]byte{txBz}, finalProposal.Txs)
 	})
 }
 
@@ -325,7 +519,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -333,11 +527,23 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1,
 		}
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{
-			tx1: true,
-		})
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+			},
+		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
 
@@ -348,7 +554,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -356,11 +562,23 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx1,
 		}
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{
-			tx1: false,
-		})
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: false,
+			},
+		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -371,7 +589,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -381,7 +599,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -391,7 +609,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			0,
-			0,
+			1,
 		)
 		s.Require().NoError(err)
 
@@ -401,18 +619,27 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx3,
 		}
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{
-			tx1: true,
-			tx2: false,
-			tx3: true,
-		})
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: false,
+				tx3: true,
+			})
 
-		_, err = lane.ProcessLane(sdk.Context{}, proposal, block.NoOpProcessLanesHandler())
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
-}
 
-func (s *BaseTestSuite) TestCheckOrder() {
 	s.Run("should accept proposal with transactions in correct order", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -420,7 +647,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
@@ -431,7 +658,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -441,11 +668,24 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			tx2,
 		}
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{
-			tx1: true,
-			tx2: true,
-		})
-		s.Require().NoError(lane.CheckOrder(sdk.Context{}, proposal))
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			})
+
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
 	})
 
 	s.Run("should not accept a proposal with transactions that are not in the correct order", func() {
@@ -455,7 +695,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -466,7 +706,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
@@ -476,11 +716,24 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			tx2,
 		}
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), map[sdk.Tx]bool{
-			tx1: true,
-			tx2: true,
-		})
-		s.Require().Error(lane.CheckOrder(sdk.Context{}, proposal))
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			})
+
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
 	})
 
 	s.Run("should not accept a proposal where transactions are out of order relative to other lanes", func() {
@@ -490,7 +743,7 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			2,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
@@ -501,24 +754,203 @@ func (s *BaseTestSuite) TestCheckOrder() {
 			0,
 			1,
 			0,
-			0,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
 		)
 		s.Require().NoError(err)
 
-		mocklane := mocks.NewLane(s.T())
-		mocklane.On("Match", sdk.Context{}, tx1).Return(true)
-		mocklane.On("Match", sdk.Context{}, tx2).Return(false)
+		otherLane := s.initLane(math.LegacyOneDec(), nil)
 
-		lane := s.initLane(math.LegacyMustNewDecFromStr("1"), nil)
-		lane.SetIgnoreList([]block.Lane{mocklane})
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: false,
+			})
+		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		proposal := []sdk.Tx{
 			tx1,
 			tx2,
 		}
 
-		s.Require().Error(lane.CheckOrder(sdk.Context{}, proposal))
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds too large of a partial block", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+			})
+
+		maxSize := s.getTxSize(tx1) - 1
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			maxSize,
+			1000000,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too gas consumptive", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+			},
+		)
+
+		maxSize := s.getTxSize(tx1)
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			maxSize,
+			9,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too gas consumptive p2", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			})
+
+		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2)
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			maxSize,
+			19,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("should not accept a proposal that builds a partial block that is too large p2", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			10,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			},
+		)
+
+		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2) - 1
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			maxSize,
+			20,
+		)
+
+		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
 	})
 }
 
@@ -569,4 +1001,11 @@ func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.
 	}
 
 	return anteHandler
+}
+
+func (s *BaseTestSuite) getTxSize(tx sdk.Tx) int64 {
+	txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+	s.Require().NoError(err)
+
+	return int64(len(txBz))
 }

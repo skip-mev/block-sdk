@@ -59,7 +59,6 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 
 	// invariant check: Ensure that the partial proposal is not too large.
 	limit := p.GetLaneLimits(lane.GetMaxBlockSpace())
-	fmt.Println(limit, lane.GetMaxBlockSpace())
 	if partialProposalSize > limit.MaxTxBytes {
 		return fmt.Errorf(
 			"partial proposal is too large: %d > %d",
