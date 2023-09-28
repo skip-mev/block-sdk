@@ -103,13 +103,13 @@ func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
 
-	_, txHashStr, err := utils.GetTxHashStr(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		cm.Remove(tx)
 		return err
 	}
 
-	cm.txCache[txHashStr] = struct{}{}
+	cm.txCache[txInfo.Hash] = struct{}{}
 
 	return nil
 }
@@ -120,12 +120,12 @@ func (cm *Mempool[C]) Remove(tx sdk.Tx) error {
 		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
 	}
 
-	_, txHashStr, err := utils.GetTxHashStr(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		return fmt.Errorf("failed to get tx hash string: %w", err)
 	}
 
-	delete(cm.txCache, txHashStr)
+	delete(cm.txCache, txInfo.Hash)
 
 	return nil
 }
@@ -145,12 +145,12 @@ func (cm *Mempool[C]) CountTx() int {
 
 // Contains returns true if the transaction is contained in the mempool.
 func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
-	_, txHashStr, err := utils.GetTxHashStr(cm.txEncoder, tx)
+	txInfo, err := utils.GetTxInfo(cm.txEncoder, tx)
 	if err != nil {
 		return false
 	}
 
-	_, ok := cm.txCache[txHashStr]
+	_, ok := cm.txCache[txInfo.Hash]
 	return ok
 }
 

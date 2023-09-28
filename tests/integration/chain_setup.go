@@ -1,17 +1,18 @@
 package integration
 
 import (
+	"archive/tar"
+	"bytes"
 	"context"
 	"encoding/hex"
 	"encoding/json"
+	"io"
+	"os"
+	"path"
 	"strings"
 	"testing"
 	"time"
-	"os"
-	"io"
-	"path"
-	"archive/tar"
-	"bytes"
+
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/crypto/keyring"
@@ -39,7 +40,7 @@ import (
 
 type KeyringOverride struct {
 	keyringOptions keyring.Option
-	cdc codec.Codec
+	cdc            codec.Codec
 }
 
 // ChainBuilderFromChainSpec creates an interchaintest chain builder factory given a ChainSpec
@@ -189,8 +190,8 @@ func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.C
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion. The callback
 // function is called for each tx that is included in a block.
 func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
-	ctx context.Context, 
-	chain *cosmos.CosmosChain, 
+	ctx context.Context,
+	chain *cosmos.CosmosChain,
 	msgsPerUser []Tx,
 	cb func(tx []byte, resp *rpctypes.ResultTx),
 ) [][]byte {
@@ -203,6 +204,11 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 	// broadcast each tx
 	s.Require().True(len(chain.Nodes()) > 0)
 	client := chain.Nodes()[0].Client
+
+	statusResp, err := client.Status(context.Background())
+	s.Require().NoError(err)
+
+	s.T().Logf("broadcasting transactions at latest height of %d", statusResp.SyncInfo.LatestBlockHeight)
 
 	for i, tx := range txs {
 		// broadcast tx
@@ -343,7 +349,7 @@ func Block(t *testing.T, chain *cosmos.CosmosChain, height int64) *rpctypes.Resu
 // WaitForHeight waits for the chain to reach the given height
 func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 	// wait for next height
-	err := testutil.WaitForCondition(30*time.Second, 100 * time.Millisecond, func() (bool, error) {
+	err := testutil.WaitForCondition(30*time.Second, 100*time.Millisecond, func() (bool, error) {
 		pollHeight, err := chain.Height(context.Background())
 		if err != nil {
 			return false, err
@@ -357,13 +363,13 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHash string, txs [][]byte) {
 	// verify the block
 	if bidTxHash != "" {
-		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset]))
+		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset+1]))
 		offset += 1
 	}
 
 	// verify the txs in sequence
 	for i, tx := range txs {
-		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset]))
+		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset+1]))
 	}
 }
 
@@ -403,7 +409,7 @@ func (s *IntegrationTestSuite) setupBroadcaster() {
 }
 
 // sniped from here: https://github.com/strangelove-ventures/interchaintest ref: 9341b001214d26be420f1ca1ab0f15bad17faee6
-func (s *IntegrationTestSuite) keyringDirFromNode() (string) {
+func (s *IntegrationTestSuite) keyringDirFromNode() string {
 	node := s.chain.(*cosmos.CosmosChain).Nodes()[0]
 
 	// create a temp-dir
