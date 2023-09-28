@@ -118,7 +118,7 @@ func (s *KeeperTestSuite) TestValidateAuctionBid() {
 	})
 }
 
-func (suite *KeeperTestSuite) TestValidateBundle() {
+func (s *KeeperTestSuite) TestValidateBundle() {
 	var accounts []testutils.Account // tracks the order of signers in the bundle
 
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
@@ -201,8 +201,8 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 	}
 
 	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.SetupTest() // reset
+		s.Run(tc.name, func() {
+			s.SetupTest() // reset
 
 			// Malleate the test case
 			tc.malleate()
@@ -217,11 +217,11 @@ func (suite *KeeperTestSuite) TestValidateBundle() {
 			}
 
 			// Validate the bundle
-			err := suite.auctionkeeper.ValidateAuctionBundle(bidder.Address, signers)
+			err := s.auctionkeeper.ValidateAuctionBundle(bidder.Address, signers)
 			if tc.pass {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 			} else {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			}
 		})
 	}

@@ -34,31 +34,31 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (suite *KeeperTestSuite) SetupTest() {
-	suite.encCfg = testutils.CreateTestEncodingConfig()
-	suite.key = storetypes.NewKVStoreKey(types.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
-	suite.ctx = testCtx.Ctx
+func (s *KeeperTestSuite) SetupTest() {
+	s.encCfg = testutils.CreateTestEncodingConfig()
+	s.key = storetypes.NewKVStoreKey(types.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx
 
-	suite.accountKeeper = mocks.NewAccountKeeper(suite.T())
-	suite.accountKeeper.On("GetModuleAddress", types.ModuleName).Return(sdk.AccAddress{}).Maybe()
+	s.accountKeeper = mocks.NewAccountKeeper(s.T())
+	s.accountKeeper.On("GetModuleAddress", types.ModuleName).Return(sdk.AccAddress{}).Maybe()
 
-	suite.bankKeeper = mocks.NewBankKeeper(suite.T())
-	suite.distrKeeper = mocks.NewDistributionKeeper(suite.T())
-	suite.stakingKeeper = mocks.NewStakingKeeper(suite.T())
-	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
-	suite.auctionkeeper = keeper.NewKeeper(
-		suite.encCfg.Codec,
-		suite.key,
-		suite.accountKeeper,
-		suite.bankKeeper,
-		suite.distrKeeper,
-		suite.stakingKeeper,
-		suite.authorityAccount.String(),
+	s.bankKeeper = mocks.NewBankKeeper(s.T())
+	s.distrKeeper = mocks.NewDistributionKeeper(s.T())
+	s.stakingKeeper = mocks.NewStakingKeeper(s.T())
+	s.authorityAccount = sdk.AccAddress([]byte("authority"))
+	s.auctionkeeper = keeper.NewKeeper(
+		s.encCfg.Codec,
+		s.key,
+		s.accountKeeper,
+		s.bankKeeper,
+		s.distrKeeper,
+		s.stakingKeeper,
+		s.authorityAccount.String(),
 	)
 
-	err := suite.auctionkeeper.SetParams(suite.ctx, types.DefaultParams())
-	suite.Require().NoError(err)
+	err := s.auctionkeeper.SetParams(s.ctx, types.DefaultParams())
+	s.Require().NoError(err)
 
-	suite.msgServer = keeper.NewMsgServerImpl(suite.auctionkeeper)
+	s.msgServer = keeper.NewMsgServerImpl(s.auctionkeeper)
 }

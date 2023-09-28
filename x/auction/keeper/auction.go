@@ -87,11 +87,7 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 	}
 
 	// Extract the bid from the bidder.
-	if err := k.ExtractBid(ctx, bidder, bid); err != nil {
-		return err
-	}
-
-	return nil
+	return k.ExtractBid(ctx, bidder, bid)
 }
 
 // ExtractBid extracts the bid amount from the transaction.

@@ -11,7 +11,7 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-func (suite *KeeperTestSuite) TestMsgUpdateParams() {
+func (s *KeeperTestSuite) TestMsgUpdateParams() {
 	rng := rand.New(rand.NewSource(time.Now().Unix()))
 	account := testutils.RandomAccounts(rng, 1)[0]
 
@@ -25,7 +25,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 		{
 			name: "invalid proposer fee",
 			msg: &types.MsgUpdateParams{
-				Authority: suite.authorityAccount.String(),
+				Authority: s.authorityAccount.String(),
 				Params: types.Params{
 					ProposerFee: math.LegacyMustNewDecFromStr("1.1"),
 				},
@@ -36,7 +36,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 		{
 			name: "invalid auction fees",
 			msg: &types.MsgUpdateParams{
-				Authority: suite.authorityAccount.String(),
+				Authority: s.authorityAccount.String(),
 				Params: types.Params{
 					ProposerFee: math.LegacyMustNewDecFromStr("0.1"),
 				},
@@ -51,7 +51,7 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 				Params: types.Params{
 					ProposerFee:          math.LegacyMustNewDecFromStr("0.1"),
 					MaxBundleSize:        2,
-					EscrowAccountAddress: suite.authorityAccount,
+					EscrowAccountAddress: s.authorityAccount,
 					MinBidIncrement:      sdk.NewInt64Coin("stake", 100),
 					ReserveFee:           sdk.NewInt64Coin("stake", 100),
 				},
@@ -62,16 +62,16 @@ func (suite *KeeperTestSuite) TestMsgUpdateParams() {
 	}
 
 	for _, tc := range testCases {
-		suite.Run(tc.name, func() {
+		s.Run(tc.name, func() {
 			if !tc.passBasic {
-				suite.Require().Error(tc.msg.ValidateBasic())
+				s.Require().Error(tc.msg.ValidateBasic())
 			}
 
-			_, err := suite.msgServer.UpdateParams(suite.ctx, tc.msg)
+			_, err := s.msgServer.UpdateParams(s.ctx, tc.msg)
 			if tc.pass {
-				suite.Require().NoError(err)
+				s.Require().NoError(err)
 			} else {
-				suite.Require().Error(err)
+				s.Require().Error(err)
 			}
 		})
 	}
