@@ -17,12 +17,19 @@ func (l *BaseLane) PrepareLane(
 	proposal proposals.Proposal,
 	next block.PrepareLanesHandler,
 ) (proposals.Proposal, error) {
-	limit := proposal.GetLaneLimits(l.cfg.MaxBlockSpace)
+	l.Logger().Info("preparing lane", "lane", l.Name())
 
 	// Select transactions from the lane respecting the selection logic of the lane and the
 	// max block space for the lane.
+	limit := proposal.GetLaneLimits(l.cfg.MaxBlockSpace)
 	txsToInclude, txsToRemove, err := l.prepareLaneHandler(ctx, proposal, limit)
 	if err != nil {
+		l.Logger().Error(
+			"failed to prepare lane",
+			"lane", l.Name(),
+			"err", err,
+		)
+
 		return proposal, err
 	}
 
@@ -68,6 +75,8 @@ func (l *BaseLane) ProcessLane(
 	txs [][]byte,
 	next block.ProcessLanesHandler,
 ) (proposals.Proposal, error) {
+	l.Logger().Info("processing lane", "lane", l.Name(), "num_txs_to_verify", len(txs))
+
 	// Assume that this lane is processing sdk.Tx's and decode the transactions.
 	decodedTxs, err := utils.GetDecodedTxs(l.TxDecoder(), txs)
 	if err != nil {
@@ -82,6 +91,13 @@ func (l *BaseLane) ProcessLane(
 
 	// Verify the transactions that belong to this lane according to the verification logic of the lane.
 	if err := l.processLaneHandler(ctx, decodedTxs); err != nil {
+		l.Logger().Error(
+			"failed to process lane",
+			"lane", l.Name(),
+			"err", err,
+			"num_txs_to_verify", len(decodedTxs),
+		)
+
 		return proposal, err
 	}
 
