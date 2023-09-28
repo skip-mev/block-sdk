@@ -108,19 +108,26 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 // ValidateTimeout validates that the timeout is greater than or equal to the expected block height
 // the bid transaction will be executed in.
 func (ad AuctionDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
-	currentBlockHeight := ctx.BlockHeight()
+	// If the timeout height is set to zero, this means that the searcher wanted next block execution.
+	// However, the height at which the searcher submitted the transaction has already passed so we
+	// return an error.
+	if timeout == 0 && ctx.IsReCheckTx() {
+		return fmt.Errorf("timeout height cannot be 0 for recheck tx")
+	}
+
+	height := ctx.BlockHeight()
 
 	// If the mode is CheckTx or ReCheckTx, we increment the current block height by one to
 	// account for the fact that the transaction will be executed in the next block.
 	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
-		currentBlockHeight++
+		height++
 	}
 
-	if timeout < currentBlockHeight {
+	if timeout < height {
 		return fmt.Errorf(
 			"timeout height cannot be less than the current block height (timeout: %d, current block height: %d)",
 			timeout,
-			currentBlockHeight,
+			height,
 		)
 	}
 

@@ -1,6 +1,7 @@
 package keeper_test
 
 import (
+	"fmt"
 	"math/rand"
 	"time"
 
@@ -10,212 +11,111 @@ import (
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/x/auction/types/mocks"
+	mock "github.com/stretchr/testify/mock"
 )
 
-func (suite *KeeperTestSuite) TestValidateBidInfo() {
-	var (
-		// Tx building variables
-		accounts = []testutils.Account{} // tracks the order of signers in the bundle
-		balance  = sdk.NewCoin("stake", math.NewInt(10000))
-		bid      = sdk.NewCoin("stake", math.NewInt(1000))
+func (s *KeeperTestSuite) TestValidateAuctionBid() {
+	rng := rand.New(rand.NewSource(time.Now().Unix()))
+	bidder := testutils.RandomAccounts(rng, 1)[0].Address
+	bankSendErr := fmt.Errorf("bank send error")
 
-		// Auction params
-		maxBundleSize          uint32 = 10
-		reserveFee                    = sdk.NewCoin("stake", math.NewInt(1000))
-		minBidIncrement               = sdk.NewCoin("stake", math.NewInt(1000))
-		escrowAddress                 = sdk.AccAddress([]byte("escrow"))
-		frontRunningProtection        = true
-
-		// mempool variables
-		highestBid = sdk.Coin{}
-	)
-
-	rnd := rand.New(rand.NewSource(time.Now().Unix()))
-	bidder := testutils.RandomAccounts(rnd, 1)[0]
-
-	cases := []struct {
-		name     string
-		malleate func()
-		pass     bool
-	}{
-		{
-			"insufficient bid amount",
-			func() {
-				bid = sdk.Coin{}
-			},
-			false,
-		},
-		{
-			"insufficient balance",
-			func() {
-				bid = sdk.NewCoin("stake", math.NewInt(1000))
-				balance = sdk.NewCoin("stake", math.NewInt(100))
-			},
-			false,
-		},
-		{
-			"too many transactions in the bundle",
-			func() {
-				// reset the balance and bid to their original values
-				bid = sdk.NewCoin("stake", math.NewInt(1000))
-				balance = sdk.NewCoin("stake", math.NewInt(10000))
-				accounts = testutils.RandomAccounts(rnd, int(maxBundleSize+1))
-			},
-			false,
-		},
-		{
-			"frontrunning bundle",
-			func() {
-				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
-				accounts = []testutils.Account{bidder, randomAccount}
-			},
-			false,
-		},
-		{
-			"sandwiching bundle",
-			func() {
-				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
-				accounts = []testutils.Account{bidder, randomAccount, bidder}
-			},
-			false,
-		},
-		{
-			"valid bundle",
-			func() {
-				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
-				accounts = []testutils.Account{randomAccount, randomAccount, bidder, bidder, bidder}
-			},
-			true,
-		},
-		{
-			"valid bundle with only bidder txs",
-			func() {
-				accounts = []testutils.Account{bidder, bidder, bidder, bidder}
-			},
-			true,
-		},
-		{
-			"valid bundle with only random txs from single same user",
-			func() {
-				randomAccount := testutils.RandomAccounts(rnd, 1)[0]
-				accounts = []testutils.Account{randomAccount, randomAccount, randomAccount, randomAccount}
-			},
-			true,
-		},
-		{
-			"invalid bundle with random accounts",
-			func() {
-				accounts = testutils.RandomAccounts(rnd, 2)
-			},
-			false,
-		},
-		{
-			"disabled front-running protection",
-			func() {
-				accounts = testutils.RandomAccounts(rnd, 10)
-				frontRunningProtection = false
-			},
-			true,
-		},
-		{
-			"invalid bundle that does not outbid the highest bid",
-			func() {
-				accounts = []testutils.Account{bidder, bidder, bidder}
-				highestBid = sdk.NewCoin("stake", math.NewInt(500))
-				bid = sdk.NewCoin("stake", math.NewInt(500))
-			},
-			false,
-		},
-		{
-			"valid bundle that outbids the highest bid",
-			func() {
-				highestBid = sdk.NewCoin("stake", math.NewInt(500))
-				bid = sdk.NewCoin("stake", math.NewInt(1500))
-			},
-			true,
-		},
-		{
-			"attempting to bid with a different denom",
-			func() {
-				highestBid = sdk.NewCoin("stake", math.NewInt(500))
-				bid = sdk.NewCoin("stake2", math.NewInt(1500))
-			},
-			false,
-		},
-		{
-			"min bid increment is different from bid denom", // THIS SHOULD NEVER HAPPEN
-			func() {
-				highestBid = sdk.NewCoin("stake", math.NewInt(500))
-				bid = sdk.NewCoin("stake", math.NewInt(1500))
-				minBidIncrement = sdk.NewCoin("stake2", math.NewInt(1000))
-			},
-			false,
-		},
+	params := types.Params{
+		ReserveFee:           sdk.NewCoin("stake", math.NewInt(1000)),
+		EscrowAccountAddress: sdk.AccAddress([]byte("escrow")),
+		MinBidIncrement:      sdk.NewCoin("stake", math.NewInt(1000)),
+		ProposerFee:          math.LegacyZeroDec(),
 	}
+	s.Require().NoError(s.auctionkeeper.SetParams(s.ctx, params))
 
-	for _, tc := range cases {
-		suite.Run(tc.name, func() {
-			suite.SetupTest() // reset
+	s.Run("nil bid", func() {
+		highestBid := sdk.NewCoin("stake", math.NewInt(1000))
+		s.Require().Error(s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, sdk.Coin{}, highestBid))
+	})
 
-			tc.malleate()
+	s.Run("reserve fee and bid denom mismatch", func() {
+		highestBid := sdk.NewCoin("stake", math.NewInt(1000))
+		bid := sdk.NewCoin("stake2", math.NewInt(1000))
+		s.Require().Error(s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid))
+	})
 
-			// Set up the new auction keeper with mocks customized for this test case
-			suite.bankKeeper.EXPECT().GetBalance(suite.ctx, bidder.Address, minBidIncrement.Denom).Return(balance).AnyTimes()
-			suite.bankKeeper.EXPECT().SendCoins(suite.ctx, bidder.Address, escrowAddress, reserveFee).Return(nil).AnyTimes()
+	s.Run("bid less than reserve fee", func() {
+		highestBid := sdk.NewCoin("stake", math.NewInt(1000))
+		bid := sdk.NewCoin("stake", math.NewInt(500))
+		s.Require().Error(s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid))
+	})
 
-			suite.auctionkeeper = keeper.NewKeeper(
-				suite.encCfg.Codec,
-				suite.key,
-				suite.accountKeeper,
-				suite.bankKeeper,
-				suite.distrKeeper,
-				suite.stakingKeeper,
-				suite.authorityAccount.String(),
-			)
-			params := types.Params{
-				MaxBundleSize:          maxBundleSize,
-				ReserveFee:             reserveFee,
-				EscrowAccountAddress:   escrowAddress,
-				FrontRunningProtection: frontRunningProtection,
-				MinBidIncrement:        minBidIncrement,
-			}
-			suite.auctionkeeper.SetParams(suite.ctx, params)
+	s.Run("bid less than highest bid + min bid increment", func() {
+		highestBid := sdk.NewCoin("stake", math.NewInt(1000))
+		bid := sdk.NewCoin("stake", math.NewInt(1500))
+		s.Require().Error(s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid))
+	})
 
-			// Create the bundle of transactions ordered by accounts
-			bundle := make([][]byte, 0)
-			for _, acc := range accounts {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, acc, 0, 1, 100, 0)
-				suite.Require().NoError(err)
+	s.Run("valid bid", func() {
+		highestBid := sdk.Coin{}
+		bid := sdk.NewCoin("stake", math.NewInt(1500))
 
-				txBz, err := suite.encCfg.TxConfig.TxEncoder()(tx)
-				suite.Require().NoError(err)
-				bundle = append(bundle, txBz)
-			}
+		s.bankKeeper.On("SendCoins", mock.Anything, mock.Anything, mock.Anything, sdk.NewCoins(bid)).Return(nil)
 
-			signers := make([]map[string]struct{}, len(accounts))
-			for index, acc := range accounts {
-				txSigners := map[string]struct{}{
-					acc.Address.String(): {},
-				}
+		err := s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid)
+		s.Require().NoError(err)
+	})
 
-				signers[index] = txSigners
-			}
+	s.Run("insufficient funds", func() {
+		highestBid := sdk.Coin{}
+		bid := sdk.NewCoin("stake", math.NewInt(1500))
 
-			bidInfo := &types.BidInfo{
-				Bidder:       bidder.Address,
-				Bid:          bid,
-				Transactions: bundle,
-				Signers:      signers,
-			}
+		s.bankKeeper = mocks.NewBankKeeper(s.T())
+		s.auctionkeeper = keeper.NewKeeper(
+			s.encCfg.Codec,
+			s.key,
+			s.accountKeeper,
+			s.bankKeeper,
+			s.distrKeeper,
+			s.stakingKeeper,
+			s.authorityAccount.String(),
+		)
 
-			err := suite.auctionkeeper.ValidateBidInfo(suite.ctx, highestBid, bidInfo)
-			if tc.pass {
-				suite.Require().NoError(err)
-			} else {
-				suite.Require().Error(err)
-			}
-		})
-	}
+		s.bankKeeper.On("SendCoins", mock.Anything, mock.Anything, mock.Anything, sdk.NewCoins(bid)).Return(bankSendErr)
+
+		err := s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid)
+		s.Require().Error(err)
+	})
+
+	s.Run("valid bid with proposer split", func() {
+		highestBid := sdk.Coin{}
+		bid := sdk.NewCoin("stake", math.NewInt(1000))
+
+		s.bankKeeper = mocks.NewBankKeeper(s.T())
+		rewardsProvider := mocks.NewRewardsAddressProvider(s.T())
+		rewardsAddr := sdk.AccAddress([]byte("rewards"))
+		rewardsProvider.On("GetRewardsAddress", mock.Anything).Return(rewardsAddr, nil)
+
+		s.auctionkeeper = keeper.NewKeeperWithRewardsAddressProvider(
+			s.encCfg.Codec,
+			s.key,
+			s.accountKeeper,
+			s.bankKeeper,
+			rewardsProvider,
+			s.authorityAccount.String(),
+		)
+
+		params := types.Params{
+			ProposerFee:          math.LegacyMustNewDecFromStr("0.1"),
+			ReserveFee:           sdk.NewCoin("stake", math.NewInt(1000)),
+			EscrowAccountAddress: sdk.AccAddress([]byte("escrow")),
+			MinBidIncrement:      sdk.NewCoin("stake", math.NewInt(1000)),
+		}
+		s.Require().NoError(s.auctionkeeper.SetParams(s.ctx, params))
+
+		proposalSplit := sdk.NewCoin("stake", math.NewInt(100))
+		escrowSplit := sdk.NewCoin("stake", math.NewInt(900))
+		s.bankKeeper.On("SendCoins", mock.Anything, mock.Anything, mock.Anything, sdk.NewCoins(proposalSplit)).Return(nil)
+		s.bankKeeper.On("SendCoins", mock.Anything, mock.Anything, mock.Anything, sdk.NewCoins(escrowSplit)).Return(nil)
+
+		err := s.auctionkeeper.ValidateAuctionBid(s.ctx, bidder, bid, highestBid)
+		s.Require().NoError(err)
+	})
 }
 
 func (suite *KeeperTestSuite) TestValidateBundle() {

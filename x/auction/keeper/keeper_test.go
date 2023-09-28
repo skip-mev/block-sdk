@@ -6,11 +6,11 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/x/auction/types/mocks"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -19,10 +19,10 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	auctionkeeper    keeper.Keeper
-	bankKeeper       *testutils.MockBankKeeper
-	accountKeeper    *testutils.MockAccountKeeper
-	distrKeeper      *testutils.MockDistributionKeeper
-	stakingKeeper    *testutils.MockStakingKeeper
+	bankKeeper       *mocks.BankKeeper
+	accountKeeper    *mocks.AccountKeeper
+	distrKeeper      *mocks.DistributionKeeper
+	stakingKeeper    *mocks.StakingKeeper
 	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
 	msgServer        types.MsgServer
@@ -40,14 +40,12 @@ func (suite *KeeperTestSuite) SetupTest() {
 	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
 	suite.ctx = testCtx.Ctx
 
-	ctrl := gomock.NewController(suite.T())
+	suite.accountKeeper = mocks.NewAccountKeeper(suite.T())
+	suite.accountKeeper.On("GetModuleAddress", types.ModuleName).Return(sdk.AccAddress{}).Maybe()
 
-	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
-	suite.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
-
-	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
-	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
+	suite.bankKeeper = mocks.NewBankKeeper(suite.T())
+	suite.distrKeeper = mocks.NewDistributionKeeper(suite.T())
+	suite.stakingKeeper = mocks.NewStakingKeeper(suite.T())
 	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
 	suite.auctionkeeper = keeper.NewKeeper(
 		suite.encCfg.Codec,

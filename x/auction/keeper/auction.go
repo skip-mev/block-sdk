@@ -86,10 +86,53 @@ func (k Keeper) ValidateAuctionBid(ctx sdk.Context, bidder sdk.AccAddress, bid, 
 		}
 	}
 
-	// ensure the bidder has enough funds to cover all the inclusion fees
-	balances := k.bankKeeper.GetBalance(ctx, bidder, bid.Denom)
-	if !balances.IsGTE(bid) {
-		return fmt.Errorf("insufficient funds to bid %s with balance %s", bid, balances)
+	// Extract the bid from the bidder.
+	if err := k.ExtractBid(ctx, bidder, bid); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+// ExtractBid extracts the bid amount from the transaction.
+func (k Keeper) ExtractBid(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coin) error {
+	params, err := k.GetParams(ctx)
+	if err != nil {
+		return err
+	}
+
+	escrowAddress := sdk.AccAddress(params.EscrowAccountAddress)
+
+	var proposerReward sdk.Coins
+	if params.ProposerFee.IsZero() {
+		// send the entire bid to the escrow account when no proposer fee is set
+		if err := k.bankKeeper.SendCoins(ctx, bidder, escrowAddress, sdk.NewCoins(bid)); err != nil {
+			return err
+		}
+	} else {
+		rewardsAddress, err := k.rewardsAddressProvider.GetRewardsAddress(ctx)
+		if err != nil {
+			// In the case where the rewards address provider returns an error, the
+			// escrow account will receive the entire bid.
+			rewardsAddress = escrowAddress
+		}
+
+		// determine the amount of the bid that goes to the (previous) proposer
+		bid := sdk.NewDecCoinsFromCoins(bid)
+		proposerReward, _ = bid.MulDecTruncate(params.ProposerFee).TruncateDecimal()
+
+		if err := k.bankKeeper.SendCoins(ctx, bidder, rewardsAddress, proposerReward); err != nil {
+			return err
+		}
+
+		// Determine the amount of the remaining bid that goes to the escrow account.
+		// If a decimal remainder exists, it'll stay with the bidding account.
+		escrowTotal := bid.Sub(sdk.NewDecCoinsFromCoins(proposerReward...))
+		escrowReward, _ := escrowTotal.TruncateDecimal()
+
+		if err := k.bankKeeper.SendCoins(ctx, bidder, escrowAddress, escrowReward); err != nil {
+			return err
+		}
 	}
 
 	return nil
