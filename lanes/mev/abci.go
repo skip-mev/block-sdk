@@ -147,8 +147,8 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 	}
 }
 
-// VerifyBidSize will verify that the bid transaction and all of its bundled
-// transactions are valid respect the lane limits.
+// VerifyBidBasic will verify that the bid transaction and all of its bundled
+// transactions respect the basic invariants of the lane (e.g. size, gas limit).
 func (l *MEVLane) VerifyBidBasic(
 	bidTx sdk.Tx,
 	proposal proposals.Proposal,
@@ -218,9 +218,8 @@ func (l *MEVLane) VerifyBidBasic(
 	return bundle, nil
 }
 
-// VerifyTx will verify that the bid transaction and all of its bundled
-// transactions are valid. It will return an error if any of the transactions
-// are invalid.
+// VerifyBidTx will verify that the bid transaction and all of its bundled
+// transactions are valid.
 func (l *MEVLane) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) error {
 	bidInfo, err := l.GetAuctionBidInfo(bidTx)
 	if err != nil {
