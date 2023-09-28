@@ -97,6 +97,10 @@ use-integration:
 	go work edit -dropuse .
 	go work edit -use ./tests/integration
 
+tidy:
+	go mod tidy
+	gofmt -s -w ./
+
 .PHONY: docker-build docker-build-integration
 ###############################################################################
 ##                                  Docker                                   ##

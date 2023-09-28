@@ -52,6 +52,14 @@ func NewIntegrationTestSuiteFromSpec(spec *interchaintest.ChainSpec) *Integratio
 
 func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
 	s.denom = denom
+<<<<<<< HEAD
+=======
+
+	// update the bech32 prefixes
+	sdk.GetConfig().SetBech32PrefixForAccount(s.denom, s.denom+sdk.PrefixPublic)
+	sdk.GetConfig().SetBech32PrefixForValidator(s.denom+sdk.PrefixValidator, s.denom+sdk.PrefixValidator+sdk.PrefixPublic)
+	sdk.GetConfig().Seal()
+>>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 	return s
 }
 

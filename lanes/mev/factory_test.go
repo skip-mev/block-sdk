@@ -18,7 +18,7 @@ func (suite *MEVTestSuite) TestIsAuctionTx() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 2, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 2, 0, 0)
 				suite.Require().NoError(err)
 				return tx
 			},
@@ -124,7 +124,7 @@ func (suite *MEVTestSuite) TestGetTransactionSigners() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 10, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 10, 0, 0)
 				suite.Require().NoError(err)
 
 				return tx
@@ -185,7 +185,7 @@ func (suite *MEVTestSuite) TestWrapBundleTransaction() {
 		{
 			"normal sdk tx",
 			func() (sdk.Tx, []byte) {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0, 0)
 				suite.Require().NoError(err)
 
 				bz, err := suite.encCfg.TxConfig.TxEncoder()(tx)
@@ -240,7 +240,7 @@ func (suite *MEVTestSuite) TestGetBidder() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0, 0)
 				suite.Require().NoError(err)
 
 				return tx
@@ -315,7 +315,7 @@ func (suite *MEVTestSuite) TestGetBid() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0, 0)
 				suite.Require().NoError(err)
 
 				return tx
@@ -389,7 +389,7 @@ func (suite *MEVTestSuite) TestGetBundledTransactions() {
 		{
 			"normal sdk tx",
 			func() (sdk.Tx, [][]byte) {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 0, 0)
 				suite.Require().NoError(err)
 
 				return tx, nil
@@ -461,7 +461,7 @@ func (suite *MEVTestSuite) TestGetTimeout() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 1)
+				tx, err := testutils.CreateRandomTx(suite.encCfg.TxConfig, suite.accounts[0], 0, 1, 1, 0)
 				suite.Require().NoError(err)
 
 				return tx

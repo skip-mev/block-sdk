@@ -1,4 +1,4 @@
-package test
+package testutils
 
 import (
 	"math/rand"
@@ -111,7 +111,7 @@ func CreateFreeTx(txCfg client.TxConfig, account Account, nonce, timeout uint64,
 	return CreateTx(txCfg, account, nonce, timeout, msgs, fees...)
 }
 
-func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64, fees ...sdk.Coin) (authsigning.Tx, error) {
+func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64, gasLimit uint64, fees ...sdk.Coin) (authsigning.Tx, error) {
 	msgs := make([]sdk.Msg, numberMsgs)
 	for i := 0; i < int(numberMsgs); i++ {
 		msgs[i] = &banktypes.MsgSend{
@@ -141,11 +141,13 @@ func CreateRandomTx(txCfg client.TxConfig, account Account, nonce, numberMsgs, t
 
 	txBuilder.SetFeeAmount(fees)
 
+	txBuilder.SetGasLimit(gasLimit)
+
 	return txBuilder.GetTx(), nil
 }
 
-func CreateRandomTxBz(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout uint64) ([]byte, error) {
-	tx, err := CreateRandomTx(txCfg, account, nonce, numberMsgs, timeout)
+func CreateRandomTxBz(txCfg client.TxConfig, account Account, nonce, numberMsgs, timeout, gasLimit uint64) ([]byte, error) {
+	tx, err := CreateRandomTx(txCfg, account, nonce, numberMsgs, timeout, gasLimit)
 	if err != nil {
 		return nil, err
 	}
@@ -183,7 +185,7 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 	return txBuilder.GetTx(), nil
 }
 
-func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account) (authsigning.Tx, []authsigning.Tx, error) {
+func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account, gasLimit uint64) (authsigning.Tx, []authsigning.Tx, error) {
 	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
@@ -226,6 +228,8 @@ func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce,
 	}
 
 	txBuilder.SetTimeoutHeight(timeout)
+
+	txBuilder.SetGasLimit(gasLimit)
 
 	return txBuilder.GetTx(), txs, nil
 }

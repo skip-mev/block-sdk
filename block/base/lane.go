@@ -37,11 +37,6 @@ type BaseLane struct { //nolint
 	// requested and the lane needs to submit transactions it wants included in the block.
 	prepareLaneHandler PrepareLaneHandler
 
-	// checkOrderHandler is the function that is called when a new proposal is being
-	// verified and the lane needs to verify that the transactions included in the proposal
-	// respect the ordering rules of the lane and does not interleave transactions from other lanes.
-	checkOrderHandler CheckOrderHandler
-
 	// processLaneHandler is the function that is called when a new proposal is being
 	// verified and the lane needs to verify that the transactions included in the proposal
 	// are valid respecting the verification logic of the lane.
@@ -94,10 +89,6 @@ func (l *BaseLane) ValidateBasic() error {
 		l.processLaneHandler = l.DefaultProcessLaneHandler()
 	}
 
-	if l.checkOrderHandler == nil {
-		l.checkOrderHandler = l.DefaultCheckOrderHandler()
-	}
-
 	return nil
 }
 
@@ -122,18 +113,6 @@ func (l *BaseLane) SetProcessLaneHandler(processLaneHandler ProcessLaneHandler) 
 	}
 
 	l.processLaneHandler = processLaneHandler
-}
-
-// SetCheckOrderHandler sets the check order handler for the lane. This handler
-// is called when a new proposal is being verified and the lane needs to verify
-// that the transactions included in the proposal respect the ordering rules of
-// the lane and does not include transactions from other lanes.
-func (l *BaseLane) SetCheckOrderHandler(checkOrderHandler CheckOrderHandler) {
-	if checkOrderHandler == nil {
-		panic("check order handler cannot be nil")
-	}
-
-	l.checkOrderHandler = checkOrderHandler
 }
 
 // Match returns true if the transaction should be processed by this lane. This

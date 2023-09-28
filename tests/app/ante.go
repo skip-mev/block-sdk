@@ -4,12 +4,15 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/auth/ante"
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/utils"
 	auctionante "github.com/skip-mev/block-sdk/x/auction/ante"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
+<<<<<<< HEAD
 type AnteHandlerOptions struct {
+=======
+type BSDKHandlerOptions struct {
+>>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 	BaseOptions   ante.HandlerOptions
 	Mempool       block.Mempool
 	MEVLane       auctionante.MEVLane
@@ -19,8 +22,14 @@ type AnteHandlerOptions struct {
 	FreeLane      block.Lane
 }
 
+<<<<<<< HEAD
 // NewPOBAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the POB AnteHandler.
 func NewAnteHandler(options AnteHandlerOptions) sdk.AnteHandler {
+=======
+// NewBSDKAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the custom
+// block-sdk AnteHandlers.
+func NewBSDKAnteHandler(options BSDKHandlerOptions) sdk.AnteHandler {
+>>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 	if options.BaseOptions.AccountKeeper == nil {
 		panic("account keeper is required for ante builder")
 	}
@@ -40,7 +49,7 @@ func NewAnteHandler(options AnteHandlerOptions) sdk.AnteHandler {
 		ante.NewTxTimeoutHeightDecorator(),
 		ante.NewValidateMemoDecorator(options.BaseOptions.AccountKeeper),
 		ante.NewConsumeGasForTxSizeDecorator(options.BaseOptions.AccountKeeper),
-		utils.NewIgnoreDecorator(
+		block.NewIgnoreDecorator(
 			ante.NewDeductFeeDecorator(
 				options.BaseOptions.AccountKeeper,
 				options.BaseOptions.BankKeeper,
