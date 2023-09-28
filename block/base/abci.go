@@ -82,6 +82,13 @@ func (l *BaseLane) ProcessLane(
 
 	// Verify the transactions that belong to this lane according to the verification logic of the lane.
 	if err := l.processLaneHandler(ctx, decodedTxs); err != nil {
+		l.Logger().Error(
+			"failed to process lane",
+			"lane", l.Name(),
+			"err", err,
+			"num_txs_to_verify", len(decodedTxs),
+		)
+
 		return proposal, err
 	}
 
