@@ -54,7 +54,7 @@ func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
 	s.denom = denom
 
 	// update the bech32 prefixes
-	sdk.GetConfig().SetBech32PrefixForAccount(s.denom, s.denom+ sdk.PrefixPublic)
+	sdk.GetConfig().SetBech32PrefixForAccount(s.denom, s.denom+sdk.PrefixPublic)
 	sdk.GetConfig().SetBech32PrefixForValidator(s.denom+sdk.PrefixValidator, s.denom+sdk.PrefixValidator+sdk.PrefixPublic)
 	sdk.GetConfig().Seal()
 	return s
