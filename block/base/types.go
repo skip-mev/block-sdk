@@ -2,12 +2,8 @@ package base
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-	"github.com/skip-mev/block-sdk/block"
-=======
 
 	"github.com/skip-mev/block-sdk/block/proposals"
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 )
 
 type (

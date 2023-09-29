@@ -325,11 +325,7 @@ func New(
 		SigGasConsumer:  ante.DefaultSigVerificationGasConsumer,
 		SignModeHandler: app.txConfig.SignModeHandler(),
 	}
-<<<<<<< HEAD
-	options := AnteHandlerOptions{
-=======
 	options := BSDKHandlerOptions{
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 		BaseOptions:   handlerOptions,
 		auctionkeeper: app.Auctionkeeper,
 		TxDecoder:     app.txConfig.TxDecoder(),
@@ -338,11 +334,7 @@ func New(
 		MEVLane:       mevLane,
 		Mempool:       mempool,
 	}
-<<<<<<< HEAD
-	anteHandler := NewAnteHandler(options)
-=======
 	anteHandler := NewBSDKAnteHandler(options)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 
 	// Set the lane config on the lanes.
 	for _, lane := range lanes {

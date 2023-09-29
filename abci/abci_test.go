@@ -92,11 +92,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -147,11 +143,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx2, tx1)
@@ -202,11 +194,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx1)
@@ -273,12 +261,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -328,12 +311,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -384,12 +362,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 10000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
@@ -442,13 +415,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0])
 		size := int64(len(proposal[0]) - 1)
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: size})
-=======
 		s.setBlockParams(10000000, size)
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -495,12 +463,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposal := s.getTxBytes(freeTx)
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -578,12 +541,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(8, len(resp.Txs))
@@ -648,8 +606,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0], normalTx)
 
 		// Should be theoretically sufficient to fit the bid tx and the bundled tx + normal tx
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -698,12 +655,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -751,12 +703,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -805,12 +752,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -859,12 +801,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{MaxTxBytes: 1000000})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -893,9 +830,6 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: nil})
-=======
 		info := s.createProposalInfoBytes(
 			0,
 			0,
@@ -905,9 +839,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info}
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().NoError(err)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
@@ -934,10 +866,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1}, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
 	s.Run("can process a valid proposal with txs from multiple lanes", func() {
@@ -992,10 +923,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 2, freeLane.Name(): 1}, bidTx, bundleTxs[0], freeTx, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
 	s.Run("rejects a proposal with mismatching block size", func() {
@@ -1025,9 +955,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal[0] = infoBz
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal with mismatching gas limit", func() {
@@ -1057,9 +986,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal[0] = infoBz
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal with bad txs", func() {
@@ -1069,10 +997,6 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: [][]byte{{0x01, 0x02, 0x03}}})
-		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
 		info := s.createProposalInfoBytes(
 			0,
 			0,
@@ -1086,10 +1010,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal when a lane panics", func() {
@@ -1107,10 +1029,6 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NoError(err)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, panicLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: [][]byte{txbz}})
-		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
 
 		info := s.createProposalInfoBytes(
 			0,
@@ -1123,10 +1041,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info, txbz}
 
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal (out of order)", func() {
@@ -1160,15 +1076,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-<<<<<<< HEAD
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).ProcessProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: s.getTxBytes(tx, tx2)})
-=======
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 1}, tx2, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
@@ -1223,12 +1134,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 3}, bidTx, bundle[0], bundle[1], normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: s.getTxBytes(bidTx, bundle[0], bundle[1], normalTx, normalTx2)})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
-		s.Require().Error(err)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much gas", func() {
@@ -1276,9 +1184,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
-		s.Require().Error(err)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much block space", func() {
@@ -1333,8 +1241,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
@@ -1376,60 +1283,24 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 	s.Run("should invalidate proposal without info", func() {
 		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
-<<<<<<< HEAD
-func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
-	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace:   maxBlockSpace,
-	}
-=======
 		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 
 	s.Run("should invalidate completely empty proposal", func() {
 		proposal := [][]byte{}
 
-<<<<<<< HEAD
-func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
-	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxBlockSpace:   maxBlockSpace,
-	}
-=======
 		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 
 	s.Run("should invalidate proposal with mismatch txs count with proposal info", func() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
 
-<<<<<<< HEAD
-func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
-	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxBlockSpace:   maxBlockSpace,
-	}
-=======
 		_, _, err := proposalHandlers.ExtractLanes(proposal)
 		s.Require().Error(err)
 	})
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 
 	s.Run("can validate a proposal with a single tx", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -1443,16 +1314,6 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 		s.Require().NoError(err)
 		proposal := s.getTxBytes(tx)
 
-<<<<<<< HEAD
-func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
-	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxBlockSpace:   maxBlockSpace,
-	}
-=======
 		size, limit := s.getTxInfos(tx)
 		maxSize, maxLimit := proposals.GetBlockLimits(s.ctx)
 		info := s.createProposalInfoBytes(
@@ -1464,34 +1325,10 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 				defaultLane.Name(): 1,
 			},
 		)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 
 		proposal = append([][]byte{info}, proposal...)
 
-<<<<<<< HEAD
-	lane.SetPrepareLaneHandler(base.PanicPrepareLaneHandler())
-	lane.SetProcessLaneHandler(base.PanicProcessLaneHandler())
-
-	return lane
-}
-
-func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), true, lanes...)
-
-	return abci.NewProposalHandler(
-		log.NewTMLogger(os.Stdout),
-		s.encodingConfig.TxConfig.TxDecoder(),
-		mempool,
-	)
-}
-
-func (s *ProposalsTestSuite) getTxBytes(txs ...sdk.Tx) [][]byte {
-	txBytes := make([][]byte, len(txs))
-	for i, tx := range txs {
-		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
-=======
 		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))

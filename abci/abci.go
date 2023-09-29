@@ -1,6 +1,8 @@
 package abci
 
 import (
+	"fmt"
+
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -54,15 +56,10 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		// In the case where there is a panic, we recover here and return an empty proposal.
 		defer func() {
 			if rec := recover(); rec != nil {
-				h.logger.Error("failed to prepare proposal", "err", err)
-<<<<<<< HEAD
-				resp = abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
-=======
+				h.logger.Error("failed to prepare proposal", "err", rec)
 
 				// TODO: Should we attempt to return a empty proposal here with empty proposal info?
-				resp = &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
-				err = fmt.Errorf("failed to prepare proposal: %v", rec)
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+				resp = abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 			}
 		}()
 
@@ -83,7 +80,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		txs, err := finalProposal.GetProposalWithInfo()
 		if err != nil {
 			h.logger.Error("failed to get proposal with metadata", "err", err)
-			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
+			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 		}
 
 		h.logger.Info(
@@ -98,13 +95,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 
 		h.logger.Info("mempool distribution after proposal creation", "distribution", h.mempool.GetTxDistribution())
 
-<<<<<<< HEAD
-		return abci.ResponsePrepareProposal{Txs: proposal.GetProposal()}
-=======
-		return &abci.ResponsePrepareProposal{
+		return abci.ResponsePrepareProposal{
 			Txs: txs,
-		}, nil
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+		}
 	}
 }
 
@@ -125,25 +118,11 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
-<<<<<<< HEAD
-		txs := req.Txs
-		if len(txs) == 0 {
-			h.logger.Info("accepted empty proposal")
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
-		}
-
-		// Decode the transactions from the proposal.
-		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, txs)
-		if err != nil {
-			h.logger.Error("failed to decode transactions", "err", err)
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
-=======
 		// Extract all of the lanes and their corresponding transactions from the proposal.
 		proposalInfo, partialProposals, err := h.ExtractLanes(req.Txs)
 		if err != nil {
 			h.logger.Error("failed to validate proposal", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
@@ -163,7 +142,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		// Ensure block size and gas limit are correct.
 		if err := h.ValidateBlockLimits(finalProposal, proposalInfo); err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		h.logger.Info(

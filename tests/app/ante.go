@@ -8,11 +8,7 @@ import (
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 )
 
-<<<<<<< HEAD
-type AnteHandlerOptions struct {
-=======
 type BSDKHandlerOptions struct {
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 	BaseOptions   ante.HandlerOptions
 	Mempool       block.Mempool
 	MEVLane       auctionante.MEVLane
@@ -22,14 +18,9 @@ type BSDKHandlerOptions struct {
 	FreeLane      block.Lane
 }
 
-<<<<<<< HEAD
-// NewPOBAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the POB AnteHandler.
-func NewAnteHandler(options AnteHandlerOptions) sdk.AnteHandler {
-=======
 // NewBSDKAnteHandler wraps all of the default Cosmos SDK AnteDecorators with the custom
 // block-sdk AnteHandlers.
 func NewBSDKAnteHandler(options BSDKHandlerOptions) sdk.AnteHandler {
->>>>>>> b9d6761 (feat(ABCI): New Proposal Struct with Associated Metadata (#126))
 	if options.BaseOptions.AccountKeeper == nil {
 		panic("account keeper is required for ante builder")
 	}
