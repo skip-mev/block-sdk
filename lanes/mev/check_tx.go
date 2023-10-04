@@ -162,7 +162,10 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 			handler.baseApp.Logger().Info(
 				"invalid bid tx",
 				"err", err,
-				"tx", req.Tx,
+				"height", ctx.BlockHeight(),
+				"bid_height", bidInfo.Timeout,
+				"bidder", bidInfo.Bidder,
+				"bid", bidInfo.Bid,
 				"removing tx from mempool", true,
 			)
 
@@ -187,7 +190,10 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 
 		handler.baseApp.Logger().Info(
 			"valid bid tx",
-			"tx", req.Tx,
+			"height", ctx.BlockHeight(),
+			"bid_height", bidInfo.Timeout,
+			"bidder", bidInfo.Bidder,
+			"bid", bidInfo.Bid,
 			"inserting tx into mempool", true,
 		)
 
