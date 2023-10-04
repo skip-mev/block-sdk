@@ -15,7 +15,13 @@ $ go install github.com/skip-mev/block-sdk
 
 ## 🤔 How to use it [30 min]
 
-There are **five** required components to building a custom lane using the base lane:
+The Block SDK is designed to be modular and extensible. This means that 
+developers can build their own lanes and customize the block building/verification
+logic to fit their needs. This guide will walk through the process of building
+a custom lane and configuring it in the application. Developers should 
+extend the base lane (`block/base/lane.go`) to build their own lanes.
+
+There are **five** components to building a custom lane using the base lane:
 
 1. `Mempool` - The lane's mempool is responsible for storing transactions that 
 have been verified and are waiting to be included in proposals.
@@ -23,14 +29,10 @@ have been verified and are waiting to be included in proposals.
 should belong to this lane.
 3. [**OPTIONAL**] `PrepareLaneHandler` - Allows developers to define their own 
 handler to customize the how transactions are verified and ordered before they 
-are included into a proposal.
-4. [**OPTIONAL**] `CheckOrderHandler` - Allows developers to define their own 
-handler that will run any custom checks on whether transactions included in 
-block proposals are in the correct order (respecting the ordering rules of the 
-lane and the ordering rules of the other lanes).
-5. [**OPTIONAL**] `ProcessLaneHandler` - Allows developers to define their own 
+are included in a proposal.
+4. [**OPTIONAL**] `ProcessLaneHandler` - Allows developers to define their own 
 handler for processing transactions that are included in block proposals.
-6. `Configuration` - Configure high-level options for your lane.
+5. `Configuration` - Configure high-level options for your lane.
 
 ### 1. 🗄️ Mempool
 
@@ -50,7 +52,7 @@ does the following:
 * Implements a `MinValue` method that returns the minimum priority value
   that a transaction can have.
 
-The default implementation can be found in `block/base/mempool.go`.
+The default implementation can be found in `block/base/mempool.go` - see `DefaultTxPriority`.
 
 > Scenario
 What if we wanted to prioritize transactions by the amount they have staked on 
@@ -116,14 +118,15 @@ To utilize this new priority configuration in a lane, all you have to then do
 is pass in the `TxPriority[C]` to the `NewMempool` function.
 
 ```golang
-// Create the lane config
+// Create the lane config (explained in more detail below)
 laneCfg := NewLaneConfig(
     ...
     MaxTxs: 100,
     ...
 )
 
-// Pseudocode for creating the custom tx priority
+// Pseudocode for creating the custom tx priority. This is what
+// returns your custom tx priority.
 priorityCfg := NewPriorityConfig(
     stakingKeeper,
     accountKeeper,
@@ -212,8 +215,8 @@ mempool := base.NewMempool[string](
 lane := base.NewBaseLane(
     cfg,
     LaneName,
-    mempool,
-    handler.CustomMatchHandler(),
+    mempool, // Custom mempool
+    handler.CustomMatchHandler(), // Custom match handler
 )
 ```
 
@@ -241,13 +244,33 @@ The handler should return the following for a given lane:
 2. The transactions to be removed from the lane's mempool.
 3. An error if the lane is unable to prepare a block proposal.
 
+When collecting transactions to include in the block proposal, the handler
+must respect the lane limits - i.e. the maximum number of bytes and units
+of gas that the lane can use in the block proposal. This is defined in the
+`limit proposals.LaneLimits` struct.
+
 ```golang
-// PrepareLaneHandler is responsible for preparing transactions to be included
-// in the block from a given lane. Given a lane, this function should return
-// the transactions to include in the block, the transactions that must be
-// removed from the lane, and an error if one occurred.
-PrepareLaneHandler func(ctx sdk.Context,proposal BlockProposal,maxTxBytes int64)
-    (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error)
+type (
+    // PrepareLaneHandler is responsible for preparing transactions to be 
+    // included in the block from a given lane. Given a lane, this function 
+    // should return the transactions to include in the block, the transactions
+    // that must be removed from the lane, and an error if one occurred.
+    PrepareLaneHandler func(
+        ctx sdk.Context,
+        proposal proposals.Proposal,
+        limit proposals.LaneLimits,
+    ) (txsToInclude, txsToRemove []sdk.Tx, err error)
+
+	// LaneLimits defines the constraints for a partial proposal. Each lane must 
+    // only propose transactions that satisfy these constraints. Otherwise the 
+    // partial proposal update will be rejected.
+	LaneLimits struct {
+		// MaxTxBytes is the maximum number of bytes allowed in the partial proposal.
+		MaxTxBytes int64
+		// MaxGasLimit is the maximum gas limit allowed in the partial proposal.
+		MaxGasLimit uint64
+	}
+)
 ```
 
 The default implementation is simple. It will continue to select transactions 
@@ -255,7 +278,7 @@ from its mempool under the following criteria:
 
 1. The transactions is not already included in the block proposal.
 2. The transaction is valid and passes the AnteHandler check.
-3. The transaction is not too large to be included in the block.
+3. The transaction is not too large/gas intensive to be included in the block.
 
 If a more involved selection process is required, you can implement your own 
 `PrepareLaneHandler` and and set it after creating the base lane.
@@ -274,78 +297,36 @@ customLane := NewCustomLane(
 customLane.SetPrepareLaneHandler(customlane.PrepareLaneHandler())
 ```
 
-### 4. ✅ CheckOrderHandler
+See `lanes/mev/abci.go` for an example of how to set up a custom `PrepareLaneHandler`.
 
-The `CheckOrderHandler` is an optional field you can set on the base lane. 
-This handler is responsible for verifying the ordering of the transactions in 
-the block proposal that belong to the lane.
-
-```golang
-// CheckOrderHandler is responsible for checking the order of transactions that
-// belong to a given lane. This handler should be used to verify that the
-// ordering of transactions passed into the function respect the ordering logic
-// of the lane (if any transactions from the lane are included). This function
-// should also ensure that transactions that belong to this lane are contiguous
-// and do not have any transactions from other lanes in between them.
-CheckOrderHandler func(ctx sdk.Context, txs []sdk.Tx) error
-```
-
-The default implementation is simple and utilizes the same `TxPriority` struct 
-that the mempool uses to determine if transactions are in order. The criteria 
-for determining if transactions are in order is as follows:
-
-1. The transactions are in order according to the `TxPriority` struct. i.e. 
-any two transactions (that match to the lane) `tx1` and `tx2` where `tx1` has a 
-higher priority than `tx2` should be ordered before `tx2`.
-2. The transactions are contiguous. i.e. there are no transactions from other 
-lanes in between the transactions that belong to this lane. i.e. if `tx1` and 
-`tx2` belong to the lane, there should be no transactions from other lanes in 
-between `tx1` and `tx2`.
-
-If a more involved ordering process is required, you can implement your own 
-`CheckOrderHandler` and and set it after creating the base lane.
-
-```golang
-// Pseudocode for creating the custom check order handler
-// This assumes that the CustomLane inherits from the base
-// lane.
-customLane := NewCustomLane(
-    cfg,
-    mempool,
-    handler.CustomMatchHandler(),
-)
-
-// Set the custom CheckOrderHandler on the lane
-customLane.SetCheckOrderHandler(customlane.CheckOrderHandler())
-```
-
-### 5. 🆗 ProcessLaneHandler
+### 4. 🆗 ProcessLaneHandler
 
 The `ProcessLaneHandler` is an optional field you can set on the base lane. 
 This handler is responsible for verifying the transactions in the block proposal
-that belong to the lane. This handler is executed after the `CheckOrderHandler` 
-so the transactions passed into this function SHOULD already be in order 
-respecting the ordering rules of the lane and respecting the ordering rules of 
-mempool relative to the lanes it has. This means that if the first transaction 
-does not belong to the lane, the remaining transactions should not belong to 
-the lane either.
+that belong to the lane.
 
 ```golang
-// ProcessLaneHandler is responsible for processing transactions that are
-// included in a block and belong to a given lane. ProcessLaneHandler is
-// executed after CheckOrderHandler so the transactions passed into this
-// function SHOULD already be in order respecting the ordering rules of the
-// lane and respecting the ordering rules of mempool relative to the lanes it has.
-ProcessLaneHandler func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error)
+// ProcessLaneHandler is responsible for processing transactions that are 
+// included in a block and belong to a given lane. This handler must return an 
+// error if the transactions are not correctly ordered, do not belong to this 
+// lane, or any other relevant error.
+ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) error
 ```
 
-Given the invariants above, the default implementation is simple. It will 
+The `partialProposal` is a slice of transactions that belong to the lane and
+are included in the block proposal. The handler should return an error if the
+transactions are not correctly ordered, do not belong to this lane, or any
+other relevant error.
+
+Given the description above, the default implementation is simple. It will 
 continue to verify transactions in the block proposal under the following criteria:
 
-1. If a transaction matches to this lane, verify it and continue. If it is not 
-valid, return an error.
-2. If a transaction does not match to this lane, return the remaining 
-transactions to the next lane to process.
+1. All of the transactions included in `partialProposal` must belong to this
+lane i.e. they must match the lane's `MatchHandler`.
+2. All of the transactions must be ordered respecting the ordering rules of the
+mempool i.e. the transactions must be ordered by their priority which is defined
+by the `TxPriority[C]` struct.
+3. All of the transactions must be valid and pass the AnteHandler check.
 
 Similar to the setup of handlers above, if a more involved verification process 
 is required, you can implement your own `ProcessLaneHandler` and and set it 
@@ -365,18 +346,9 @@ customLane := NewCustomLane(
 customLane.SetProcessLaneHandler(customlane.ProcessLaneHandler())
 ```
 
-### 6. 📝 Lane Configuration
+See `lanes/mev/abci.go` for an example of how to set up a custom `ProcessLaneHandler`.
 
-Once you have created your custom lane, you can configure it in the application 
-by doing the following:
-
-1. Create a custom `LaneConfig` struct that defines the configuration of the lane.
-2. Instantiate the lane with the custom `LaneConfig` struct alongside any other 
-dependencies (mempool, match handler, etc.).
-3. Instantiate a new `LanedMempool` with the custom lane.
-4. Set the `LanedMempool` on the `BaseApp` instance.
-5. Set up the proposal handlers of the Block SDK to use your lane.
-6. That's it! You're done!
+### 5. 📝 Lane Configuration
 
 The lane config (`LaneConfig`) is a simple configuration object that defines 
 the desired amount of block space the lane should utilize when building a 
@@ -406,7 +378,7 @@ transactions as they are being considered for a new proposal or are being
 processed in a proposed block. We recommend user's utilize the same antehandler 
 chain that is used in the base app. If developers want a certain `AnteDecorator`
 to be ignored if it qualifies for a given lane, they can do so by using the 
-`NewIgnoreDecorator` defined in `block/utils/ante.go`.
+`NewIgnoreDecorator` defined in `block/ante.go`.
 
 For example, a free lane might want to ignore the `DeductFeeDecorator` so that
 its transactions are not charged any fees. Where ever the `AnteHandler` is 
@@ -436,7 +408,7 @@ Anytime a transaction that qualifies for the free lane is being processed, the
 
 This sets the maximum number of transactions allowed in the mempool with the semantics:
 
-* if `MaxTxs` == 0, there is no cap on the number of transactions in the mempool
+* if `MaxTxs` == 0, there is no cap on the number of transactions in the mempool.
 * if `MaxTxs` > 0, the mempool will cap the number of transactions it stores, 
 and will prioritize transactions by their priority and sender-nonce 
 (sequence number) when evicting transactions.
@@ -445,7 +417,7 @@ and will prioritize transactions by their priority and sender-nonce
 #### **MaxBlockSpace**
 
 MaxBlockSpace is the maximum amount of block space that the lane will attempt 
-to fill when building a proposal. This parameter may be useful lanes that 
+to fill when building a proposal. This parameter may be useful for lanes that 
 should be limited (such as a free or onboarding lane) in space usage. 
 Setting this to 0 will allow the lane to fill the block with as many 
 transactions as possible.
@@ -461,3 +433,17 @@ processed after the default lane. In this case, the free lane should be added
 to the ignore list of the default lane. Otherwise, the transactions that belong 
 to the free lane will be processed by the default lane (which accepts all 
 transactions by default).
+
+
+### Set up
+
+Once you have created your custom lane, you can configure it in the application 
+by doing the following:
+
+1. Create a custom `LaneConfig` struct that defines the configuration of the lane.
+2. Instantiate the lane with the custom `LaneConfig` struct alongside any other 
+dependencies (mempool, match handler, etc.).
+3. Instantiate a new `LanedMempool` with the custom lane.
+4. Set the `LanedMempool` on the `BaseApp` instance.
+5. Set up the proposal handlers of the Block SDK to use your lane.
+6. That's it! You're done!
