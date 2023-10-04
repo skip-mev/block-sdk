@@ -2,46 +2,28 @@ package ante
 
 import (
 	"bytes"
-	"context"
-	"fmt"
 
 	"cosmossdk.io/errors"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/skip-mev/block-sdk/x/auction/keeper"
-	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var _ sdk.AnteDecorator = AuctionDecorator{}
 
 type (
-	// MEVLane is an interface that defines the methods required to interact with the MEV
-	// lane.
-	MEVLane interface {
-		GetAuctionBidInfo(tx sdk.Tx) (*types.BidInfo, error)
-		GetTopAuctionTx(ctx context.Context) sdk.Tx
-	}
-
-	// Mempool is an interface that defines the methods required to interact with the application-side mempool.
-	Mempool interface {
-		Contains(tx sdk.Tx) bool
-	}
-
 	// AuctionDecorator is an AnteDecorator that validates the auction bid and bundled transactions.
 	AuctionDecorator struct {
-		auctionkeeper keeper.Keeper
-		txEncoder     sdk.TxEncoder
 		lane          MEVLane
-		mempool       Mempool
+		auctionkeeper AuctionKeeper
+		txEncoder     sdk.TxEncoder
 	}
 )
 
-func NewAuctionDecorator(ak keeper.Keeper, txEncoder sdk.TxEncoder, lane MEVLane, mempool Mempool) AuctionDecorator {
+// NewAuctionDecorator returns a new AuctionDecorator.
+func NewAuctionDecorator(ak AuctionKeeper, txEncoder sdk.TxEncoder, lane MEVLane) AuctionDecorator {
 	return AuctionDecorator{
 		auctionkeeper: ak,
 		txEncoder:     txEncoder,
 		lane:          lane,
-		mempool:       mempool,
 	}
 }
 
@@ -55,25 +37,15 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 
 	// Validate the auction bid if one exists.
 	if bidInfo != nil {
-		// If comet is re-checking a transaction, we only need to check if the transaction is in the application-side mempool.
-		if ctx.IsReCheckTx() {
-			if !ad.mempool.Contains(tx) {
-				return ctx, fmt.Errorf("transaction not found in application-side mempool")
-			}
-		}
-
 		// Auction transactions must have a timeout set to a valid block height.
-		if err := ad.ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
+		if err := ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
 			return ctx, err
 		}
 
-		// We only need to verify the auction bid relative to the local validator's mempool if the mode
-		// is checkTx or recheckTx. Otherwise, the ABCI handlers (VerifyVoteExtension, ExtendVoteExtension, etc.)
-		// will always compare the auction bid to the highest bidding transaction in the mempool leading to
-		// poor liveness guarantees.
-		// TODO(nikhil/david): refactor this logic (is this necessary?)
+		// Only compare the bid to the top bid if the current execution mode is not one of the
+		// ignore bid modes.
 		topBid := sdk.Coin{}
-		if ctx.IsCheckTx() || ctx.IsReCheckTx() {
+		if _, ok := currentHeightExecModes[ctx.ExecMode()]; !ok {
 			if topBidTx := ad.lane.GetTopAuctionTx(ctx); topBidTx != nil {
 				topBidBz, err := ad.txEncoder(topBidTx)
 				if err != nil {
@@ -86,6 +58,8 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 				}
 
 				// Compare the bytes to see if the current transaction is the highest bidding transaction.
+				// If it is the same transaction, we do not need to compare the bids as the bid check will
+				// fail.
 				if !bytes.Equal(topBidBz, currentTxBz) {
 					topBidInfo, err := ad.lane.GetAuctionBidInfo(topBidTx)
 					if err != nil {
@@ -103,33 +77,4 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	}
 
 	return next(ctx, tx, simulate)
-}
-
-// ValidateTimeout validates that the timeout is greater than or equal to the expected block height
-// the bid transaction will be executed in.
-func (ad AuctionDecorator) ValidateTimeout(ctx sdk.Context, timeout int64) error {
-	// If the timeout height is set to zero, this means that the searcher wanted next block execution.
-	// However, the height at which the searcher submitted the transaction has already passed so we
-	// return an error.
-	if timeout == 0 && ctx.IsReCheckTx() {
-		return fmt.Errorf("timeout height cannot be 0 for recheck tx")
-	}
-
-	height := ctx.BlockHeight()
-
-	// If the mode is CheckTx or ReCheckTx, we increment the current block height by one to
-	// account for the fact that the transaction will be executed in the next block.
-	if ctx.IsCheckTx() || ctx.IsReCheckTx() {
-		height++
-	}
-
-	if timeout < height {
-		return fmt.Errorf(
-			"timeout height cannot be less than the current block height (timeout: %d, current block height: %d)",
-			timeout,
-			height,
-		)
-	}
-
-	return nil
 }

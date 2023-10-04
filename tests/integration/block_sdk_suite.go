@@ -3,7 +3,12 @@ package integration
 import (
 	"context"
 
+	"bytes"
+
 	"cosmossdk.io/math"
+	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
+	"github.com/cosmos/cosmos-sdk/codec"
+	"github.com/cosmos/cosmos-sdk/crypto/keyring"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
@@ -12,10 +17,6 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
-	"github.com/cosmos/cosmos-sdk/codec"
-	"github.com/cosmos/cosmos-sdk/crypto/keyring"
-	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
-	"bytes"
 )
 
 const (
@@ -62,8 +63,8 @@ func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
 
 func (s *IntegrationTestSuite) WithKeyringOptions(cdc codec.Codec, opts keyring.Option) {
 	s.broadcasterOverrides = &KeyringOverride{
-		cdc:   cdc,
-		keyringOptions:  opts,
+		cdc:            cdc,
+		keyringOptions: opts,
 	}
 }
 
@@ -119,6 +120,51 @@ func (s *IntegrationTestSuite) TestValidBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
+	s.Run("Valid Auction Bid with no timeout set", func() {
+		// get escrow account balance before bid
+		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
+
+		// create bundle w/ a single tx
+		// create message send tx
+		tx := banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
+
+		// create the MsgAuctioBid
+		bidAmt := params.ReserveFee
+		bid, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
+			{
+				User: s.user1,
+				Msgs: []sdk.Msg{
+					tx,
+				},
+				SequenceIncrement: 1,
+			},
+		})
+
+		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+		require.NoError(s.T(), err)
+
+		// broadcast + wait for the tx to be included in a block
+		res := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+			{
+				User: s.user1,
+				Msgs: []sdk.Msg{bid},
+			},
+		})
+		height = height + 1
+
+		// wait for next height
+		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height)
+
+		// query + verify the block
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), int64(height))
+		VerifyBlock(s.T(), block, 0, TxHash(res[0]), bundledTxs)
+
+		// ensure that the escrow account has the correct balance
+		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
+		expectedIncrement := escrowAddressIncrement(bidAmt.Amount, params.ProposerFee)
+		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
+	})
+
 	s.Run("Valid Auction Bid", func() {
 		// get escrow account balance before bid
 		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
@@ -143,7 +189,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		require.NoError(s.T(), err)
 
 		// broadcast + wait for the tx to be included in a block
-		res := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		res := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user1,
 				Msgs:   []sdk.Msg{bid},
@@ -177,7 +223,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 
 		// create the MsgAuctionBid
 		bidAmt := params.ReserveFee
-		bid, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
+		bid, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
 			{
 				User:              s.user1,
 				Msgs:              msgs[0:1],
@@ -205,8 +251,8 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		expTxs := make(chan committedTx, 2)
 
 		regular_txs := s.BroadcastTxsWithCallback(
-			context.Background(), 
-			s.chain.(*cosmos.CosmosChain), 
+			context.Background(),
+			s.chain.(*cosmos.CosmosChain),
 			msgsToBcast,
 			func(tx []byte, resp *rpctypes.ResultTx) {
 				expTxs <- committedTx{tx, resp}
@@ -217,7 +263,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 
 		// get the height of the block that the bid was included in
 		var commitHeight int64
-		
+
 		tx1 := <-expTxs
 		tx2 := <-expTxs
 
@@ -265,10 +311,10 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		}
 		// create bundle
 		bidAmt := params.ReserveFee
-		bid, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, txs)
+		bid, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, txs)
 		// create 2 more bundle w same txs from same user
-		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), txs)
-		bid3, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement).Add(params.MinBidIncrement), txs)
+		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), txs)
+		bid3, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement).Add(params.MinBidIncrement), txs)
 
 		// query height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -279,7 +325,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 		height++
 
 		// broadcast all bids
-		broadcastedTxs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		broadcastedTxs := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:               s.user1,
 				Msgs:               []sdk.Msg{bid},
@@ -345,18 +391,18 @@ func (s *IntegrationTestSuite) TestValidBids() {
 
 		// broadcast txs in the bundle to network + bundle + extra
 		broadcastedTxs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
-		{
-			User:   s.user2,
-			Msgs:   []sdk.Msg{bid},
-			Height: height + 3,
-		}, {
-			User: s.user3,
-			Msgs: []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user1.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
-			Height: height + 3,
-		}},
-		func(tx []byte, resp *rpctypes.ResultTx) {
-			expTxs <- committedTx{tx, resp}
-		})
+			{
+				User:   s.user2,
+				Msgs:   []sdk.Msg{bid},
+				Height: height + 3,
+			}, {
+				User:   s.user3,
+				Msgs:   []sdk.Msg{banktypes.NewMsgSend(s.user3.Address(), s.user1.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
+				Height: height + 3,
+			}},
+			func(tx []byte, resp *rpctypes.ResultTx) {
+				expTxs <- committedTx{tx, resp}
+			})
 		close(expTxs)
 
 		var bidTxHeight int64
@@ -379,7 +425,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 }
 
 type committedTx struct {
-	tx   []byte
+	tx  []byte
 	res *rpctypes.ResultTx
 }
 
@@ -397,6 +443,71 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
+	s.Run("broadcasting multiple bids to the same validator with no timeout set", func() {
+		// escrow account balance
+		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
+
+		// create bid 1
+		// bank-send msg
+		msg := Tx{
+			User:              s.user1,
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
+			SequenceIncrement: 1,
+		}
+		// create bid1
+		bidAmt := params.ReserveFee
+		bid1, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+
+		// create bid 2
+		msg2 := Tx{
+			User:              s.user2,
+			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))},
+			SequenceIncrement: 1,
+		}
+		// create bid2 w/ higher bid than bid1
+		bid2, bundledTxs2 := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
+
+		// create channel to receive txs
+		txsCh := make(chan committedTx, 2)
+
+		// broadcast both bids. the second bid should fail because the first bid will be included in the block
+		// and the second bid will be rejected because the next block will have invalidated the bid.
+		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+			{
+				User: s.user1,
+				Msgs: []sdk.Msg{bid1},
+			},
+			{
+				User: s.user2,
+				Msgs: []sdk.Msg{bid2},
+			},
+		}, func(tx []byte, resp *rpctypes.ResultTx) {
+			txsCh <- committedTx{tx, resp}
+		})
+
+		// check txs were committed
+		require.Len(s.T(), txsCh, 2)
+		close(txsCh)
+
+		tx1 := <-txsCh
+		<-txsCh
+
+		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+		require.NoError(s.T(), err)
+
+		// query next block
+		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
+		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs2)
+
+		// Wait a few more blocks to ensure the tx was not included
+		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+2)
+
+		// check escrow balance
+		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
+		expectedIncrement := escrowAddressIncrement(bidAmt.Amount, params.ProposerFee)
+		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
+	})
+
 	s.Run("broadcasting bids to two different validators (both should execute over several blocks) with same bid", func() {
 		// escrow account balance
 		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
@@ -410,7 +521,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// create bid 2
 		msg2 := Tx{
@@ -419,7 +530,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 			SequenceIncrement: 1,
 		}
 		// create bid2 w/ higher bid than bid1
-		bid2, bundledTxs2 := s.CreateAuctionBidMsg( context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
+		bid2, bundledTxs2 := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -430,9 +541,9 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// broadcast both bids (with ample time to be committed (instead of timing out))
 		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
-				User:               s.user1,
-				Msgs:               []sdk.Msg{bid1},
-				Height:             height + 4,
+				User:   s.user1,
+				Msgs:   []sdk.Msg{bid1},
+				Height: height + 4,
 			},
 			{
 				User:   s.user2,
@@ -442,7 +553,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}, func(tx []byte, resp *rpctypes.ResultTx) {
 			txsCh <- committedTx{tx, resp}
 		})
-		
+
 		// check txs were committed
 		require.Len(s.T(), txsCh, 2)
 		close(txsCh)
@@ -450,7 +561,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		tx1 := <-txsCh
 		tx2 := <-txsCh
 
-		// query next block	
+		// query next block
 		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
 
 		// check bid2 was included first
@@ -481,7 +592,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{tx})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{tx})
 
 		// create bid 2
 		tx2 := Tx{
@@ -490,7 +601,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 			SequenceIncrement: 1,
 		}
 		// create bid2 w/ higher bid than bid1
-		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{tx2})
+		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{tx2})
 
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -543,7 +654,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// create bid 2
 		msg2 := Tx{
@@ -553,7 +664,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 
 		// create bid2 w/ higher bid than bid1
-		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg2})
+		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg2})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -568,10 +679,10 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 				Height: height + 4,
 			},
 			{
-				User:              s.user1,
-				Msgs:              []sdk.Msg{bid2},
-				Height:            height + 4,
-				ExpectFail:        true,
+				User:       s.user1,
+				Msgs:       []sdk.Msg{bid2},
+				Height:     height + 4,
+				ExpectFail: true,
 			},
 		}, func(tx []byte, resp *rpctypes.ResultTx) {
 			expTx <- committedTx{tx, resp}
@@ -605,10 +716,10 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// create bid2 w/ higher bid than bid1
-		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg})
+		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -618,9 +729,9 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// broadcast both bids
 		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
-				User:              s.user1,
-				Msgs:              []sdk.Msg{bid1},
-				Height:            height + 4,
+				User:               s.user1,
+				Msgs:               []sdk.Msg{bid1},
+				Height:             height + 4,
 				SkipInclusionCheck: true,
 			},
 			{
@@ -663,10 +774,10 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// create bid2 w/ higher bid than bid1
-		bid2, _ := s.CreateAuctionBidMsg( context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg})
+		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg})
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -676,9 +787,9 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// broadcast both bids
 		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
-				User:       s.user1,
-				Msgs:       []sdk.Msg{bid1},
-				Height:     height + 4,
+				User:               s.user1,
+				Msgs:               []sdk.Msg{bid1},
+				Height:             height + 4,
 				SkipInclusionCheck: true,
 			},
 			{
@@ -721,7 +832,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		}
 		// create bid1
 		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// create bid2
 		// create a second message
@@ -743,9 +854,9 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		// broadcast both bids
 		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
-				User:               s.user1,
-				Msgs:               []sdk.Msg{bid1},
-				Height:             height + 4,
+				User:   s.user1,
+				Msgs:   []sdk.Msg{bid1},
+				Height: height + 4,
 			},
 			{
 				User:   s.user2,
@@ -754,7 +865,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 			},
 		}, func(tx []byte, resp *rpctypes.ResultTx) {
 			committedTxs <- committedTx{
-				tx:   tx,
+				tx:  tx,
 				res: resp,
 			}
 		})
@@ -797,11 +908,11 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 			SequenceIncrement: 2,
 		}
 		bidAmt := params.ReserveFee
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		// wrap bidTx in another tx
-		wrappedBid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
+		wrappedBid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
 			{
 				User:              s.user1,
 				Msgs:              []sdk.Msg{bid},
@@ -813,7 +924,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		require.NoError(s.T(), err)
 
 		// broadcast wrapped bid, and expect a failure
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{wrappedBid},
@@ -831,7 +942,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 			SequenceIncrement: 2,
 		}
 		bidAmt := sdk.NewCoin(s.denom, math.NewInt(1000000000000000000))
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -858,7 +969,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		}
 
 		bidAmt := params.ReserveFee
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg, msg2, msg3})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg, msg2, msg3})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -875,13 +986,13 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 			SequenceIncrement: 2,
 		}
 		bidAmt := params.ReserveFee
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
 		// broadcast wrapped bid, and expect a failure
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{bid},
@@ -901,7 +1012,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// create bid smaller than reserve
 		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -924,7 +1035,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// create bid smaller than reserve
 		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, msgs)
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, msgs)
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -943,7 +1054,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// create bid smaller than reserve
 		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// broadcast wrapped bid, and expect a failure
 		s.SimulateTx(context.Background(), s.chain.(*cosmos.CosmosChain), s.user1, 0, true, []sdk.Msg{bid}...)
@@ -959,7 +1070,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 
 		// create the MsgAuctioBid (this should fail b.c same tx is repeated twice)
 		bidAmt := params.ReserveFee
-		bid, _ := s.CreateAuctionBidMsg( context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
+		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{
 			{
 				User: s.user2,
 				Msgs: []sdk.Msg{
@@ -976,7 +1087,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		require.NoError(s.T(), err)
 
 		// broadcast + wait for the tx to be included in a block
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		txs := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{bid},
@@ -1022,7 +1133,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 		balanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user1.FormattedAddress(), s.denom)
 
 		// create a free tx (MsgDelegate), broadcast and wait for commit
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User: s.user1,
 				Msgs: []sdk.Msg{
@@ -1085,7 +1196,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 		user2BalanceBefore := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 
 		// user1 submits a free-tx, user2 submits a free tx
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User: s.user1,
 				Msgs: []sdk.Msg{
@@ -1242,7 +1353,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:       s.user1,
 				Msgs:       []sdk.Msg{bid},
@@ -1392,7 +1503,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
-		txs := s.BroadcastTxs( context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
+		txs := s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
 				User:   s.user3,
 				Msgs:   []sdk.Msg{bid},
