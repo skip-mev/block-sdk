@@ -53,7 +53,6 @@ func NewProposalHandler(
 // valid transactions in the proposal (up to MaxBlockSize, MaxGasLimit).
 func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 	return func(ctx sdk.Context, req abci.RequestPrepareProposal) (resp abci.ResponsePrepareProposal) {
-		// Per CometBFT, PrepareProposal should not be called with height < 1.
 		if req.Height <= 1 {
 			return abci.ResponsePrepareProposal{Txs: req.Txs}
 		}
@@ -114,7 +113,6 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // transactions, then the proposal is rejected.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
-		// Per CometBFT, ProcessProposal should not be called with height < 1.
 		if req.Height <= 1 {
 			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 		}
