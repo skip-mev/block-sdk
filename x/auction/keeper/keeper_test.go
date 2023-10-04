@@ -6,11 +6,11 @@ import (
 	storetypes "cosmossdk.io/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/golang/mock/gomock"
 
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/x/auction/types/mocks"
 
 	"github.com/stretchr/testify/suite"
 )
@@ -19,10 +19,10 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	auctionkeeper    keeper.Keeper
-	bankKeeper       *testutils.MockBankKeeper
-	accountKeeper    *testutils.MockAccountKeeper
-	distrKeeper      *testutils.MockDistributionKeeper
-	stakingKeeper    *testutils.MockStakingKeeper
+	bankKeeper       *mocks.BankKeeper
+	accountKeeper    *mocks.AccountKeeper
+	distrKeeper      *mocks.DistributionKeeper
+	stakingKeeper    *mocks.StakingKeeper
 	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
 	msgServer        types.MsgServer
@@ -34,33 +34,31 @@ func TestKeeperTestSuite(t *testing.T) {
 	suite.Run(t, new(KeeperTestSuite))
 }
 
-func (suite *KeeperTestSuite) SetupTest() {
-	suite.encCfg = testutils.CreateTestEncodingConfig()
-	suite.key = storetypes.NewKVStoreKey(types.StoreKey)
-	testCtx := testutil.DefaultContextWithDB(suite.T(), suite.key, storetypes.NewTransientStoreKey("transient_test"))
-	suite.ctx = testCtx.Ctx
+func (s *KeeperTestSuite) SetupTest() {
+	s.encCfg = testutils.CreateTestEncodingConfig()
+	s.key = storetypes.NewKVStoreKey(types.StoreKey)
+	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx
 
-	ctrl := gomock.NewController(suite.T())
+	s.accountKeeper = mocks.NewAccountKeeper(s.T())
+	s.accountKeeper.On("GetModuleAddress", types.ModuleName).Return(sdk.AccAddress{}).Maybe()
 
-	suite.accountKeeper = testutils.NewMockAccountKeeper(ctrl)
-	suite.accountKeeper.EXPECT().GetModuleAddress(types.ModuleName).Return(sdk.AccAddress{}).AnyTimes()
-
-	suite.bankKeeper = testutils.NewMockBankKeeper(ctrl)
-	suite.distrKeeper = testutils.NewMockDistributionKeeper(ctrl)
-	suite.stakingKeeper = testutils.NewMockStakingKeeper(ctrl)
-	suite.authorityAccount = sdk.AccAddress([]byte("authority"))
-	suite.auctionkeeper = keeper.NewKeeper(
-		suite.encCfg.Codec,
-		suite.key,
-		suite.accountKeeper,
-		suite.bankKeeper,
-		suite.distrKeeper,
-		suite.stakingKeeper,
-		suite.authorityAccount.String(),
+	s.bankKeeper = mocks.NewBankKeeper(s.T())
+	s.distrKeeper = mocks.NewDistributionKeeper(s.T())
+	s.stakingKeeper = mocks.NewStakingKeeper(s.T())
+	s.authorityAccount = sdk.AccAddress([]byte("authority"))
+	s.auctionkeeper = keeper.NewKeeper(
+		s.encCfg.Codec,
+		s.key,
+		s.accountKeeper,
+		s.bankKeeper,
+		s.distrKeeper,
+		s.stakingKeeper,
+		s.authorityAccount.String(),
 	)
 
-	err := suite.auctionkeeper.SetParams(suite.ctx, types.DefaultParams())
-	suite.Require().NoError(err)
+	err := s.auctionkeeper.SetParams(s.ctx, types.DefaultParams())
+	s.Require().NoError(err)
 
-	suite.msgServer = keeper.NewMsgServerImpl(suite.auctionkeeper)
+	s.msgServer = keeper.NewMsgServerImpl(s.auctionkeeper)
 }
