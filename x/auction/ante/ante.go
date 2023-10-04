@@ -42,10 +42,9 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 			return ctx, err
 		}
 
-		// Only compare the bid to the top bid if the current execution mode is not one of the
-		// ignore bid modes.
+		// Only compare the bid to the top bid if necessary.
 		topBid := sdk.Coin{}
-		if _, ok := currentHeightExecModes[ctx.ExecMode()]; !ok {
+		if _, ok := nextHeightExecModes[ctx.ExecMode()]; ok {
 			if topBidTx := ad.lane.GetTopAuctionTx(ctx); topBidTx != nil {
 				topBidBz, err := ad.txEncoder(topBidTx)
 				if err != nil {
