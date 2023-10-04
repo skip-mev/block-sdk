@@ -7,8 +7,6 @@ import (
 
 	block "github.com/skip-mev/block-sdk/block"
 
-	log "cosmossdk.io/log"
-
 	math "cosmossdk.io/math"
 
 	mempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -90,22 +88,6 @@ func (_m *Lane) Insert(_a0 context.Context, _a1 types.Tx) error {
 		r0 = rf(_a0, _a1)
 	} else {
 		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
-// Logger provides a mock function with given fields:
-func (_m *Lane) Logger() log.Logger {
-	ret := _m.Called()
-
-	var r0 log.Logger
-	if rf, ok := ret.Get(0).(func() log.Logger); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(log.Logger)
-		}
 	}
 
 	return r0
