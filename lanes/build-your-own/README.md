@@ -339,7 +339,7 @@ the lane either.
 ProcessLaneHandler func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error)
 ```
 
-Given the invarients above, the default implementation is simple. It will 
+Given the invariants above, the default implementation is simple. It will 
 continue to verify transactions in the block proposal under the following criteria:
 
 1. If a transaction matches to this lane, verify it and continue. If it is not 

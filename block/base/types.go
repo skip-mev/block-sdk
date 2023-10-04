@@ -2,7 +2,8 @@ package base
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/block-sdk/block"
+
+	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
 type (
@@ -15,28 +16,20 @@ type (
 	// the transactions that must be removed from the lane, and an error if one occurred.
 	PrepareLaneHandler func(
 		ctx sdk.Context,
-		proposal block.BlockProposal,
-		maxTxBytes int64,
-	) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error)
+		proposal proposals.Proposal,
+		limit proposals.LaneLimits,
+	) (txsToInclude []sdk.Tx, txsToRemove []sdk.Tx, err error)
 
 	// ProcessLaneHandler is responsible for processing transactions that are included in a block and
-	// belong to a given lane. ProcessLaneHandler is executed after CheckOrderHandler so the transactions
-	// passed into this function SHOULD already be in order respecting the ordering rules of the lane and
-	// respecting the ordering rules of mempool relative to the lanes it has.
-	ProcessLaneHandler func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error)
-
-	// CheckOrderHandler is responsible for checking the order of transactions that belong to a given
-	// lane. This handler should be used to verify that the ordering of transactions passed into the
-	// function respect the ordering logic of the lane (if any transactions from the lane are included).
-	// This function should also ensure that transactions that belong to this lane are contiguous and do
-	// not have any transactions from other lanes in between them.
-	CheckOrderHandler func(ctx sdk.Context, txs []sdk.Tx) error
+	// belong to a given lane. This handler must return an error if the transactions are not correctly
+	// ordered, do not belong to this lane, or any other relevant error.
+	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) error
 )
 
 // NoOpPrepareLaneHandler returns a no-op prepare lane handler.
 // This should only be used for testing.
 func NoOpPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error) {
+	return func(sdk.Context, proposals.Proposal, proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		return nil, nil, nil
 	}
 }
@@ -44,7 +37,7 @@ func NoOpPrepareLaneHandler() PrepareLaneHandler {
 // PanicPrepareLaneHandler returns a prepare lane handler that panics.
 // This should only be used for testing.
 func PanicPrepareLaneHandler() PrepareLaneHandler {
-	return func(sdk.Context, block.BlockProposal, int64) (txsToInclude [][]byte, txsToRemove []sdk.Tx, err error) {
+	return func(sdk.Context, proposals.Proposal, proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		panic("panic prepare lanes handler")
 	}
 }
@@ -52,15 +45,15 @@ func PanicPrepareLaneHandler() PrepareLaneHandler {
 // NoOpProcessLaneHandler returns a no-op process lane handler.
 // This should only be used for testing.
 func NoOpProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
-		return txs, nil
+	return func(sdk.Context, []sdk.Tx) error {
+		return nil
 	}
 }
 
 // PanicProcessLanesHandler returns a process lanes handler that panics.
 // This should only be used for testing.
 func PanicProcessLaneHandler() ProcessLaneHandler {
-	return func(sdk.Context, []sdk.Tx) ([]sdk.Tx, error) {
+	return func(sdk.Context, []sdk.Tx) error {
 		panic("panic process lanes handler")
 	}
 }

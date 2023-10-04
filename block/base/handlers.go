@@ -4,20 +4,22 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/skip-mev/block-sdk/block"
+
+	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // DefaultPrepareLaneHandler returns a default implementation of the PrepareLaneHandler. It
 // selects all transactions in the mempool that are valid and not already in the partial
-// proposal. It will continue to reap transactions until the maximum block space for this
+// proposal. It will continue to reap transactions until the maximum blockspace/gas for this
 // lane has been reached. Additionally, any transactions that are invalid will be returned.
 func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
-	return func(ctx sdk.Context, proposal block.BlockProposal, maxTxBytes int64) ([][]byte, []sdk.Tx, error) {
+	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		var (
-			totalSize   int64
-			txs         [][]byte
-			txsToRemove []sdk.Tx
+			totalSize    int64
+			totalGas     uint64
+			txsToInclude []sdk.Tx
+			txsToRemove  []sdk.Tx
 		)
 
 		// Select all transactions in the mempool that are valid and not already in the
@@ -25,7 +27,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			tx := iterator.Tx()
 
-			txBytes, hash, err := utils.GetTxHashStr(l.TxEncoder(), tx)
+			txInfo, err := utils.GetTxInfo(l.TxEncoder(), tx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of tx", "err", err)
 
@@ -37,7 +39,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			if !l.Match(ctx, tx) {
 				l.Logger().Info(
 					"failed to select tx for lane; tx does not belong to lane",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"lane", l.Name(),
 				)
 
@@ -46,10 +48,10 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// if the transaction is already in the (partial) block proposal, we skip it.
-			if proposal.Contains(txBytes) {
+			if proposal.Contains(txInfo.Hash) {
 				l.Logger().Info(
 					"failed to select tx for lane; tx is already in proposal",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"lane", l.Name(),
 				)
 
@@ -57,25 +59,40 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// If the transaction is too large, we break and do not attempt to include more txs.
-			txSize := int64(len(txBytes))
-			if updatedSize := totalSize + txSize; updatedSize > maxTxBytes {
+			if updatedSize := totalSize + txInfo.Size; updatedSize > limit.MaxTxBytes {
 				l.Logger().Info(
-					"tx bytes above the maximum allowed",
+					"failed to select tx for lane; tx bytes above the maximum allowed",
 					"lane", l.Name(),
-					"tx_size", txSize,
+					"tx_size", txInfo.Size,
 					"total_size", totalSize,
-					"max_tx_bytes", maxTxBytes,
-					"tx_hash", hash,
+					"max_tx_bytes", limit.MaxTxBytes,
+					"tx_hash", txInfo.Hash,
 				)
 
-				break
+				// TODO: Determine if there is any trade off with breaking or continuing here.
+				continue
+			}
+
+			// If the gas limit of the transaction is too large, we break and do not attempt to include more txs.
+			if updatedGas := totalGas + txInfo.GasLimit; updatedGas > limit.MaxGasLimit {
+				l.Logger().Info(
+					"failed to select tx for lane; gas limit above the maximum allowed",
+					"lane", l.Name(),
+					"tx_gas", txInfo.GasLimit,
+					"total_gas", totalGas,
+					"max_gas", limit.MaxGasLimit,
+					"tx_hash", txInfo.Hash,
+				)
+
+				// TODO: Determine if there is any trade off with breaking or continuing here.
+				continue
 			}
 
 			// Verify the transaction.
 			if ctx, err = l.AnteVerifyTx(ctx, tx, false); err != nil {
 				l.Logger().Info(
 					"failed to verify tx",
-					"tx_hash", hash,
+					"tx_hash", txInfo.Hash,
 					"err", err,
 				)
 
@@ -83,66 +100,40 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 				continue
 			}
 
-			totalSize += txSize
-			txs = append(txs, txBytes)
+			totalSize += txInfo.Size
+			totalGas += txInfo.GasLimit
+			txsToInclude = append(txsToInclude, tx)
 		}
 
-		return txs, txsToRemove, nil
+		return txsToInclude, txsToRemove, nil
 	}
 }
 
-// DefaultProcessLaneHandler returns a default implementation of the ProcessLaneHandler. It
-// verifies all transactions in the lane that matches to the lane. If any transaction
-// fails to verify, the entire proposal is rejected. If the handler comes across a transaction
-// that does not match the lane's matcher, it will return the remaining transactions in the
-// proposal.
+// DefaultProcessLaneHandler returns a default implementation of the ProcessLaneHandler. It verifies
+// the following invariants:
+// 1. All transactions belong to this lane.
+// 2. All transactions respect the priority defined by the mempool.
+// 3. All transactions are valid respecting the verification logic of the lane.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) ([]sdk.Tx, error) {
-		var err error
-
+	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
 		// Process all transactions that match the lane's matcher.
-		for index, tx := range txs {
-			if l.Match(ctx, tx) {
-				if ctx, err = l.AnteVerifyTx(ctx, tx, false); err != nil {
-					return nil, fmt.Errorf("failed to verify tx: %w", err)
-				}
-			} else {
-				return txs[index:], nil
+		for index, tx := range partialProposal {
+			if !l.Match(ctx, tx) {
+				return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())
+			}
+
+			// If the transactions do not respect the priority defined by the mempool, we consider the proposal
+			// to be invalid
+			if index > 0 && l.Compare(ctx, partialProposal[index-1], tx) == -1 {
+				return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
+			}
+
+			if _, err := l.AnteVerifyTx(ctx, tx, false); err != nil {
+				return fmt.Errorf("failed to verify tx: %w", err)
 			}
 		}
 
-		// This means we have processed all transactions in the proposal.
-		return nil, nil
-	}
-}
-
-// DefaultCheckOrderHandler returns a default implementation of the CheckOrderHandler. It
-// ensures the following invariants:
-//
-//  1. All transactions that belong to this lane respect the ordering logic defined by the
-//     lane.
-//  2. Transactions that belong to other lanes cannot be interleaved with transactions that
-//     belong to this lane.
-func (l *BaseLane) DefaultCheckOrderHandler() CheckOrderHandler {
-	return func(ctx sdk.Context, txs []sdk.Tx) error {
-		seenOtherLaneTx := false
-
-		for index, tx := range txs {
-			if l.Match(ctx, tx) {
-				if seenOtherLaneTx {
-					return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())
-				}
-
-				// If the transactions do not respect the priority defined by the mempool, we consider the proposal
-				// to be invalid
-				if index > 0 && l.Compare(ctx, txs[index-1], tx) == -1 {
-					return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
-				}
-			} else {
-				seenOtherLaneTx = true
-			}
-		}
-
+		// This means we have processed all transactions in the partial proposal.
 		return nil
 	}
 }
