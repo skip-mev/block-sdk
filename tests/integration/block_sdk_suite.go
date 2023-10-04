@@ -831,7 +831,11 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
 			SequenceIncrement: 2,
 		}
+<<<<<<< HEAD
 		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(1000000000000000000))
+=======
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(1000000000000000000))
+>>>>>>> d495b38 (feat(MEV): Updating MEV Lane with Testing + Cleaner Implementation (#134))
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -901,7 +905,11 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		}
 
 		// create bid smaller than reserve
+<<<<<<< HEAD
 		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+=======
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
+>>>>>>> d495b38 (feat(MEV): Updating MEV Lane with Testing + Cleaner Implementation (#134))
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -924,7 +932,11 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		}
 
 		// create bid smaller than reserve
+<<<<<<< HEAD
 		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+=======
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
+>>>>>>> d495b38 (feat(MEV): Updating MEV Lane with Testing + Cleaner Implementation (#134))
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, msgs)
 
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -943,7 +955,11 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		}
 
 		// create bid smaller than reserve
+<<<<<<< HEAD
 		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
+=======
+		bidAmt := sdk.NewCoin(s.denom, math.NewInt(0))
+>>>>>>> d495b38 (feat(MEV): Updating MEV Lane with Testing + Cleaner Implementation (#134))
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// broadcast wrapped bid, and expect a failure

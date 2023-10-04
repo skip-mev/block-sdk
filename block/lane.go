@@ -57,9 +57,6 @@ type Lane interface {
 	// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
 	GetMaxBlockSpace() math.LegacyDec
 
-	// Logger returns the lane's logger.
-	Logger() log.Logger
-
 	// Name returns the name of the lane.
 	Name() string
 
