@@ -42,6 +42,7 @@ func (s *MEVTestSuite) SetupTest() {
 	s.config = mev.NewDefaultAuctionFactory(s.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	testCtx := testutil.DefaultContextWithDB(s.T(), storetypes.NewKVStoreKey("test"), storetypes.NewTransientStoreKey("transient_test"))
 	s.ctx = testCtx.Ctx.WithExecMode(sdk.ExecModePrepareProposal)
+	s.ctx = s.ctx.WithBlockHeight(1)
 
 	// Init accounts
 	random := rand.New(rand.NewSource(time.Now().Unix()))
