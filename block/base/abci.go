@@ -51,6 +51,8 @@ func (l *BaseLane) PrepareLane(
 			"err", err,
 			"num_txs_to_add", len(txsToInclude),
 			"num_txs_to_remove", len(txsToRemove),
+			"lane_max_block_size", limit.MaxTxBytes,
+			"lane_max_gas_limit", limit.MaxGasLimit,
 		)
 
 		return proposal, err
@@ -61,6 +63,8 @@ func (l *BaseLane) PrepareLane(
 		"lane", l.Name(),
 		"num_txs_added", len(txsToInclude),
 		"num_txs_removed", len(txsToRemove),
+		"lane_max_block_size", limit.MaxTxBytes,
+		"lane_max_gas_limit", limit.MaxGasLimit,
 	)
 
 	return next(ctx, proposal)
