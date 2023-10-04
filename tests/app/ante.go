@@ -11,7 +11,6 @@ import (
 
 type BSDKHandlerOptions struct {
 	BaseOptions   ante.HandlerOptions
-	Mempool       block.Mempool
 	MEVLane       auctionante.MEVLane
 	TxDecoder     sdk.TxDecoder
 	TxEncoder     sdk.TxEncoder
@@ -55,7 +54,7 @@ func NewBSDKAnteHandler(options BSDKHandlerOptions) sdk.AnteHandler {
 		ante.NewSigGasConsumeDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SigGasConsumer),
 		ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.BaseOptions.AccountKeeper),
-		auctionante.NewAuctionDecorator(options.auctionkeeper, options.TxEncoder, options.MEVLane, options.Mempool),
+		auctionante.NewAuctionDecorator(options.auctionkeeper, options.TxEncoder, options.MEVLane),
 	}
 
 	return sdk.ChainAnteDecorators(anteDecorators...)
