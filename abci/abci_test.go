@@ -59,12 +59,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(1, len(resp.Txs))
 
@@ -98,11 +93,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -153,11 +144,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx2, tx1)
@@ -208,11 +195,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx1)
@@ -238,12 +221,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -284,12 +262,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -339,12 +312,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -395,12 +363,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
@@ -454,12 +417,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		size := int64(len(proposal[0]) - 1)
 
 		s.setBlockParams(10000000, size)
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -506,12 +464,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposal := s.getTxBytes(freeTx)
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -589,12 +542,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(8, len(resp.Txs))
@@ -659,12 +607,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0], normalTx)
 
 		// Should be theoretically sufficient to fit the bid tx and the bundled tx + normal tx
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(2, len(resp.Txs))
@@ -713,12 +656,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -766,12 +704,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -820,12 +753,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -874,12 +802,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -917,12 +840,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info}
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
@@ -949,12 +867,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1}, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
@@ -1011,12 +924,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 2, freeLane.Name(): 1}, bidTx, bundleTxs[0], freeTx, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().NoError(err)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
@@ -1048,14 +956,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal[0] = infoBz
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 	})
 
 	s.Run("rejects a proposal with mismatching gas limit", func() {
@@ -1085,14 +987,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal[0] = infoBz
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 	})
 
 	s.Run("rejects a proposal with bad txs", func() {
@@ -1115,14 +1011,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 	})
 
 	s.Run("rejects a proposal when a lane panics", func() {
@@ -1152,14 +1042,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		proposal := [][]byte{info, txbz}
 
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 	})
 
 	s.Run("can process a invalid proposal (out of order)", func() {
@@ -1196,11 +1080,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 1}, tx2, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
@@ -1255,11 +1135,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 3}, bidTx, bundle[0], bundle[1], normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
@@ -1309,11 +1185,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
@@ -1370,11 +1242,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-<<<<<<< HEAD
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal})
-=======
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})

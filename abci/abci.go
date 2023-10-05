@@ -1,8 +1,6 @@
 package abci
 
 import (
-	"fmt"
-
 	abci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -51,15 +49,11 @@ func NewProposalHandler(
 // a boundary on the number of bytes that can be included in the proposal and will include all
 // valid transactions in the proposal (up to MaxBlockSize, MaxGasLimit).
 func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
-<<<<<<< HEAD
 	return func(ctx sdk.Context, req abci.RequestPrepareProposal) (resp abci.ResponsePrepareProposal) {
-=======
-	return func(ctx sdk.Context, req *abci.RequestPrepareProposal) (resp *abci.ResponsePrepareProposal, err error) {
 		if req.Height <= 1 {
-			return &abci.ResponsePrepareProposal{Txs: req.Txs}, nil
+			return abci.ResponsePrepareProposal{Txs: req.Txs}
 		}
 
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 		// In the case where there is a panic, we recover here and return an empty proposal.
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -119,15 +113,11 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // lane will iteratively verify the transactions that it belong to it. If any lane fails to verify the
 // transactions, then the proposal is rejected.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
-<<<<<<< HEAD
 	return func(ctx sdk.Context, req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
-=======
-	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		if req.Height <= 1 {
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
+			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}
 		}
 
->>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 		// In the case where any of the lanes panic, we recover here and return a reject status.
 		defer func() {
 			if rec := recover(); rec != nil {
