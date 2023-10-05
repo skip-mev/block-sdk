@@ -30,11 +30,21 @@ func TestMempoolTestSuite(t *testing.T) {
 	suite.Run(t, new(MEVTestSuite))
 }
 
+<<<<<<< HEAD
 func (suite *MEVTestSuite) SetupTest() {
 	// Mempool setup
 	suite.encCfg = testutils.CreateTestEncodingConfig()
 	suite.config = mev.NewDefaultAuctionFactory(suite.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.ctx = sdk.NewContext(nil, cmtproto.Header{}, false, log.NewNopLogger())
+=======
+func (s *MEVTestSuite) SetupTest() {
+	// Init encoding config
+	s.encCfg = testutils.CreateTestEncodingConfig()
+	s.config = mev.NewDefaultAuctionFactory(s.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
+	testCtx := testutil.DefaultContextWithDB(s.T(), storetypes.NewKVStoreKey("test"), storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = testCtx.Ctx.WithExecMode(sdk.ExecModePrepareProposal)
+	s.ctx = s.ctx.WithBlockHeight(1)
+>>>>>>> cbc0483 (chore(verifytx): Updating VerifyTx to Cache between Transactions (#137))
 
 	// Init accounts
 	suite.random = rand.New(rand.NewSource(time.Now().Unix()))
