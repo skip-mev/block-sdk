@@ -2,7 +2,6 @@ package block
 
 import (
 	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 	"github.com/skip-mev/block-sdk/block/proposals"
@@ -56,9 +55,6 @@ type Lane interface {
 
 	// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
 	GetMaxBlockSpace() math.LegacyDec
-
-	// Logger returns the lane's logger.
-	Logger() log.Logger
 
 	// Name returns the name of the lane.
 	Name() string

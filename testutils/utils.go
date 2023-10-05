@@ -185,14 +185,14 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 	return txBuilder.GetTx(), nil
 }
 
-func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account, gasLimit uint64) (authsigning.Tx, []authsigning.Tx, error) {
+func CreateAuctionTx(txCfg client.TxConfig, bidder Account, bid sdk.Coin, nonce, timeout uint64, signers []Account, gasLimit uint64) (sdk.Tx, []sdk.Tx, error) {
 	bidMsg := &auctiontypes.MsgAuctionBid{
 		Bidder:       bidder.Address.String(),
 		Bid:          bid,
 		Transactions: make([][]byte, len(signers)),
 	}
 
-	txs := []authsigning.Tx{}
+	txs := []sdk.Tx{}
 
 	for i := 0; i < len(signers); i++ {
 		randomMsg := CreateRandomMsgs(signers[i].Address, 1)
