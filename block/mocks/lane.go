@@ -7,11 +7,6 @@ import (
 
 	block "github.com/skip-mev/block-sdk/block"
 
-<<<<<<< HEAD
-	log "github.com/cometbft/cometbft/libs/log"
-
-=======
->>>>>>> d495b38 (feat(MEV): Updating MEV Lane with Testing + Cleaner Implementation (#134))
 	math "cosmossdk.io/math"
 
 	mempool "github.com/cosmos/cosmos-sdk/types/mempool"
