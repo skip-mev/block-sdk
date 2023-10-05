@@ -42,6 +42,7 @@ func (s *MEVTestSuite) SetupTest() {
 	s.encCfg = testutils.CreateTestEncodingConfig()
 	s.config = mev.NewDefaultAuctionFactory(s.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	testCtx := testutil.DefaultContextWithDB(s.T(), storetypes.NewKVStoreKey("test"), storetypes.NewTransientStoreKey("transient_test"))
+	s.ctx = s.ctx.WithBlockHeight(1)
 	s.ctx = testCtx.Ctx.WithIsCheckTx(true)
 
 	// Init accounts

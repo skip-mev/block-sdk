@@ -50,6 +50,8 @@ func (l *BaseLane) PrepareLane(
 			"err", err,
 			"num_txs_to_add", len(txsToInclude),
 			"num_txs_to_remove", len(txsToRemove),
+			"lane_max_block_size", limit.MaxTxBytes,
+			"lane_max_gas_limit", limit.MaxGasLimit,
 		)
 
 		return proposal, err
@@ -60,6 +62,8 @@ func (l *BaseLane) PrepareLane(
 		"lane", l.Name(),
 		"num_txs_added", len(txsToInclude),
 		"num_txs_removed", len(txsToRemove),
+		"lane_max_block_size", limit.MaxTxBytes,
+		"lane_max_gas_limit", limit.MaxGasLimit,
 	)
 
 	return next(ctx, proposal)
@@ -121,12 +125,20 @@ func (l *BaseLane) ProcessLane(
 	return next(ctx, proposal)
 }
 
-// AnteVerifyTx verifies that the transaction is valid respecting the ante verification logic of
+// VerifyTx verifies that the transaction is valid respecting the ante verification logic of
 // of the antehandler chain.
-func (l *BaseLane) AnteVerifyTx(ctx sdk.Context, tx sdk.Tx, simulate bool) (sdk.Context, error) {
+func (l *BaseLane) VerifyTx(ctx sdk.Context, tx sdk.Tx, simulate bool) error {
 	if l.cfg.AnteHandler != nil {
-		return l.cfg.AnteHandler(ctx, tx, simulate)
+		// Only write to the context if the tx does not fail.
+		catchCtx, write := ctx.CacheContext()
+		if _, err := l.cfg.AnteHandler(catchCtx, tx, simulate); err != nil {
+			return err
+		}
+
+		write()
+
+		return nil
 	}
 
-	return ctx, nil
+	return nil
 }

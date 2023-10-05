@@ -51,7 +51,7 @@ type (
 // attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
 // that mutex is set to true when creating the mempool. This will ensure that each
 // transaction cannot be inserted into the lanes before it.
-func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) *LanedMempool {
+func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) Mempool {
 	mempool := &LanedMempool{
 		logger:   logger,
 		registry: lanes,
