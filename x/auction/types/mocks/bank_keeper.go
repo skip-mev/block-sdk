@@ -3,8 +3,6 @@
 package mocks
 
 import (
-	context "context"
-
 	types "github.com/cosmos/cosmos-sdk/types"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -15,11 +13,11 @@ type BankKeeper struct {
 }
 
 // GetBalance provides a mock function with given fields: ctx, addr, denom
-func (_m *BankKeeper) GetBalance(ctx context.Context, addr types.AccAddress, denom string) types.Coin {
+func (_m *BankKeeper) GetBalance(ctx types.Context, addr types.AccAddress, denom string) types.Coin {
 	ret := _m.Called(ctx, addr, denom)
 
 	var r0 types.Coin
-	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, string) types.Coin); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, string) types.Coin); ok {
 		r0 = rf(ctx, addr, denom)
 	} else {
 		r0 = ret.Get(0).(types.Coin)
@@ -29,11 +27,11 @@ func (_m *BankKeeper) GetBalance(ctx context.Context, addr types.AccAddress, den
 }
 
 // SendCoins provides a mock function with given fields: ctx, fromAddr, toAddr, amt
-func (_m *BankKeeper) SendCoins(ctx context.Context, fromAddr types.AccAddress, toAddr types.AccAddress, amt types.Coins) error {
+func (_m *BankKeeper) SendCoins(ctx types.Context, fromAddr types.AccAddress, toAddr types.AccAddress, amt types.Coins) error {
 	ret := _m.Called(ctx, fromAddr, toAddr, amt)
 
 	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, types.AccAddress, types.Coins) error); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, types.AccAddress, types.AccAddress, types.Coins) error); ok {
 		r0 = rf(ctx, fromAddr, toAddr, amt)
 	} else {
 		r0 = ret.Error(0)

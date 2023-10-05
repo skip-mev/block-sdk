@@ -3,8 +3,6 @@
 package mocks
 
 import (
-	context "context"
-
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	mock "github.com/stretchr/testify/mock"
 
@@ -16,28 +14,20 @@ type StakingKeeper struct {
 	mock.Mock
 }
 
-// GetValidatorByConsAddr provides a mock function with given fields: _a0, _a1
-func (_m *StakingKeeper) GetValidatorByConsAddr(_a0 context.Context, _a1 types.ConsAddress) (stakingtypes.Validator, error) {
+// ValidatorByConsAddr provides a mock function with given fields: _a0, _a1
+func (_m *StakingKeeper) ValidatorByConsAddr(_a0 types.Context, _a1 types.ConsAddress) stakingtypes.ValidatorI {
 	ret := _m.Called(_a0, _a1)
 
-	var r0 stakingtypes.Validator
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.ConsAddress) (stakingtypes.Validator, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.ConsAddress) stakingtypes.Validator); ok {
+	var r0 stakingtypes.ValidatorI
+	if rf, ok := ret.Get(0).(func(types.Context, types.ConsAddress) stakingtypes.ValidatorI); ok {
 		r0 = rf(_a0, _a1)
 	} else {
-		r0 = ret.Get(0).(stakingtypes.Validator)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(stakingtypes.ValidatorI)
+		}
 	}
 
-	if rf, ok := ret.Get(1).(func(context.Context, types.ConsAddress) error); ok {
-		r1 = rf(_a0, _a1)
-	} else {
-		r1 = ret.Error(1)
-	}
-
-	return r0, r1
+	return r0
 }
 
 // NewStakingKeeper creates a new instance of StakingKeeper. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.

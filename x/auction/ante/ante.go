@@ -38,13 +38,13 @@ func (ad AuctionDecorator) AnteHandle(ctx sdk.Context, tx sdk.Tx, simulate bool,
 	// Validate the auction bid if one exists.
 	if bidInfo != nil {
 		// Auction transactions must have a timeout set to a valid block height.
-		if err := ValidateTimeout(ctx, int64(bidInfo.Timeout)); err != nil {
+		if err := ValidateTimeout(ctx, int64(bidInfo.Timeout), simulate); err != nil {
 			return ctx, err
 		}
 
 		// Only compare the bid to the top bid if necessary.
 		topBid := sdk.Coin{}
-		if _, ok := nextHeightExecModes[ctx.ExecMode()]; ok {
+		if ctx.IsCheckTx() || ctx.IsReCheckTx() || simulate {
 			if topBidTx := ad.lane.GetTopAuctionTx(ctx); topBidTx != nil {
 				topBidBz, err := ad.txEncoder(topBidTx)
 				if err != nil {

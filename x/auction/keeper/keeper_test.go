@@ -6,11 +6,6 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-<<<<<<< HEAD
-	"github.com/golang/mock/gomock"
-=======
-
->>>>>>> 3374203 (chore(auction): Moving bid extraction to from msg handler to ante handler (#135))
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/auction/keeper"
 	"github.com/skip-mev/block-sdk/x/auction/types"
