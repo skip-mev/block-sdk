@@ -37,7 +37,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			tx: true,
 		}
 		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -48,7 +48,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			1,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -76,7 +76,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 
 		// Insert the transaction into the lane
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -91,7 +91,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			limit.MaxGasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -119,7 +119,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 
 		// Insert the transaction into the lane
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -135,7 +135,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			limit.MaxGasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -163,7 +163,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -178,7 +178,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			limit.MaxGasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is not empty and contains the transaction
@@ -207,7 +207,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -218,7 +218,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			10,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is empty
@@ -260,8 +260,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
+		s.Require().NoError(lane.Insert(s.ctx, tx1))
+		s.Require().NoError(lane.Insert(s.ctx, tx2))
 
 		txBz1, err := s.encodingConfig.TxConfig.TxEncoder()(tx1)
 		s.Require().NoError(err)
@@ -277,7 +277,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			gasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -316,8 +316,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
+		s.Require().NoError(lane.Insert(s.ctx, tx1))
+		s.Require().NoError(lane.Insert(s.ctx, tx2))
 
 		txBz1, err := s.encodingConfig.TxConfig.TxEncoder()(tx1)
 		s.Require().NoError(err)
@@ -333,7 +333,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			gasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -375,8 +375,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
 		// Insert the transaction into the lane
-		s.Require().NoError(lane.Insert(sdk.Context{}.WithPriority(10), tx1))
-		s.Require().NoError(lane.Insert(sdk.Context{}.WithPriority(5), tx2))
+		s.Require().NoError(lane.Insert(s.ctx.WithPriority(10), tx1))
+		s.Require().NoError(lane.Insert(s.ctx.WithPriority(5), tx2))
 
 		txBz1, err := s.encodingConfig.TxConfig.TxEncoder()(tx1)
 		s.Require().NoError(err)
@@ -392,7 +392,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			gasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -434,8 +434,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
 		// Insert the transaction into the lane
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx1))
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx2))
+		s.Require().NoError(lane.Insert(s.ctx, tx1))
+		s.Require().NoError(lane.Insert(s.ctx, tx2))
 
 		txBz1, err := s.encodingConfig.TxConfig.TxEncoder()(tx1)
 		s.Require().NoError(err)
@@ -451,7 +451,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			gasLimit,
 		)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -481,7 +481,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
 
 		// Insert the transaction into the lane
-		s.Require().NoError(lane.Insert(sdk.Context{}, tx))
+		s.Require().NoError(lane.Insert(s.ctx, tx))
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -500,7 +500,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		err = emptyProposal.UpdateProposal(mockLane, []sdk.Tx{tx})
 		s.Require().NoError(err)
 
-		finalProposal, err := lane.PrepareLane(sdk.Context{}, emptyProposal, block.NoOpPrepareLanesHandler())
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
 
 		// Ensure the proposal is ordered correctly
@@ -543,7 +543,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
 
@@ -578,7 +578,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -636,7 +636,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -684,7 +684,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
 
@@ -732,7 +732,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -783,7 +783,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -818,7 +818,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			1000000,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -854,7 +854,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			9,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -901,7 +901,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			19,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -949,7 +949,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			20,
 		)
 
-		_, err = lane.ProcessLane(sdk.Context{}, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 }

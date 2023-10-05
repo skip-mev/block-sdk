@@ -10,6 +10,8 @@ import (
 )
 
 func (s *MEVTestSuite) TestPrepareLane() {
+	s.ctx = s.ctx.WithExecMode(sdk.ExecModePrepareProposal)
+
 	s.Run("can prepare a lane with no txs in mempool", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
 		proposal := proposals.NewProposal(s.encCfg.TxConfig.TxEncoder(), 200, 100)
@@ -220,6 +222,8 @@ func (s *MEVTestSuite) TestPrepareLane() {
 }
 
 func (s *MEVTestSuite) TestProcessLane() {
+	s.ctx = s.ctx.WithExecMode(sdk.ExecModeProcessProposal)
+
 	s.Run("can process an empty proposal", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
 		proposal := proposals.NewProposal(s.encCfg.TxConfig.TxEncoder(), 200, 100)

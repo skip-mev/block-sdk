@@ -20,6 +20,12 @@ type (
 	}
 )
 
+// NewProposalWithContext returns a new empty proposal.
+func NewProposalWithContext(ctx sdk.Context, txEncoder sdk.TxEncoder) Proposal {
+	maxBlockSize, maxGasLimit := GetBlockLimits(ctx)
+	return NewProposal(txEncoder, maxBlockSize, maxGasLimit)
+}
+
 // NewProposal returns a new empty proposal. Any transactions added to the proposal
 // will be subject to the given max block size and max gas limit.
 func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
