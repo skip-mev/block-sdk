@@ -231,7 +231,7 @@ func (l *MEVLane) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) er
 	}
 
 	// verify the top-level bid transaction
-	if ctx, err = l.AnteVerifyTx(ctx, bidTx, false); err != nil {
+	if err = l.VerifyTx(ctx, bidTx, false); err != nil {
 		return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 	}
 
@@ -241,7 +241,7 @@ func (l *MEVLane) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) er
 			return fmt.Errorf("invalid bid tx; bundled tx is another bid transaction")
 		}
 
-		if ctx, err = l.AnteVerifyTx(ctx, bundledTx, false); err != nil {
+		if err = l.VerifyTx(ctx, bundledTx, false); err != nil {
 			return fmt.Errorf("invalid bid tx; failed to execute bundled transaction: %w", err)
 		}
 	}

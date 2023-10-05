@@ -89,7 +89,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// Verify the transaction.
-			if ctx, err = l.AnteVerifyTx(ctx, tx, false); err != nil {
+			if err = l.VerifyTx(ctx, tx, false); err != nil {
 				l.Logger().Info(
 					"failed to verify tx",
 					"tx_hash", txInfo.Hash,
@@ -128,7 +128,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 				return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
 			}
 
-			if _, err := l.AnteVerifyTx(ctx, tx, false); err != nil {
+			if err := l.VerifyTx(ctx, tx, false); err != nil {
 				return fmt.Errorf("failed to verify tx: %w", err)
 			}
 		}
