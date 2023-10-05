@@ -116,7 +116,6 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 
 	return func(ctx sdk.Context, partialProposal proposals.Proposal) (finalProposal proposals.Proposal, err error) {
 		lane := chain[0]
-		lane.Logger().Info("preparing lane", "lane", lane.Name())
 
 		// Cache the context in the case where any of the lanes fail to prepare the proposal.
 		cacheCtx, write := ctx.CacheContext()
@@ -127,9 +126,6 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 		// and call the next lane in the chain to the prepare the proposal.
 		defer func() {
 			if rec := recover(); rec != nil || err != nil {
-				lane.Logger().Error("failed to prepare lane", "lane", lane.Name(), "err", err, "recover_error", rec)
-				lane.Logger().Info("skipping lane", "lane", lane.Name())
-
 				if len(chain) <= 2 {
 					// If there are only two lanes remaining, then the first lane in the chain
 					// is the lane that failed to prepare the partial proposal and the second lane in the
@@ -177,9 +173,6 @@ func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.Pr
 	return func(ctx sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error) {
 		lane := chain[0]
 		partialProposal := partialProposals[0]
-
-		lane.Logger().Info("processing lane", "lane", chain[0].Name())
-
 		return lane.ProcessLane(ctx, proposal, partialProposal, ChainProcessLanes(partialProposals[1:], chain[1:]))
 	}
 }

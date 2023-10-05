@@ -332,7 +332,6 @@ func New(
 		TxEncoder:     app.txConfig.TxEncoder(),
 		FreeLane:      freeLane,
 		MEVLane:       mevLane,
-		Mempool:       mempool,
 	}
 	anteHandler := NewBSDKAnteHandler(options)
 
