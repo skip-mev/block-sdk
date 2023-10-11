@@ -33,7 +33,7 @@ require (
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/tools v0.14.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230913181813-007df8e322eb
-	google.golang.org/grpc v1.58.2
+	google.golang.org/grpc v1.58.3
 	google.golang.org/protobuf v1.31.0
 	mvdan.cc/gofumpt v0.5.0
 )
