@@ -37,6 +37,11 @@ func (k Keeper) ValidateBidInfo(ctx sdk.Context, highestBid sdk.Coin, bidInfo *t
 		}
 	}
 
+	// Validate the timeouts of the transactions in the bundle.
+	if err := k.ValidateBundleTimeouts(bidInfo); err != nil {
+		return err
+	}
+
 	return nil
 }
 
@@ -174,6 +179,31 @@ func (k Keeper) ValidateAuctionBundle(bidder sdk.AccAddress, bundleSigners []map
 			if len(prevSigners) == 0 {
 				return NewFrontRunningError()
 			}
+		}
+	}
+
+	return nil
+}
+
+// ValidateBundleTimeouts validates that the timeouts of the transactions in the bundle are valid. We consider
+// the timeouts valid iff all of the bidders txs in the bundle are all the same and are equal to the timeout of the bid.
+// This is mandatory as otherwise other searchers can potentially include other searcher's transactions in their bundles.
+func (k Keeper) ValidateBundleTimeouts(bidInfo *types.BidInfo) error {
+	bidder := bidInfo.Bidder.String()
+	bidTimeout := bidInfo.Timeout
+
+	for index, bundleTimeout := range bidInfo.TransactionTimeouts {
+		signers := bidInfo.Signers[index]
+		if _, ok := signers[bidder]; !ok {
+			continue
+		}
+
+		if bundleTimeout != bidTimeout {
+			return fmt.Errorf(
+				"searchers must set the timeout of all of their transactions in the bundle to be the same as the bid timeout; got %d, expected %d",
+				bundleTimeout,
+				bidTimeout,
+			)
 		}
 	}
 

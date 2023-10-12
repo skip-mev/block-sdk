@@ -268,7 +268,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(), // This means the lane has no limit on block space.
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"), // This means the lane has no limit on block space.
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          0, // This means the lane has no limit on the number of transactions it can store.
 	}
@@ -282,7 +282,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          0,
 	}
@@ -297,7 +297,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.6"),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          0,
 	}
