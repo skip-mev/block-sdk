@@ -41,9 +41,9 @@ func ValidateTimeout(ctx sdk.Context, timeout int64) error {
 		height++
 	}
 
-	if height > timeout {
+	if height != timeout {
 		return fmt.Errorf(
-			"timeout height cannot be less than the current block height (timeout: %d, current block height: %d)",
+			"you must set the timeout height to be the next block height got %d, expected %d",
 			timeout,
 			height,
 		)
