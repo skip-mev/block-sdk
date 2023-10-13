@@ -47,7 +47,7 @@ type KeyringOverride struct {
 // and returns the associated chain
 func ChainBuilderFromChainSpec(t *testing.T, spec *interchaintest.ChainSpec) ibc.Chain {
 	// require that NumFullNodes == NumValidators == 4
-	require.Equal(t, *spec.NumValidators, 4)
+	require.Equal(t, *spec.NumValidators, 1)
 
 	cf := interchaintest.NewBuiltinChainFactory(zaptest.NewLogger(t), []*interchaintest.ChainSpec{spec})
 
@@ -106,9 +106,7 @@ func (s *IntegrationTestSuite) CreateTx(ctx context.Context, chain *cosmos.Cosmo
 	}
 
 	// get gas for tx
-	_, gas, err := tx.CalculateGas(cc, txf, msgs...)
-	s.Require().NoError(err)
-	txf.WithGas(gas)
+	txf.WithGas(25000000)
 
 	// update sequence number
 	txf = txf.WithSequence(txf.Sequence() + seqIncrement)
@@ -181,8 +179,8 @@ func (s *IntegrationTestSuite) CreateAuctionBidMsg(ctx context.Context, searcher
 // BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
 // is not expected to be included in a block, set SkipInclusionCheck to true and the method
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion
-func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, msgsPerUser []Tx) [][]byte {
-	return s.BroadcastTxsWithCallback(ctx, chain, msgsPerUser, nil)
+func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, txs []Tx) [][]byte {
+	return s.BroadcastTxsWithCallback(ctx, chain, txs, nil)
 }
 
 // BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
@@ -192,13 +190,13 @@ func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.C
 func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 	ctx context.Context,
 	chain *cosmos.CosmosChain,
-	msgsPerUser []Tx,
+	txs []Tx,
 	cb func(tx []byte, resp *rpctypes.ResultTx),
 ) [][]byte {
-	txs := make([][]byte, len(msgsPerUser))
+	rawTxs := make([][]byte, len(txs))
 
-	for i, msg := range msgsPerUser {
-		txs[i] = s.CreateTx(ctx, chain, msg.User, msg.SequenceIncrement, msg.Height, msg.GasPrice, msg.Msgs...)
+	for i, msg := range txs {
+		rawTxs[i] = s.CreateTx(ctx, chain, msg.User, msg.SequenceIncrement, msg.Height, msg.GasPrice, msg.Msgs...)
 	}
 
 	// broadcast each tx
@@ -210,12 +208,12 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 
 	s.T().Logf("broadcasting transactions at latest height of %d", statusResp.SyncInfo.LatestBlockHeight)
 
-	for i, tx := range txs {
+	for i, tx := range rawTxs {
 		// broadcast tx
 		resp, err := client.BroadcastTxSync(ctx, tx)
 
 		// check execution was successful
-		if !msgsPerUser[i].ExpectFail {
+		if !txs[i].ExpectFail {
 			s.Require().Equal(resp.Code, uint32(0))
 		} else {
 			if resp != nil {
@@ -224,14 +222,13 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 				s.Require().Error(err)
 			}
 		}
-
 	}
 
 	// block on all txs being included in block
 	eg := errgroup.Group{}
-	for i, tx := range txs {
+	for i, tx := range rawTxs {
 		// if we don't expect this tx to be included.. skip it
-		if msgsPerUser[i].SkipInclusionCheck || msgsPerUser[i].ExpectFail {
+		if txs[i].SkipInclusionCheck || txs[i].ExpectFail {
 			continue
 		}
 
@@ -254,7 +251,7 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 
 	s.Require().NoError(eg.Wait())
 
-	return txs
+	return rawTxs
 }
 
 // QueryAuctionParams queries the x/auction module's params
@@ -373,6 +370,20 @@ func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHas
 	}
 }
 
+// VerifyBlockWithExpectedBlock takes in a list of raw tx bytes and compares each tx hash to the tx hashes in the block.
+// The expected block is the block that should be returned by the chain at the given height.
+func VerifyBlockWithExpectedBlock(t *testing.T, chain *cosmos.CosmosChain, height uint64, txs [][]byte) {
+	block := Block(t, chain, int64(height))
+	blockTxs := block.Block.Data.Txs[1:]
+
+	t.Logf("verifying block %d", height)
+	require.Equal(t, len(txs), len(blockTxs))
+	for i, tx := range txs {
+		t.Logf("verifying tx %d; expected %s, got %s", i, TxHash(tx), TxHash(blockTxs[i]))
+		require.Equal(t, TxHash(tx), TxHash(blockTxs[i]))
+	}
+}
+
 func TxHash(tx []byte) string {
 	return strings.ToUpper(hex.EncodeToString(comettypes.Tx(tx).Hash()))
 }
@@ -445,4 +456,8 @@ func (s *IntegrationTestSuite) keyringDirFromNode() string {
 	}
 
 	return localDir
+}
+
+func escrowAddressIncrement(bid math.Int, proposerFee math.LegacyDec) int64 {
+	return int64(bid.Sub(math.Int(math.LegacyNewDecFromInt(bid).Mul(proposerFee).RoundInt())).Int64())
 }

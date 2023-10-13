@@ -160,7 +160,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 				"bid_height", bidInfo.Timeout,
 				"bidder", bidInfo.Bidder,
 				"bid", bidInfo.Bid,
-				"removing tx from mempool", true,
+				"is_recheck_tx", ctx.IsReCheckTx(),
 			)
 
 			// attempt to remove the bid from the MEVLane (if it exists)
