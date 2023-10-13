@@ -226,3 +226,59 @@ func (s *KeeperTestSuite) TestValidateBundle() {
 		})
 	}
 }
+
+func (s *KeeperTestSuite) TestValidateBundleTimeouts() {
+	s.Run("can validate valid bundle timeouts", func() {
+		bidder := sdk.AccAddress([]byte("bidder"))
+		other := sdk.AccAddress([]byte("other"))
+
+		bidInfo := &types.BidInfo{
+			Bidder:              sdk.AccAddress([]byte("bidder")),
+			Timeout:             10,
+			TransactionTimeouts: []uint64{0, 10, 0},
+			Signers: []map[string]struct{}{
+				{other.String(): {}},
+				{bidder.String(): {}},
+				{other.String(): {}},
+			},
+		}
+
+		err := s.auctionkeeper.ValidateBundleTimeouts(bidInfo)
+		s.Require().NoError(err)
+	})
+
+	s.Run("can invalidate invalid bundle timeouts", func() {
+		bidder := sdk.AccAddress([]byte("bidder"))
+		other := sdk.AccAddress([]byte("other"))
+
+		bidInfo := &types.BidInfo{
+			Bidder:              sdk.AccAddress([]byte("bidder")),
+			Timeout:             10,
+			TransactionTimeouts: []uint64{0, 10, 0},
+			Signers: []map[string]struct{}{
+				{other.String(): {}},
+				{bidder.String(): {}},
+				{bidder.String(): {}},
+			},
+		}
+
+		err := s.auctionkeeper.ValidateBundleTimeouts(bidInfo)
+		s.Require().Error(err)
+	})
+
+	s.Run("can invalidate invalid bundle timeout with single tx", func() {
+		bidder := sdk.AccAddress([]byte("bidder"))
+
+		bidInfo := &types.BidInfo{
+			Bidder:              sdk.AccAddress([]byte("bidder")),
+			Timeout:             10,
+			TransactionTimeouts: []uint64{0},
+			Signers: []map[string]struct{}{
+				{bidder.String(): {}},
+			},
+		}
+
+		err := s.auctionkeeper.ValidateBundleTimeouts(bidInfo)
+		s.Require().Error(err)
+	})
+}

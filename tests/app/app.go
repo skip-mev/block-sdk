@@ -268,9 +268,9 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(), // This means the lane has no limit on block space.
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          0, // This means the lane has no limit on the number of transactions it can store.
+		MaxTxs:          1000,
 	}
 	mevLane := mev.NewMEVLane(
 		mevConfig,
@@ -282,9 +282,9 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          0,
+		MaxTxs:          1000,
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
@@ -297,9 +297,9 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.6"),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          0,
+		MaxTxs:          1000,
 	}
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 
