@@ -102,6 +102,6 @@ func (t Terminator) Select(context.Context, [][]byte) sdkmempool.Iterator {
 }
 
 // HasHigherPriority is a no-op
-func (t Terminator) Compare(sdk.Context, sdk.Tx, sdk.Tx) int {
-	return 0
+func (t Terminator) Compare(sdk.Context, sdk.Tx, sdk.Tx) (int, error) {
+	return 0, nil
 }

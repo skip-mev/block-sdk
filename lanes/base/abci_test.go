@@ -1,9 +1,11 @@
 package base_test
 
 import (
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"math/rand"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -512,6 +514,192 @@ func (s *BaseTestSuite) TestPrepareLane() {
 }
 
 func (s *BaseTestSuite) TestProcessLane() {
+	s.Run("should accept a proposal where transaction fees are not in order bc of sequence numbers", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2, // This transaction has a higher sequence number and higher fees
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			},
+		)
+
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+	})
+
+	s.Run("should accept a proposal where transaction fees are not in order bc of sequence numbers with other txs", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(10)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(20)),
+		)
+		s.Require().NoError(err)
+
+		tx3, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3)),
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2, // This transaction has a higher sequence number and higher fees
+			tx3,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+				tx3: true,
+			},
+		)
+
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+	})
+
+	s.Run("accepts proposal with multiple senders and seq nums", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(10)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(20)),
+		)
+		s.Require().NoError(err)
+
+		tx3, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(9)),
+		)
+		s.Require().NoError(err)
+
+		tx4, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			1,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(11)),
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+			tx3,
+			tx4,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+				tx3: true,
+				tx4: true,
+			},
+		)
+
+		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+	})
+
 	s.Run("should accept a proposal with valid transactions", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -952,6 +1140,68 @@ func (s *BaseTestSuite) TestProcessLane() {
 		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
+}
+
+func (s *BaseTestSuite) TestPrepareProcessParity() {
+	txsToInsert := []sdk.Tx{}
+	validationMap := make(map[sdk.Tx]bool)
+	numTxsPerAccount := uint64(200)
+	accounts := testutils.RandomAccounts(s.random, 50)
+
+	for _, account := range accounts {
+		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
+			// create a random fee amount
+			feeAmount := math.NewInt(int64(rand.Intn(100000)))
+			tx, err := testutils.CreateRandomTx(
+				s.encodingConfig.TxConfig,
+				account,
+				nonce,
+				1,
+				0,
+				1,
+				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+			)
+			s.Require().NoError(err)
+
+			txsToInsert = append(txsToInsert, tx)
+			validationMap[tx] = true
+		}
+	}
+
+	// Add the transactions to the lane
+	lane := s.initLane(math.LegacyOneDec(), validationMap)
+	for _, tx := range txsToInsert {
+		s.Require().NoError(lane.Insert(s.ctx, tx))
+	}
+
+	// Retrieve the transactions from the lane in the same way the prepare function would.
+	retrievedTxs := []sdk.Tx{}
+	for iterator := lane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
+		retrievedTxs = append(retrievedTxs, iterator.Tx())
+	}
+
+	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
+
+	partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), retrievedTxs)
+	s.Require().NoError(err)
+
+	emptyProposal := proposals.NewProposal(
+		s.encodingConfig.TxConfig.TxEncoder(),
+		1000000000000000,
+		1000000000000000,
+	)
+
+	proposal, err := lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+	s.Require().NoError(err)
+	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
+	s.T().Logf("proposal num txs: %d", len(proposal.Txs))
+
+	// Ensure that the transactions are in the same order
+	for i := 0; i < len(retrievedTxs); i++ {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(retrievedTxs[i])
+		s.Require().NoError(err)
+		s.Require().Equal(bz, proposal.Txs[i])
+	}
 }
 
 func (s *BaseTestSuite) initLane(

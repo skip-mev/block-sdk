@@ -124,8 +124,10 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 
 			// If the transactions do not respect the priority defined by the mempool, we consider the proposal
 			// to be invalid
-			if index > 0 && l.Compare(ctx, partialProposal[index-1], tx) == -1 {
-				return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
+			if index > 0 {
+				if v, err := l.Compare(ctx, partialProposal[index-1], tx); v == -1 || err != nil {
+					return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
+				}
 			}
 
 			if err := l.VerifyTx(ctx, tx, false); err != nil {

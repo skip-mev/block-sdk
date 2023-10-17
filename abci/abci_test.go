@@ -1,6 +1,7 @@
 package abci_test
 
 import (
+	"context"
 	"math/rand"
 	"testing"
 
@@ -862,6 +863,54 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
+	s.Run("can accept proposal where txs are broadcasted with different sequence numbers", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
+		)
+		s.Require().NoError(err)
+
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx1: true,
+			tx2: true,
+		})
+
+		defaultLane.Insert(sdk.Context{}, tx1)
+		defaultLane.Insert(sdk.Context{}, tx2)
+
+		txs := [][]sdk.Tx{}
+
+		for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
+			txs = append(txs, []sdk.Tx{iterator.Tx()})
+		}
+
+		s.Require().Equal(2, len(txs))
+
+		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2}, tx1, tx2)
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		s.Require().NoError(err)
+		s.Require().NotNil(resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+	})
+
 	s.Run("can process a valid proposal with a single tx", func() {
 		// Create a random transaction that will be inserted into the default lane
 		tx, err := testutils.CreateRandomTx(
@@ -1269,6 +1318,103 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
 	})
+}
+
+func (s *ProposalsTestSuite) TestPrepareProcessParity() {
+	// Define a large enough block size and gas limit to ensure that the proposal is accepted
+	s.setBlockParams(1000000000000, 1000000000000)
+
+	// Create a random transaction that will be inserted into the default/free lane
+	numTxsPerAccount := uint64(2)
+	numAccounts := 5
+	accounts := testutils.RandomAccounts(s.random, numAccounts)
+
+	// Create a bunch of transactions to insert into the default lane
+	txsToInsert := []sdk.Tx{}
+	validationMap := make(map[sdk.Tx]bool)
+	for _, account := range accounts {
+		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
+			// create a random fee amount
+			feeAmount := math.NewInt(int64(rand.Intn(100000)))
+			tx, err := testutils.CreateRandomTx(
+				s.encodingConfig.TxConfig,
+				account,
+				nonce,
+				1,
+				0,
+				1,
+				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+			)
+			s.Require().NoError(err)
+
+			txsToInsert = append(txsToInsert, tx)
+			validationMap[tx] = true
+		}
+	}
+
+	// Set up the default lane with the transactions
+	defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), validationMap)
+	for _, tx := range txsToInsert {
+		s.Require().NoError(defaultLane.Insert(s.ctx, tx))
+	}
+
+	// Create a bunch of transactions to insert into the free lane
+	freeTxsToInsert := []sdk.Tx{}
+	freeValidationMap := make(map[sdk.Tx]bool)
+	for _, account := range accounts {
+		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
+			// create a random fee amount
+			feeAmount := math.NewInt(int64(rand.Intn(100000)))
+			tx, err := testutils.CreateFreeTx(
+				s.encodingConfig.TxConfig,
+				account,
+				nonce,
+				1,
+				"test",
+				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+			)
+			s.Require().NoError(err)
+
+			freeTxsToInsert = append(freeTxsToInsert, tx)
+			freeValidationMap[tx] = true
+		}
+	}
+
+	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.0"), freeValidationMap)
+	for _, tx := range freeTxsToInsert {
+		s.Require().NoError(freelane.Insert(s.ctx, tx))
+	}
+
+	// Retrieve the transactions from the default lane in the same way the prepare function would.
+	retrievedTxs := []sdk.Tx{}
+	for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
+		retrievedTxs = append(retrievedTxs, iterator.Tx())
+	}
+	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
+
+	// Retrieve the transactions from the free lane in the same way the prepare function would.
+	freeRetrievedTxs := []sdk.Tx{}
+	for iterator := freelane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
+		freeRetrievedTxs = append(freeRetrievedTxs, iterator.Tx())
+	}
+	s.Require().Equal(len(freeTxsToInsert), len(freeRetrievedTxs))
+
+	// Create a proposal with the retrieved transactions
+	numTxsPerLane := numTxsPerAccount * uint64(numAccounts)
+	s.Require().Equal(numTxsPerLane, uint64(len(retrievedTxs)))
+	s.Require().Equal(numTxsPerLane, uint64(len(freeRetrievedTxs)))
+
+	proposal := s.createProposal(
+		map[string]uint64{defaultLane.Name(): numTxsPerLane, freelane.Name(): numTxsPerLane},
+		append(freeRetrievedTxs, retrievedTxs...)...,
+	)
+
+	// Validate the proposal
+	proposalHandler := s.setUpProposalHandlers([]block.Lane{freelane, defaultLane}).ProcessProposalHandler()
+	resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+	s.Require().NotNil(resp)
+	s.Require().NoError(err)
 }
 
 func (s *ProposalsTestSuite) TestValidateBasic() {
