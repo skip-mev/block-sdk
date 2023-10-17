@@ -18,7 +18,7 @@ type LaneMempool interface {
 	// Compare determines the relative priority of two transactions belonging in the same lane. Compare
 	// will return -1 if this transaction has a lower priority than the other transaction, 0 if they have
 	// the same priority, and 1 if this transaction has a higher priority than the other transaction.
-	Compare(ctx sdk.Context, this, other sdk.Tx) int
+	Compare(ctx sdk.Context, this, other sdk.Tx) (int, error)
 
 	// Contains returns true if the transaction is contained in the mempool.
 	Contains(tx sdk.Tx) bool

@@ -86,6 +86,119 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		b := sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)).String()
 		s.Require().Equal(0, txPriority.Compare(a, b))
 	})
+
+	lane := s.initLane(math.LegacyOneDec(), nil)
+
+	s.Run("should return -1 when signers are the same but the first tx has a higher sequence", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		s.Require().NoError(err)
+		s.Require().Equal(-1, cmp)
+	})
+
+	s.Run("should return 1 when signers are the same but the second tx has a higher sequence", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		s.Require().NoError(err)
+		s.Require().Equal(1, cmp)
+	})
+
+	s.Run("should return 0 when signers are the same and the sequence is the same", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		_, err = lane.Compare(sdk.Context{}, tx1, tx2)
+		s.Require().Error(err)
+	})
+
+	s.Run("should return 1 when the first tx has a higher priority", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(200)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			0,
+			0,
+			0,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		)
+		s.Require().NoError(err)
+
+		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		s.Require().NoError(err)
+		s.Require().Equal(1, cmp)
+	})
 }
 
 func (s *BaseTestSuite) TestInsert() {
