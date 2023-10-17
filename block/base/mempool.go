@@ -175,7 +175,7 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, 
 	if len(signers) == 0 {
 		return 0, fmt.Errorf("expected one signer for the first transaction")
 	}
-	signer1 := signers[0]
+	thisSignerInfo := signers[0]
 
 	signers, err = cm.extractor.GetSigners(other)
 	if err != nil {
@@ -184,14 +184,14 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, 
 	if len(signers) == 0 {
 		return 0, fmt.Errorf("expected one signer for the second transaction")
 	}
-	signer2 := signers[0]
+	otherSignerInfo := signers[0]
 
 	// If the signers are the same, we compare the sequence numbers.
-	if signer1.Signer.Equals(signer2.Signer) {
+	if thisSignerInfo.Signer.Equals(otherSignerInfo.Signer) {
 		switch {
-		case signer1.Sequence < signer2.Sequence:
+		case thisSignerInfo.Sequence < otherSignerInfo.Sequence:
 			return 1, nil
-		case signer1.Sequence > signer2.Sequence:
+		case thisSignerInfo.Sequence > otherSignerInfo.Sequence:
 			return -1, nil
 		default:
 			// This case should never happen but we add in the case for completeness.
