@@ -45,6 +45,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			int64(len(txBz)),
 			1,
@@ -88,6 +89,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
@@ -132,6 +134,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
@@ -175,6 +178,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
@@ -215,6 +219,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			int64(len(txBz)),
 			10,
@@ -274,6 +279,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2))
 		gasLimit := uint64(20)
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			size,
 			gasLimit,
@@ -330,6 +336,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2))
 		gasLimit := uint64(2)
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			size,
 			gasLimit,
@@ -389,6 +396,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
 		gasLimit := uint64(3)
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			size,
 			gasLimit,
@@ -448,6 +456,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
 		gasLimit := uint64(1)
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			size,
 			gasLimit,
@@ -489,6 +498,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			int64(len(txBz))*10,
 			1000000,
@@ -554,6 +564,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -616,6 +627,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -691,6 +703,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -726,6 +739,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -761,6 +775,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -819,6 +834,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -867,6 +883,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -915,6 +932,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -966,6 +984,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			100000,
 			100000,
@@ -1001,6 +1020,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			maxSize,
 			1000000,
@@ -1037,6 +1057,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			maxSize,
 			9,
@@ -1084,6 +1105,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			maxSize,
 			19,
@@ -1132,6 +1154,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			maxSize,
 			20,
@@ -1143,6 +1166,83 @@ func (s *BaseTestSuite) TestProcessLane() {
 }
 
 func (s *BaseTestSuite) TestPrepareProcessParity() {
+	txsToInsert := []sdk.Tx{}
+	validationMap := make(map[sdk.Tx]bool)
+	numTxsPerAccount := uint64(50)
+	accounts := testutils.RandomAccounts(s.random, 50)
+
+	for _, account := range accounts {
+		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
+			// create a random fee amount
+			feeAmount := math.NewInt(int64(rand.Intn(100000)))
+			tx, err := testutils.CreateRandomTx(
+				s.encodingConfig.TxConfig,
+				account,
+				nonce,
+				1,
+				0,
+				1,
+				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+			)
+			s.Require().NoError(err)
+
+			txsToInsert = append(txsToInsert, tx)
+			validationMap[tx] = true
+		}
+	}
+
+	// Add the transactions to the lane
+	lane := s.initLane(math.LegacyOneDec(), validationMap)
+	for _, tx := range txsToInsert {
+		s.Require().NoError(lane.Insert(s.ctx, tx))
+	}
+
+	// Retrieve the transactions from the lane in the same way the prepare function would.
+	retrievedTxs := []sdk.Tx{}
+	for iterator := lane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
+		retrievedTxs = append(retrievedTxs, iterator.Tx())
+	}
+	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
+
+	// Construct a block proposal with the transactions in the mempool
+	emptyProposal := proposals.NewProposal(
+		log.NewTestLogger(s.T()),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		1000000000000000,
+		1000000000000000,
+	)
+	proposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
+	s.Require().NoError(err)
+	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
+
+	// Ensure that the transactions are in the same order
+	for i := 0; i < len(retrievedTxs); i++ {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(retrievedTxs[i])
+		s.Require().NoError(err)
+		s.Require().Equal(bz, proposal.Txs[i])
+	}
+
+	// Verify the same proposal with the process lanes handler
+	emptyProposal = proposals.NewProposal(
+		log.NewTestLogger(s.T()),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		1000000000000000,
+		1000000000000000,
+	)
+	proposal, err = lane.ProcessLane(s.ctx, emptyProposal, proposal.Txs, block.NoOpProcessLanesHandler())
+	s.Require().NoError(err)
+	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
+	s.T().Logf("proposal num txs: %d", len(proposal.Txs))
+
+	// Ensure that the transactions are in the same order
+	for i := 0; i < len(retrievedTxs); i++ {
+		bz, err := s.encodingConfig.TxConfig.TxEncoder()(retrievedTxs[i])
+		s.Require().NoError(err)
+		s.Require().Equal(bz, proposal.Txs[i])
+	}
+}
+
+func (s *BaseTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	txsToInsert := []sdk.Tx{}
 	validationMap := make(map[sdk.Tx]bool)
 	numTxsPerAccount := uint64(200)
@@ -1186,6 +1286,7 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 	s.Require().NoError(err)
 
 	emptyProposal := proposals.NewProposal(
+		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		1000000000000000,
 		1000000000000000,

@@ -168,12 +168,11 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		)
 		s.Require().NoError(err)
 
-		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
-		s.Require().NoError(err)
-		s.Require().Equal(0, cmp)
+		_, err = lane.Compare(sdk.Context{}, tx1, tx2)
+		s.Require().Error(err)
 	})
 
-	s.Run("should return -1 when the first tx has a higher priority", func() {
+	s.Run("should return 1 when the first tx has a higher priority", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],

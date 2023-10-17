@@ -175,6 +175,7 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, 
 	if len(signers) == 0 {
 		return 0, fmt.Errorf("expected one signer for the first transaction")
 	}
+	// The priority nonce mempool uses the first tx signer so this is a safe operation.
 	thisSignerInfo := signers[0]
 
 	signers, err = cm.extractor.GetSigners(other)
@@ -195,7 +196,7 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, 
 			return -1, nil
 		default:
 			// This case should never happen but we add in the case for completeness.
-			return 0, nil
+			return 0, fmt.Errorf("the two transactions have the same sequence number")
 		}
 	}
 
