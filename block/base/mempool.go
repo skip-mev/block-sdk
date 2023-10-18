@@ -22,6 +22,10 @@ type (
 		// index defines an index of transactions.
 		index sdkmempool.Mempool
 
+		// signerExtractor defines the signer extraction adapter that allows us to
+		// extract the signer from a transaction.
+		extractor signer_extraction.Adapter
+
 		// txPriority defines the transaction priority function. It is used to
 		// retrieve the priority of a given transaction and to compare the priority
 		// of two transactions. The index utilizes this struct to order transactions
@@ -91,6 +95,7 @@ func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder,
 			},
 			extractor,
 		),
+		extractor:  extractor,
 		txPriority: txPriority,
 		txEncoder:  txEncoder,
 		txCache:    make(map[string]struct{}),
@@ -155,8 +160,48 @@ func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
 }
 
 // Compare determines the relative priority of two transactions belonging in the same lane.
-func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) int {
+// There are two cases to consider:
+//  1. The transactions have the same signer. In this case, we compare the sequence numbers.
+//  2. The transactions have different signers. In this case, we compare the priorities of the
+//     transactions.
+//
+// Compare will return -1 if this transaction has a lower priority than the other transaction, 0 if
+// they have the same priority, and 1 if this transaction has a higher priority than the other transaction.
+func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, error) {
+	signers, err := cm.extractor.GetSigners(this)
+	if err != nil {
+		return 0, err
+	}
+	if len(signers) == 0 {
+		return 0, fmt.Errorf("expected one signer for the first transaction")
+	}
+	// The priority nonce mempool uses the first tx signer so this is a safe operation.
+	thisSignerInfo := signers[0]
+
+	signers, err = cm.extractor.GetSigners(other)
+	if err != nil {
+		return 0, err
+	}
+	if len(signers) == 0 {
+		return 0, fmt.Errorf("expected one signer for the second transaction")
+	}
+	otherSignerInfo := signers[0]
+
+	// If the signers are the same, we compare the sequence numbers.
+	if thisSignerInfo.Signer.Equals(otherSignerInfo.Signer) {
+		switch {
+		case thisSignerInfo.Sequence < otherSignerInfo.Sequence:
+			return 1, nil
+		case thisSignerInfo.Sequence > otherSignerInfo.Sequence:
+			return -1, nil
+		default:
+			// This case should never happen but we add in the case for completeness.
+			return 0, fmt.Errorf("the two transactions have the same sequence number")
+		}
+	}
+
+	// Determine the priority and compare the priorities.
 	firstPriority := cm.txPriority.GetTxPriority(ctx, this)
 	secondPriority := cm.txPriority.GetTxPriority(ctx, other)
-	return cm.txPriority.Compare(firstPriority, secondPriority)
+	return cm.txPriority.Compare(firstPriority, secondPriority), nil
 }
