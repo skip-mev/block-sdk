@@ -888,10 +888,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2}, tx1, tx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().NoError(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
 	s.Run("can process a valid proposal with a single tx", func() {
@@ -1384,8 +1383,7 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	// Create a proposal with the retrieved transactions
 	// Set up the default lane with no transactions
 	proposalHandler := s.setUpProposalHandlers([]block.Lane{freelane, defaultLane}).PrepareProposalHandler()
-	resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-	s.Require().NoError(err)
+	resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 	s.Require().NotNil(resp)
 
 	info := s.getProposalInfo(resp.Txs[0])
@@ -1416,9 +1414,9 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 
 	// Validate the proposal
 	processHandler := s.setUpProposalHandlers([]block.Lane{freelane, defaultLane}).ProcessProposalHandler()
-	processResp, err := processHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+	processResp := processHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 	s.Require().NotNil(processResp)
-	s.Require().NoError(err)
+	s.Require().Equal(cometabci.ResponseProcessProposal_ACCEPT, processResp.Status)
 }
 
 func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
@@ -1513,9 +1511,9 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 
 	// Validate the proposal
 	proposalHandler := s.setUpProposalHandlers([]block.Lane{freelane, defaultLane}).ProcessProposalHandler()
-	resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+	resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 	s.Require().NotNil(resp)
-	s.Require().NoError(err)
+	s.Require().Equal(cometabci.ResponseProcessProposal_ACCEPT, resp.Status)
 }
 
 func (s *ProposalsTestSuite) TestValidateBasic() {

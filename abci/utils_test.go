@@ -4,7 +4,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-	"os"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
@@ -58,7 +57,7 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -71,7 +70,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -84,7 +83,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -97,7 +96,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 
 func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTMLogger(os.Stdout),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		MaxBlockSpace:   maxBlockSpace,
@@ -118,10 +117,10 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), true, lanes...)
+	mempool := block.NewLanedMempool(log.NewNopLogger(), true, lanes...)
 
 	return abci.NewProposalHandler(
-		log.NewTMLogger(os.Stdout),
+		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		mempool,
