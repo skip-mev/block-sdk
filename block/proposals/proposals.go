@@ -2,6 +2,7 @@ package proposals
 
 import (
 	"cosmossdk.io/math"
+	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 )
@@ -9,6 +10,8 @@ import (
 type (
 	// Proposal defines a block proposal type.
 	Proposal struct {
+		Logger log.Logger
+
 		// Txs is the list of transactions in the proposal.
 		Txs [][]byte
 		// Cache is a cache of the selected transactions in the proposal.
@@ -21,15 +24,16 @@ type (
 )
 
 // NewProposalWithContext returns a new empty proposal.
-func NewProposalWithContext(ctx sdk.Context, txEncoder sdk.TxEncoder) Proposal {
+func NewProposalWithContext(logger log.Logger, ctx sdk.Context, txEncoder sdk.TxEncoder) Proposal {
 	maxBlockSize, maxGasLimit := GetBlockLimits(ctx)
-	return NewProposal(txEncoder, maxBlockSize, maxGasLimit)
+	return NewProposal(logger, txEncoder, maxBlockSize, maxGasLimit)
 }
 
 // NewProposal returns a new empty proposal. Any transactions added to the proposal
 // will be subject to the given max block size and max gas limit.
-func NewProposal(txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
+func NewProposal(logger log.Logger, txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
 	return Proposal{
+		Logger:    logger,
 		TxEncoder: txEncoder,
 		Txs:       make([][]byte, 0),
 		Cache:     make(map[string]struct{}),
