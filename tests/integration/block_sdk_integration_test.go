@@ -9,6 +9,7 @@ import (
 	"github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
+	ictestutil "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"github.com/stretchr/testify/suite"
 
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
@@ -16,7 +17,7 @@ import (
 
 var (
 	// config params
-	numValidators = 4
+	numValidators = 1
 	numFullNodes  = 0
 	denom         = "stake"
 
@@ -34,6 +35,10 @@ var (
 			Key:   "app_state.auction.params.max_bundle_size",
 			Value: 3,
 		},
+	}
+
+	consensusParams = ictestutil.Toml{
+		"timeout_commit": "3500ms",
 	}
 
 	// interchain specification
@@ -63,6 +68,7 @@ var (
 			NoHostMount:            noHostMount,
 			UsingNewGenesisCommand: true,
 			ModifyGenesis:          cosmos.ModifyGenesis(genesisKV),
+			ConfigFileOverrides:    map[string]any{"config/config.toml": ictestutil.Toml{"consensus": consensusParams}},
 		},
 	}
 )
