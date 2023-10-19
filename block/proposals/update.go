@@ -1,11 +1,11 @@
 package proposals
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
@@ -41,21 +41,33 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 	partialProposalSize := int64(0)
 	partialProposalGasLimit := uint64(0)
 
+	signerAdapter := signerextraction.NewDefaultAdapter()
+
 	for index, tx := range partialProposal {
 		txInfo, err := utils.GetTxInfo(p.TxEncoder, tx)
 		if err != nil {
 			return fmt.Errorf("err retrieving transaction info: %s", err)
 		}
 
-		p.Logger.Debug(
+		feeTx := tx.(sdk.FeeTx)
+		signers, err := signerAdapter.GetSigners(tx)
+		if err != nil {
+			return fmt.Errorf("err retrieving signers: %s", err)
+		}
+
+		p.Logger.Info(
 			"updating proposal with tx",
 			"index", index,
 			"lane", lane.Name(),
 			"tx_hash", txInfo.Hash,
 			"tx_size", txInfo.Size,
 			"tx_gas_limit", txInfo.GasLimit,
-			"tx_bytes", txInfo.TxBytes,
-			"raw_tx", base64.StdEncoding.EncodeToString(txInfo.TxBytes),
+			// "tx_bytes", txInfo.TxBytes,
+			// "raw_tx", base64.StdEncoding.EncodeToString(txInfo.TxBytes),
+			"fee", feeTx.GetFee(),
+			"gas", feeTx.GetGas(),
+			"signer", signers[0].Signer.String(),
+			"nonce", signers[0].Sequence,
 		)
 
 		// invariant check: Ensure that the transaction is not already in the proposal.

@@ -67,11 +67,6 @@ func (m MsgAuctionBid) ValidateBasic() error {
 		return errors.Wrap(err, "invalid bid")
 	}
 
-	// Validate the transactions.
-	if len(m.Transactions) == 0 {
-		return fmt.Errorf("no transactions included")
-	}
-
 	for _, tx := range m.Transactions {
 		if len(tx) == 0 {
 			return fmt.Errorf("empty transaction included")

@@ -17,7 +17,7 @@ import (
 
 var (
 	// config params
-	numValidators = 1
+	numValidators = 4
 	numFullNodes  = 0
 	denom         = "stake"
 
@@ -38,7 +38,7 @@ var (
 	}
 
 	consensusParams = ictestutil.Toml{
-		"timeout_commit": "3500ms",
+		"timeout_commit": "5000ms",
 	}
 
 	// interchain specification
