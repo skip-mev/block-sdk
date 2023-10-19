@@ -370,80 +370,6 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
-<<<<<<< HEAD
-	s.Run("broadcasting bids to two different validators (both should execute over several blocks) with same bid", func() {
-		// escrow account balance
-		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-
-		// create bid 1
-		// bank-send msg
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-		// create bid1
-		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
-
-		// create bid 2
-		msg2 := Tx{
-			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-		// create bid2 w/ higher bid than bid1
-		bid2, bundledTxs2 := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
-		// get chain height
-		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-		require.NoError(s.T(), err)
-
-		// create channel to receive txs
-		txsCh := make(chan committedTx, 2)
-
-		// broadcast both bids (with ample time to be committed (instead of timing out))
-		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
-			{
-				User:   s.user1,
-				Msgs:   []sdk.Msg{bid1},
-				Height: height + 4,
-			},
-			{
-				User:   s.user2,
-				Msgs:   []sdk.Msg{bid2},
-				Height: height + 3,
-			},
-		}, func(tx []byte, resp *rpctypes.ResultTx) {
-			txsCh <- committedTx{tx, resp}
-		})
-
-		// check txs were committed
-		require.Len(s.T(), txsCh, 2)
-		close(txsCh)
-
-		tx1 := <-txsCh
-		tx2 := <-txsCh
-
-		// query next block
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
-
-		// check bid2 was included first
-		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs2)
-
-		// check next block
-		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), tx2.res.Height)
-
-		// check bid1 was included second
-		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
-
-		// check escrow balance
-		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-		expectedIncrement := escrowAddressIncrement(bidAmt.Add(params.MinBidIncrement.Add(bidAmt)).Amount, params.ProposerFee)
-		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
-	})
-
-=======
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 	s.Run("Multiple bid transactions with second bid being smaller than min bid increment", func() {
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -507,34 +433,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
 	})
 
-<<<<<<< HEAD
-	s.Run("Multiple bid transactions from diff accounts with second bid being smaller than min bid increment", func() {
-		// escrow account balance
-		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-
-		// create bid 1
-		// bank-send msg
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-		// create bid1
-		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
-
-		// create bid 2
-		msg2 := Tx{
-			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-
-		// create bid2 w/ higher bid than bid1
-		bid2, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg2})
-=======
 	s.Run("Multiple transactions from diff. account with increasing bids and first bid should fail in later block", func() {
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		// get chain height
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -546,16 +445,6 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
 
 		// create bid 1
-<<<<<<< HEAD
-		// bank-send msg
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-		// create bid1
-=======
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		bidAmt := params.ReserveFee
 		bundleTx1 := Tx{
 			User: s.user3,
@@ -604,90 +493,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 
 		// check escrow balance
 		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-<<<<<<< HEAD
-		expectedIncrement := escrowAddressIncrement(bidAmt.Add(params.MinBidIncrement).Amount, params.ProposerFee)
-		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
-
-		// wait for next block for mempool to clear
-		WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+3)
-	})
-
-	s.Run("Multiple transactions with increasing bids and different bundles", func() {
-		// escrow account balance
-		escrowAcctBalanceBeforeBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-
-		// create bid 1
-		// bank-send msg
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-		// create bid1
-		bidAmt := params.ReserveFee
-		bid1, bundledTxs := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
-
-		// create bid2
-		// create a second message
-		msg2 := Tx{
-			User:              s.user2,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 1,
-		}
-
-		// create bid2 w/ higher bid than bid1
-		bid2, bundledTxs2 := s.CreateAuctionBidMsg(context.Background(), s.user2, s.chain.(*cosmos.CosmosChain), bidAmt.Add(params.MinBidIncrement), []Tx{msg2})
-		// get chain height
-		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-		require.NoError(s.T(), err)
-
-		// make channel for committedTxs (expect 2 txs to be committed)
-		committedTxs := make(chan committedTx, 2)
-
-		// broadcast both bids
-		txs := s.BroadcastTxsWithCallback(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
-			{
-				User:   s.user1,
-				Msgs:   []sdk.Msg{bid1},
-				Height: height + 4,
-			},
-			{
-				User:   s.user2,
-				Msgs:   []sdk.Msg{bid2},
-				Height: height + 3,
-			},
-		}, func(tx []byte, resp *rpctypes.ResultTx) {
-			committedTxs <- committedTx{
-				tx:  tx,
-				res: resp,
-			}
-		})
-
-		// close the channel when finished
-		close(committedTxs)
-
-		// expect 2 txs
-		tx1 := <-committedTxs
-		tx2 := <-committedTxs
-
-		// query next block
-		block := Block(s.T(), s.chain.(*cosmos.CosmosChain), tx1.res.Height)
-
-		// check bid2 was included first
-		VerifyBlock(s.T(), block, 0, TxHash(txs[1]), bundledTxs2)
-
-		// query next block and check tx inclusion
-		block = Block(s.T(), s.chain.(*cosmos.CosmosChain), tx2.res.Height)
-
-		// check bid1 was included second
-		VerifyBlock(s.T(), block, 0, TxHash(txs[0]), bundledTxs)
-
-		// check escrow balance
-		escrowAcctBalanceAfterBid := QueryAccountBalance(s.T(), s.chain, escrowAddr, params.ReserveFee.Denom)
-		expectedIncrement := escrowAddressIncrement(bidAmt.Add(params.MinBidIncrement.Add(bidAmt)).Amount, params.ProposerFee)
-=======
 		expectedIncrement := escrowAddressIncrement(bidAmt.Amount, params.ProposerFee)
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		require.Equal(s.T(), escrowAcctBalanceBeforeBid+expectedIncrement, escrowAcctBalanceAfterBid)
 	})
 }
@@ -731,18 +537,6 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 	})
 
 	s.Run("Invalid bid that is attempting to bid more than their balance", func() {
-<<<<<<< HEAD
-		// create bid tx
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 2,
-		}
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(1000000000000000000))
-		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
-
-=======
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
 
@@ -797,29 +591,6 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		bidAmt := params.ReserveFee
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg, msg2, msg3})
 
-<<<<<<< HEAD
-		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-		require.NoError(s.T(), err)
-
-		// broadcast wrapped bid, and expect a failure
-		s.SimulateTx(context.Background(), s.chain.(*cosmos.CosmosChain), s.user1, height+1, true, []sdk.Msg{bid}...)
-	})
-
-	s.Run("Invalid bid that includes an invalid bundle tx", func() {
-		// create bid tx
-		msg := Tx{
-			User:              s.user1,
-			Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-			SequenceIncrement: 2,
-		}
-		bidAmt := params.ReserveFee
-		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
-
-		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-		require.NoError(s.T(), err)
-
-=======
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		// broadcast wrapped bid, and expect a failure
 		s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{
 			{
@@ -941,12 +712,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 			Height:            height + 1,
 		}
 
-<<<<<<< HEAD
-		// create bid smaller than reserve
-		bidAmt := sdk.NewCoin(s.denom, sdk.NewInt(0))
-=======
 		bidAmt := sdk.NewCoin(s.denom, params.ReserveFee.Amount)
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		bid, _ := s.CreateAuctionBidMsg(context.Background(), s.user1, s.chain.(*cosmos.CosmosChain), bidAmt, []Tx{msg})
 
 		// broadcast wrapped bid, and expect a failure
@@ -969,11 +735,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		require.NoError(s.T(), err)
 
 		// create message send tx
-<<<<<<< HEAD
-		tx := banktypes.NewMsgSend(s.user2.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))
-=======
 		msgSend := banktypes.NewMsgSend(s.user2.Address(), s.user3.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100))))
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 
 		// create the MsgAuctioBid (this should fail b.c same tx is repeated twice)
 		bidAmt := params.ReserveFee
@@ -1010,10 +772,6 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 		VerifyBlockWithExpectedBlock(s.T(), s.chain.(*cosmos.CosmosChain), height+1, [][]byte{txs[1]})
 	})
 
-<<<<<<< HEAD
-func escrowAddressIncrement(bid math.Int, proposerFee sdk.Dec) int64 {
-	return int64(bid.Sub(sdk.NewDecFromInt(bid).Mul(proposerFee).RoundInt()).Int64())
-=======
 	s.Run("searcher does not set the timeout height on their transactions", func() {
 		height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 		require.NoError(s.T(), err)
@@ -1072,7 +830,6 @@ func escrowAddressIncrement(bid math.Int, proposerFee sdk.Dec) int64 {
 		// verify the block
 		VerifyBlockWithExpectedBlock(s.T(), s.chain.(*cosmos.CosmosChain), height+1, nil)
 	})
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 }
 
 // TestFreeLane tests that the application correctly handles free lanes. There are a few invariants that are tested:

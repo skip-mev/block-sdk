@@ -9,6 +9,7 @@ import (
 	"reflect"
 
 	"cosmossdk.io/depinject"
+	"cosmossdk.io/math"
 	dbm "github.com/cometbft/cometbft-db"
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
@@ -272,11 +273,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-<<<<<<< HEAD
-		MaxBlockSpace:   sdk.ZeroDec(), // This means the lane has no limit on block space.
-=======
 		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          1000,
 	}
@@ -290,11 +287,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-<<<<<<< HEAD
-		MaxBlockSpace:   sdk.ZeroDec(),
-=======
 		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          1000,
 	}
@@ -309,11 +302,7 @@ func New(
 		Logger:          app.Logger(),
 		TxEncoder:       app.txConfig.TxEncoder(),
 		TxDecoder:       app.txConfig.TxDecoder(),
-<<<<<<< HEAD
-		MaxBlockSpace:   sdk.ZeroDec(),
-=======
 		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.6"),
->>>>>>> 339b927 (fix(auction): Adding extra check on bundler timeouts (#156))
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		MaxTxs:          1000,
 	}
