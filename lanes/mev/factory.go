@@ -79,25 +79,37 @@ func (config *DefaultAuctionFactory) GetAuctionBidInfo(tx sdk.Tx) (*types.BidInf
 		return nil, fmt.Errorf("invalid bidder address (%s): %w", msg.Bidder, err)
 	}
 
-	timeoutTx, ok := tx.(TxWithTimeoutHeight)
-	if !ok {
-		return nil, fmt.Errorf("cannot extract timeout; transaction does not implement TxWithTimeoutHeight")
+	height, err := config.GetTimeoutHeight(tx)
+	if err != nil {
+		return nil, err
 	}
 
-	signers, err := config.getBundleSigners(msg.Transactions)
+	signers, timeouts, err := config.getBundleInfo(msg.Transactions)
 	if err != nil {
 		return nil, err
 	}
 
 	return &types.BidInfo{
-		Bid:          msg.Bid,
-		Bidder:       bidder,
-		Transactions: msg.Transactions,
-		Timeout:      timeoutTx.GetTimeoutHeight(),
-		Signers:      signers,
+		Bid:                 msg.Bid,
+		Bidder:              bidder,
+		Transactions:        msg.Transactions,
+		TransactionTimeouts: timeouts,
+		Timeout:             height,
+		Signers:             signers,
 	}, nil
 }
 
+// GetTimeoutHeight returns the timeout height of the transaction.
+func (config *DefaultAuctionFactory) GetTimeoutHeight(tx sdk.Tx) (uint64, error) {
+	timeoutTx, ok := tx.(TxWithTimeoutHeight)
+	if !ok {
+		return 0, fmt.Errorf("cannot extract timeout; transaction does not implement TxWithTimeoutHeight")
+	}
+
+	return timeoutTx.GetTimeoutHeight(), nil
+}
+
+// MatchHandler defines a default function that checks if a transaction matches the mev lane.
 func (config *DefaultAuctionFactory) MatchHandler() base.MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		bidInfo, err := config.GetAuctionBidInfo(tx)
@@ -105,31 +117,38 @@ func (config *DefaultAuctionFactory) MatchHandler() base.MatchHandler {
 	}
 }
 
-// getBundleSigners defines a default function that returns the signers of all transactions in
-// a bundle. In the default case, each bundle transaction will be an sdk.Tx and the
-// signers are the signers of each sdk.Msg in the transaction.
-func (config *DefaultAuctionFactory) getBundleSigners(bundle [][]byte) ([]map[string]struct{}, error) {
-	bundleSigners := make([]map[string]struct{}, 0)
+// getBundleInfo defines a default function that returns the signers of all transactions in
+// a bundle as well as each bundled txs timeout. In the default case, each bundle transaction
+// will be an sdk.Tx and the signers are the signers of each sdk.Msg in the transaction.
+func (config *DefaultAuctionFactory) getBundleInfo(bundle [][]byte) ([]map[string]struct{}, []uint64, error) {
+	bundleSigners := make([]map[string]struct{}, len(bundle))
+	timeouts := make([]uint64, len(bundle))
 
-	for _, tx := range bundle {
+	for index, tx := range bundle {
 		sdkTx, err := config.txDecoder(tx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		txSigners := make(map[string]struct{})
 
 		signers, err := config.signerExtractor.GetSigners(sdkTx)
 		if err != nil {
-			return nil, err
+			return nil, nil, err
 		}
 
 		for _, signer := range signers {
 			txSigners[signer.Signer.String()] = struct{}{}
 		}
 
-		bundleSigners = append(bundleSigners, txSigners)
+		timeout, err := config.GetTimeoutHeight(sdkTx)
+		if err != nil {
+			return nil, nil, err
+		}
+
+		bundleSigners[index] = txSigners
+		timeouts[index] = timeout
 	}
 
-	return bundleSigners, nil
+	return bundleSigners, timeouts, nil
 }
