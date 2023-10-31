@@ -88,7 +88,7 @@ func local_request_Query_Lane_0(ctx context.Context, marshaler runtime.Marshaler
 }
 
 func request_Query_Lanes_0(ctx context.Context, marshaler runtime.Marshaler, client QueryClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryAllLanesRequest
+	var protoReq QueryLanesRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := client.Lanes(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
@@ -97,7 +97,7 @@ func request_Query_Lanes_0(ctx context.Context, marshaler runtime.Marshaler, cli
 }
 
 func local_request_Query_Lanes_0(ctx context.Context, marshaler runtime.Marshaler, server QueryServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
-	var protoReq QueryAllLanesRequest
+	var protoReq QueryLanesRequest
 	var metadata runtime.ServerMetadata
 
 	msg, err := server.Lanes(ctx, &protoReq)

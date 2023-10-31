@@ -2,9 +2,8 @@ package cli
 
 import (
 	"github.com/cosmos/cosmos-sdk/client"
-	"github.com/spf13/cobra"
-
 	"github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/spf13/cobra"
 )
 
 // NewTxCmd returns a root CLI command handler for all x/blocksdk transaction

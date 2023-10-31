@@ -15,7 +15,7 @@ service Query {
     option (google.api.http).get = "/block-sdk/blocksdk/v1/lane/{id}";
   }
 
-  rpc Lanes(QueryAllLanesRequest) returns(QueryAllLanesResponse) {
+  rpc Lanes(QueryLanesRequest) returns(QueryLanesResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/block-sdk/blocksdk/v1/lanes";
   }
@@ -29,8 +29,8 @@ message QueryLaneResponse {
   Lane lane = 1 [ (gogoproto.nullable) = false ];
 }
 
-message QueryAllLanesRequest {}
+message QueryLanesRequest {}
 
-message QueryAllLanesResponse {
+message QueryLanesResponse {
   repeated Lane lanes = 1 [ (gogoproto.nullable) = false ];
 }
