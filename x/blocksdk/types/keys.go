@@ -18,5 +18,5 @@ const (
 	prefixLanes = iota + 1
 )
 
-// KeyParams is the store key for the blocksdk module's parameters.
-var KeyParams = []byte{prefixLanes}
+// KeyLanes is the store key for the lanes.
+var KeyLanes = []byte{prefixLanes}

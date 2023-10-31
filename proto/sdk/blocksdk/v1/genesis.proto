@@ -3,5 +3,9 @@ package sdk.blocksdk.v1;
 
 option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
 
+import "sdk/blocksdk/v1/blocksdk.proto";
+
 // GenesisState defines the genesis state of the x/blocksdk module.
-message GenesisState {}
+message GenesisState {
+  repeated Lane lanes = 1;
+}

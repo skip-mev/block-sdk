@@ -181,10 +181,6 @@ func ProvideModule(in Inputs) Outputs {
 	blocksdkKeeper := keeper.NewKeeper(
 		in.Cdc,
 		in.Key,
-		in.AccountKeeper,
-		in.BankKeeper,
-		in.DistributionKeeper,
-		in.StakingKeeper,
 		authority.String(),
 	)
 

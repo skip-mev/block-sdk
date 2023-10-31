@@ -3,5 +3,33 @@ package sdk.blocksdk.v1;
 
 option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
 
+import "sdk/blocksdk/v1/blocksdk.proto";
+import "google/api/annotations.proto";
+import "cosmos/query/v1/query.proto";
+
 // Query defines the x/blocksdk querier service.
-service Query {}
+service Query {
+  rpc Lane(QueryLaneRequest) returns(QueryLaneResponse){
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/block-sdk/blocksdk/v1/lane/{id}";
+  }
+
+  rpc Lanes(QueryAllLanesRequest) returns(QueryAllLanesResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/block-sdk/blocksdk/v1/lanes";
+  }
+}
+
+message QueryLaneRequest {
+  string id = 1;
+}
+
+message QueryLaneResponse {
+  Lane lane = 1;
+}
+
+message QueryAllLanesRequest {}
+
+message QueryAllLanesResponse {
+  repeated Lane lanes = 1;
+}
