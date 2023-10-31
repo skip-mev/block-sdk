@@ -66,8 +66,11 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	_ "github.com/skip-mev/block-sdk/x/blocksdk" // import for side-effects
+	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 var (
@@ -246,6 +249,10 @@ var (
 			{
 				Name:   auctiontypes.ModuleName,
 				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
+			},
+			{
+				Name:   blocksdktypes.ModuleName,
+				Config: appconfig.WrapAny(&blocksdkmodulev1.Module{}),
 			},
 		},
 	}),
