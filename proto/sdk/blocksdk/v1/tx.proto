@@ -1,0 +1,9 @@
+syntax = "proto3";
+package sdk.blocksdk.v1;
+
+option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
+
+import "cosmos/msg/v1/msg.proto";
+
+// Msg defines the x/blocksdk Msg service.
+service Msg { option (cosmos.msg.v1.service) = true; }

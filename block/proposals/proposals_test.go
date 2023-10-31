@@ -7,12 +7,13 @@ import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/require"
+
 	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
 	"github.com/skip-mev/block-sdk/testutils"
-	"github.com/stretchr/testify/require"
 )
 
 func TestUpdateProposal(t *testing.T) {
