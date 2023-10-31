@@ -8,7 +8,5 @@ import "sdk/blocksdk/v1/blocksdk.proto";
 
 // GenesisState defines the genesis state of the x/blocksdk module.
 message GenesisState {
-  repeated Lane lanes = 1 [(gogoproto.nullable) = false];
-
-
+  repeated Lane lanes = 1 [ (gogoproto.nullable) = false ];
 }

@@ -14,7 +14,7 @@ import "sdk/blocksdk/v1/blocksdk.proto";
 service Msg {
   option (cosmos.msg.v1.service) = true;
 
-  rpc RegisterLane(MsgRegisterLane) returns (MsgRegisterLaneResponse){
+  rpc RegisterLane(MsgRegisterLane) returns (MsgRegisterLaneResponse) {
     option (google.api.http).post = "/block-sdk/blocksdk/v1/register_lane";
   }
   rpc UpdateLane(MsgUpdateLane) returns (MsgUpdateLaneResponse) {

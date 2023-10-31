@@ -5,7 +5,6 @@ import "gogoproto/gogo.proto";
 import "amino/amino.proto";
 import "cosmos_proto/cosmos.proto";
 
-
 option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
 
 message Lane {

@@ -11,7 +11,6 @@ func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	for _, lane := range gs.Lanes {
 		k.SetLane(ctx, lane)
 	}
-
 }
 
 // ExportGenesis returns a GenesisState for a given context.
