@@ -6,12 +6,17 @@ import (
 	"github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-// InitGenesis initializes the auction module's state from a given genesis state.
+// InitGenesis initializes the blocksdk module's state from a given genesis state.
 func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
+	for _, lane := range gs.Lanes {
+		k.SetLane(ctx, lane)
+	}
 
 }
 
 // ExportGenesis returns a GenesisState for a given context.
 func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
-	return types.NewGenesisState()
+	lanes := k.GetLanes(ctx)
+
+	return &types.GenesisState{Lanes: lanes}
 }

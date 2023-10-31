@@ -22,7 +22,7 @@ import (
 
 	abci "github.com/cometbft/cometbft/abci/types"
 
-	modulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	modulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	"github.com/skip-mev/block-sdk/x/blocksdk/client/cli"
 	"github.com/skip-mev/block-sdk/x/blocksdk/keeper"
 	"github.com/skip-mev/block-sdk/x/blocksdk/types"
@@ -113,7 +113,7 @@ func (am AppModule) IsOnePerModuleType() {}
 // ConsensusVersion implements AppModule/ConsensusVersion.
 func (AppModule) ConsensusVersion() uint64 { return ConsensusVersion }
 
-// RegisterServices registers a the gRPC Query and Msg services for the x/auction
+// RegisterServices registers a the gRPC Query and Msg services for the x/blocksdk
 // module.
 func (am AppModule) RegisterServices(cfc module.Configurator) {
 	types.RegisterMsgServer(cfc.MsgServer(), keeper.NewMsgServerImpl(am.keeper))
@@ -127,7 +127,7 @@ func (a AppModuleBasic) RegisterRESTRoutes(_ client.Context, _ *mux.Router) {}
 // logic (most often the chain will be halted).
 func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
-// InitGenesis performs the module's genesis initialization for the auction
+// InitGenesis performs the module's genesis initialization for the blocksdk
 // module. It returns no validator updates.
 func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
 	var genState types.GenesisState
@@ -137,7 +137,7 @@ func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.Ra
 	return []abci.ValidatorUpdate{}
 }
 
-// ExportGenesis returns the auction module's exported genesis state as raw
+// ExportGenesis returns the blocksdk module's exported genesis state as raw
 // JSON bytes.
 func (am AppModule) ExportGenesis(ctx sdk.Context, cdc codec.JSONCodec) json.RawMessage {
 	genState := am.keeper.ExportGenesis(ctx)
@@ -167,8 +167,8 @@ type Inputs struct {
 type Outputs struct {
 	depinject.Out
 
-	Auctionkeeper keeper.Keeper
-	Module        appmodule.AppModule
+	BlockSDKkeeper keeper.Keeper
+	Module         appmodule.AppModule
 }
 
 func ProvideModule(in Inputs) Outputs {
@@ -186,5 +186,5 @@ func ProvideModule(in Inputs) Outputs {
 
 	m := NewAppModule(in.Cdc, blocksdkKeeper)
 
-	return Outputs{Auctionkeeper: blocksdkKeeper, Module: m}
+	return Outputs{BlockSDKkeeper: blocksdkKeeper, Module: m}
 }

@@ -3,9 +3,10 @@ package sdk.blocksdk.v1;
 
 option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
 
-import "sdk/blocksdk/v1/blocksdk.proto";
 import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
 import "cosmos/query/v1/query.proto";
+import "sdk/blocksdk/v1/blocksdk.proto";
 
 // Query defines the x/blocksdk querier service.
 service Query {
@@ -25,11 +26,11 @@ message QueryLaneRequest {
 }
 
 message QueryLaneResponse {
-  Lane lane = 1;
+  Lane lane = 1 [ (gogoproto.nullable) = false ];
 }
 
 message QueryAllLanesRequest {}
 
 message QueryAllLanesResponse {
-  repeated Lane lanes = 1;
+  repeated Lane lanes = 1 [ (gogoproto.nullable) = false ];
 }

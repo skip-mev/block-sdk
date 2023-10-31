@@ -36,10 +36,3 @@ type DistributionKeeper interface {
 type StakingKeeper interface {
 	GetValidatorByConsAddr(context.Context, sdk.ConsAddress) (stakingtypes.Validator, error)
 }
-
-// RewardsAddressProvider is an interface that provides an address where proposer/subset of auction profits are sent.
-//
-//go:generate mockery --name RewardsAddressProvider --output ./mocks --outpkg mocks --case underscore
-type RewardsAddressProvider interface {
-	GetRewardsAddress(context sdk.Context) (sdk.AccAddress, error)
-}
