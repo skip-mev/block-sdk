@@ -35,6 +35,10 @@ type LaneConfig struct {
 	// used by this lane. NOTE: If this is set to zero, then there is no limit
 	// on the number of transactions that can be included in the block for this
 	// lane (up to maxTxBytes as provided by the request). This is useful for the default lane.
+	//
+	// Deprecated: MaxBlockSpace exists for historical compatibility
+	// and should not be used. To access the MaxBlockSpace field for a lane
+	// use ModuleLaneFetcher interface.
 	MaxBlockSpace math.LegacyDec
 
 	// IgnoreList defines the list of lanes to ignore when processing transactions. This
