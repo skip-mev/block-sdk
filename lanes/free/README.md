@@ -70,6 +70,7 @@ func NewApp() {
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(),
         MaxTxs:        0,
+        ModuleLaneFetcher: app.blocksdkKeeper,
     }
     freeLane := freelane.NewFreeLane(freeConfig, base.DefaultTxPriority(), freelane.DefaultMatchHandler())
     
@@ -80,6 +81,7 @@ func NewApp() {
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(),
         MaxTxs:        0,
+		ModuleLaneFetcher: app.blocksdkKeeper,
     }
     defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 

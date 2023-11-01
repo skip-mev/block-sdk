@@ -106,5 +106,9 @@ func (c *LaneConfig) ValidateBasic() error {
 		return fmt.Errorf("max block space must be set to a value between 0 and 1")
 	}
 
+	if c.ModuleLaneFetcher == nil {
+		return fmt.Errorf("module lane fetcher must be set")
+	}
+
 	return nil
 }

@@ -1,6 +1,7 @@
 package block_test
 
 import (
+	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
 	"math/rand"
 	"testing"
 	"time"
@@ -29,7 +30,7 @@ type BlockBusterTestSuite struct {
 	// Define basic tx configuration
 	encodingConfig testutils.EncodingConfig
 
-	// Define all of the lanes utilized in the test suite
+	// Define all the lanes utilized in the test suite
 	mevLane       *mev.MEVLane
 	baseLane      *defaultlane.DefaultLane
 	freeLane      *free.FreeLane
@@ -61,12 +62,13 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// TOB lane set up
 	suite.gasTokenDenom = "stake"
 	mevConfig := base.LaneConfig{
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		Logger:            log.NewNopLogger(),
+		TxEncoder:         suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		AnteHandler:       nil,
+		MaxBlockSpace:     math.LegacyZeroDec(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(suite.T()),
 	}
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
@@ -75,12 +77,13 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Free lane set up
 	freeConfig := base.LaneConfig{
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		Logger:            log.NewNopLogger(),
+		TxEncoder:         suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		AnteHandler:       nil,
+		MaxBlockSpace:     math.LegacyZeroDec(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(suite.T()),
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
@@ -90,12 +93,13 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Base lane set up
 	baseConfig := base.LaneConfig{
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		Logger:            log.NewNopLogger(),
+		TxEncoder:         suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		AnteHandler:       nil,
+		MaxBlockSpace:     math.LegacyZeroDec(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(suite.T()),
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,

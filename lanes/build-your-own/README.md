@@ -366,6 +366,7 @@ config := base.LaneConfig{
     MaxTxs: 0,
     MaxBlockSpace: math.LegacyZeroDec(),
     IgnoreList: []block.Lane{},
+    ModuleLaneFetcher: app.blocksdkKeeper,
 }
 ```
 

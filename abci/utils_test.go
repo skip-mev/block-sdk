@@ -15,6 +15,7 @@ import (
 	signeradaptors "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
+	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
@@ -58,12 +59,13 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace:   maxBlockSpace,
-		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+		Logger:            log.NewTestLogger(s.T()),
+		TxEncoder:         s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:       s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:     maxBlockSpace,
+		SignerExtractor:   signeradaptors.NewDefaultAdapter(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(s.T()),
 	}
 
 	return defaultlane.NewDefaultLane(cfg)
@@ -71,12 +73,13 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace:   maxBlockSpace,
-		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+		Logger:            log.NewTestLogger(s.T()),
+		TxEncoder:         s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:       s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:     maxBlockSpace,
+		SignerExtractor:   signeradaptors.NewDefaultAdapter(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(s.T()),
 	}
 
 	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder, signeradaptors.NewDefaultAdapter()))
@@ -84,12 +87,13 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     s.setUpAnteHandler(expectedExecution),
-		MaxBlockSpace:   maxBlockSpace,
-		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+		Logger:            log.NewTestLogger(s.T()),
+		TxEncoder:         s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:       s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:     maxBlockSpace,
+		SignerExtractor:   signeradaptors.NewDefaultAdapter(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(s.T()),
 	}
 
 	return free.NewFreeLane(cfg, base.DefaultTxPriority(), free.DefaultMatchHandler())
@@ -97,11 +101,12 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 
 func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
-		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
-		MaxBlockSpace:   maxBlockSpace,
-		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+		Logger:            log.NewTestLogger(s.T()),
+		TxEncoder:         s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:         s.encodingConfig.TxConfig.TxDecoder(),
+		MaxBlockSpace:     maxBlockSpace,
+		SignerExtractor:   signeradaptors.NewDefaultAdapter(),
+		ModuleLaneFetcher: baseblockmocks.NewLaneFetcher(s.T()),
 	}
 
 	lane := base.NewBaseLane(

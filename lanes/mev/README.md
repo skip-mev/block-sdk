@@ -130,6 +130,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(), 
         MaxTxs:        0,
+		ModuleLaneFetcher: app.blocksdkKeeper,
     }
     mevLane := mev.NewMEVLane(
         mevConfig,
@@ -143,6 +144,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(),
         MaxTxs:        0,
+		ModuleLaneFetcher: app.blocksdkKeeper,
     }
     defaultLane := base.NewStandardLane(defaultConfig)
 

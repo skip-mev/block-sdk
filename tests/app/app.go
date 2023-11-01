@@ -271,12 +271,13 @@ func New(
 	// lane and the last lane is the lowest priority lane.
 	// MEV lane allows transactions to bid for inclusion at the top of the next block.
 	mevConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
+		Logger:            app.Logger(),
+		TxEncoder:         app.txConfig.TxEncoder(),
+		TxDecoder:         app.txConfig.TxDecoder(),
+		MaxBlockSpace:     math.LegacyMustNewDecFromStr("0.2"),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		MaxTxs:            1000,
+		ModuleLaneFetcher: app.blocksdkKeeper,
 	}
 	mevLane := mev.NewMEVLane(
 		mevConfig,
@@ -285,12 +286,13 @@ func New(
 
 	// Free lane allows transactions to be included in the next block for free.
 	freeConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
+		Logger:            app.Logger(),
+		TxEncoder:         app.txConfig.TxEncoder(),
+		TxDecoder:         app.txConfig.TxDecoder(),
+		MaxBlockSpace:     math.LegacyMustNewDecFromStr("0.2"),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		MaxTxs:            1000,
+		ModuleLaneFetcher: app.blocksdkKeeper,
 	}
 	freeLane := free.NewFreeLane(
 		freeConfig,
@@ -300,12 +302,13 @@ func New(
 
 	// Default lane accepts all other transactions.
 	defaultConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.6"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
+		Logger:            app.Logger(),
+		TxEncoder:         app.txConfig.TxEncoder(),
+		TxDecoder:         app.txConfig.TxDecoder(),
+		MaxBlockSpace:     math.LegacyMustNewDecFromStr("0.6"),
+		SignerExtractor:   signer_extraction.NewDefaultAdapter(),
+		MaxTxs:            1000,
+		ModuleLaneFetcher: app.blocksdkKeeper,
 	}
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig)
 
