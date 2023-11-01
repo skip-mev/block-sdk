@@ -154,6 +154,7 @@ var (
 						consensustypes.ModuleName,
 						circuittypes.ModuleName,
 						auctiontypes.ModuleName,
+						blocksdktypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					// When ExportGenesis is not specified, the export genesis module order
