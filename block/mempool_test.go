@@ -1,10 +1,11 @@
 package block_test
 
 import (
-	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
 	"math/rand"
 	"testing"
 	"time"
+
+	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
