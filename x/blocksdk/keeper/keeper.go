@@ -17,12 +17,12 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
-	// The address that is capable of executing a MsgUpdateParams message.
+	// The address that is capable of executing a message.
 	// Typically this will be the governance module's address.
 	authority string
 }
 
-// NewKeeper is a wrapper around NewKeeperWithRewardsAddressProvider for backwards compatibility.
+// NewKeeper creates a new x/blocksdk keeper.
 func NewKeeper(
 	cdc codec.BinaryCodec,
 	storeKey storetypes.StoreKey,

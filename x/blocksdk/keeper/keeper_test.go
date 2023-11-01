@@ -12,8 +12,6 @@ import (
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/blocksdk/keeper"
 	"github.com/skip-mev/block-sdk/x/blocksdk/types"
-	"github.com/skip-mev/block-sdk/x/blocksdk/types/mocks"
-
 	"github.com/stretchr/testify/suite"
 )
 
@@ -21,10 +19,6 @@ type KeeperTestSuite struct {
 	suite.Suite
 
 	blocksdKeeper    keeper.Keeper
-	bankKeeper       *mocks.BankKeeper
-	accountKeeper    *mocks.AccountKeeper
-	distrKeeper      *mocks.DistributionKeeper
-	stakingKeeper    *mocks.StakingKeeper
 	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
 	msgServer        types.MsgServer
@@ -41,14 +35,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.key = storetypes.NewKVStoreKey(types.StoreKey)
 	testCtx := testutil.DefaultContextWithDB(s.T(), s.key, storetypes.NewTransientStoreKey("transient_test"))
 	s.ctx = testCtx.Ctx
-
-	s.accountKeeper = mocks.NewAccountKeeper(s.T())
-	s.accountKeeper.On("GetModuleAddress", types.ModuleName).Return(sdk.AccAddress{}).Maybe()
-
-	s.bankKeeper = mocks.NewBankKeeper(s.T())
-	s.distrKeeper = mocks.NewDistributionKeeper(s.T())
-	s.stakingKeeper = mocks.NewStakingKeeper(s.T())
-	s.authorityAccount = sdk.AccAddress([]byte("authority"))
+	s.authorityAccount = []byte("authority")
 	s.blocksdKeeper = keeper.NewKeeper(
 		s.encCfg.Codec,
 		s.key,

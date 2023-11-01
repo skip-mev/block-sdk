@@ -15,7 +15,7 @@ const (
 )
 
 const (
-	prefixLanes = iota + 1
+	prefixLanes = iota
 )
 
 // KeyLanes is the store key for the lanes.
