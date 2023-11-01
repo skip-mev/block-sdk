@@ -14,6 +14,7 @@ import (
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
+	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
 	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/utils"
@@ -1316,6 +1317,7 @@ func (s *BaseTestSuite) initLane(
 		s.setUpAnteHandler(expectedExecution),
 		signer_extraction.NewDefaultAdapter(),
 		maxBlockSpace,
+		baseblockmocks.NewLaneFetcher(s.T()),
 	)
 
 	return defaultlane.NewDefaultLane(config)

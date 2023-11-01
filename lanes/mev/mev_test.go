@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	baseblockmocks "github.com/skip-mev/block-sdk/block/base/mocks"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -61,6 +63,7 @@ func (s *MEVTestSuite) initLane(
 		s.setUpAnteHandler(expectedExecution),
 		signer_extraction.NewDefaultAdapter(),
 		maxBlockSpace,
+		baseblockmocks.NewLaneFetcher(s.T()),
 	)
 
 	factory := mev.NewDefaultAuctionFactory(s.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())

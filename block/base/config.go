@@ -5,11 +5,20 @@ import (
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
+
+// LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
+//
+//go:generate mockery --name LaneFetcher --output ./mocks --outpkg mocks --case underscore
+type LaneFetcher interface {
+	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
+}
 
 // LaneConfig defines the basic configurations needed for a lane.
 type LaneConfig struct {
@@ -44,6 +53,10 @@ type LaneConfig struct {
 	//   (sequence number) when evicting transactions.
 	// - if MaxTx < 0, `Insert` is a no-op.
 	MaxTxs int
+
+	// ModuleLaneFetcher interfaces into the app's x/blockspace module to fetch
+	// on-chain lane information.
+	ModuleLaneFetcher LaneFetcher
 }
 
 // NewLaneConfig returns a new LaneConfig. This will be embedded in a lane.
@@ -54,14 +67,16 @@ func NewLaneConfig(
 	anteHandler sdk.AnteHandler,
 	signerExtractor signer_extraction.Adapter,
 	maxBlockSpace math.LegacyDec,
+	laneFetcher LaneFetcher,
 ) LaneConfig {
 	return LaneConfig{
-		Logger:          logger,
-		TxEncoder:       txEncoder,
-		TxDecoder:       txDecoder,
-		AnteHandler:     anteHandler,
-		MaxBlockSpace:   maxBlockSpace,
-		SignerExtractor: signerExtractor,
+		Logger:            logger,
+		TxEncoder:         txEncoder,
+		TxDecoder:         txDecoder,
+		AnteHandler:       anteHandler,
+		MaxBlockSpace:     maxBlockSpace,
+		SignerExtractor:   signerExtractor,
+		ModuleLaneFetcher: laneFetcher,
 	}
 }
 

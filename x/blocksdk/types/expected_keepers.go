@@ -7,7 +7,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 )
 
-// BankKeeper defines the expected API contract for the x/account module.
+// AccountKeeper defines the expected API contract for the x/account module.
 //
 //go:generate mockery --name AccountKeeper --output ./mocks --outpkg mocks --case underscore
 type AccountKeeper interface {
