@@ -31,10 +31,10 @@ func (q QueryServer) Lane(goCtx context.Context, query *types.QueryLaneRequest) 
 	return &types.QueryLaneResponse{Lane: lane}, nil
 }
 
-func (q QueryServer) Lanes(goCtx context.Context, _ *types.QueryAllLanesRequest) (*types.QueryAllLanesResponse, error) {
+func (q QueryServer) Lanes(goCtx context.Context, _ *types.QueryLanesRequest) (*types.QueryLanesResponse, error) {
 	ctx := sdk.UnwrapSDKContext(goCtx)
 
 	lanes := q.keeper.GetLanes(ctx)
 
-	return &types.QueryAllLanesResponse{Lanes: lanes}, nil
+	return &types.QueryLanesResponse{Lanes: lanes}, nil
 }
