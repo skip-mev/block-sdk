@@ -1,11 +1,13 @@
 package types_test
 
 import (
-	"cosmossdk.io/math"
-	"github.com/skip-mev/block-sdk/testutils"
 	"math/rand"
 	"testing"
 	"time"
+
+	"cosmossdk.io/math"
+
+	"github.com/skip-mev/block-sdk/testutils"
 
 	"github.com/skip-mev/block-sdk/x/blocksdk/types"
 )

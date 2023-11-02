@@ -19,10 +19,10 @@ import (
 type KeeperTestSuite struct {
 	suite.Suite
 
-	blocksdKeeper keeper.Keeper
-	encCfg        testutils.EncodingConfig
-	ctx           sdk.Context
-	// msgServer        types.MsgServer
+	blocksdKeeper    keeper.Keeper
+	encCfg           testutils.EncodingConfig
+	ctx              sdk.Context
+	msgServer        types.MsgServer
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
 }
@@ -43,7 +43,7 @@ func (s *KeeperTestSuite) SetupTest() {
 		s.authorityAccount.String(),
 	)
 
-	// s.msgServer = keeper.NewMsgServerImpl(s.blocksdKeeper)
+	s.msgServer = keeper.NewMsgServerImpl(s.blocksdKeeper)
 }
 
 func (s *KeeperTestSuite) TestLane() {
