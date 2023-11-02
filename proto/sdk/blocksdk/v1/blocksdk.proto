@@ -27,10 +27,10 @@ message Lane {
     (gogoproto.nullable) = false
   ];
 
-  // order is the priority ordering of the Lane.  Lane orders should be set in
-  // order of priority starting from 0, monotonically increasing and
-  // non-overlapping.  A lane with a lower order value will have a higher
-  // priority over a lane with a higher order value.  For example, if LaneA has
-  // priority of 0 and LaneB has a priority of 1, LaneA has priority over LaneB.
+  // order is the priority ordering of the Lane when processed in PrepareProposal
+  // and ProcessProposal. Lane orders should be set in order of priority starting from 0,
+  // monotonically increasing and non-overlapping. A lane with a lower order value
+  // will have a higher priority over a lane with a higher order value.  For example,
+  // if LaneA has priority of 0 and LaneB has a priority of 1, LaneA has priority over LaneB.
   uint64 order = 3;
 }
