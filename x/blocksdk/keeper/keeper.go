@@ -58,12 +58,12 @@ func (k *Keeper) AddLane(ctx sdk.Context, lane types.Lane) error {
 		return fmt.Errorf("new lane creates invalid lane configuration: %w", err)
 	}
 
-	k.SetLane(ctx, lane)
+	k.setLane(ctx, lane)
 	return nil
 }
 
-// SetLane sets a lane in the store.
-func (k *Keeper) SetLane(ctx sdk.Context, lane types.Lane) {
+// setLane sets a lane in the store.
+func (k *Keeper) setLane(ctx sdk.Context, lane types.Lane) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
 	b := k.cdc.MustMarshal(&lane)
 	store.Set([]byte(lane.Id), b)
@@ -97,12 +97,8 @@ func (k *Keeper) GetLanes(ctx sdk.Context) (lanes []types.Lane) {
 }
 
 // DeleteLane deletes an Lane.
-func (k *Keeper) DeleteLane(ctx sdk.Context, id string) error {
+func (k *Keeper) DeleteLane(ctx sdk.Context, id string) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
-	b := store.Get([]byte(id))
-
 	// Delete the Lane
-	store.Delete(b)
-
-	return nil
+	store.Delete([]byte(id))
 }

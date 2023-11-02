@@ -7,14 +7,14 @@ import (
 )
 
 // InitGenesis initializes the blocksdk module's state from a given genesis state.
-func (k Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
+func (k *Keeper) InitGenesis(ctx sdk.Context, gs types.GenesisState) {
 	for _, lane := range gs.Lanes {
-		k.SetLane(ctx, lane)
+		k.setLane(ctx, lane)
 	}
 }
 
 // ExportGenesis returns a GenesisState for a given context.
-func (k Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
+func (k *Keeper) ExportGenesis(ctx sdk.Context) *types.GenesisState {
 	lanes := k.GetLanes(ctx)
 
 	return &types.GenesisState{Lanes: lanes}

@@ -46,10 +46,11 @@ func (s *KeeperTestSuite) SetupTest() {
 	// s.msgServer = keeper.NewMsgServerImpl(s.blocksdKeeper)
 }
 
-func (s *KeeperTestSuite) TestSetLane() {
+func (s *KeeperTestSuite) TestLane() {
 	const (
 		validLaneID1  = "test1"
 		validLaneID2  = "test2"
+		validLaneID3  = "test3"
 		invalidLaneID = "invalid"
 	)
 
@@ -57,15 +58,18 @@ func (s *KeeperTestSuite) TestSetLane() {
 		{
 			Id:            validLaneID1,
 			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.10"),
+			Order:         0,
 		},
 		{
 			Id:            validLaneID2,
 			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.10"),
+			Order:         1,
 		},
 	}
 
 	for _, lane := range lanes {
-		s.blocksdKeeper.SetLane(s.ctx, lane)
+		err := s.blocksdKeeper.AddLane(s.ctx, lane)
+		s.Require().NoError(err)
 	}
 
 	s.Run("get lane valid", func() {
@@ -82,5 +86,44 @@ func (s *KeeperTestSuite) TestSetLane() {
 	s.Run("get lanes", func() {
 		gotLanes := s.blocksdKeeper.GetLanes(s.ctx)
 		s.Require().Equal(lanes, gotLanes)
+	})
+
+	s.Run("add invalid duplicate lane order", func() {
+		invalidLane := types.Lane{
+			Id:            validLaneID3,
+			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.10"),
+			Order:         0,
+		}
+
+		err := s.blocksdKeeper.AddLane(s.ctx, invalidLane)
+		s.Require().Error(err)
+	})
+
+	s.Run("add invalid duplicate lane ID", func() {
+		invalidLane := types.Lane{
+			Id:            validLaneID1,
+			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.10"),
+			Order:         2,
+		}
+
+		err := s.blocksdKeeper.AddLane(s.ctx, invalidLane)
+		s.Require().Error(err)
+	})
+
+	s.Run("add invalid non-monotonic order", func() {
+		invalidLane := types.Lane{
+			Id:            validLaneID3,
+			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.10"),
+			Order:         3,
+		}
+
+		err := s.blocksdKeeper.AddLane(s.ctx, invalidLane)
+		s.Require().Error(err)
+	})
+
+	s.Run("delete valid", func() {
+		s.blocksdKeeper.DeleteLane(s.ctx, validLaneID1)
+		_, err := s.blocksdKeeper.GetLane(s.ctx, validLaneID1)
+		s.Require().Error(err)
 	})
 }
