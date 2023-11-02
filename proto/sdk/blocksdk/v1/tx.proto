@@ -31,5 +31,6 @@ message MsgUpdateLane {
   Lane lane = 2 [ (gogoproto.nullable) = false ];
 }
 
-// MsgUpdateLaneResponse defines a response to update an existing lane in the store.
+// MsgUpdateLaneResponse defines a response to update an existing lane in the
+// store.
 message MsgUpdateLaneResponse {}
