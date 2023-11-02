@@ -18,7 +18,7 @@ type Keeper struct {
 	storeKey storetypes.StoreKey
 
 	// The address that is capable of executing a message.
-	// Typically this will be the governance module's address.
+	// Typically, this will be the governance module's address.
 	authority string
 }
 
@@ -38,24 +38,39 @@ func NewKeeper(
 }
 
 // Logger returns a blocksdk module-specific logger.
-func (k Keeper) Logger(ctx sdk.Context) log.Logger {
+func (k *Keeper) Logger(ctx sdk.Context) log.Logger {
 	return ctx.Logger().With("module", "x/"+types.ModuleName)
 }
 
 // GetAuthority returns the address that is capable of executing a MsgUpdateParams message.
-func (k Keeper) GetAuthority() string {
+func (k *Keeper) GetAuthority() string {
 	return k.authority
 }
 
+// AddLane calls SetLane and provides additional stateful checks that the new
+// set of lanes will be valid.
+func (k *Keeper) AddLane(ctx sdk.Context, lane types.Lane) error {
+	currentLanes := k.GetLanes(ctx)
+	newLanes := append(currentLanes, lane)
+
+	// validate new set of lanes
+	if err := types.Lanes(newLanes).ValidateBasic(); err != nil {
+		return fmt.Errorf("new lane creates invalid lane configuration: %w", err)
+	}
+
+	k.SetLane(ctx, lane)
+	return nil
+}
+
 // SetLane sets a lane in the store.
-func (k Keeper) SetLane(ctx sdk.Context, lane types.Lane) {
+func (k *Keeper) SetLane(ctx sdk.Context, lane types.Lane) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
 	b := k.cdc.MustMarshal(&lane)
 	store.Set([]byte(lane.Id), b)
 }
 
 // GetLane returns a lane by its id.
-func (k Keeper) GetLane(ctx sdk.Context, id string) (lane types.Lane, err error) {
+func (k *Keeper) GetLane(ctx sdk.Context, id string) (lane types.Lane, err error) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
 	b := store.Get([]byte(id))
 	if b == nil {
@@ -66,7 +81,7 @@ func (k Keeper) GetLane(ctx sdk.Context, id string) (lane types.Lane, err error)
 }
 
 // GetLanes returns all lanes.
-func (k Keeper) GetLanes(ctx sdk.Context) (lanes []types.Lane) {
+func (k *Keeper) GetLanes(ctx sdk.Context) (lanes []types.Lane) {
 	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
 	iterator := storetypes.KVStorePrefixIterator(store, []byte{})
 
@@ -79,4 +94,15 @@ func (k Keeper) GetLanes(ctx sdk.Context) (lanes []types.Lane) {
 	}
 
 	return
+}
+
+// DeleteLane deletes an Lane.
+func (k *Keeper) DeleteLane(ctx sdk.Context, id string) error {
+	store := prefix.NewStore(ctx.KVStore(k.storeKey), types.KeyLanes)
+	b := store.Get([]byte(id))
+
+	// Delete the Lane
+	store.Delete(b)
+
+	return nil
 }
