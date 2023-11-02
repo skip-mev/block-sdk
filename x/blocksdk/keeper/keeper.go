@@ -51,10 +51,10 @@ func (k *Keeper) GetAuthority() string {
 // set of lanes will be valid.
 func (k *Keeper) AddLane(ctx sdk.Context, lane types.Lane) error {
 	currentLanes := k.GetLanes(ctx)
-	newLanes := append(currentLanes, lane)
+	currentLanes = append(currentLanes, lane)
 
 	// validate new set of lanes
-	if err := types.Lanes(newLanes).ValidateBasic(); err != nil {
+	if err := types.Lanes(currentLanes).ValidateBasic(); err != nil {
 		return fmt.Errorf("new lane creates invalid lane configuration: %w", err)
 	}
 
