@@ -36,11 +36,13 @@ type Lane struct {
 	// max_block_space defines the relative percentage of block space that can be
 	// used by this lane. NOTE: If this is set to zero, then there is no limit
 	// on the number of transactions that can be included in the block for this
-	// lane (up to maxTxBytes as provided by the request). This is useful for the default lane.
+	// lane (up to maxTxBytes as provided by the request). This is useful for the
+	// default lane.
 	MaxBlockSpace cosmossdk_io_math.LegacyDec `protobuf:"bytes,2,opt,name=max_block_space,json=maxBlockSpace,proto3,customtype=cosmossdk.io/math.LegacyDec" json:"max_block_space"`
-	// order is the priority ordering of the Lane.  Lane orders should be set in order of priority
-	// starting from 0, monotonically increasing and non-overlapping.  A lane with a lower order value
-	// will have a higher priority over a lane with a higher order value.  For example, if LaneA has
+	// order is the priority ordering of the Lane.  Lane orders should be set in
+	// order of priority starting from 0, monotonically increasing and
+	// non-overlapping.  A lane with a lower order value will have a higher
+	// priority over a lane with a higher order value.  For example, if LaneA has
 	// priority of 0 and LaneB has a priority of 1, LaneA has priority over LaneB.
 	Order uint64 `protobuf:"varint,3,opt,name=order,proto3" json:"order,omitempty"`
 }
