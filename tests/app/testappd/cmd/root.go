@@ -279,7 +279,6 @@ func txCommand() *cobra.Command {
 		authcmd.GetBroadcastCommand(),
 		authcmd.GetEncodeCommand(),
 		authcmd.GetDecodeCommand(),
-		// authcmd.GetAuxToFeeCommand(),
 	)
 
 	return cmd
