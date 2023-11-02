@@ -214,7 +214,8 @@ func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
 func NewLane(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *Lane {
+},
+) *Lane {
 	mock := &Lane{}
 	mock.Mock.Test(t)
 
