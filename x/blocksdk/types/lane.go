@@ -26,7 +26,7 @@ func (l *Lane) ValidateBasic() error {
 // for each lane, verifies that order is monotonically increasing for all lanes, and
 // checks that IDs are unique.
 func (ls Lanes) ValidateBasic() error {
-	laneIDMap := make(map[string]struct{})
+	encounteredIDs := make(map[string]struct{})
 	encounteredOrders := make(map[uint64]struct{})
 
 	// validate each lane and check that ID and order fields are unique
@@ -35,12 +35,12 @@ func (ls Lanes) ValidateBasic() error {
 			return err
 		}
 
-		_, found := laneIDMap[l.Id]
+		_, found := encounteredIDs[l.Id]
 		if found {
 			return fmt.Errorf("duplicate lane ID found: %s", l.Id)
 		}
 
-		laneIDMap[l.Id] = struct{}{}
+		encounteredIDs[l.Id] = struct{}{}
 
 		_, found = encounteredOrders[l.Order]
 		if found {
