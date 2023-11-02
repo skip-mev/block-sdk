@@ -3,7 +3,7 @@ module github.com/skip-mev/block-sdk
 go 1.21
 
 require (
-	cosmossdk.io/api v0.7.1
+	cosmossdk.io/api v0.7.2
 	cosmossdk.io/client/v2 v2.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/core v0.11.0
 	cosmossdk.io/depinject v1.0.0-alpha.4
