@@ -20,8 +20,6 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	abci "github.com/cometbft/cometbft/abci/types"
-
 	modulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	"github.com/skip-mev/block-sdk/x/blocksdk/client/cli"
 	"github.com/skip-mev/block-sdk/x/blocksdk/keeper"
@@ -29,8 +27,12 @@ import (
 )
 
 var (
-	_ module.AppModule      = AppModule{}
-	_ module.AppModuleBasic = AppModuleBasic{}
+	_ module.AppModuleBasic = AppModule{}
+	_ module.HasGenesis     = AppModule{}
+	_ module.HasServices    = AppModule{}
+	_ module.HasInvariants  = AppModule{}
+
+	_ appmodule.AppModule = AppModule{}
 )
 
 // ConsensusVersion defines the current x/blocksdk module consensus version.
@@ -129,12 +131,11 @@ func (am AppModule) RegisterInvariants(_ sdk.InvariantRegistry) {}
 
 // InitGenesis performs the module's genesis initialization for the blocksdk
 // module. It returns no validator updates.
-func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) []abci.ValidatorUpdate {
+func (am AppModule) InitGenesis(ctx sdk.Context, cdc codec.JSONCodec, gs json.RawMessage) {
 	var genState types.GenesisState
 	cdc.MustUnmarshalJSON(gs, &genState)
 
 	am.keeper.InitGenesis(ctx, genState)
-	return []abci.ValidatorUpdate{}
 }
 
 // ExportGenesis returns the blocksdk module's exported genesis state as raw
