@@ -70,6 +70,8 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+	blocksdkmodule "github.com/skip-mev/block-sdk/x/blocksdk"
+	blocksdkkeeper "github.com/skip-mev/block-sdk/x/blocksdk/keeper"
 )
 
 const (
@@ -106,6 +108,7 @@ var (
 		vesting.AppModuleBasic{},
 		consensus.AppModuleBasic{},
 		auctionmodule.AppModuleBasic{},
+		blocksdkmodule.AppModuleBasic{},
 		feegrantmodule.AppModuleBasic{},
 	)
 )
@@ -138,6 +141,7 @@ type TestApp struct {
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitBreakerKeeper  circuitkeeper.Keeper
 	auctionkeeper         auctionkeeper.Keeper
+	blocksdkKeeper        blocksdkkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -219,6 +223,7 @@ func New(
 		&app.AuthzKeeper,
 		&app.GroupKeeper,
 		&app.auctionkeeper,
+		&app.blocksdkKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.FeeGrantKeeper,
 		&app.CircuitBreakerKeeper,
