@@ -2,9 +2,10 @@ package abci_test
 
 import (
 	"context"
-	"github.com/skip-mev/block-sdk/block/mocks"
 	"math/rand"
 	"testing"
+
+	"github.com/skip-mev/block-sdk/block/mocks"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"

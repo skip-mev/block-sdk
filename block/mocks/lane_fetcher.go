@@ -3,8 +3,9 @@
 package mocks
 
 import (
-	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	mock "github.com/stretchr/testify/mock"
+
+	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	types "github.com/cosmos/cosmos-sdk/types"
 )
@@ -59,7 +60,8 @@ func (_m *LaneFetcher) GetLanes(ctx types.Context) []blocksdktypes.Lane {
 func NewLaneFetcher(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *LaneFetcher {
+},
+) *LaneFetcher {
 	mock := &LaneFetcher{}
 	mock.Mock.Test(t)
 

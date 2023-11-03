@@ -219,12 +219,18 @@ func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
 	_m.Called(ignoreList)
 }
 
+// SetMaxBlockSpace provides a mock function with given fields: _a0
+func (_m *Lane) SetMaxBlockSpace(_a0 math.LegacyDec) {
+	_m.Called(_a0)
+}
+
 // NewLane creates a new instance of Lane. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewLane(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *Lane {
+},
+) *Lane {
 	mock := &Lane{}
 	mock.Mock.Test(t)
 

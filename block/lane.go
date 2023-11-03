@@ -57,6 +57,9 @@ type Lane interface {
 	// GetMaxBlockSpace returns the max block space for the lane as a relative percentage.
 	GetMaxBlockSpace() math.LegacyDec
 
+	// SetMaxBlockSpace sets the max block space for the lane as a relative percentage.
+	SetMaxBlockSpace(math.LegacyDec)
+
 	// Name returns the name of the lane.
 	Name() string
 
@@ -68,4 +71,16 @@ type Lane interface {
 
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
+}
+
+// FindLane finds a Lanes from in an array of Lanes and returns it and its index if found.
+// Returns nil, 0 and false if not found.
+func FindLane(lanes []Lane, name string) (Lane, int, bool) {
+	for i, lane := range lanes {
+		if lane.Name() == name {
+			return lane, i, true
+		}
+	}
+
+	return nil, 0, false
 }

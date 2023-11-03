@@ -248,3 +248,33 @@ func (m *LanedMempool) ValidateBasic() error {
 
 	return nil
 }
+
+func (m *LanedMempool) GenerateRegistry(ctx sdk.Context) (newRegistry []Lane, err error) {
+	// TODO add a last block updated check ?
+	lanes := m.moduleLaneFetcher.GetLanes(ctx)
+
+	// order lanes and populate the necessary fields (maxBlockSize, etc)
+	return m.OrderLanes(lanes)
+}
+
+func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (orderedLanes []Lane, err error) {
+	orderedLanes = make([]Lane, len(chainLanes))
+	registryLanes := m.Registry()
+
+	for _, chainLane := range chainLanes {
+		lane, index, found := FindLane(registryLanes, chainLane.Id)
+		if !found {
+			return orderedLanes, fmt.Errorf("lane %s not found in registry, invalid configuration", chainLane.Id)
+		}
+
+		lane.SetMaxBlockSpace(chainLane.MaxBlockSpace)
+		orderedLanes[chainLane.GetOrder()] = lane
+
+		// remove found lane from registry lanes for quicker find()
+		registryLanes[index] = registryLanes[len(registryLanes)-1] // Copy last element to index i.
+		registryLanes[len(registryLanes)-1] = nil                  // Erase last element (write zero value).
+		registryLanes = registryLanes[:len(registryLanes)-1]       // Truncate slice.
+	}
+
+	return orderedLanes, nil
+}

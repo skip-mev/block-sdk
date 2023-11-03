@@ -1,10 +1,7 @@
 package app
 
 import (
-	"cosmossdk.io/x/feegrant"
 	"time"
-
-	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
 	appv1alpha1 "cosmossdk.io/api/cosmos/app/v1alpha1"
@@ -29,6 +26,7 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
 	circuittypes "cosmossdk.io/x/circuit/types"
+	"cosmossdk.io/x/feegrant"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -69,6 +67,7 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 	_ "github.com/skip-mev/block-sdk/x/blocksdk" // import for side-effects
