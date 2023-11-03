@@ -1,6 +1,7 @@
 package app
 
 import (
+	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	"time"
 
 	runtimev1alpha1 "cosmossdk.io/api/cosmos/app/runtime/v1alpha1"
@@ -68,6 +69,8 @@ import (
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	_ "github.com/skip-mev/block-sdk/x/blocksdk" // import for side-effects
+	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 var (
@@ -151,6 +154,7 @@ var (
 						consensustypes.ModuleName,
 						circuittypes.ModuleName,
 						auctiontypes.ModuleName,
+						blocksdktypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					// When ExportGenesis is not specified, the export genesis module order
@@ -246,6 +250,10 @@ var (
 			{
 				Name:   auctiontypes.ModuleName,
 				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
+			},
+			{
+				Name:   blocksdktypes.ModuleName,
+				Config: appconfig.WrapAny(&blocksdkmodulev1.Module{}),
 			},
 		},
 	}),
