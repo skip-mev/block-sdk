@@ -242,5 +242,9 @@ func (m *LanedMempool) ValidateBasic() error {
 		return fmt.Errorf("sum of total block space percentages will be less than 1")
 	}
 
+	if m.moduleLaneFetcher == nil {
+		return fmt.Errorf("moduleLaneFetcher muset be set on mempool")
+	}
+
 	return nil
 }

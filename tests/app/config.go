@@ -1,6 +1,7 @@
 package app
 
 import (
+	"cosmossdk.io/x/feegrant"
 	"time"
 
 	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
@@ -28,7 +29,6 @@ import (
 	"cosmossdk.io/core/appconfig"
 	"cosmossdk.io/depinject"
 	circuittypes "cosmossdk.io/x/circuit/types"
-	"cosmossdk.io/x/feegrant"
 	upgradetypes "cosmossdk.io/x/upgrade/types"
 	"github.com/cosmos/cosmos-sdk/runtime"
 	"github.com/cosmos/cosmos-sdk/types/module"
@@ -51,6 +51,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	_ "cosmossdk.io/x/circuit"                        // import for side-effects
+	_ "cosmossdk.io/x/feegrant/module"                // import for side-effects
 	_ "cosmossdk.io/x/upgrade"                        // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/auth/vesting"   // import for side-effects

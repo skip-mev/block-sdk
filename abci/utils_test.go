@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"github.com/skip-mev/block-sdk/block/mocks"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -118,7 +119,12 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), true, lanes...)
+	mempool := block.NewLanedMempool(log.NewTestLogger(
+		s.T()),
+		true,
+		mocks.NewLaneFetcher(s.T()),
+		lanes...,
+	)
 
 	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),

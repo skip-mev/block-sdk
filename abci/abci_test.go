@@ -2,6 +2,7 @@ package abci_test
 
 import (
 	"context"
+	"github.com/skip-mev/block-sdk/block/mocks"
 	"math/rand"
 	"testing"
 
@@ -660,7 +661,17 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, defaultLane)
+		lanes := []block.Lane{
+			panicLane,
+			defaultLane,
+		}
+
+		mempool := block.NewLanedMempool(log.NewTestLogger(
+			s.T()),
+			false,
+			mocks.NewLaneFetcher(s.T()),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -709,7 +720,17 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane)
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+		}
+
+		mempool := block.NewLanedMempool(log.NewTestLogger(
+			s.T()),
+			false,
+			mocks.NewLaneFetcher(s.T()),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -759,7 +780,18 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, panicLane2, defaultLane)
+		lanes := []block.Lane{
+			panicLane,
+			panicLane2,
+			defaultLane,
+		}
+
+		mempool := block.NewLanedMempool(log.NewTestLogger(
+			s.T()),
+			false,
+			mocks.NewLaneFetcher(s.T()),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -809,7 +841,18 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane, panicLane2)
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+			panicLane2,
+		}
+
+		mempool := block.NewLanedMempool(log.NewTestLogger(
+			s.T()),
+			false,
+			mocks.NewLaneFetcher(s.T()),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),

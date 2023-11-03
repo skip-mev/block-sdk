@@ -265,7 +265,12 @@ func New(
 		freeLane,
 		defaultLane,
 	}
-	mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
+	mempool := block.NewLanedMempool(
+		app.Logger(),
+		true,
+		&app.blocksdkKeeper,
+		lanes...,
+	)
 	app.App.SetMempool(mempool)
 
 	// Create a global ante handler that will be called on each transaction when

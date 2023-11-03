@@ -1,6 +1,7 @@
 package block_test
 
 import (
+	"github.com/skip-mev/block-sdk/block/mocks"
 	"math/rand"
 	"testing"
 	"time"
@@ -103,7 +104,12 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	suite.mempool = block.NewLanedMempool(
+		log.NewTestLogger(suite.T()),
+		true,
+		mocks.NewLaneFetcher(suite.T()),
+		suite.lanes...,
+	)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
