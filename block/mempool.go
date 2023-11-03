@@ -9,9 +9,19 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 var _ Mempool = (*LanedMempool)(nil)
+
+// LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
+//
+//go:generate mockery --name LaneFetcher --output ./mocks --outpkg mocks --case underscore
+type LaneFetcher interface {
+	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
+	GetLanes(ctx sdk.Context) []blocksdkmoduletypes.Lane
+}
 
 type (
 	// Mempool defines the Block SDK mempool interface.
@@ -21,7 +31,7 @@ type (
 		// Registry returns the mempool's lane registry.
 		Registry() []Lane
 
-		// Contains returns the any of the lanes currently contain the transaction.
+		// Contains returns true if any of the lanes currently contain the transaction.
 		Contains(tx sdk.Tx) bool
 
 		// GetTxDistribution returns the number of transactions in each lane.
@@ -37,11 +47,17 @@ type (
 		// according to their priority. The first lane in the registry has the
 		// highest priority and the last lane has the lowest priority.
 		registry []Lane
+
+		// moduleLaneFetcher is the mempool's interface to read on-chain lane
+		// information in the x/blocksdk module.
+		moduleLaneFetcher LaneFetcher
 	}
 )
 
-// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool is
-// comprised of a registry of lanes. Each lane is responsible for selecting
+// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool comprises
+//
+//	a registry of lanes. Each lane is responsible for selecting
+//
 // transactions according to its own selection logic. The lanes are ordered
 // according to their priority. The first lane in the registry has the highest
 // priority. Proposals are verified according to the order of the lanes in the
@@ -51,10 +67,11 @@ type (
 // attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
 // that mutex is set to true when creating the mempool. This will ensure that each
 // transaction cannot be inserted into the lanes before it.
-func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) Mempool {
+func NewLanedMempool(logger log.Logger, mutex bool, laneFetcher LaneFetcher, lanes ...Lane) Mempool {
 	mempool := &LanedMempool{
-		logger:   logger,
-		registry: lanes,
+		logger:            logger,
+		registry:          lanes,
+		moduleLaneFetcher: laneFetcher,
 	}
 
 	if err := mempool.ValidateBasic(); err != nil {
