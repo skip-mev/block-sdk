@@ -6,34 +6,34 @@ updates:
   - package-ecosystem: github-actions
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
 
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     labels:
       - "A:automerge"
       - dependencies
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     target-branch: "main"
 
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     labels:
       - "A:automerge"
       - dependencies
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     target-branch: "release/v1.x.x"
   
   - package-ecosystem: gomod
     directory: "/"
     schedule:
-      interval: daily
+      interval: weekly
     labels:
       - "A:automerge"
       - dependencies
-    open-pull-requests-limit: 5
+    open-pull-requests-limit: 3
     target-branch: "release/v2.x.x"
