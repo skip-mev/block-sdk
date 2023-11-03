@@ -22,6 +22,7 @@ type KeeperTestSuite struct {
 	blocksdKeeper    keeper.Keeper
 	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
+	queryServer      types.QueryServer
 	msgServer        types.MsgServer
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
@@ -44,6 +45,7 @@ func (s *KeeperTestSuite) SetupTest() {
 	)
 
 	s.msgServer = keeper.NewMsgServerImpl(s.blocksdKeeper)
+	s.queryServer = keeper.NewQueryServer(s.blocksdKeeper)
 }
 
 func (s *KeeperTestSuite) TestLane() {
