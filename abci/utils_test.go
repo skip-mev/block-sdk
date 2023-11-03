@@ -4,8 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
-
-	"github.com/skip-mev/block-sdk/block/mocks"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -120,10 +119,26 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
+	laneFetcher := NewMockLaneFetcher(
+		func() (blocksdkmoduletypes.Lane, error) {
+			return blocksdkmoduletypes.Lane{}, nil
+		},
+		func() []blocksdkmoduletypes.Lane {
+			blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
+			for i, lane := range lanes {
+				blocksdkLanes[i] = blocksdkmoduletypes.Lane{
+					Id:            lane.Name(),
+					MaxBlockSpace: lane.GetMaxBlockSpace(),
+					Order:         uint64(i),
+				}
+			}
+			return blocksdkLanes
+		})
+
 	mempool := block.NewLanedMempool(log.NewTestLogger(
 		s.T()),
 		true,
-		mocks.NewLaneFetcher(s.T()),
+		laneFetcher,
 		lanes...,
 	)
 

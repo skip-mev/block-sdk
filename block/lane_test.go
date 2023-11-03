@@ -2,15 +2,11 @@ package block_test
 
 import (
 	"fmt"
-	"github.com/stretchr/testify/require"
-	"testing"
-
-	"github.com/skip-mev/block-sdk/block/mocks"
-
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/mocks"
 )
 
-func TestFindLane(t *testing.T) {
+func (suite *BlockBusterTestSuite) TestFindLane() {
 	lanes := make([]block.Lane, 30)
 	cleanup := func() {
 		for i := range lanes {
@@ -20,7 +16,7 @@ func TestFindLane(t *testing.T) {
 	defer cleanup()
 
 	for i := range lanes {
-		laneMock := mocks.NewLane(t)
+		laneMock := mocks.NewLane(suite.T())
 		laneMock.On("Name").Return(fmt.Sprintf("lane%d", i))
 		lanes[i] = laneMock
 	}
@@ -65,17 +61,17 @@ func TestFindLane(t *testing.T) {
 			wantFound: true,
 		},
 	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			gotLane, gotIndex, gotFound := block.FindLane(tt.args.lanes, tt.args.name)
-			if tt.wantFound {
-				require.True(t, gotFound)
-				require.Equal(t, tt.wantLane, gotLane)
-				require.Equal(t, tt.wantIndex, gotIndex)
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			gotLane, gotIndex, gotFound := block.FindLane(tc.args.lanes, tc.args.name)
+			if tc.wantFound {
+				suite.Require().True(gotFound)
+				suite.Require().Equal(tc.wantLane, gotLane)
+				suite.Require().Equal(tc.wantIndex, gotIndex)
 				return
 			}
 
-			require.False(t, gotFound)
+			suite.Require().False(gotFound)
 
 		})
 	}

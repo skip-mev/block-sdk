@@ -2,6 +2,7 @@ package abci_test
 
 import (
 	"context"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"math/rand"
 	"testing"
 
@@ -20,6 +21,34 @@ import (
 	"github.com/skip-mev/block-sdk/block/proposals"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
+
+type MockLaneFetcher struct {
+	getLaneHandler  func() (blocksdkmoduletypes.Lane, error)
+	getLanesHandler func() []blocksdkmoduletypes.Lane
+}
+
+func NewMockLaneFetcher(getLane func() (blocksdkmoduletypes.Lane, error), getLanes func() []blocksdkmoduletypes.Lane) MockLaneFetcher {
+	return MockLaneFetcher{
+		getLaneHandler:  getLane,
+		getLanesHandler: getLanes,
+	}
+}
+
+func (m *MockLaneFetcher) SetGetLaneHandler(h func() (blocksdkmoduletypes.Lane, error)) {
+	m.getLaneHandler = h
+}
+
+func (m MockLaneFetcher) GetLane(_ sdk.Context, _ string) (blocksdkmoduletypes.Lane, error) {
+	return m.getLaneHandler()
+}
+
+func (m *MockLaneFetcher) SetGetLanesHandler(h func() []blocksdkmoduletypes.Lane) {
+	m.getLanesHandler = h
+}
+
+func (m MockLaneFetcher) GetLanes(_ sdk.Context) []blocksdkmoduletypes.Lane {
+	return m.getLanesHandler()
+}
 
 type ProposalsTestSuite struct {
 	suite.Suite
@@ -1498,7 +1527,7 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	accounts := testutils.RandomAccounts(s.random, numAccounts)
 
 	// Create a bunch of transactions to insert into the default lane
-	txsToInsert := []sdk.Tx{}
+	var txsToInsert []sdk.Tx
 	validationMap := make(map[sdk.Tx]bool)
 	for _, account := range accounts {
 		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
@@ -1555,14 +1584,14 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	}
 
 	// Retrieve the transactions from the default lane in the same way the prepare function would.
-	retrievedTxs := []sdk.Tx{}
+	var retrievedTxs []sdk.Tx
 	for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		retrievedTxs = append(retrievedTxs, iterator.Tx())
 	}
 	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
 
 	// Retrieve the transactions from the free lane in the same way the prepare function would.
-	freeRetrievedTxs := []sdk.Tx{}
+	var freeRetrievedTxs []sdk.Tx
 	for iterator := freelane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		freeRetrievedTxs = append(freeRetrievedTxs, iterator.Tx())
 	}
@@ -1601,7 +1630,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info}
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Equal(3, len(partialProposals))
 
@@ -1614,21 +1643,21 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate proposal without info", func() {
 		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate completely empty proposal", func() {
 		proposal := [][]byte{}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
@@ -1636,7 +1665,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
@@ -1666,7 +1695,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1713,7 +1742,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1774,7 +1803,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))

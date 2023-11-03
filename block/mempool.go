@@ -29,7 +29,7 @@ type (
 		sdkmempool.Mempool
 
 		// Registry returns the mempool's lane registry.
-		Registry() []Lane
+		Registry(ctx sdk.Context) ([]Lane, error)
 
 		// Contains returns true if any of the lanes currently contain the transaction.
 		Contains(tx sdk.Tx) bool
@@ -210,11 +210,6 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 	return false
 }
 
-// Registry returns the mempool's lane registry.
-func (m *LanedMempool) Registry() []Lane {
-	return m.registry
-}
-
 // ValidateBasic validates the mempools configuration. ValidateBasic ensures
 // the following:
 // - The sum of the lane max block space percentages is less than or equal to 1.
@@ -249,17 +244,19 @@ func (m *LanedMempool) ValidateBasic() error {
 	return nil
 }
 
-func (m *LanedMempool) GenerateRegistry(ctx sdk.Context) (newRegistry []Lane, err error) {
+// Registry returns the mempool's lane registry.
+func (m *LanedMempool) Registry(ctx sdk.Context) (newRegistry []Lane, err error) {
 	// TODO add a last block updated check ?
 	lanes := m.moduleLaneFetcher.GetLanes(ctx)
 
 	// order lanes and populate the necessary fields (maxBlockSize, etc)
-	return m.OrderLanes(lanes)
+	m.registry, err = m.OrderLanes(lanes)
+	return m.registry, err
 }
 
 func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (orderedLanes []Lane, err error) {
 	orderedLanes = make([]Lane, len(chainLanes))
-	registryLanes := m.Registry()
+	registryLanes := m.registry
 
 	for _, chainLane := range chainLanes {
 		lane, index, found := FindLane(registryLanes, chainLane.Id)

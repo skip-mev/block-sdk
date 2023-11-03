@@ -1,6 +1,7 @@
 package block_test
 
 import (
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"math/rand"
 	"testing"
 	"time"
@@ -108,7 +109,11 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	suite.mempool = block.NewLanedMempool(
 		log.NewTestLogger(suite.T()),
 		true,
-		mocks.NewLaneFetcher(suite.T()),
+		mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+			return suite.baseLane, nil
+		}, func() []blocksdkmoduletypes.Lane {
+			return suite.lanes
+		}),
 		suite.lanes...,
 	)
 
@@ -381,5 +386,68 @@ func (suite *BlockBusterTestSuite) fillFreeLane(numTxs int) {
 		// insert the tx into the lane and update the account
 		suite.nonces[acc.Address.String()]++
 		suite.Require().NoError(suite.mempool.Insert(suite.ctx, tx))
+	}
+}
+
+func (suite *BlockBusterTestSuite) TestLanedMempool_GenerateRegistry() {
+	laneFetcher := NewMockLaneFetcher(
+		func() (blocksdkmoduletypes.Lane, error) {
+			return blocksdkmoduletypes.Lane{}, nil
+		},
+		func() []blocksdkmoduletypes.Lane {
+			blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
+			for i, lane := range lanes {
+				blocksdkLanes[i] = blocksdkmoduletypes.Lane{
+					Id:            lane.Name(),
+					MaxBlockSpace: lane.GetMaxBlockSpace(),
+					Order:         uint64(i),
+				}
+			}
+			return blocksdkLanes
+		})
+
+	type fields struct {
+		registry []block.Lane
+	}
+
+	tests := []struct {
+		name            string
+		fields          fields
+		wantNewRegistry []block.Lane
+		wantErr         bool
+	}{
+		{
+			name: "valid",
+			fields: fields{registry: []block.Lane{
+				suite.baseLane,
+				suite.mevLane,
+				suite.baseLane,
+			}},
+			wantNewRegistry: []block.Lane{
+				suite.baseLane,
+				suite.mevLane,
+				suite.baseLane,
+			},
+			wantErr: false,
+		},
+	}
+	for _, tc := range tests {
+		suite.Run(tc.name, func() {
+			mempool := block.NewLanedMempool(
+				log.NewTestLogger(suite.T()),
+				false,
+				mocks.NewLaneFetcher(suite.T()),
+				tc.fields.registry...,
+			)
+
+			gotNewRegistry, err := mempool.Registry(suite.ctx)
+			if !tc.wantErr {
+				suite.Require().NoError(err)
+				suite.Require().Equal(tc.wantNewRegistry, gotNewRegistry)
+				return
+			}
+
+			suite.Require().Error(err)
+		})
 	}
 }

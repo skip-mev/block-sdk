@@ -15,7 +15,7 @@ import (
 // for the proposal to be valid. This includes:
 //  1. The proposal must contain the proposal information and must be valid.
 //  2. The proposal must contain the correct number of transactions for each lane.
-func (h *ProposalHandler) ExtractLanes(proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
+func (h *ProposalHandler) ExtractLanes(ctx sdk.Context, proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
 	// If the proposal is empty, then the metadata was not included.
 	if len(proposal) == 0 {
 		return types.ProposalInfo{}, nil, fmt.Errorf("proposal does not contain proposal metadata")
@@ -29,7 +29,11 @@ func (h *ProposalHandler) ExtractLanes(proposal [][]byte) (types.ProposalInfo, [
 		return types.ProposalInfo{}, nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
 	}
 
-	lanes := h.mempool.Registry()
+	lanes, err := h.mempool.Registry(ctx)
+	if err != nil {
+		return types.ProposalInfo{}, nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
+
+	}
 	partialProposals := make([][][]byte, len(lanes))
 
 	if metaData.TxsByLane == nil {
