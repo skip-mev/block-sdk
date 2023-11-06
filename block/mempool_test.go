@@ -1,10 +1,11 @@
 package block_test
 
 import (
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"math/rand"
 	"testing"
 	"time"
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	"github.com/skip-mev/block-sdk/block/mocks"
 
@@ -517,7 +518,6 @@ func (suite *BlockBusterTestSuite) TestLanedMempool_Registry() {
 	}
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-
 			// setup mock mempool
 			mempool := block.NewLanedMempool(
 				log.NewTestLogger(suite.T()),
@@ -645,7 +645,6 @@ func (suite *BlockBusterTestSuite) TestLanedMempool_OrderLanes() {
 	}
 	for _, tc := range tests {
 		suite.Run(tc.name, func() {
-
 			// setup mock mempool
 			mempool := block.NewLanedMempool(
 				log.NewTestLogger(suite.T()),

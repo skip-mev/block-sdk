@@ -32,7 +32,6 @@ func (h *ProposalHandler) ExtractLanes(ctx sdk.Context, proposal [][]byte) (type
 	lanes, err := h.mempool.Registry(ctx)
 	if err != nil {
 		return types.ProposalInfo{}, nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
-
 	}
 	partialProposals := make([][][]byte, len(lanes))
 

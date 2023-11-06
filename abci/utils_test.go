@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	"cosmossdk.io/log"

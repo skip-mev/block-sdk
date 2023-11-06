@@ -2,6 +2,7 @@ package block_test
 
 import (
 	"fmt"
+
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/mocks"
 )
@@ -72,7 +73,6 @@ func (suite *BlockBusterTestSuite) TestFindLane() {
 			}
 
 			suite.Require().False(gotFound)
-
 		})
 	}
 }

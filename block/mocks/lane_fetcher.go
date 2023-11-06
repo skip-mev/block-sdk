@@ -2,6 +2,7 @@ package mocks
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 

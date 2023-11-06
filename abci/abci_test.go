@@ -2,9 +2,10 @@ package abci_test
 
 import (
 	"context"
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"math/rand"
 	"testing"
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	"github.com/skip-mev/block-sdk/block/mocks"
 
