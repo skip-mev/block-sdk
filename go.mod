@@ -14,7 +14,7 @@ require (
 	cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/x/feegrant v0.0.0-20230724130706-5442197d6bcd
-	cosmossdk.io/x/tx v0.11.0
+	cosmossdk.io/x/tx v0.12.0
 	cosmossdk.io/x/upgrade v0.0.0-20230724130706-5442197d6bcd
 	github.com/client9/misspell v0.3.4
 	github.com/cometbft/cometbft v0.38.0
@@ -24,10 +24,10 @@ require (
 	github.com/cosmos/gogoproto v1.4.11
 	github.com/golang/protobuf v1.5.3
 	github.com/golangci/golangci-lint v1.55.1
-	github.com/gorilla/mux v1.8.0
+	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/huandu/skiplist v1.2.0
-	github.com/spf13/cobra v1.7.0
+	github.com/spf13/cobra v1.8.0
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.17.0
 	github.com/stretchr/testify v1.8.4
