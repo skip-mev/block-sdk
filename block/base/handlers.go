@@ -22,6 +22,8 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			txsToRemove  []sdk.Tx
 		)
 
+		l.Logger().Info("mempool size", "countTx", l.LaneMempool.CountTx())
+
 		// Select all transactions in the mempool that are valid and not already in the
 		// partial proposal.
 		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
@@ -104,6 +106,11 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 			totalGas += txInfo.GasLimit
 			txsToInclude = append(txsToInclude, tx)
 		}
+
+		l.Logger().Info("tx",
+			"tx_to_include", txsToInclude,
+			"tx_to_remove", txsToRemove,
+		)
 
 		return txsToInclude, txsToRemove, nil
 	}
