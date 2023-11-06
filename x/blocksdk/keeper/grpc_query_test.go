@@ -32,7 +32,7 @@ func (s *KeeperTestSuite) TestQueryLane() {
 		wantErr  bool
 	}{
 		{
-			name:     "invalid ane does not exist",
+			name:     "invalid lane does not exist",
 			query:    &types.QueryLaneRequest{Id: "invalid"},
 			expected: types.Lane{},
 			wantErr:  true,
