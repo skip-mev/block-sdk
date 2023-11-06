@@ -246,7 +246,12 @@ func (m *LanedMempool) ValidateBasic() error {
 
 // Registry returns the mempool's lane registry.
 func (m *LanedMempool) Registry(ctx sdk.Context) (newRegistry []Lane, err error) {
+	if m.moduleLaneFetcher == nil {
+		return m.registry, fmt.Errorf("module lane fetcher not set")
+	}
+
 	// TODO add a last block updated check ?
+	// potential future optimization
 	lanes := m.moduleLaneFetcher.GetLanes(ctx)
 
 	// order lanes and populate the necessary fields (maxBlockSize, etc)
@@ -259,6 +264,11 @@ func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (ordere
 	registryLanes := m.registry
 
 	for _, chainLane := range chainLanes {
+		// panic protect
+		if chainLane.GetOrder() >= uint64(len(orderedLanes)) {
+			return orderedLanes, fmt.Errorf("lane order %d out  of bounds, invalid configuration", chainLane.GetOrder())
+		}
+
 		lane, index, found := FindLane(registryLanes, chainLane.Id)
 		if !found {
 			return orderedLanes, fmt.Errorf("lane %s not found in registry, invalid configuration", chainLane.Id)

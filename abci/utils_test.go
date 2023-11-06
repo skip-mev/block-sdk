@@ -119,19 +119,20 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
+	blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
+	for i, lane := range lanes {
+		blocksdkLanes[i] = blocksdkmoduletypes.Lane{
+			Id:            lane.Name(),
+			MaxBlockSpace: lane.GetMaxBlockSpace(),
+			Order:         uint64(i),
+		}
+	}
+
 	laneFetcher := NewMockLaneFetcher(
 		func() (blocksdkmoduletypes.Lane, error) {
 			return blocksdkmoduletypes.Lane{}, nil
 		},
 		func() []blocksdkmoduletypes.Lane {
-			blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
-			for i, lane := range lanes {
-				blocksdkLanes[i] = blocksdkmoduletypes.Lane{
-					Id:            lane.Name(),
-					MaxBlockSpace: lane.GetMaxBlockSpace(),
-					Order:         uint64(i),
-				}
-			}
 			return blocksdkLanes
 		})
 

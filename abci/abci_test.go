@@ -696,10 +696,27 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			defaultLane,
 		}
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(
-			s.T()),
-			false,
-			mocks.NewLaneFetcher(s.T()),
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			true,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
 			lanes...,
 		)
 
@@ -755,10 +772,27 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			panicLane,
 		}
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(
-			s.T()),
-			false,
-			mocks.NewLaneFetcher(s.T()),
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			true,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
 			lanes...,
 		)
 
@@ -816,13 +850,34 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			defaultLane,
 		}
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(
-			s.T()),
-			false,
-			mocks.NewLaneFetcher(s.T()),
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         2,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			true,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
 			lanes...,
 		)
-
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
@@ -877,10 +932,32 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			panicLane2,
 		}
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(
-			s.T()),
-			false,
-			mocks.NewLaneFetcher(s.T()),
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         2,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			true,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
 			lanes...,
 		)
 
