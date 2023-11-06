@@ -27,7 +27,7 @@ func GetMsgAuctionBidFromTx(tx sdk.Tx) (*auctiontypes.MsgAuctionBid, error) {
 
 	case len(auctionBidMsgs) == 1 && len(tx.GetMsgs()) == 1:
 		// a single MsgAuctionBid message transaction
-		return auctionBidMsgs[0], nil //nolint
+		return auctionBidMsgs[0], nil
 
 	default:
 		// a transaction with at at least one MsgAuctionBid message
