@@ -20,11 +20,10 @@ type (
 	// ProposalHandler is a wrapper around the ABCI++ PrepareProposal and ProcessProposal
 	// handlers.
 	ProposalHandler struct {
-		logger              log.Logger
-		txDecoder           sdk.TxDecoder
-		txEncoder           sdk.TxEncoder
-		prepareLanesHandler block.PrepareLanesHandler
-		mempool             block.Mempool
+		logger    log.Logger
+		txDecoder sdk.TxDecoder
+		txEncoder sdk.TxEncoder
+		mempool   block.Mempool
 	}
 )
 
@@ -37,11 +36,10 @@ func NewProposalHandler(
 	mempool block.Mempool,
 ) *ProposalHandler {
 	return &ProposalHandler{
-		logger:              logger,
-		txDecoder:           txDecoder,
-		txEncoder:           txEncoder,
-		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()),
-		mempool:             mempool,
+		logger:    logger,
+		txDecoder: txDecoder,
+		txEncoder: txEncoder,
+		mempool:   mempool,
 	}
 }
 
@@ -74,8 +72,16 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
+		registry, err := h.mempool.Registry(ctx)
+		if err != nil {
+			h.logger.Error("failed to get lane registry", "err", err)
+			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
+		}
+
+		prepareLanesHandler := ChainPrepareLanes(registry)
+
 		// Fill the proposal with transactions from each lane.
-		finalProposal, err := h.prepareLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
+		finalProposal, err := prepareLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
@@ -133,14 +139,20 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 		}()
 
 		// Extract all of the lanes and their corresponding transactions from the proposal.
-		proposalInfo, partialProposals, err := h.ExtractLanes(req.Txs)
+		proposalInfo, partialProposals, err := h.ExtractLanes(ctx, req.Txs)
 		if err != nil {
 			h.logger.Error("failed to validate proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
-		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
+		registry, err := h.mempool.Registry(ctx)
+		if err != nil {
+			h.logger.Error("failed to get lane registry", "err", err)
+			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
+		}
+
+		processLanesHandler := ChainProcessLanes(partialProposals, registry)
 		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
 		if err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)

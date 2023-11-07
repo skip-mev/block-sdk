@@ -173,3 +173,9 @@ func (l *BaseLane) TxEncoder() sdk.TxEncoder {
 func (l *BaseLane) GetMaxBlockSpace() math.LegacyDec {
 	return l.cfg.MaxBlockSpace
 }
+
+// SetMaxBlockSpace sets the maximum amount of block space that the lane is
+// allowed to consume as a percentage of the total block space.
+func (l *BaseLane) SetMaxBlockSpace(maxBlockSpace math.LegacyDec) {
+	l.cfg.MaxBlockSpace = maxBlockSpace
+}

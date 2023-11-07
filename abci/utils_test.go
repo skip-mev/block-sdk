@@ -5,6 +5,8 @@ import (
 	"encoding/hex"
 	"fmt"
 
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -63,6 +65,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
 		MaxBlockSpace:   maxBlockSpace,
+		IgnoreList:      make([]block.Lane, 0),
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
@@ -118,7 +121,29 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), true, lanes...)
+	blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
+	for i, lane := range lanes {
+		blocksdkLanes[i] = blocksdkmoduletypes.Lane{
+			Id:            lane.Name(),
+			MaxBlockSpace: lane.GetMaxBlockSpace(),
+			Order:         uint64(i),
+		}
+	}
+
+	laneFetcher := NewMockLaneFetcher(
+		func() (blocksdkmoduletypes.Lane, error) {
+			return blocksdkmoduletypes.Lane{}, nil
+		},
+		func() []blocksdkmoduletypes.Lane {
+			return blocksdkLanes
+		})
+
+	mempool := block.NewLanedMempool(log.NewTestLogger(
+		s.T()),
+		false,
+		laneFetcher,
+		lanes...,
+	)
 
 	return abci.NewProposalHandler(
 		log.NewTestLogger(s.T()),

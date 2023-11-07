@@ -55,6 +55,9 @@ func (t Terminator) GetMaxBlockSpace() math.LegacyDec {
 	return math.LegacyZeroDec()
 }
 
+// SetMaxBlockSpace is a no-op
+func (t Terminator) SetMaxBlockSpace(_ math.LegacyDec) {}
+
 // Logger is a no-op
 func (t Terminator) Logger() log.Logger {
 	return log.NewNopLogger()
