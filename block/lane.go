@@ -75,7 +75,7 @@ type Lane interface {
 
 // FindLane finds a Lanes from in an array of Lanes and returns it and its index if found.
 // Returns nil, 0 and false if not found.
-func FindLane(lanes []Lane, name string) (Lane, int, bool) {
+func FindLane(lanes []Lane, name string) (lane Lane, index int, found bool) {
 	for i, lane := range lanes {
 		if lane.Name() == name {
 			return lanes[i], i, true
