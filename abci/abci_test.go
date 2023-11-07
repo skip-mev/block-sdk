@@ -5,10 +5,6 @@ import (
 	"math/rand"
 	"testing"
 
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
-
-	"github.com/skip-mev/block-sdk/block/mocks"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -19,8 +15,10 @@ import (
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	testutils "github.com/skip-mev/block-sdk/testutils"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 type MockLaneFetcher struct {
