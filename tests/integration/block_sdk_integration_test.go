@@ -1,7 +1,9 @@
 package integration_test
 
 import (
+	"cosmossdk.io/math"
 	"fmt"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"testing"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
@@ -28,12 +30,32 @@ var (
 	}
 	encodingConfig = MakeEncodingConfig()
 	noHostMount    = false
-	gasAdjustment  = float64(2.0)
+	gasAdjustment  = 2.0
 
 	genesisKV = []cosmos.GenesisKV{
 		{
 			Key:   "app_state.auction.params.max_bundle_size",
 			Value: 3,
+		},
+		{
+			Key: "app_state.blocksdk.lanes",
+			Value: []blocksdkmoduletypes.Lane{
+				{
+					Id:            "mev",
+					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
+					Order:         0,
+				},
+				{
+					Id:            "free",
+					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
+					Order:         1,
+				},
+				{
+					Id:            "",
+					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.6"),
+					Order:         2,
+				},
+			},
 		},
 	}
 
