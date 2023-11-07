@@ -148,12 +148,6 @@ func (l *BaseLane) SetIgnoreList(lanes []block.Lane) {
 	l.cfg.IgnoreList = lanes
 }
 
-// GetIgnoreList gets the ignore list for the lane. The ignore list is a list
-// of lanes that the lane should ignore when processing transactions.
-func (l *BaseLane) GetIgnoreList() []block.Lane {
-	return l.cfg.IgnoreList
-}
-
 // SetAnteHandler sets the ante handler for the lane.
 func (l *BaseLane) SetAnteHandler(anteHandler sdk.AnteHandler) {
 	l.cfg.AnteHandler = anteHandler
