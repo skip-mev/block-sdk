@@ -6,10 +6,14 @@ import (
 
 	"cosmossdk.io/math"
 
+	"github.com/skip-mev/block-sdk/lanes/base"
+	"github.com/skip-mev/block-sdk/lanes/free"
+	"github.com/skip-mev/block-sdk/lanes/mev"
+
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/strangelove-ventures/interchaintest/v7"
+	interchaintest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	ictestutil "github.com/strangelove-ventures/interchaintest/v7/testutil"
@@ -43,17 +47,17 @@ var (
 			Key: "app_state.blocksdk.lanes",
 			Value: []blocksdkmoduletypes.Lane{
 				{
-					Id:            "mev",
+					Id:            mev.LaneName,
 					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
 					Order:         0,
 				},
 				{
-					Id:            "free",
+					Id:            free.LaneName,
 					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
 					Order:         1,
 				},
 				{
-					Id:            "",
+					Id:            base.LaneName,
 					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.6"),
 					Order:         2,
 				},
@@ -102,6 +106,7 @@ func MakeEncodingConfig() *testutil.TestEncodingConfig {
 
 	// register auction types
 	auctiontypes.RegisterInterfaces(cfg.InterfaceRegistry)
+	blocksdkmoduletypes.RegisterInterfaces(cfg.InterfaceRegistry)
 
 	return &cfg
 }
