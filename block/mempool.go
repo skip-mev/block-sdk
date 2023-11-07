@@ -16,8 +16,6 @@ import (
 var _ Mempool = (*LanedMempool)(nil)
 
 // LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
-//
-//go:generate mockery --name LaneFetcher --output ./mocks --outpkg mocks --case underscore
 type LaneFetcher interface {
 	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
 	GetLanes(ctx sdk.Context) []blocksdkmoduletypes.Lane
@@ -80,8 +78,9 @@ func NewLanedMempool(logger log.Logger, mutex bool, laneFetcher LaneFetcher, lan
 
 	// Set the ignore list for each lane
 	if mutex {
-		registry := mempool.registry
-		for index, lane := range mempool.registry {
+		registry := make([]Lane, len(mempool.registry))
+		copy(registry, mempool.registry)
+		for index, lane := range registry {
 			if index > 0 {
 				lane.SetIgnoreList(registry[:index])
 			}
@@ -252,35 +251,34 @@ func (m *LanedMempool) Registry(ctx sdk.Context) (newRegistry []Lane, err error)
 
 	// TODO add a last block updated check ?
 	// potential future optimization
-	lanes := m.moduleLaneFetcher.GetLanes(ctx)
+	chainLanes := m.moduleLaneFetcher.GetLanes(ctx)
 
 	// order lanes and populate the necessary fields (maxBlockSize, etc)
-	m.registry, err = m.OrderLanes(lanes)
+	m.registry, err = m.OrderLanes(chainLanes)
 	return m.registry, err
 }
 
 func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (orderedLanes []Lane, err error) {
 	orderedLanes = make([]Lane, len(chainLanes))
-	registryLanes := m.registry
-
 	for _, chainLane := range chainLanes {
 		// panic protect
 		if chainLane.GetOrder() >= uint64(len(orderedLanes)) {
 			return orderedLanes, fmt.Errorf("lane order %d out  of bounds, invalid configuration", chainLane.GetOrder())
 		}
 
-		lane, index, found := FindLane(registryLanes, chainLane.Id)
+		_, index, found := FindLane(m.registry, chainLane.Id)
 		if !found {
 			return orderedLanes, fmt.Errorf("lane %s not found in registry, invalid configuration", chainLane.Id)
 		}
 
+		lane := m.registry[index]
 		lane.SetMaxBlockSpace(chainLane.MaxBlockSpace)
 		orderedLanes[chainLane.GetOrder()] = lane
 
 		// remove found lane from registry lanes for quicker find()
-		registryLanes[index] = registryLanes[len(registryLanes)-1] // Copy last element to index i.
-		registryLanes[len(registryLanes)-1] = nil                  // Erase last element (write zero value).
-		registryLanes = registryLanes[:len(registryLanes)-1]       // Truncate slice.
+		m.registry[index] = m.registry[len(m.registry)-1] // Copy last element to index i.
+		m.registry[len(m.registry)-1] = nil               // Erase last element (write zero value).
+		m.registry = m.registry[:len(m.registry)-1]       // Truncate slice.
 	}
 
 	return orderedLanes, nil

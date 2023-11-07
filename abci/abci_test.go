@@ -712,7 +712,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 
 		mempool := block.NewLanedMempool(
 			log.NewTestLogger(s.T()),
-			true,
+			false,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
@@ -788,7 +788,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 
 		mempool := block.NewLanedMempool(
 			log.NewTestLogger(s.T()),
-			true,
+			false,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
@@ -871,7 +871,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 
 		mempool := block.NewLanedMempool(
 			log.NewTestLogger(s.T()),
-			true,
+			false,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
@@ -953,7 +953,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 
 		mempool := block.NewLanedMempool(
 			log.NewTestLogger(s.T()),
-			true,
+			false,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {

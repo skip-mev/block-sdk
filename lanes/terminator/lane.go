@@ -74,6 +74,11 @@ func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 // SetIgnoreList is a no-op
 func (t Terminator) SetIgnoreList([]block.Lane) {}
 
+// GetIgnoreList is a no-op
+func (t Terminator) GetIgnoreList() []block.Lane {
+	return []block.Lane{}
+}
+
 // Match is a no-op
 func (t Terminator) Match(sdk.Context, sdk.Tx) bool {
 	return false

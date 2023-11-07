@@ -69,6 +69,9 @@ type Lane interface {
 	// SetIgnoreList sets the lanes that should be ignored by this lane.
 	SetIgnoreList(ignoreList []Lane)
 
+	// GetIgnoreList gets the lanes that should be ignored by this lane.
+	GetIgnoreList() []Lane
+
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 }
@@ -78,7 +81,7 @@ type Lane interface {
 func FindLane(lanes []Lane, name string) (Lane, int, bool) {
 	for i, lane := range lanes {
 		if lane.Name() == name {
-			return lane, i, true
+			return lanes[i], i, true
 		}
 	}
 
