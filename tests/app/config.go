@@ -49,6 +49,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	_ "cosmossdk.io/x/circuit"                        // import for side-effects
+	_ "cosmossdk.io/x/feegrant/module"                // import for side-effects
 	_ "cosmossdk.io/x/upgrade"                        // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/auth/tx/config" // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/auth/vesting"   // import for side-effects
@@ -66,8 +67,11 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
+	blocksdkmodulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
 	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	_ "github.com/skip-mev/block-sdk/x/blocksdk" // import for side-effects
+	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 var (
@@ -151,6 +155,7 @@ var (
 						consensustypes.ModuleName,
 						circuittypes.ModuleName,
 						auctiontypes.ModuleName,
+						blocksdktypes.ModuleName,
 						feegrant.ModuleName,
 					},
 					// When ExportGenesis is not specified, the export genesis module order
@@ -246,6 +251,10 @@ var (
 			{
 				Name:   auctiontypes.ModuleName,
 				Config: appconfig.WrapAny(&auctionmodulev1.Module{}),
+			},
+			{
+				Name:   blocksdktypes.ModuleName,
+				Config: appconfig.WrapAny(&blocksdkmodulev1.Module{}),
 			},
 		},
 	}),

@@ -15,9 +15,39 @@ import (
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	testutils "github.com/skip-mev/block-sdk/testutils"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
+
+type MockLaneFetcher struct {
+	getLaneHandler  func() (blocksdkmoduletypes.Lane, error)
+	getLanesHandler func() []blocksdkmoduletypes.Lane
+}
+
+func NewMockLaneFetcher(getLane func() (blocksdkmoduletypes.Lane, error), getLanes func() []blocksdkmoduletypes.Lane) MockLaneFetcher {
+	return MockLaneFetcher{
+		getLaneHandler:  getLane,
+		getLanesHandler: getLanes,
+	}
+}
+
+func (m *MockLaneFetcher) SetGetLaneHandler(h func() (blocksdkmoduletypes.Lane, error)) {
+	m.getLaneHandler = h
+}
+
+func (m MockLaneFetcher) GetLane(_ sdk.Context, _ string) (blocksdkmoduletypes.Lane, error) {
+	return m.getLaneHandler()
+}
+
+func (m *MockLaneFetcher) SetGetLanesHandler(h func() []blocksdkmoduletypes.Lane) {
+	m.getLanesHandler = h
+}
+
+func (m MockLaneFetcher) GetLanes(_ sdk.Context) []blocksdkmoduletypes.Lane {
+	return m.getLanesHandler()
+}
 
 type ProposalsTestSuite struct {
 	suite.Suite
@@ -660,7 +690,34 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, defaultLane)
+		lanes := []block.Lane{
+			panicLane,
+			defaultLane,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			false,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -709,7 +766,34 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane)
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			false,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -759,8 +843,40 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, panicLane2, defaultLane)
+		lanes := []block.Lane{
+			panicLane,
+			panicLane2,
+			defaultLane,
+		}
 
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         2,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			false,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+			lanes...,
+		)
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
@@ -809,7 +925,40 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane, panicLane2)
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+			panicLane2,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         2,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool := block.NewLanedMempool(
+			log.NewTestLogger(s.T()),
+			false,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+			lanes...,
+		)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -1454,7 +1603,7 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	accounts := testutils.RandomAccounts(s.random, numAccounts)
 
 	// Create a bunch of transactions to insert into the default lane
-	txsToInsert := []sdk.Tx{}
+	var txsToInsert []sdk.Tx
 	validationMap := make(map[sdk.Tx]bool)
 	for _, account := range accounts {
 		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
@@ -1511,14 +1660,14 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	}
 
 	// Retrieve the transactions from the default lane in the same way the prepare function would.
-	retrievedTxs := []sdk.Tx{}
+	var retrievedTxs []sdk.Tx
 	for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		retrievedTxs = append(retrievedTxs, iterator.Tx())
 	}
 	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
 
 	// Retrieve the transactions from the free lane in the same way the prepare function would.
-	freeRetrievedTxs := []sdk.Tx{}
+	var freeRetrievedTxs []sdk.Tx
 	for iterator := freelane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		freeRetrievedTxs = append(freeRetrievedTxs, iterator.Tx())
 	}
@@ -1557,7 +1706,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info}
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Equal(3, len(partialProposals))
 
@@ -1570,21 +1719,21 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate proposal without info", func() {
 		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
 	s.Run("should invalidate completely empty proposal", func() {
 		proposal := [][]byte{}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
@@ -1592,7 +1741,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
 		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
 
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
+		_, _, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().Error(err)
 	})
 
@@ -1622,7 +1771,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1669,7 +1818,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
@@ -1730,7 +1879,7 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 
 		proposal = append([][]byte{info}, proposal...)
 
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
+		_, partialProposals, err := proposalHandlers.ExtractLanes(s.ctx, proposal)
 		s.Require().NoError(err)
 
 		s.Require().Equal(3, len(partialProposals))
