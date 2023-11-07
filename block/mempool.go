@@ -78,9 +78,8 @@ func NewLanedMempool(logger log.Logger, mutex bool, laneFetcher LaneFetcher, lan
 
 	// Set the ignore list for each lane
 	if mutex {
-		registry := make([]Lane, len(mempool.registry))
-		copy(registry, mempool.registry)
-		for index, lane := range registry {
+		registry := mempool.registry
+		for index, lane := range mempool.registry {
 			if index > 0 {
 				lane.SetIgnoreList(registry[:index])
 			}
