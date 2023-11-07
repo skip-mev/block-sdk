@@ -1,10 +1,12 @@
 package integration_test
 
 import (
-	"cosmossdk.io/math"
 	"fmt"
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 	"testing"
+
+	"cosmossdk.io/math"
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/strangelove-ventures/interchaintest/v7"
