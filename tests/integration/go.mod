@@ -9,7 +9,6 @@ replace (
 	github.com/ChainSafe/go-schnorrkel/1 => github.com/ChainSafe/go-schnorrkel v1.0.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/skip-mev/block-sdk => ../../
-// github.com/strangelove-ventures/interchaintest/v7 => github.com/skip-mev/interchaintest/v7 v7.0.1 // TODO(nikhil): move away from skip fork
 )
 
 require (
