@@ -23,7 +23,7 @@ import (
 
 var (
 	// config params
-	numValidators = 1
+	numValidators = 4
 	numFullNodes  = 0
 	denom         = "stake"
 

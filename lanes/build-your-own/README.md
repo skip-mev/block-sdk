@@ -432,7 +432,10 @@ For example, say there are two lanes: default and free. The free lane is
 processed after the default lane. In this case, the free lane should be added 
 to the ignore list of the default lane. Otherwise, the transactions that belong 
 to the free lane will be processed by the default lane (which accepts all 
-transactions by default).
+transactions by default). 
+
+**NOTE**: By default, we set the ignore list such that each lane is mutually 
+exclusive when constructing the mempool.
 
 
 ### Set up

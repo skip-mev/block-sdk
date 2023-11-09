@@ -3,7 +3,6 @@ package block
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -11,6 +10,11 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+)
+
+const (
+	// DefaultLaneName is the default lane name.
+	DefaultLaneName = "default"
 )
 
 var _ Mempool = (*LanedMempool)(nil)
@@ -53,19 +57,65 @@ type (
 )
 
 // NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool comprises
+// a registry of lanes. Each lane is responsible for selecting transactions according
+// to its own selection logic. The lanes are ordered according to their priority. The
+// first lane in the registry has the highest priority. Proposals are verified according
+// to the order of the lanes in the registry. Each transaction SHOULD only belong in one lane.
+// To enforce that transactions only belong to one lane, each lane has an ignore list.
 //
-//	a registry of lanes. Each lane is responsible for selecting
+// For example, say we have three lanes, MEV, default, and free. The ignore list of each
+// lane will look like the following:
+// - MEV: free
+// - default: MEV, free
+// - free: MEV.
 //
-// transactions according to its own selection logic. The lanes are ordered
-// according to their priority. The first lane in the registry has the highest
-// priority. Proposals are verified according to the order of the lanes in the
-// registry. Each transaction should only belong in one lane but this is NOT enforced.
-// To enforce that each transaction belong to a single lane, you must configure the
-// ignore list of each lane to include all preceding lanes. Basic mempool API will
-// attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
-// that mutex is set to true when creating the mempool. This will ensure that each
-// transaction cannot be inserted into the lanes before it.
-func NewLanedMempool(logger log.Logger, mutex bool, laneFetcher LaneFetcher, lanes ...Lane) Mempool {
+// Note that a name with the value "default" MUST be provided.
+func NewLanedMempool(
+	logger log.Logger,
+	lanes []Lane,
+	laneFetcher LaneFetcher,
+) (*LanedMempool, error) {
+	laneCache := make(map[Lane]struct{})
+	seenDefault := false
+
+	// Ensure that each of the lanes are mutually exclusive. The default lane should
+	// ignore all other lanes, while all other lanes should ignore every lane except
+	// the default lane.
+	for index, lane := range lanes {
+		if lane.Name() == DefaultLaneName {
+			lowerIgnoreList := make([]Lane, index)
+			copy(lowerIgnoreList, lanes[:index])
+
+			upperIgnoreList := make([]Lane, len(lanes)-index-1)
+			copy(upperIgnoreList, lanes[index+1:])
+
+			lane.SetIgnoreList(append(lowerIgnoreList, upperIgnoreList...))
+			seenDefault = true
+		} else {
+			laneCache[lane] = struct{}{}
+		}
+	}
+
+	if !seenDefault {
+		return nil, fmt.Errorf("default lane not found. a lane with the name %s must be provided", DefaultLaneName)
+	}
+
+	for _, lane := range lanes {
+		if lane.Name() == DefaultLaneName {
+			continue
+		}
+
+		delete(laneCache, lane)
+
+		ignoreList := make([]Lane, 0)
+		for otherLane := range laneCache {
+			ignoreList = append(ignoreList, otherLane)
+		}
+
+		lane.SetIgnoreList(ignoreList)
+		laneCache[lane] = struct{}{}
+	}
+
 	mempool := &LanedMempool{
 		logger:            logger,
 		registry:          lanes,
@@ -73,22 +123,10 @@ func NewLanedMempool(logger log.Logger, mutex bool, laneFetcher LaneFetcher, lan
 	}
 
 	if err := mempool.ValidateBasic(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	// Set the ignore list for each lane
-	if mutex {
-		// perform full copy to prevent GC
-		registry := make([]Lane, len(mempool.registry))
-		copy(registry, mempool.registry)
-		for index, lane := range registry {
-			if index > 0 {
-				lane.SetIgnoreList(registry[:index])
-			}
-		}
-	}
-
-	return mempool
+	return mempool, nil
 }
 
 // CountTx returns the total number of transactions in the mempool. This will
@@ -123,25 +161,14 @@ func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 		}
 	}()
 
-	var errors []string
-
 	unwrappedCtx := sdk.UnwrapSDKContext(ctx)
 	for _, lane := range m.registry {
-		if !lane.Match(unwrappedCtx, tx) {
-			continue
-		}
-
-		if err := lane.Insert(ctx, tx); err != nil {
-			m.logger.Debug("failed to insert tx into lane", "lane", lane.Name(), "err", err)
-			errors = append(errors, fmt.Sprintf("failed to insert tx into lane %s: %s", lane.Name(), err.Error()))
+		if lane.Match(unwrappedCtx, tx) {
+			return lane.Insert(ctx, tx)
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf(strings.Join(errors, ";"))
+	return nil
 }
 
 // Insert returns a nil iterator.
@@ -154,7 +181,8 @@ func (m *LanedMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator
 	return nil
 }
 
-// Remove removes a transaction from all of the lanes it is currently in.
+// Remove removes a transaction from the mempool. This assumes that the transaction
+// is contained in only one of the lanes.
 func (m *LanedMempool) Remove(tx sdk.Tx) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -163,33 +191,13 @@ func (m *LanedMempool) Remove(tx sdk.Tx) (err error) {
 		}
 	}()
 
-	var errors []string
-
 	for _, lane := range m.registry {
-		if !lane.Contains(tx) {
-			continue
-		}
-
-		if err := lane.Remove(tx); err != nil {
-			m.logger.Debug("failed to remove tx from lane", "lane", lane.Name(), "err", err)
-
-			// We only care about errors that are not "tx not found" errors.
-			//
-			// TODO: Figure out whether we should be erroring in the mempool if
-			// the tx is not found in the lane. Downstream, if the removal fails runTx will
-			// error out and will NOT execute runMsgs (which is where the tx is actually
-			// executed).
-			if err != sdkmempool.ErrTxNotFound {
-				errors = append(errors, fmt.Sprintf("failed to remove tx from lane %s: %s;", lane.Name(), err.Error()))
-			}
+		if lane.Contains(tx) {
+			return lane.Remove(tx)
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf(strings.Join(errors, ";"))
+	return nil
 }
 
 // Contains returns true if the transaction is contained in any of the lanes.
@@ -208,40 +216,6 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 	}
 
 	return false
-}
-
-// ValidateBasic validates the mempools configuration. ValidateBasic ensures
-// the following:
-// - The sum of the lane max block space percentages is less than or equal to 1.
-// - There is no unused block space.
-func (m *LanedMempool) ValidateBasic() error {
-	sum := math.LegacyZeroDec()
-	seenZeroMaxBlockSpace := false
-
-	for _, lane := range m.registry {
-		maxBlockSpace := lane.GetMaxBlockSpace()
-		if maxBlockSpace.IsZero() {
-			seenZeroMaxBlockSpace = true
-		}
-
-		sum = sum.Add(lane.GetMaxBlockSpace())
-	}
-
-	switch {
-	// Ensure that the sum of the lane max block space percentages is less than
-	// or equal to 1.
-	case sum.GT(math.LegacyOneDec()):
-		return fmt.Errorf("sum of lane max block space percentages must be less than or equal to 1, got %s", sum)
-	// Ensure that there is no unused block space.
-	case sum.LT(math.LegacyOneDec()) && !seenZeroMaxBlockSpace:
-		return fmt.Errorf("sum of total block space percentages will be less than 1")
-	}
-
-	if m.moduleLaneFetcher == nil {
-		return fmt.Errorf("moduleLaneFetcher muset be set on mempool")
-	}
-
-	return nil
 }
 
 // Registry returns the mempool's lane registry.
@@ -283,4 +257,49 @@ func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (ordere
 	}
 
 	return orderedLanes, nil
+}
+
+// ValidateBasic validates the mempools configuration. ValidateBasic ensures
+// the following:
+// - The sum of the lane max block space percentages is less than or equal to 1.
+// - There is no unused block space.
+func (m *LanedMempool) ValidateBasic() error {
+	if len(m.registry) == 0 {
+		return fmt.Errorf("registry cannot be nil; must configure at least one lane")
+	}
+
+	sum := math.LegacyZeroDec()
+	seenZeroMaxBlockSpace := false
+	seenLanes := make(map[string]struct{})
+
+	for _, lane := range m.registry {
+		name := lane.Name()
+		if _, seen := seenLanes[name]; seen {
+			return fmt.Errorf("duplicate lane name %s", name)
+		}
+
+		maxBlockSpace := lane.GetMaxBlockSpace()
+		if maxBlockSpace.IsZero() {
+			seenZeroMaxBlockSpace = true
+		}
+
+		sum = sum.Add(lane.GetMaxBlockSpace())
+		seenLanes[name] = struct{}{}
+	}
+
+	switch {
+	// Ensure that the sum of the lane max block space percentages is less than
+	// or equal to 1.
+	case sum.GT(math.LegacyOneDec()):
+		return fmt.Errorf("sum of lane max block space percentages must be less than or equal to 1, got %s", sum)
+	// Ensure that there is no unused block space.
+	case sum.LT(math.LegacyOneDec()) && !seenZeroMaxBlockSpace:
+		return fmt.Errorf("sum of total block space percentages will be less than 1")
+	}
+
+	if m.moduleLaneFetcher == nil {
+		return fmt.Errorf("moduleLaneFetcher muset be set on mempool")
+	}
+
+	return nil
 }

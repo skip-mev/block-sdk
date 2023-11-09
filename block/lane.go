@@ -69,6 +69,9 @@ type Lane interface {
 	// SetIgnoreList sets the lanes that should be ignored by this lane.
 	SetIgnoreList(ignoreList []Lane)
 
+	// GetIgnoreList returns the lanes that should be ignored by this lane.
+	GetIgnoreList() []Lane
+
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 }

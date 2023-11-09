@@ -128,6 +128,10 @@ func (l *BaseLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
 // list is utilized to prevent transactions that should be considered in other lanes
 // from being considered from this lane.
 func (l *BaseLane) CheckIgnoreList(ctx sdk.Context, tx sdk.Tx) bool {
+	if l.cfg.IgnoreList == nil {
+		return false
+	}
+
 	for _, lane := range l.cfg.IgnoreList {
 		if lane.Match(ctx, tx) {
 			return true
@@ -146,6 +150,12 @@ func (l *BaseLane) Name() string {
 // of lanes that the lane should ignore when processing transactions.
 func (l *BaseLane) SetIgnoreList(lanes []block.Lane) {
 	l.cfg.IgnoreList = lanes
+}
+
+// GetIgnoreList returns the ignore list for the lane. The ignore list is a list
+// of lanes that the lane should ignore when processing transactions.
+func (l *BaseLane) GetIgnoreList() []block.Lane {
+	return l.cfg.IgnoreList
 }
 
 // SetAnteHandler sets the ante handler for the lane.
