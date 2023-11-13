@@ -13,7 +13,7 @@ require (
 	cosmossdk.io/store v1.0.0
 	cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd
-	cosmossdk.io/x/feegrant v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/tx v0.12.0
 	cosmossdk.io/x/upgrade v0.0.0-20230724130706-5442197d6bcd
 	github.com/client9/misspell v0.3.4

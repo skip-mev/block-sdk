@@ -213,8 +213,8 @@ cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd h1:kGqp1WfBw0FHvtYN
 cosmossdk.io/tools/confix v0.0.0-20230724130706-5442197d6bcd/go.mod h1:0hR2RA/sxP6yO6nffc6JW9/8S5AHzRvdkivxpvrkWuw=
 cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd h1:eN2ZRy3Aw89NESga/RvLR7/QzYHr1Ip0mCsi+ATo1+4=
 cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd/go.mod h1:9j92Murx9xkeeQZl+nkI6iVT+h9/GHg/MqMzHqHLKhc=
-cosmossdk.io/x/feegrant v0.0.0-20230724130706-5442197d6bcd h1:of8W41/xzf9Yr68UMMxnodw5Nzo405psYZEie+IacGM=
-cosmossdk.io/x/feegrant v0.0.0-20230724130706-5442197d6bcd/go.mod h1:AhfsRnEMElAAnZfrFuIrFpzqbc6o45Dkbkea8XzT/bU=
+cosmossdk.io/x/feegrant v0.1.0 h1:c7s3oAq/8/UO0EiN1H5BIjwVntujVTkYs35YPvvrdQk=
+cosmossdk.io/x/feegrant v0.1.0/go.mod h1:4r+FsViJRpcZif/yhTn+E0E6OFfg4n0Lx+6cCtnZElU=
 cosmossdk.io/x/tx v0.12.0 h1:Ry2btjQdrfrje9qZ3iZeZSmDArjgxUJMMcLMrX4wj5U=
 cosmossdk.io/x/tx v0.12.0/go.mod h1:qTth2coAGkwCwOCjqQ8EAQg+9udXNRzcnSbMgGKGEI0=
 cosmossdk.io/x/upgrade v0.0.0-20230724130706-5442197d6bcd h1:bxUrk7NTpXxe9CPjz2kUS0tfHfnPoQTV+XCMcVFk9rM=
