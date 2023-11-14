@@ -323,4 +323,5 @@ require (
 replace (
 	github.com/99designs/keyring => github.com/cosmos/keyring v1.2.0
 	github.com/syndtr/goleveldb => github.com/syndtr/goleveldb v1.0.1-0.20210819022825-2ae1ddf74ef7
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20230522175609-2e198f4a06a1
 )
