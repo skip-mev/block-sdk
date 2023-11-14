@@ -2,6 +2,7 @@ package block
 
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
