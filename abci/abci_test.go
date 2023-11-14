@@ -12,11 +12,12 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/stretchr/testify/suite"
 )
 
 type ProposalsTestSuite struct {

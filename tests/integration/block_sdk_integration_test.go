@@ -5,12 +5,13 @@ import (
 	"testing"
 
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	"github.com/skip-mev/block-sdk/tests/integration"
 	"github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
 	ictestutil "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/skip-mev/block-sdk/tests/integration"
 
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )

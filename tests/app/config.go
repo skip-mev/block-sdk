@@ -44,6 +44,7 @@ import (
 	"google.golang.org/protobuf/types/known/durationpb"
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
+
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )

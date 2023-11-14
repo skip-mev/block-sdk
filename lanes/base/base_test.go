@@ -7,9 +7,10 @@ import (
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
+
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/x/auction/types"
-	"github.com/stretchr/testify/suite"
 )
 
 type BaseTestSuite struct {
