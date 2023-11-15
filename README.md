@@ -49,3 +49,8 @@ To read more about Skip's pre-built `lanes` and how to use them, check out the [
 #### 🎨 Lane Development
 
 To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/chains/lanes/build-your-own-lane).
+
+### Audits 
+
+The Block SDK has undergone audits by the following firms:
+- [OtterSec (Sept 29, 2023)](audits/ottersec_sept_29_2023.pdf)
