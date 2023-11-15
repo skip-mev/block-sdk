@@ -18,6 +18,8 @@ const (
 	DefaultLaneName = "default"
 )
 
+var _ Mempool = (*LanedMempool)(nil)
+
 // LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
 type LaneFetcher interface {
 	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
@@ -25,6 +27,20 @@ type LaneFetcher interface {
 }
 
 type (
+	// Mempool defines the Block SDK mempool interface.
+	Mempool interface {
+		sdkmempool.Mempool
+
+		// Registry returns the mempool's lane registry.
+		Registry(ctx sdk.Context) ([]Lane, error)
+
+		// Contains returns true if any of the lanes currently contain the transaction.
+		Contains(tx sdk.Tx) bool
+
+		// GetTxDistribution returns the number of transactions in each lane.
+		GetTxDistribution() map[string]int
+	}
+
 	// LanedMempool defines the Block SDK mempool implementation. It contains a registry
 	// of lanes, which allows for customizable block proposal construction.
 	LanedMempool struct {
