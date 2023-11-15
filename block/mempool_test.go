@@ -46,7 +46,7 @@ type BlockBusterTestSuite struct {
 
 	chainLanes []blocksdkmoduletypes.Lane
 	lanes      []block.Lane
-	mempool    block.Mempool
+	mempool    *block.LanedMempool
 
 	// account set up
 	accounts []testutils.Account
