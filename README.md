@@ -53,4 +53,4 @@ To read more about how to build your own custom `lanes`, check out the [Build Yo
 ### Audits 
 
 The Block SDK has undergone audits by the following firms:
-- [OtterSec (Sept 29, 2023)](audits/ottersec_sept_29_2023.pdf)
+- [OtterSec (Sept 9th, 2023)](audits/ottersec_sept_29_2023.pdf)
