@@ -24,10 +24,11 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
 	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
-	"github.com/skip-mev/block-sdk/tests/app"
-	"github.com/skip-mev/block-sdk/tests/app/params"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+
+	"github.com/skip-mev/block-sdk/tests/app"
+	"github.com/skip-mev/block-sdk/tests/app/params"
 )
 
 func NewRootCmd() *cobra.Command {

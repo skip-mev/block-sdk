@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/utils"

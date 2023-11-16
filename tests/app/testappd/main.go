@@ -5,6 +5,7 @@ import (
 
 	"github.com/cosmos/cosmos-sdk/server"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
+
 	"github.com/skip-mev/block-sdk/tests/app"
 	"github.com/skip-mev/block-sdk/tests/app/testappd/cmd"
 )

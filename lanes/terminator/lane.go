@@ -7,6 +7,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
 )

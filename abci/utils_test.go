@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	tmprototypes "github.com/cometbft/cometbft/proto/tendermint/types"
+
 	"github.com/skip-mev/block-sdk/abci"
 	signeradaptors "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"

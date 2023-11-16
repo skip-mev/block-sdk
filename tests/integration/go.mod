@@ -10,7 +10,7 @@ replace (
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
 	github.com/skip-mev/block-sdk => ../../
-
+	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
 	github.com/vedhavyas/go-subkey => github.com/strangelove-ventures/go-subkey v1.0.7
 )
 

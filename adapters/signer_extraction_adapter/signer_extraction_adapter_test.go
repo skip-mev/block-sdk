@@ -8,9 +8,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/client"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/stretchr/testify/suite"
+
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/stretchr/testify/suite"
 )
 
 type SignerExtractionAdapterTestSuite struct {
