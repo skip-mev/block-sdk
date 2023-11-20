@@ -12,12 +12,12 @@ require (
 	cosmossdk.io/math v1.2.0
 	cosmossdk.io/store v1.0.0
 	cosmossdk.io/tools/confix v0.1.0
-	cosmossdk.io/x/circuit v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/circuit v0.1.0
 	cosmossdk.io/x/feegrant v0.1.0
 	cosmossdk.io/x/tx v0.12.0
-	cosmossdk.io/x/upgrade v0.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/x/upgrade v0.1.0
 	github.com/client9/misspell v0.3.4
-	github.com/cometbft/cometbft v0.38.0
+	github.com/cometbft/cometbft v0.38.1
 	github.com/cosmos/cosmos-db v1.0.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.3
 	github.com/cosmos/cosmos-sdk v0.50.1
