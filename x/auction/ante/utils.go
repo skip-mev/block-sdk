@@ -28,8 +28,6 @@ func ValidateTimeout(ctx sdk.Context, timeout int64, simulate bool) error {
 	// Every transaction must have a timeout height greater than or equal to the height at which
 	// the bid transaction will be executed.
 	height := ctx.BlockHeight()
-
-	ctx.IsReCheckTx()
 	if ctx.IsCheckTx() || ctx.IsReCheckTx() || simulate {
 		height++
 	}
