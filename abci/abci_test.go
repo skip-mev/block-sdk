@@ -672,7 +672,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	s.Run("can build a proposal if a lane panics first", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik1", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -708,19 +708,21 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			},
 		}
 
-		mempool := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
-			false,
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
 				return chainLanes
 			}),
-			lanes...,
 		)
+		s.Require().NoError(err)
+
+		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -748,7 +750,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if second lane panics", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik1", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -784,19 +786,21 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			},
 		}
 
-		mempool := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
-			false,
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
 				return chainLanes
 			}),
-			lanes...,
 		)
+		s.Require().NoError(err)
+
+		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -824,8 +828,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if multiple consecutive lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik1", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("panik2", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -867,18 +871,23 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			},
 		}
 
-		mempool := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
-			false,
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
 				return chainLanes
 			}),
-			lanes...,
 		)
+		s.Require().NoError(err)
+
+		panicLane.SetIgnoreList(nil)
+		panicLane2.SetIgnoreList(nil)
+		defaultLane.SetIgnoreList(nil)
+
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -906,8 +915,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if the last few lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik1", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("panik2", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -949,19 +958,23 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			},
 		}
 
-		mempool := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
-			false,
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
 			}, func() []blocksdkmoduletypes.Lane {
 				return chainLanes
 			}),
-			lanes...,
 		)
+		s.Require().NoError(err)
+
+		panicLane.SetIgnoreList(nil)
+		panicLane2.SetIgnoreList(nil)
+		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -1237,7 +1250,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 	s.Run("rejects a proposal when a lane panics", func() {
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.0"))
+		panicLane := s.setUpPanicLane("default", math.LegacyMustNewDecFromStr("0.0"))
 
 		txbz, err := testutils.CreateRandomTxBz(
 			s.encodingConfig.TxConfig,

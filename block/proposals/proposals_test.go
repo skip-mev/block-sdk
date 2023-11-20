@@ -29,7 +29,7 @@ func TestUpdateProposal(t *testing.T) {
 	lane.On("GetMaxBlockSpace").Return(math.LegacyNewDec(1)).Maybe()
 
 	t.Run("can update with no transactions", func(t *testing.T) {
-		proposal := proposals.NewProposal(log.NewTestLogger(t), nil, 100, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), nil, 100, 100)
 
 		err := proposal.UpdateProposal(lane, nil)
 		require.NoError(t, err)
@@ -61,7 +61,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
@@ -107,7 +107,7 @@ func TestUpdateProposal(t *testing.T) {
 			gasLimit += 100
 		}
 
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
 
 		err = proposal.UpdateProposal(lane, txs)
 		require.NoError(t, err)
@@ -144,7 +144,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := int64(len(txBzs[0]))
 		gasLimit := uint64(100)
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
@@ -204,7 +204,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0]) + len(txBzs[1])
 		gasLimit := 200
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
@@ -242,7 +242,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		lane := mocks.NewLane(t)
 
@@ -280,7 +280,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		lane := mocks.NewLane(t)
 
@@ -318,7 +318,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
@@ -351,7 +351,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.Error(t, err)
@@ -392,7 +392,7 @@ func TestUpdateProposal(t *testing.T) {
 		txBzs, err := utils.GetEncodedTxs(encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx, tx2})
 		require.NoError(t, err)
 
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
 
 		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
 		require.NoError(t, err)
