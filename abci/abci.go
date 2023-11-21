@@ -9,11 +9,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
-)
-
-const (
-	// ProposalInfoIndex is the index of the proposal metadata in the proposal.
-	ProposalInfoIndex = 0
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 type (
@@ -87,16 +83,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
-		// Retrieve the proposal with metadata and transactions.
-		txs, err := finalProposal.GetProposalWithInfo()
-		if err != nil {
-			h.logger.Error("failed to get proposal with metadata", "err", err)
-			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
-		}
-
 		h.logger.Info(
 			"prepared proposal",
-			"num_txs", len(txs),
+			"num_txs", len(finalProposal.Txs),
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", finalProposal.Info.MaxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,
@@ -111,7 +100,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		)
 
 		return &abci.ResponsePrepareProposal{
-			Txs: txs,
+			Txs: finalProposal.Txs,
 		}, nil
 	}
 }
@@ -138,10 +127,10 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
-		// Extract all of the lanes and their corresponding transactions from the proposal.
-		proposalInfo, partialProposals, err := h.ExtractLanes(ctx, req.Txs)
+		// Decode the transactions in the proposal. These will be verified by each lane in a greedy fashion.
+		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, req.Txs)
 		if err != nil {
-			h.logger.Error("failed to validate proposal", "err", err)
+			h.logger.Error("failed to decode txs", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
@@ -152,22 +141,22 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		processLanesHandler := ChainProcessLanes(partialProposals, registry)
-		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
-		if err != nil {
-			h.logger.Error("failed to validate the proposal", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		}
+		processLanesHandler := ChainProcessLanes(registry)
 
-		// Ensure block size and gas limit are correct.
-		if err := h.ValidateBlockLimits(finalProposal, proposalInfo); err != nil {
+		// Verify the proposal.
+		finalProposal, err := processLanesHandler(
+			ctx,
+			proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder),
+			decodedTxs,
+		)
+		if err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		h.logger.Info(
 			"processed proposal",
-			"num_txs", len(req.Txs),
+			"num_txs", finalProposal.Txs,
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", finalProposal.Info.MaxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,

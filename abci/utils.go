@@ -1,107 +1,12 @@
 package abci
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
-
-// ExtractLanes validates the proposal against the basic invariants that are required
-// for the proposal to be valid. This includes:
-//  1. The proposal must contain the proposal information and must be valid.
-//  2. The proposal must contain the correct number of transactions for each lane.
-func (h *ProposalHandler) ExtractLanes(ctx sdk.Context, proposal [][]byte) (types.ProposalInfo, [][][]byte, error) {
-	// If the proposal is empty, then the metadata was not included.
-	if len(proposal) == 0 {
-		return types.ProposalInfo{}, nil, fmt.Errorf("proposal does not contain proposal metadata")
-	}
-
-	metaDataBz, txs := proposal[ProposalInfoIndex], proposal[ProposalInfoIndex+1:]
-
-	// Retrieve the metadata from the proposal.
-	var metaData types.ProposalInfo
-	if err := metaData.Unmarshal(metaDataBz); err != nil {
-		return types.ProposalInfo{}, nil, fmt.Errorf("failed to unmarshal proposal metadata: %w", err)
-	}
-
-	lanes, err := h.mempool.Registry(ctx)
-	if err != nil {
-		return types.ProposalInfo{}, nil, fmt.Errorf("failed to get mempool registry: %w", err)
-	}
-	partialProposals := make([][][]byte, len(lanes))
-
-	if metaData.TxsByLane == nil {
-		if len(txs) > 0 {
-			return types.ProposalInfo{}, nil, fmt.Errorf("proposal contains invalid number of transactions")
-		}
-
-		return types.ProposalInfo{}, partialProposals, nil
-	}
-
-	h.logger.Info(
-		"received proposal with metadata",
-		"max_block_size", metaData.MaxBlockSize,
-		"max_gas_limit", metaData.MaxGasLimit,
-		"gas_limit", metaData.GasLimit,
-		"block_size", metaData.BlockSize,
-		"lanes_with_txs", metaData.TxsByLane,
-	)
-
-	// Iterate through all of the lanes and match the corresponding transactions to the lane.
-	for index, lane := range lanes {
-		numTxs := metaData.TxsByLane[lane.Name()]
-		if numTxs > uint64(len(txs)) {
-			return types.ProposalInfo{}, nil, fmt.Errorf(
-				"proposal metadata contains invalid number of transactions for lane %s; got %d, expected %d",
-				lane.Name(),
-				len(txs),
-				numTxs,
-			)
-		}
-
-		partialProposals[index] = txs[:numTxs]
-		txs = txs[numTxs:]
-	}
-
-	// If there are any transactions remaining in the proposal, then the proposal is invalid.
-	if len(txs) > 0 {
-		return types.ProposalInfo{}, nil, fmt.Errorf("proposal contains invalid number of transactions")
-	}
-
-	return metaData, partialProposals, nil
-}
-
-// ValidateBlockLimits validates the block limits of the proposal against the block limits
-// of the chain.
-func (h *ProposalHandler) ValidateBlockLimits(finalProposal proposals.Proposal, proposalInfo types.ProposalInfo) error {
-	// Conduct final checks on block size and gas limit.
-	if finalProposal.Info.BlockSize != proposalInfo.BlockSize {
-		h.logger.Error(
-			"proposal block size does not match",
-			"expected", proposalInfo.BlockSize,
-			"got", finalProposal.Info.BlockSize,
-		)
-
-		return fmt.Errorf("proposal block size does not match")
-	}
-
-	if finalProposal.Info.GasLimit != proposalInfo.GasLimit {
-		h.logger.Error(
-			"proposal gas limit does not match",
-			"expected", proposalInfo.GasLimit,
-			"got", finalProposal.Info.GasLimit,
-		)
-
-		return fmt.Errorf("proposal gas limit does not match")
-	}
-
-	return nil
-}
 
 // ChainPrepareLanes chains together the proposal preparation logic from each lane into a
 // single function. The first lane in the chain is the first lane to be prepared and the
@@ -163,7 +68,7 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 // into a single function. The first lane in the chain is the first lane to be verified and
 // the last lane in the chain is the last lane to be verified. Each lane will validate
 // the transactions that it selected in the prepare phase.
-func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.ProcessLanesHandler {
+func ChainProcessLanes(chain []block.Lane) block.ProcessLanesHandler {
 	if len(chain) == 0 {
 		return nil
 	}
@@ -171,12 +76,10 @@ func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.Pr
 	// Handle non-terminated decorators chain
 	if (chain[len(chain)-1] != terminator.Terminator{}) {
 		chain = append(chain, terminator.Terminator{})
-		partialProposals = append(partialProposals, nil)
 	}
 
-	return func(ctx sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error) {
+	return func(ctx sdk.Context, proposal proposals.Proposal, txs []sdk.Tx) (proposals.Proposal, error) {
 		lane := chain[0]
-		partialProposal := partialProposals[0]
-		return lane.ProcessLane(ctx, proposal, partialProposal, ChainProcessLanes(partialProposals[1:], chain[1:]))
+		return lane.ProcessLane(ctx, proposal, txs, ChainProcessLanes(chain[1:]))
 	}
 }

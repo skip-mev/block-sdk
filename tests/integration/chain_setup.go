@@ -356,25 +356,11 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 	require.NoError(t, err)
 }
 
-// VerifyBlock takes a Block and verifies that it contains the given bid at the 0-th index, and the bundled txs immediately after
-func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHash string, txs [][]byte) {
-	// verify the block
-	if bidTxHash != "" {
-		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset+1]))
-		offset += 1
-	}
-
-	// verify the txs in sequence
-	for i, tx := range txs {
-		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset+1]))
-	}
-}
-
 // VerifyBlockWithExpectedBlock takes in a list of raw tx bytes and compares each tx hash to the tx hashes in the block.
 // The expected block is the block that should be returned by the chain at the given height.
 func VerifyBlockWithExpectedBlock(t *testing.T, chain *cosmos.CosmosChain, height uint64, txs [][]byte) {
 	block := Block(t, chain, int64(height))
-	blockTxs := block.Block.Data.Txs[1:]
+	blockTxs := block.Block.Data.Txs
 
 	t.Logf("verifying block %d", height)
 	require.Equal(t, len(txs), len(blockTxs))
