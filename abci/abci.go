@@ -154,7 +154,7 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 		h.logger.Info(
 			"processed proposal",
-			"num_txs", finalProposal.Txs,
+			"num_txs", len(finalProposal.Txs),
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", finalProposal.Info.MaxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,

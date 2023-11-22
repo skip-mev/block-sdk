@@ -2,6 +2,8 @@ package integration
 
 import (
 	"context"
+	"math/rand"
+	"time"
 
 	"cosmossdk.io/math"
 	rpctypes "github.com/cometbft/cometbft/rpc/core/types"
@@ -39,6 +41,8 @@ type IntegrationTestSuite struct {
 	user1, user2, user3 ibc.Wallet
 	// denom
 	denom string
+	// fuzzusers
+	fuzzusers []ibc.Wallet
 
 	// overrides for key-ring configuration of the broadcaster
 	broadcasterOverrides *KeyringOverride
@@ -85,6 +89,10 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.user1 = interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0]
 	s.user2 = interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0]
 	s.user3 = interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0]
+
+	for i := 0; i < 10; i++ {
+		s.fuzzusers = append(s.fuzzusers, interchaintest.GetAndFundTestUsers(s.T(), ctx, s.T().Name(), initBalance, s.chain)[0])
+	}
 
 	// create the broadcaster
 	s.T().Log("creating broadcaster")
@@ -1256,5 +1264,163 @@ func (s *IntegrationTestSuite) TestLanes() {
 		// check user2 balance expect no fee deduction
 		user2BalanceAfter := QueryAccountBalance(s.T(), s.chain.(*cosmos.CosmosChain), s.user2.FormattedAddress(), s.denom)
 		require.Equal(s.T(), user2BalanceBefore, user2BalanceAfter+delegation.Amount.Int64())
+	})
+}
+
+func (s *IntegrationTestSuite) TestNetwork() {
+	amountToTest := time.NewTicker(time.Second * 45)
+	defer amountToTest.Stop()
+
+	numTxs := 10
+	sendAmount := sdk.NewCoins(sdk.NewCoin(s.denom, math.NewInt(100)))
+	delegation := sdk.NewCoin(s.denom, math.NewInt(100))
+	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
+
+	s.Run("can produce blocks with only default transactions", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				require.NoError(s.T(), err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers {
+						fee := rand.Int63n(100000)
+						sequenceOffset := uint64(i)
+
+						normalTx := s.CreateDummyNormalTx(user, s.user1, sendAmount, sequenceOffset, fee)
+						s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{normalTx})
+					}
+				}
+			}
+		}
+	})
+
+	s.Run("can produce blocks with only free transactions", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				require.NoError(s.T(), err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers {
+						sequenceOffset := uint64(i)
+
+						freeTx := s.CreateDummyFreeTx(user, validators[0], delegation, sequenceOffset)
+						s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{freeTx})
+					}
+				}
+			}
+		}
+	})
+
+	s.Run("can produce blocks with only MEV transactions", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				require.NoError(s.T(), err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers {
+						bid := rand.Int63n(1000000)
+						bidAmount := sdk.NewCoin(s.denom, math.NewInt(bid))
+
+						mevTx := s.CreateDummyAuctionBidTx(
+							height+2,
+							user,
+							bidAmount,
+						)
+						s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{mevTx})
+					}
+				}
+			}
+		}
+	})
+
+	amountToTest.Reset(5 * time.Minute)
+	s.Run("can produce blocks with all types of transactions", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				require.NoError(s.T(), err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+
+				txs := []Tx{}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[0:3] {
+						bid := rand.Int63n(1000000)
+						bidAmount := sdk.NewCoin(s.denom, math.NewInt(bid))
+
+						bidTx := s.CreateDummyAuctionBidTx(
+							height+2,
+							user,
+							bidAmount,
+						)
+						txs = append(txs, bidTx)
+					}
+				}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[3:6] {
+						sequenceOffset := uint64(i)
+
+						freeTx := s.CreateDummyFreeTx(user, validators[0], delegation, sequenceOffset)
+						txs = append(txs, freeTx)
+
+					}
+				}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[6:10] {
+						fee := rand.Int63n(100000)
+						sequenceOffset := uint64(i)
+						normalTx := s.CreateDummyNormalTx(user, s.user1, sendAmount, sequenceOffset, fee)
+						txs = append(txs, normalTx)
+					}
+				}
+
+				s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), txs)
+			}
+		}
+	})
+
+	// Wait for 1 minute for the network to stabilize
+	amountToTest.Reset(1 * time.Minute)
+	s.Run("can produce empty blocks", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				require.NoError(s.T(), err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+			}
+		}
 	})
 }

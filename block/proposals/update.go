@@ -47,7 +47,7 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 			return fmt.Errorf("err retrieving transaction info: %s", err)
 		}
 
-		p.Logger.Debug(
+		p.Logger.Info(
 			"updating proposal with tx",
 			"index", index,
 			"lane", lane.Name(),
