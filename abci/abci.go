@@ -108,9 +108,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // ProcessProposalHandler processes the proposal by verifying all transactions in the proposal
 // according to each lane's verification logic. Proposals are verified similar to how they are
 // constructed. After a proposal is processed, it should amount to the same proposal that was prepared.
-// Each proposal will first be broken down by the lanes that prepared each partial proposal. Then, each
-// lane will iteratively verify the transactions that it belong to it. If any lane fails to verify the
-// transactions, then the proposal is rejected.
+// The proposal is verified in a greedy fashion, respecting the ordering of lanes. A lane will
+// verify all transactions in the proposal that belong to the lane and pass any remaining transactions
+// to the next lane in the chain.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		if req.Height <= 1 {

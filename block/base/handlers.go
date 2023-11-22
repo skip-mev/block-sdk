@@ -111,8 +111,8 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 
 // DefaultProcessLaneHandler returns a default implementation of the ProcessLaneHandler. It verifies
 // the following invariants:
-//  1. All transactions belong to this lane. If a transaction does not belong to this lane, we
-//     return the remain transactions to the next lane.
+//  1. All transactions belong to this lane. If a transaction does not belong to this lane, we return
+//     the remaining transactions iff there are no matches in the remaining transactions after this index.
 //  2. All transactions respect the priority defined by the mempool.
 //  3. All transactions are valid respecting the verification logic of the lane.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
@@ -125,8 +125,10 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 			if !l.Match(ctx, tx) {
 				// If the transaction does not belong to this lane, we return the remaining transactions
 				// iff there are no matches in the remaining transactions after this index.
-				if err := l.VerifyNoMatches(ctx, partialProposal[index:]); err != nil {
-					return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+				if index+1 < len(partialProposal) {
+					if err := l.VerifyNoMatches(ctx, partialProposal[index+1:]); err != nil {
+						return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+					}
 				}
 
 				return partialProposal[:index], partialProposal[index:], nil
@@ -146,7 +148,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 		}
 
 		// This means we have processed all transactions in the partial proposal i.e.
-		// all of the transactions belong to this lane.
+		// all of the transactions belong to this lane. There are no remaining transactions.
 		return partialProposal, nil, nil
 	}
 }
@@ -155,7 +157,7 @@ func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 func (l *BaseLane) VerifyNoMatches(ctx sdk.Context, txs []sdk.Tx) error {
 	for _, tx := range txs {
 		if l.Match(ctx, tx) {
-			return fmt.Errorf("transaction belongs to lane")
+			return fmt.Errorf("transaction belongs to lane when it should not")
 		}
 	}
 

@@ -79,13 +79,18 @@ func (l *BaseLane) ProcessLane(
 	txs []sdk.Tx,
 	next block.ProcessLanesHandler,
 ) (proposals.Proposal, error) {
+	l.Logger().Info(
+		"processing lane",
+		"lane", l.Name(),
+		"num_txs_to_verify", len(txs),
+	)
+
 	if len(txs) == 0 {
-		return proposal, nil
+		return next(ctx, proposal, txs)
 	}
 
-	l.Logger().Info("processing lane", "lane", l.Name())
-
-	// Verify the transactions that belong to this lane according to the verification logic of the lane.
+	// Verify the transactions that belong to the lane and return any transactions that must be
+	// validated by the next lane in the chain.
 	txsFromLane, remainingTxs, err := l.processLaneHandler(ctx, txs)
 	if err != nil {
 		l.Logger().Error(
@@ -117,6 +122,7 @@ func (l *BaseLane) ProcessLane(
 		"num_txs_remaining", len(remainingTxs),
 	)
 
+	// Validate the remaining transactions with the next lane in the chain.
 	return next(ctx, proposal, remainingTxs)
 }
 

@@ -94,8 +94,12 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 		// should be included in the proposal.
 		bidTx := partialProposal[0]
 		if !l.Match(ctx, bidTx) {
-			if err := l.VerifyNoMatches(ctx, partialProposal[1:]); err != nil {
-				return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+			// If the transaction does not belong to this lane, we return the remaining transactions
+			// iff there are no matches in the remaining transactions after this index.
+			if len(partialProposal) > 1 {
+				if err := l.VerifyNoMatches(ctx, partialProposal[1:]); err != nil {
+					return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+				}
 			}
 
 			return nil, partialProposal, nil
@@ -146,6 +150,8 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 		}
 
 		// Verify the top-level bid transaction.
+		//
+		// TODO: There is duplicate work being done in VerifyBidTx and here.
 		if err := l.VerifyBidTx(ctx, bidTx, bundle); err != nil {
 			return nil, nil, fmt.Errorf("invalid bid tx; failed to verify bid tx: %w", err)
 		}

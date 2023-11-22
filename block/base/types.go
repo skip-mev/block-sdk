@@ -21,8 +21,13 @@ type (
 	) (txsToInclude []sdk.Tx, txsToRemove []sdk.Tx, err error)
 
 	// ProcessLaneHandler is responsible for processing transactions that are included in a block and
-	// belong to a given lane. This handler must return an error if the transactions are not correctly
-	// ordered, do not belong to this lane, or any other relevant error.
+	// belong to a given lane. The handler must return the transactions that were successfully processed
+	// and the transactions that it cannot process because they belong to a different lane. Basic invariant
+	// checks that are required:
+	// 1. Transactions belonging to the lane must be contiguous from the beginning of the partial proposal.
+	// 2. Transactions that do not belong to the lane must be contiguous from the end of the partial proposal.
+	// 3. Transactions must be ordered respecting the priority defined by the lane (e.g. gas price).
+	// 4. Transactions must be valid according to the verification logic of the lane.
 	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) (
 		txsFromLane []sdk.Tx,
 		remainingTxs []sdk.Tx,

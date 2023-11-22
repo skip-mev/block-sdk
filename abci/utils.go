@@ -67,7 +67,10 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 // ChainProcessLanes chains together the proposal verification logic from each lane
 // into a single function. The first lane in the chain is the first lane to be verified and
 // the last lane in the chain is the last lane to be verified. Each lane will validate
-// the transactions that it selected in the prepare phase.
+// the transactions that belong to the lane and pass any remaining transactions to the next
+// lane in the chain. If any of the lanes fail to verify the transactions, the proposal will
+// be rejected. If there are any remaining transactions after all lanes have been processed,
+// the proposal will be rejected.
 func ChainProcessLanes(chain []block.Lane) block.ProcessLanesHandler {
 	if len(chain) == 0 {
 		return nil
