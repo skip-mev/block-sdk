@@ -74,9 +74,8 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
 		}
 
-		prepareLanesHandler := ChainPrepareLanes(registry)
-
 		// Fill the proposal with transactions from each lane.
+		prepareLanesHandler := ChainPrepareLanes(registry)
 		finalProposal, err := prepareLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
@@ -141,9 +140,8 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		processLanesHandler := ChainProcessLanes(registry)
-
 		// Verify the proposal.
+		processLanesHandler := ChainProcessLanes(registry)
 		finalProposal, err := processLanesHandler(
 			ctx,
 			proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder),

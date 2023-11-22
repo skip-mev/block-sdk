@@ -915,6 +915,122 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
+	s.Run("can reject a proposal with txs from multiple lanes", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// create a bid tx that will be inserted into the mev lane
+		bidTx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[1:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		// create a free tx that will be inserted into the free lane
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Mev lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			bidTx:        true,
+			bundleTxs[0]: true,
+		})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+
+		proposal := s.createProposal(bidTx, bundleTxs[0], tx, freeTx) // tx and freeTx are out of order
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		s.Require().Error(err)
+		s.Require().NotNil(resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
+	s.Run("can reject a proposal with txs from multiple lanes (mev is mixed up)", func() {
+		// Create a random transaction that will be inserted into the default lane
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			0,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// create a bid tx that will be inserted into the mev lane
+		bidTx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[1:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		// create a free tx that will be inserted into the free lane
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Mev lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			bidTx:        true,
+			bundleTxs[0]: true,
+		})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
+			tx: true,
+		})
+
+		proposal := s.createProposal(freeTx, tx, bidTx, bundleTxs[0])
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		s.Require().Error(err)
+		s.Require().NotNil(resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
 	s.Run("rejects a proposal with bad txs", func() {
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
 		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
@@ -950,20 +1066,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
-	s.Run("can process a invalid proposal (out of order)", func() {
+	s.Run("can process a invalid proposal (default lane out of order)", func() {
 		// Create a random transaction that will be inserted into the default lane
-		tx, err := testutils.CreateAuctionTxWithSigners(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
-			0,
-			1,
-			nil,
-		)
-		s.Require().NoError(err)
-
-		// Create a random transaction that will be inserted into the default lane
-		tx2, err := testutils.CreateRandomTx(
+		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[2],
 			0,
@@ -974,19 +1079,31 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		s.Require().NoError(err)
 
+		// Create a random transaction that will be inserted into the default lane
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			1,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
 		// Mev lane
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx: true})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
 		// Set up the default lane
-		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true})
-		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true, tx1: true})
 
-		proposal := s.createProposal(tx2, tx)
+		proposal := s.createProposal(tx2, tx1)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where first lane is valid second is not", func() {
@@ -1042,6 +1159,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much gas", func() {
@@ -1092,6 +1210,8 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much block space", func() {
@@ -1149,6 +1269,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 }
 
