@@ -49,7 +49,7 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 
 		p.Logger.Info(
 			"updating proposal with tx",
-			"index", index+len(p.Txs),
+			"index", index,
 			"lane", lane.Name(),
 			"tx_hash", txInfo.Hash,
 			"tx_size", txInfo.Size,
