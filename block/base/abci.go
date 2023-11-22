@@ -97,7 +97,6 @@ func (l *BaseLane) ProcessLane(
 			"failed to process lane",
 			"lane", l.Name(),
 			"err", err,
-			"num_txs_to_verify", len(txs),
 		)
 
 		return proposal, err
@@ -108,8 +107,8 @@ func (l *BaseLane) ProcessLane(
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),
+			"num_txs_verified", len(txsFromLane),
 			"err", err,
-			"num_txs_to_verify", len(txsFromLane),
 		)
 
 		return proposal, err

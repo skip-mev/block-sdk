@@ -1,7 +1,6 @@
 package proposals
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -55,8 +54,6 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 			"tx_hash", txInfo.Hash,
 			"tx_size", txInfo.Size,
 			"tx_gas_limit", txInfo.GasLimit,
-			"tx_bytes", txInfo.TxBytes,
-			"raw_tx", base64.StdEncoding.EncodeToString(txInfo.TxBytes),
 		)
 
 		// invariant check: Ensure that the transaction is not already in the proposal.
