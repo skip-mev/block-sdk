@@ -111,10 +111,10 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 
 // DefaultProcessLaneHandler returns a default implementation of the ProcessLaneHandler. It verifies
 // the following invariants:
-//  1. All transactions belong to this lane. If a transaction does not belong to this lane, we return
-//     the remaining transactions iff there are no matches in the remaining transactions after this index.
-//  2. All transactions respect the priority defined by the mempool.
-//  3. All transactions are valid respecting the verification logic of the lane.
+//  1. Transactions belonging to the lane must be contiguous from the beginning of the partial proposal.
+//  2. Transactions that do not belong to the lane must be contiguous from the end of the partial proposal.
+//  3. Transactions must be ordered respecting the priority defined by the lane (e.g. gas price).
+//  4. Transactions must be valid according to the verification logic of the lane.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
 	return func(ctx sdk.Context, partialProposal []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
 		if len(partialProposal) == 0 {

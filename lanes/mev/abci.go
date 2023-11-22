@@ -90,8 +90,6 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 			return nil, nil, nil
 		}
 
-		// If the first transaction does not match the lane, no other MEV transactions
-		// should be included in the proposal.
 		bidTx := partialProposal[0]
 		if !l.Match(ctx, bidTx) {
 			// If the transaction does not belong to this lane, we return the remaining transactions
