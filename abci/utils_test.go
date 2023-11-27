@@ -17,9 +17,6 @@ import (
 	signeradaptors "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/proposals/types"
-	"github.com/skip-mev/block-sdk/block/utils"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
@@ -56,6 +53,29 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 	}
 
 	return anteHandler
+}
+
+func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool, mh base.MatchHandler, name string) block.Lane {
+	cfg := base.LaneConfig{
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:   maxBlockSpace,
+		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+	}
+
+	lane := base.NewBaseLane(
+		cfg,
+		name,
+		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
+		mh,
+	)
+
+	lane.SetPrepareLaneHandler(lane.DefaultPrepareLaneHandler())
+	lane.SetProcessLaneHandler(lane.DefaultProcessLaneHandler())
+
+	return lane
 }
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
@@ -153,51 +173,8 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 	)
 }
 
-func (s *ProposalsTestSuite) createProposal(distribution map[string]uint64, txs ...sdk.Tx) [][]byte {
-	maxSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-	size, limit := s.getTxInfos(txs...)
-
-	info := s.createProposalInfoBytes(
-		maxGasLimit,
-		limit,
-		maxSize,
-		size,
-		distribution,
-	)
-
-	proposal := s.getTxBytes(txs...)
-	return append([][]byte{info}, proposal...)
-}
-
-func (s *ProposalsTestSuite) getProposalInfo(bz []byte) types.ProposalInfo {
-	var info types.ProposalInfo
-	s.Require().NoError(info.Unmarshal(bz))
-	return info
-}
-
-func (s *ProposalsTestSuite) createProposalInfo(
-	maxGasLimit, gasLimit uint64,
-	maxBlockSize, blockSize int64,
-	txsByLane map[string]uint64,
-) types.ProposalInfo {
-	return types.ProposalInfo{
-		MaxGasLimit:  maxGasLimit,
-		GasLimit:     gasLimit,
-		MaxBlockSize: maxBlockSize,
-		BlockSize:    blockSize,
-		TxsByLane:    txsByLane,
-	}
-}
-
-func (s *ProposalsTestSuite) createProposalInfoBytes(
-	maxGasLimit, gasLimit uint64,
-	maxBlockSize, blockSize int64,
-	txsByLane map[string]uint64,
-) []byte {
-	info := s.createProposalInfo(maxGasLimit, gasLimit, maxBlockSize, blockSize, txsByLane)
-	bz, err := info.Marshal()
-	s.Require().NoError(err)
-	return bz
+func (s *ProposalsTestSuite) createProposal(txs ...sdk.Tx) [][]byte {
+	return s.getTxBytes(txs...)
 }
 
 func (s *ProposalsTestSuite) getTxBytes(txs ...sdk.Tx) [][]byte {
@@ -209,21 +186,6 @@ func (s *ProposalsTestSuite) getTxBytes(txs ...sdk.Tx) [][]byte {
 		txBytes[i] = bz
 	}
 	return txBytes
-}
-
-func (s *ProposalsTestSuite) getTxInfos(txs ...sdk.Tx) (int64, uint64) {
-	totalSize := int64(0)
-	totalGasLimit := uint64(0)
-
-	for _, tx := range txs {
-		info, err := utils.GetTxInfo(s.encodingConfig.TxConfig.TxEncoder(), tx)
-		s.Require().NoError(err)
-
-		totalSize += info.Size
-		totalGasLimit += info.GasLimit
-	}
-
-	return totalSize, totalGasLimit
 }
 
 func (s *ProposalsTestSuite) setBlockParams(maxGasLimit, maxBlockSize int64) {
