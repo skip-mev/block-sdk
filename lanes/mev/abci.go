@@ -77,73 +77,84 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 
 // ProcessLaneHandler will ensure that block proposals that include transactions from
 // the mev lane are valid. In particular, the invariant checks that we perform are:
-//  1. The first transaction in the partial block proposal must be a bid transaction.
+//  1. If the first transaction does not match the lane, no other MEV transactions
+//     should be included in the proposal.
 //  2. The bid transaction must be valid.
 //  3. The bundled transactions must be valid.
 //  4. The bundled transactions must match the transactions in the block proposal in the
 //     same order they were defined in the bid transaction.
 //  5. The bundled transactions must not be bid transactions.
 func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
-	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
+	return func(ctx sdk.Context, partialProposal []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
 		if len(partialProposal) == 0 {
-			return nil
+			return nil, nil, nil
 		}
 
-		// If the first transaction does not match the lane, then we return an error.
 		bidTx := partialProposal[0]
 		if !l.Match(ctx, bidTx) {
-			return fmt.Errorf("expected first transaction in lane %s to be a bid transaction", l.Name())
+			// If the transaction does not belong to this lane, we return the remaining transactions
+			// iff there are no matches in the remaining transactions after this index.
+			if len(partialProposal) > 1 {
+				if err := l.VerifyNoMatches(ctx, partialProposal[1:]); err != nil {
+					return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+				}
+			}
+
+			return nil, partialProposal, nil
 		}
 
 		bidInfo, err := l.GetAuctionBidInfo(bidTx)
 		if err != nil {
-			return fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
+			return nil, nil, fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
 		}
 
 		if bidInfo == nil {
-			return fmt.Errorf("bid info is nil")
+			return nil, nil, fmt.Errorf("bid info is nil")
 		}
 
 		// Check that all bundled transactions were included.
-		if len(bidInfo.Transactions)+1 != len(partialProposal) {
-			return fmt.Errorf(
+		bundleSize := len(bidInfo.Transactions) + 1
+		if bundleSize > len(partialProposal) {
+			return nil, nil, fmt.Errorf(
 				"expected %d transactions in lane %s but got %d",
-				len(bidInfo.Transactions)+1,
+				bundleSize,
 				l.Name(),
 				len(partialProposal),
 			)
 		}
 
 		// Ensure the transactions in the proposal match the bundled transactions in the bid transaction.
-		bundle := partialProposal[1:]
+		bundle := partialProposal[1:bundleSize]
 		for index, bundledTxBz := range bidInfo.Transactions {
 			bundledTx, err := l.WrapBundleTransaction(bundledTxBz)
 			if err != nil {
-				return fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
+				return nil, nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 			}
 
 			expectedTxBz, err := l.TxEncoder()(bundledTx)
 			if err != nil {
-				return fmt.Errorf("invalid bid tx; failed to encode bundled tx: %w", err)
+				return nil, nil, fmt.Errorf("invalid bid tx; failed to encode bundled tx: %w", err)
 			}
 
 			actualTxBz, err := l.TxEncoder()(bundle[index])
 			if err != nil {
-				return fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
+				return nil, nil, fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
 			}
 
 			// Verify that the bundled transaction matches the transaction in the block proposal.
 			if !bytes.Equal(actualTxBz, expectedTxBz) {
-				return fmt.Errorf("invalid bid tx; bundled tx does not match tx in block proposal")
+				return nil, nil, fmt.Errorf("invalid bid tx; bundled tx does not match tx in block proposal")
 			}
 		}
 
 		// Verify the top-level bid transaction.
+		//
+		// TODO: There is duplicate work being done in VerifyBidTx and here.
 		if err := l.VerifyBidTx(ctx, bidTx, bundle); err != nil {
-			return fmt.Errorf("invalid bid tx; failed to verify bid tx: %w", err)
+			return nil, nil, fmt.Errorf("invalid bid tx; failed to verify bid tx: %w", err)
 		}
 
-		return nil
+		return partialProposal[:bundleSize], partialProposal[bundleSize:], nil
 	}
 }
 
