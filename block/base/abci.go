@@ -42,8 +42,7 @@ func (l *BaseLane) PrepareLane(
 		)
 	}
 
-	// Get the transaction info for each transaction that was selected to be included in the
-	// partial proposal.
+	// Get the transaction info for each transaction that was selected.
 	txsWithInfo := make([]utils.TxWithInfo, len(txsToInclude))
 	for i, tx := range txsToInclude {
 		txInfo, err := l.GetTxInfo(ctx, tx)

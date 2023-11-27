@@ -80,7 +80,7 @@ type Lane interface {
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 
 	// GetTxInfo returns various information about the transaction that
-	// belongs to the lane including its priority, signer's, sequence number
+	// belongs to the lane including its priority, signer's, sequence number,
 	// size and more.
 	GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxWithInfo, error)
 }

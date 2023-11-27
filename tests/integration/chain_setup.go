@@ -4,10 +4,10 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
-	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"os"
 	"path"
 	"strings"
@@ -181,13 +181,10 @@ func (s *IntegrationTestSuite) CreateDummyFreeTx(
 		delegation,
 	)
 
-	// Create a random gas price
-	gasPrice := rand.Int63n(1000)
-
 	return Tx{
 		User:               user,
 		Msgs:               []sdk.Msg{delegateMsg},
-		GasPrice:           1000,
+		GasPrice:           rand.Int63n(150000),
 		SequenceIncrement:  sequenceOffset,
 		SkipInclusionCheck: true,
 		IgnoreChecks:       true,

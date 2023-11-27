@@ -26,8 +26,31 @@ type TxWithInfo struct {
 	Priority any
 	// Signers defines the signers of a transaction.
 	Signers []signerextraction.SignerData
-	// Tx is the sdk.Tx representation of the transaction.
-	Tx sdk.Tx
+}
+
+// NewTxInfo returns a new TxInfo instance.
+func NewTxInfo(
+	hash string,
+	size int64,
+	gasLimit uint64,
+	txBytes []byte,
+	priority any,
+	signers []signerextraction.SignerData,
+) TxWithInfo {
+	return TxWithInfo{
+		Hash:     hash,
+		Size:     size,
+		GasLimit: gasLimit,
+		TxBytes:  txBytes,
+		Priority: priority,
+		Signers:  signers,
+	}
+}
+
+// String implements the fmt.Stringer interface.
+func (t TxWithInfo) String() string {
+	return fmt.Sprintf("TxWithInfo{Hash: %s, Size: %d, GasLimit: %d, Priority: %s, Signers: %v}",
+		t.Hash, t.Size, t.GasLimit, t.Priority, t.Signers)
 }
 
 // GetTxHash returns the string hash representation of a transaction.
