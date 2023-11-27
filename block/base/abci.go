@@ -42,9 +42,27 @@ func (l *BaseLane) PrepareLane(
 		)
 	}
 
+	// Get the transaction info for each transaction that was selected to be included in the
+	// partial proposal.
+	txsWithInfo := make([]utils.TxWithInfo, len(txsToInclude))
+	for i, tx := range txsToInclude {
+		txInfo, err := l.GetTxInfo(ctx, tx)
+		if err != nil {
+			l.Logger().Error(
+				"failed to get tx info",
+				"lane", l.Name(),
+				"err", err,
+			)
+
+			return proposal, err
+		}
+
+		txsWithInfo[i] = txInfo
+	}
+
 	// Update the proposal with the selected transactions. This fails if the lane attempted to add
 	// more transactions than the allocated max block space for the lane.
-	if err := proposal.UpdateProposal(ctx, l, txsToInclude); err != nil {
+	if err := proposal.UpdateProposal(l, txsWithInfo); err != nil {
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),
@@ -102,8 +120,25 @@ func (l *BaseLane) ProcessLane(
 		return proposal, err
 	}
 
+	// Retrieve the transaction info for each transaction that belongs to the lane.
+	txsWithInfo := make([]utils.TxWithInfo, len(txsFromLane))
+	for i, tx := range txsFromLane {
+		txInfo, err := l.GetTxInfo(ctx, tx)
+		if err != nil {
+			l.Logger().Error(
+				"failed to get tx info",
+				"lane", l.Name(),
+				"err", err,
+			)
+
+			return proposal, err
+		}
+
+		txsWithInfo[i] = txInfo
+	}
+
 	// Optimistically update the proposal with the partial proposal.
-	if err := proposal.UpdateProposal(ctx, l, txsFromLane); err != nil {
+	if err := proposal.UpdateProposal(l, txsWithInfo); err != nil {
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),

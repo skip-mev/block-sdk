@@ -82,7 +82,7 @@ type Lane interface {
 	// GetTxInfo returns various information about the transaction that
 	// belongs to the lane including its priority, signer's, sequence number
 	// size and more.
-	GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxInfo, error)
+	GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxWithInfo, error)
 }
 
 // FindLane finds a Lanes from in an array of Lanes and returns it and its index if found.

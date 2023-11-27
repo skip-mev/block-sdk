@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"crypto/rand"
 	"encoding/hex"
 	"encoding/json"
 	"io"
@@ -179,6 +180,9 @@ func (s *IntegrationTestSuite) CreateDummyFreeTx(
 		sdk.ValAddress(validator).String(),
 		delegation,
 	)
+
+	// Create a random gas price
+	gasPrice := rand.Int63n(1000)
 
 	return Tx{
 		User:               user,

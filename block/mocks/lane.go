@@ -108,18 +108,18 @@ func (_m *Lane) GetMaxBlockSpace() math.LegacyDec {
 }
 
 // GetTxInfo provides a mock function with given fields: ctx, tx
-func (_m *Lane) GetTxInfo(ctx types.Context, tx types.Tx) (utils.TxInfo, error) {
+func (_m *Lane) GetTxInfo(ctx types.Context, tx types.Tx) (utils.TxWithInfo, error) {
 	ret := _m.Called(ctx, tx)
 
-	var r0 utils.TxInfo
+	var r0 utils.TxWithInfo
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) (utils.TxInfo, error)); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) (utils.TxWithInfo, error)); ok {
 		return rf(ctx, tx)
 	}
-	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) utils.TxInfo); ok {
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) utils.TxWithInfo); ok {
 		r0 = rf(ctx, tx)
 	} else {
-		r0 = ret.Get(0).(utils.TxInfo)
+		r0 = ret.Get(0).(utils.TxWithInfo)
 	}
 
 	if rf, ok := ret.Get(1).(func(types.Context, types.Tx) error); ok {

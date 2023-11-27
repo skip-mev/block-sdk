@@ -11,9 +11,9 @@ import (
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 )
 
-// TxInfo contains the information required for a transaction to be
+// TxWithInfo contains the information required for a transaction to be
 // included in a proposal.
-type TxInfo struct {
+type TxWithInfo struct {
 	// Hash is the hex-encoded hash of the transaction.
 	Hash string
 	// Size is the size of the transaction in bytes.
@@ -24,8 +24,10 @@ type TxInfo struct {
 	TxBytes []byte
 	// Priority defines the priority of the transaction.
 	Priority any
-	// signerData defines the signers of a transaction.
+	// Signers defines the signers of a transaction.
 	Signers []signerextraction.SignerData
+	// Tx is the sdk.Tx representation of the transaction.
+	Tx sdk.Tx
 }
 
 // GetTxHash returns the string hash representation of a transaction.
