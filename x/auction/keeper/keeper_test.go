@@ -25,9 +25,11 @@ type KeeperTestSuite struct {
 	stakingKeeper    *mocks.StakingKeeper
 	encCfg           testutils.EncodingConfig
 	ctx              sdk.Context
-	msgServer        types.MsgServer
 	key              *storetypes.KVStoreKey
 	authorityAccount sdk.AccAddress
+
+	msgServer   types.MsgServer
+	queryServer types.QueryServer
 }
 
 func TestKeeperTestSuite(t *testing.T) {
@@ -61,4 +63,5 @@ func (s *KeeperTestSuite) SetupTest() {
 	s.Require().NoError(err)
 
 	s.msgServer = keeper.NewMsgServerImpl(s.auctionkeeper)
+	s.queryServer = keeper.NewQueryServer(s.auctionkeeper)
 }
