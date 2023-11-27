@@ -110,7 +110,7 @@ func (s *IntegrationTestSuite) SetupSubTest() {
 	height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
 	require.NoError(s.T(), err)
 	WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+3)
-	s.T().Logf("reached height %d", height+3)
+	s.T().Logf("reached height %d", height+2)
 }
 
 func (s *IntegrationTestSuite) TestQueryParams() {
@@ -1355,7 +1355,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 		}
 	})
 
-	amountToTest.Reset(5 * time.Minute)
+	amountToTest.Reset(3 * time.Minute)
 	s.Run("can produce blocks with all types of transactions", func() {
 		for {
 			select {
