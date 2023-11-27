@@ -16,6 +16,7 @@ import (
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/mocks"
+	"github.com/skip-mev/block-sdk/lanes/free"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
@@ -521,7 +522,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -534,7 +535,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -587,7 +588,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -600,7 +601,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -660,7 +661,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -675,7 +676,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -735,7 +736,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -750,7 +751,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -1266,6 +1267,64 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
+	s.Run("rejects a proposal where there are transactions remaining that have been unverified", func() {
+		bidTx, _, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			1,
+			s.accounts[0:0],
+			1,
+		)
+		s.Require().NoError(err)
+
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
+		)
+		s.Require().NoError(err)
+
+		// Set up the top of block lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			bidTx: true,
+		})
+
+		// Set up the default lane
+		freeLane := s.setUpCustomMatchHandlerLane(
+			math.LegacyMustNewDecFromStr("0.0"),
+			map[sdk.Tx]bool{
+				freeTx: true,
+			},
+			free.DefaultMatchHandler(),
+			"default",
+		)
+
+		proposal := s.createProposal(bidTx, freeTx, normalTx)
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
