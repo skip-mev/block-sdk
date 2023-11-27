@@ -1,9 +1,11 @@
 package utils
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"fmt"
+	"strings"
+
+	comettypes "github.com/cometbft/cometbft/types"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -31,8 +33,7 @@ func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
 		return TxInfo{}, fmt.Errorf("failed to encode transaction: %w", err)
 	}
 
-	txHash := sha256.Sum256(txBz)
-	txHashStr := hex.EncodeToString(txHash[:])
+	txHashStr := strings.ToUpper(hex.EncodeToString(comettypes.Tx(txBz).Hash()))
 
 	// TODO: Add an adapter to lanes so that this can be flexible to support EVM, etc.
 	gasTx, ok := tx.(sdk.FeeTx)

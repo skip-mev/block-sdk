@@ -15,7 +15,12 @@ import (
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/block/proposals"
+=======
+	"github.com/skip-mev/block-sdk/block/mocks"
+	"github.com/skip-mev/block-sdk/lanes/free"
+>>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
 
@@ -63,18 +68,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
-		s.Require().Equal(1, len(resp.Txs))
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(0, len(info.TxsByLane))
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(0, len(resp.Txs))
 	})
 
 	s.Run("can build a proposal with a single tx from the lane", func() {
@@ -100,23 +94,11 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
-	s.Run("can build a proposal with multiple txs from the lane", func() {
+	s.Run("can build a proposal with multiple txs from the default lane", func() {
 		// Create a random transaction that will be inserted into the default lane
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -152,20 +134,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx2, tx1)
-		s.Require().Equal(3, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(2), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal with single tx with other that fails", func() {
@@ -204,20 +174,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 
 		proposal := s.getTxBytes(tx1)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal an empty proposal with multiple lanes", func() {
@@ -229,19 +187,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
-
-		s.Require().Equal(1, len(resp.Txs))
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(0, len(info.TxsByLane))
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(0, len(resp.Txs))
 	})
 
 	s.Run("can build a proposal with transactions from a single lane given multiple lanes", func() {
@@ -273,20 +219,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
-		s.Require().Equal(3, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(2), info.TxsByLane[mevLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can ignore txs that are already included in a proposal", func() {
@@ -324,20 +258,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
-		s.Require().Equal(3, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(2), info.TxsByLane[mevLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(2, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal where first lane has failing tx and second lane has a valid tx", func() {
@@ -376,74 +298,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
-	})
-
-	s.Run("can build a proposal where first lane cannot fit txs but second lane can", func() {
-		// Create a bid tx that includes a single bundled tx
-		tx, bundleTxs, err := testutils.CreateAuctionTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
-			0,
-			0,
-			s.accounts[0:1],
-			100,
-		)
-		s.Require().NoError(err)
-
-		// Set up the TOB lane with the bid tx and the bundled tx
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
-			tx:           true,
-			bundleTxs[0]: true,
-		})
-		s.Require().NoError(mevLane.Insert(sdk.Context{}, tx))
-
-		// Set up the default lane with the bid tx and the bundled tx
-		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
-			// Even though this passes it should not include it in the proposal because it is in the ignore list
-			tx:           true,
-			bundleTxs[0]: true,
-		})
-		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
-		s.Require().NoError(defaultLane.Insert(sdk.Context{}, bundleTxs[0]))
-
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
-		proposal := s.getTxBytes(tx, bundleTxs[0])
-		size := int64(len(proposal[0]) - 1)
-
-		s.setBlockParams(10000000, size)
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestPrepareProposal{Height: 2})
-		s.Require().NoError(err)
-		s.Require().NotNil(resp)
-
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal[1:], resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal with single tx from middle lane", func() {
@@ -478,20 +334,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[freeLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("transaction from every lane", func() {
@@ -557,22 +401,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
-		s.Require().Equal(8, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(3, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[freeLane.Name()])
-		s.Require().Equal(uint64(5), info.TxsByLane[mevLane.Name()])
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(7, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal where first lane does not have enough gas but second lane does", func() {
@@ -623,20 +453,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(err)
 		s.Require().NotNil(resp)
 
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal[2:], resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal[2:], resp.Txs)
 	})
 }
 
@@ -674,20 +492,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal if second lane panics", func() {
@@ -723,20 +529,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal if multiple consecutive lanes panic", func() {
@@ -773,20 +567,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal if the last few lanes panic", func() {
@@ -823,20 +605,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 }
 
@@ -847,15 +617,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-
-		info := s.createProposalInfoBytes(
-			0,
-			0,
-			0,
-			0,
-			nil,
-		)
-		proposal := [][]byte{info}
+		proposal := [][]byte{}
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NoError(err)
@@ -902,7 +664,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		s.Require().Equal(2, len(txs))
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2}, tx1, tx2)
+		proposal := s.createProposal(tx1, tx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
@@ -930,7 +692,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			tx: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1}, tx)
+		proposal := s.createProposal(tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
@@ -988,7 +750,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			tx: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 2, freeLane.Name(): 1}, bidTx, bundleTxs[0], freeTx, tx)
+		proposal := s.createProposal(bidTx, bundleTxs[0], freeTx, tx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
@@ -997,67 +759,119 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_ACCEPT}, resp)
 	})
 
-	s.Run("rejects a proposal with mismatching block size", func() {
+	s.Run("can reject a proposal with txs from multiple lanes", func() {
+		// Create a random transaction that will be inserted into the default lane
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
 			0,
 			0,
 			0,
-			100,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
 
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		// create a bid tx that will be inserted into the mev lane
+		bidTx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[1:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		// create a free tx that will be inserted into the free lane
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Mev lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			bidTx:        true,
+			bundleTxs[0]: true,
+		})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
 			tx: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 0}, tx)
+		proposal := s.createProposal(bidTx, bundleTxs[0], tx, freeTx) // tx and freeTx are out of order
 
-		// modify the block size to be 1
-		info := s.getProposalInfo(proposal[0])
-		info.BlockSize--
-		infoBz, err := info.Marshal()
-		s.Require().NoError(err)
-		proposal[0] = infoBz
-
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Error(err)
+		s.Require().NotNil(resp)
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
-	s.Run("rejects a proposal with mismatching gas limit", func() {
+	s.Run("can reject a proposal with txs from multiple lanes (mev is mixed up)", func() {
+		// Create a random transaction that will be inserted into the default lane
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
 			0,
 			0,
 			0,
-			100,
+			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
 		)
 		s.Require().NoError(err)
 
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
+		// create a bid tx that will be inserted into the mev lane
+		bidTx, bundleTxs, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			0,
+			s.accounts[1:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		// create a free tx that will be inserted into the free lane
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			0,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+		)
+		s.Require().NoError(err)
+
+		// Mev lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			bidTx:        true,
+			bundleTxs[0]: true,
+		})
+		freeLane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{
+			freeTx: true,
+		})
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{
 			tx: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 0}, tx)
+		proposal := s.createProposal(freeTx, tx, bidTx, bundleTxs[0])
 
-		// modify the block size to be 1
-		info := s.getProposalInfo(proposal[0])
-		info.GasLimit--
-		infoBz, err := info.Marshal()
-		s.Require().NoError(err)
-		proposal[0] = infoBz
-
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Error(err)
+		s.Require().NotNil(resp)
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
@@ -1067,19 +881,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-
-		info := s.createProposalInfoBytes(
-			0,
-			0,
-			0,
-			0,
-			map[string]uint64{
-				mevLane.Name():     0,
-				freeLane.Name():    0,
-				defaultLane.Name(): 1,
-			},
-		)
-		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
+		proposal := [][]byte{{0x01, 0x02, 0x03}}
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Error(err)
@@ -1101,37 +903,16 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NoError(err)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, panicLane}).ProcessProposalHandler()
-
-		info := s.createProposalInfoBytes(
-			0,
-			0,
-			0,
-			0,
-			map[string]uint64{
-				panicLane.Name(): 1,
-			},
-		)
-		proposal := [][]byte{info, txbz}
+		proposal := [][]byte{txbz}
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().Error(err)
 		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
-	s.Run("can process a invalid proposal (out of order)", func() {
+	s.Run("can process a invalid proposal (default lane out of order)", func() {
 		// Create a random transaction that will be inserted into the default lane
-		tx, err := testutils.CreateAuctionTxWithSigners(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
-			0,
-			1,
-			nil,
-		)
-		s.Require().NoError(err)
-
-		// Create a random transaction that will be inserted into the default lane
-		tx2, err := testutils.CreateRandomTx(
+		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[2],
 			0,
@@ -1142,19 +923,31 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		)
 		s.Require().NoError(err)
 
+		// Create a random transaction that will be inserted into the default lane
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			1,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
 		// Mev lane
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx: true})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
 		// Set up the default lane
-		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true})
-		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
+		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true, tx1: true})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 1, mevLane.Name(): 1}, tx2, tx)
+		proposal := s.createProposal(tx2, tx1)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where first lane is valid second is not", func() {
@@ -1204,12 +997,13 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			bundle[1]: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 3}, bidTx, bundle[0], bundle[1], normalTx, normalTx2)
+		proposal := s.createProposal(bidTx, bundle[0], bundle[1], normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much gas", func() {
@@ -1254,12 +1048,14 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		// Set up the TOB lane
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.1"), nil)
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
+		proposal := s.createProposal(bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much block space", func() {
@@ -1311,12 +1107,71 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			bidTx: true,
 		})
 
-		proposal := s.createProposal(map[string]uint64{defaultLane.Name(): 2, mevLane.Name(): 1}, bidTx, normalTx, normalTx2)
+		proposal := s.createProposal(bidTx, normalTx, normalTx2)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
 		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
+	})
+
+	s.Run("rejects a proposal where there are transactions remaining that have been unverified", func() {
+		bidTx, _, err := testutils.CreateAuctionTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1000000)),
+			0,
+			1,
+			s.accounts[0:0],
+			1,
+		)
+		s.Require().NoError(err)
+
+		freeTx, err := testutils.CreateFreeTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			0,
+			1,
+			"test",
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2000000)),
+		)
+		s.Require().NoError(err)
+
+		normalTx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(3000000)),
+		)
+		s.Require().NoError(err)
+
+		// Set up the top of block lane
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.5"), map[sdk.Tx]bool{
+			bidTx: true,
+		})
+
+		// Set up the default lane
+		freeLane := s.setUpCustomMatchHandlerLane(
+			math.LegacyMustNewDecFromStr("0.0"),
+			map[sdk.Tx]bool{
+				freeTx: true,
+			},
+			free.DefaultMatchHandler(),
+			"default",
+		)
+
+		proposal := s.createProposal(bidTx, freeTx, normalTx)
+
+		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane}).ProcessProposalHandler()
+		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		s.Require().NotNil(resp)
+		s.Require().Error(err)
+		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 }
 
@@ -1411,29 +1266,21 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	s.Require().NoError(err)
 	s.Require().NotNil(resp)
 
-	info := s.getProposalInfo(resp.Txs[0])
-	s.Require().NotNil(info)
-	s.Require().Equal(2, len(info.TxsByLane))
-	s.Require().Equal(numTxsPerLane, info.TxsByLane[defaultLane.Name()])
-	s.Require().Equal(numTxsPerLane, info.TxsByLane[freelane.Name()])
-	s.Require().Equal(numTxsPerLane*2, uint64(len(resp.Txs)-1))
-
 	// Ensure the transactions are in the correct order for the free lane
 	for i := 0; i < int(numTxsPerLane); i++ {
 		bz, err := s.encodingConfig.TxConfig.TxEncoder()(freeRetrievedTxs[i])
 		s.Require().NoError(err)
-		s.Require().Equal(bz, resp.Txs[i+1])
+		s.Require().Equal(bz, resp.Txs[i])
 	}
 
 	// Ensure the transactions are in the correct order for the default lane
 	for i := 0; i < int(numTxsPerLane); i++ {
 		bz, err := s.encodingConfig.TxConfig.TxEncoder()(retrievedTxs[i])
 		s.Require().NoError(err)
-		s.Require().Equal(bz, resp.Txs[i+1+int(numTxsPerLane)])
+		s.Require().Equal(bz, resp.Txs[i+int(numTxsPerLane)])
 	}
 
 	proposal := s.createProposal(
-		map[string]uint64{defaultLane.Name(): numTxsPerLane, freelane.Name(): numTxsPerLane},
 		append(freeRetrievedTxs, retrievedTxs...)...,
 	)
 
@@ -1530,7 +1377,6 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	s.Require().Equal(numTxsPerLane, uint64(len(freeRetrievedTxs)))
 
 	proposal := s.createProposal(
-		map[string]uint64{defaultLane.Name(): numTxsPerLane, freelane.Name(): numTxsPerLane},
 		append(freeRetrievedTxs, retrievedTxs...)...,
 	)
 
@@ -1540,6 +1386,7 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	s.Require().NotNil(resp)
 	s.Require().NoError(err)
 }
+<<<<<<< HEAD
 
 func (s *ProposalsTestSuite) TestValidateBasic() {
 	// Set up the default lane with no transactions
@@ -1744,3 +1591,5 @@ func (s *ProposalsTestSuite) TestValidateBasic() {
 		s.Require().Equal(proposal[3], partialProposals[2][0])
 	})
 }
+=======
+>>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))

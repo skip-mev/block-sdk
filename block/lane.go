@@ -50,7 +50,7 @@ type Lane interface {
 	ProcessLane(
 		ctx sdk.Context,
 		proposal proposals.Proposal,
-		partialProposal [][]byte,
+		txs []sdk.Tx,
 		next ProcessLanesHandler,
 	) (proposals.Proposal, error)
 
