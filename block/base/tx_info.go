@@ -22,7 +22,7 @@ func (l *BaseLane) GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxWithInfo, erro
 	// TODO: Add an adapter to lanes so that this can be flexible to support EVM, etc.
 	gasTx, ok := tx.(sdk.FeeTx)
 	if !ok {
-		return utils.TxWithInfo{}, fmt.Errorf("failed to cast transaction to GasTx")
+		return utils.TxWithInfo{}, fmt.Errorf("failed to cast transaction to gas tx")
 	}
 
 	signers, err := l.cfg.SignerExtractor.GetSigners(tx)
