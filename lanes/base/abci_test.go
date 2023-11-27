@@ -11,6 +11,7 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/mock"
 
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
@@ -522,6 +523,51 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(uint64(2), finalProposal.Info.GasLimit)
 		s.Require().Equal([][]byte{txBz}, finalProposal.Txs)
 	})
+
+	s.Run("should not attempt to include transaction that matches to a different lane", func() {
+		// Create a basic transaction that should not in the proposal
+		tx, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			2,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
+		expectedExecution := map[sdk.Tx]bool{
+			tx: true,
+		}
+		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
+
+		// Insert the transaction into the lane
+		s.Require().NoError(lane.Insert(s.ctx, tx))
+
+		mockLane := mocks.NewLane(s.T())
+		mockLane.On(
+			"Match",
+			mock.Anything,
+			tx,
+		).Return(true, nil)
+		lane.SetIgnoreList([]block.Lane{mockLane})
+
+		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		emptyProposal := proposals.NewProposal(
+			log.NewNopLogger(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			int64(len(txBz))*10,
+			1000000,
+		)
+
+		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
+		s.Require().NoError(err)
+		s.Require().Len(finalProposal.Txs, 0)
+	})
 }
 
 func (s *BaseTestSuite) TestProcessLane() {
@@ -561,8 +607,10 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -571,8 +619,13 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Len(finalProposal.Txs, 2)
 		s.Require().NoError(err)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
 	s.Run("should accept a proposal where transaction fees are not in order bc of sequence numbers with other txs", func() {
@@ -624,8 +677,11 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		//
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 3)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -634,8 +690,13 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Len(finalProposal.Txs, 3)
 		s.Require().NoError(err)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
 	s.Run("accepts proposal with multiple senders and seq nums", func() {
@@ -700,8 +761,10 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 4)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -710,11 +773,16 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Len(finalProposal.Txs, 4)
 		s.Require().NoError(err)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
-	s.Run("should accept a proposal with valid transactions", func() {
+	s.Run("should accept a proposal with a single valid transaction", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -736,8 +804,10 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 1)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -746,8 +816,13 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Len(finalProposal.Txs, 1)
 		s.Require().NoError(err)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
 	s.Run("should not accept a proposal with invalid transactions", func() {
@@ -772,8 +847,10 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
-		s.Require().NoError(err)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().Error(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -782,7 +859,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -829,10 +906,13 @@ func (s *BaseTestSuite) TestProcessLane() {
 				tx1: true,
 				tx2: false,
 				tx3: true,
-			})
+			},
+		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
-		s.Require().NoError(err)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().Error(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -841,11 +921,11 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
-	s.Run("should accept proposal with transactions in correct order", func() {
+	s.Run("should accept proposal with transactions in correct order with same fees", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -854,55 +934,6 @@ func (s *BaseTestSuite) TestProcessLane() {
 			0,
 			1,
 			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
-		)
-		s.Require().NoError(err)
-
-		tx2, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[1],
-			0,
-			1,
-			0,
-			1,
-			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
-		)
-		s.Require().NoError(err)
-
-		proposal := []sdk.Tx{
-			tx1,
-			tx2,
-		}
-
-		lane := s.initLane(
-			math.LegacyOneDec(),
-			map[sdk.Tx]bool{
-				tx1: true,
-				tx2: true,
-			})
-
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
-		s.Require().NoError(err)
-
-		emptyProposal := proposals.NewProposal(
-			log.NewTMLogger(os.Stdout),
-			s.encodingConfig.TxConfig.TxEncoder(),
-			100000,
-			100000,
-		)
-
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
-		s.Require().NoError(err)
-	})
-
-	s.Run("should not accept a proposal with transactions that are not in the correct order", func() {
-		tx1, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			0,
-			1,
-			0,
-			1,
-			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
 		)
 		s.Require().NoError(err)
 
@@ -927,10 +958,13 @@ func (s *BaseTestSuite) TestProcessLane() {
 			map[sdk.Tx]bool{
 				tx1: true,
 				tx2: true,
-			})
+			},
+		)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -939,11 +973,68 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Len(finalProposal.Txs, 2)
+		s.Require().NoError(err)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
+	})
+
+	s.Run("should not accept a proposal with transactions that are not in the correct order fee wise", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(1)),
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			0,
+			1,
+			0,
+			1,
+			sdk.NewCoin(s.gasTokenDenom, math.NewInt(2)),
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+		}
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			},
+		)
+
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().Error(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 0)
+
+		emptyProposal := proposals.NewProposal(
+			log.NewTMLogger(os.Stdout),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			100000,
+			100000,
+		)
+
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
-	s.Run("should not accept a proposal where transactions are out of order relative to other lanes", func() {
+	s.Run("should not accept proposal where transactions from lane are not contiguous from the start", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -966,14 +1057,27 @@ func (s *BaseTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		otherLane := s.initLane(math.LegacyOneDec(), nil)
+		// First lane matches this lane the other does not.
+		otherLane := mocks.NewLane(s.T())
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx1,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx2,
+		).Return(false, nil)
 
 		lane := s.initLane(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
-				tx2: false,
-			})
+				tx2: true,
+			},
+		)
 		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		proposal := []sdk.Tx{
@@ -981,8 +1085,10 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx2,
 		}
 
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
-		s.Require().NoError(err)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().Error(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
@@ -991,7 +1097,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			100000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -1014,12 +1120,16 @@ func (s *BaseTestSuite) TestProcessLane() {
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
-			})
+			},
+		)
 
-		maxSize := s.getTxSize(tx1) - 1
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 1)
+		s.Require().Len(remainingTxs, 0)
 
+		// Set the size to be 1 less than the size of the transaction
+		maxSize := s.getTxSize(tx1) - 1
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxEncoder(),
@@ -1027,7 +1137,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			1000000,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -1053,10 +1163,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		maxSize := s.getTxSize(tx1)
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 1)
+		s.Require().Len(remainingTxs, 0)
 
+		maxSize := s.getTxSize(tx1)
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxEncoder(),
@@ -1064,7 +1176,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			9,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -1099,12 +1211,15 @@ func (s *BaseTestSuite) TestProcessLane() {
 			map[sdk.Tx]bool{
 				tx1: true,
 				tx2: true,
-			})
+			},
+		)
+
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
+		s.Require().Len(remainingTxs, 0)
 
 		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2)
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
-		s.Require().NoError(err)
-
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxEncoder(),
@@ -1112,7 +1227,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			19,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 
@@ -1150,10 +1265,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2) - 1
-		partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), proposal)
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
+		s.Require().Len(remainingTxs, 0)
 
+		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2) - 1
 		emptyProposal := proposals.NewProposal(
 			log.NewTMLogger(os.Stdout),
 			s.encodingConfig.TxConfig.TxEncoder(),
@@ -1161,7 +1278,308 @@ func (s *BaseTestSuite) TestProcessLane() {
 			20,
 		)
 
-		_, err = lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("contiguous set of transactions should be accepted with other transactions that do not match", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			2,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx3, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			3,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx4, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[3],
+			4,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+			tx3,
+			tx4,
+		}
+
+		otherLane := mocks.NewLane(s.T())
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx1,
+		).Return(false, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx2,
+		).Return(false, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx3,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx4,
+		).Return(true, nil)
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+			},
+		)
+		lane.SetIgnoreList([]block.Lane{otherLane})
+
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
+		s.Require().Len(remainingTxs, 2)
+		s.Require().Equal([]sdk.Tx{tx3, tx4}, remainingTxs)
+
+		emptyProposal := proposals.NewProposal(
+			log.NewNopLogger(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			1000,
+			1000,
+		)
+
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+		s.Require().Len(finalProposal.Txs, 2)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx1, tx2})
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, finalProposal.Txs)
+	})
+
+	s.Run("returns no error if transactions belong to a different lane", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			2,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx3, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			3,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx4, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[3],
+			4,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+			tx3,
+			tx4,
+		}
+
+		otherLane := mocks.NewLane(s.T())
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx1,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx2,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx3,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx4,
+		).Return(true, nil)
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{},
+		)
+		lane.SetIgnoreList([]block.Lane{otherLane})
+
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 4)
+		s.Require().Equal(proposal, remainingTxs)
+
+		emptyProposal := proposals.NewProposal(
+			log.NewNopLogger(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			1000,
+			1000,
+		)
+
+		finalProposal, err := lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+		s.Require().Len(finalProposal.Txs, 0)
+	})
+
+	s.Run("returns an error if transactions are interleaved with other lanes", func() {
+		tx1, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[0],
+			1,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx2, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[1],
+			2,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx3, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[2],
+			3,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		tx4, err := testutils.CreateRandomTx(
+			s.encodingConfig.TxConfig,
+			s.accounts[3],
+			4,
+			1,
+			0,
+			1,
+		)
+		s.Require().NoError(err)
+
+		proposal := []sdk.Tx{
+			tx1,
+			tx2,
+			tx3,
+			tx4,
+		}
+
+		otherLane := mocks.NewLane(s.T())
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx1,
+		).Return(false, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx2,
+		).Return(true, nil)
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx3,
+		).Return(false, nil).Maybe()
+
+		otherLane.On(
+			"Match",
+			mock.Anything,
+			tx4,
+		).Return(true, nil).Maybe()
+
+		lane := s.initLane(
+			math.LegacyOneDec(),
+			map[sdk.Tx]bool{
+				tx1: true,
+				tx2: true,
+				tx3: true,
+				tx4: true,
+			},
+		)
+		lane.SetIgnoreList([]block.Lane{otherLane})
+
+		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		s.Require().Error(err)
+		s.Require().Len(txsFromLane, 0)
+		s.Require().Len(remainingTxs, 0)
+
+		emptyProposal := proposals.NewProposal(
+			log.NewNopLogger(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			1000,
+			1000,
+		)
+
+		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
 }
@@ -1214,7 +1632,7 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 	)
 	proposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())
 	s.Require().NoError(err)
-	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
+	s.Require().Equal(len(retrievedTxs), len(proposal.Txs))
 
 	// Ensure that the transactions are in the same order
 	for i := 0; i < len(retrievedTxs); i++ {
@@ -1223,6 +1641,9 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 		s.Require().Equal(bz, proposal.Txs[i])
 	}
 
+	decodedTxs, err := utils.GetDecodedTxs(s.encodingConfig.TxConfig.TxDecoder(), proposal.Txs)
+	s.Require().NoError(err)
+
 	// Verify the same proposal with the process lanes handler
 	emptyProposal = proposals.NewProposal(
 		log.NewNopLogger(),
@@ -1230,7 +1651,7 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 		1000000000000000,
 		1000000000000000,
 	)
-	proposal, err = lane.ProcessLane(s.ctx, emptyProposal, proposal.Txs, block.NoOpProcessLanesHandler())
+	proposal, err = lane.ProcessLane(s.ctx, emptyProposal, decodedTxs, block.NoOpProcessLanesHandler())
 	s.Require().NoError(err)
 	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
 	s.T().Logf("proposal num txs: %d", len(proposal.Txs))
@@ -1283,9 +1704,6 @@ func (s *BaseTestSuite) TestIterateMempoolAndProcessProposalParity() {
 
 	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
 
-	partialProposal, err := utils.GetEncodedTxs(s.encodingConfig.TxConfig.TxEncoder(), retrievedTxs)
-	s.Require().NoError(err)
-
 	emptyProposal := proposals.NewProposal(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),
@@ -1293,9 +1711,9 @@ func (s *BaseTestSuite) TestIterateMempoolAndProcessProposalParity() {
 		1000000000000000,
 	)
 
-	proposal, err := lane.ProcessLane(s.ctx, emptyProposal, partialProposal, block.NoOpProcessLanesHandler())
+	proposal, err := lane.ProcessLane(s.ctx, emptyProposal, retrievedTxs, block.NoOpProcessLanesHandler())
 	s.Require().NoError(err)
-	s.Require().Equal(len(txsToInsert), len(proposal.Txs))
+	s.Require().Equal(len(retrievedTxs), len(proposal.Txs))
 	s.T().Logf("proposal num txs: %d", len(proposal.Txs))
 
 	// Ensure that the transactions are in the same order

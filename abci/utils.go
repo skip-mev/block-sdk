@@ -1,16 +1,14 @@
 package abci
 
 import (
-	"fmt"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/lanes/terminator"
 )
 
+<<<<<<< HEAD
 // ExtractLanes validates the proposal against the basic invariants that are required
 // for the proposal to be valid. This includes:
 //  1. The proposal must contain the proposal information and must be valid.
@@ -100,6 +98,8 @@ func (h *ProposalHandler) ValidateBlockLimits(finalProposal proposals.Proposal, 
 	return nil
 }
 
+=======
+>>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 // ChainPrepareLanes chains together the proposal preparation logic from each lane into a
 // single function. The first lane in the chain is the first lane to be prepared and the
 // last lane in the chain is the last lane to be prepared. In the case where any of the lanes
@@ -159,8 +159,11 @@ func ChainPrepareLanes(chain []block.Lane) block.PrepareLanesHandler {
 // ChainProcessLanes chains together the proposal verification logic from each lane
 // into a single function. The first lane in the chain is the first lane to be verified and
 // the last lane in the chain is the last lane to be verified. Each lane will validate
-// the transactions that it selected in the prepare phase.
-func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.ProcessLanesHandler {
+// the transactions that belong to the lane and pass any remaining transactions to the next
+// lane in the chain. If any of the lanes fail to verify the transactions, the proposal will
+// be rejected. If there are any remaining transactions after all lanes have been processed,
+// the proposal will be rejected.
+func ChainProcessLanes(chain []block.Lane) block.ProcessLanesHandler {
 	if len(chain) == 0 {
 		return nil
 	}
@@ -168,12 +171,10 @@ func ChainProcessLanes(partialProposals [][][]byte, chain []block.Lane) block.Pr
 	// Handle non-terminated decorators chain
 	if (chain[len(chain)-1] != terminator.Terminator{}) {
 		chain = append(chain, terminator.Terminator{})
-		partialProposals = append(partialProposals, nil)
 	}
 
-	return func(ctx sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error) {
+	return func(ctx sdk.Context, proposal proposals.Proposal, txs []sdk.Tx) (proposals.Proposal, error) {
 		lane := chain[0]
-		partialProposal := partialProposals[0]
-		return lane.ProcessLane(ctx, proposal, partialProposal, ChainProcessLanes(partialProposals[1:], chain[1:]))
+		return lane.ProcessLane(ctx, proposal, txs, ChainProcessLanes(chain[1:]))
 	}
 }

@@ -21,9 +21,13 @@ type (
 	) (txsToInclude []sdk.Tx, txsToRemove []sdk.Tx, err error)
 
 	// ProcessLaneHandler is responsible for processing transactions that are included in a block and
-	// belong to a given lane. This handler must return an error if the transactions are not correctly
-	// ordered, do not belong to this lane, or any other relevant error.
-	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) error
+	// belong to a given lane. The handler must return the transactions that were successfully processed
+	// and the transactions that it cannot process because they belong to a different lane.
+	ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) (
+		txsFromLane []sdk.Tx,
+		remainingTxs []sdk.Tx,
+		err error,
+	)
 )
 
 // NoOpPrepareLaneHandler returns a no-op prepare lane handler.
@@ -45,15 +49,15 @@ func PanicPrepareLaneHandler() PrepareLaneHandler {
 // NoOpProcessLaneHandler returns a no-op process lane handler.
 // This should only be used for testing.
 func NoOpProcessLaneHandler() ProcessLaneHandler {
-	return func(sdk.Context, []sdk.Tx) error {
-		return nil
+	return func(sdk.Context, []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
+		return nil, nil, nil
 	}
 }
 
 // PanicProcessLanesHandler returns a process lanes handler that panics.
 // This should only be used for testing.
 func PanicProcessLaneHandler() ProcessLaneHandler {
-	return func(sdk.Context, []sdk.Tx) error {
+	return func(sdk.Context, []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
 		panic("panic process lanes handler")
 	}
 }

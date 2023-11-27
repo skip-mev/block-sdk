@@ -24,6 +24,7 @@ import (
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
@@ -124,6 +125,71 @@ func (s *IntegrationTestSuite) CreateTx(ctx context.Context, chain *cosmos.Cosmo
 	return bz
 }
 
+func (s *IntegrationTestSuite) CreateDummyAuctionBidTx(
+	height uint64,
+	searcher ibc.Wallet,
+	bid sdk.Coin,
+) Tx {
+	msgAuctionBid := auctiontypes.NewMsgAuctionBid(
+		searcher.Address(),
+		bid,
+		nil,
+	)
+
+	return Tx{
+		User:               searcher,
+		Msgs:               []sdk.Msg{msgAuctionBid},
+		GasPrice:           1000,
+		Height:             height + 1,
+		SkipInclusionCheck: true,
+		IgnoreChecks:       true,
+	}
+}
+
+func (s *IntegrationTestSuite) CreateDummyNormalTx(
+	from, to ibc.Wallet,
+	coins sdk.Coins,
+	sequenceOffset uint64,
+	gasPrice int64,
+) Tx {
+	msgSend := banktypes.NewMsgSend(
+		sdk.AccAddress(from.Address()),
+		sdk.AccAddress(to.Address()),
+		coins,
+	)
+
+	return Tx{
+		User:               from,
+		Msgs:               []sdk.Msg{msgSend},
+		GasPrice:           gasPrice,
+		SequenceIncrement:  sequenceOffset,
+		SkipInclusionCheck: true,
+		IgnoreChecks:       true,
+	}
+}
+
+func (s *IntegrationTestSuite) CreateDummyFreeTx(
+	user ibc.Wallet,
+	validator sdk.ValAddress,
+	delegation sdk.Coin,
+	sequenceOffset uint64,
+) Tx {
+	delegateMsg := stakingtypes.NewMsgDelegate(
+		sdk.AccAddress(user.Address()).String(),
+		sdk.ValAddress(validator).String(),
+		delegation,
+	)
+
+	return Tx{
+		User:               user,
+		Msgs:               []sdk.Msg{delegateMsg},
+		GasPrice:           1000,
+		SequenceIncrement:  sequenceOffset,
+		SkipInclusionCheck: true,
+		IgnoreChecks:       true,
+	}
+}
+
 // SimulateTx simulates the provided messages, and checks whether the provided failure condition is met
 func (s *IntegrationTestSuite) SimulateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
 	// create tx factory + Client Context
@@ -154,6 +220,7 @@ type Tx struct {
 	Height             uint64
 	SkipInclusionCheck bool
 	ExpectFail         bool
+	IgnoreChecks       bool
 }
 
 // CreateAuctionBidMsg creates a new AuctionBid tx signed by the given user, the order of txs in the MsgAuctionBid will be determined by the contents + order of the MessageForUsers
@@ -203,13 +270,13 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 	s.Require().True(len(chain.Nodes()) > 0)
 	client := chain.Nodes()[0].Client
 
-	statusResp, err := client.Status(context.Background())
-	s.Require().NoError(err)
-
-	s.T().Logf("broadcasting transactions at latest height of %d", statusResp.SyncInfo.LatestBlockHeight)
-
 	for i, tx := range rawTxs {
 		// broadcast tx
+		if txs[i].IgnoreChecks {
+			client.BroadcastTxAsync(ctx, tx)
+			continue
+		}
+
 		resp, err := client.BroadcastTxSync(ctx, tx)
 
 		// check execution was successful
@@ -228,7 +295,7 @@ func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
 	eg := errgroup.Group{}
 	for i, tx := range rawTxs {
 		// if we don't expect this tx to be included.. skip it
-		if txs[i].SkipInclusionCheck || txs[i].ExpectFail {
+		if txs[i].SkipInclusionCheck || txs[i].ExpectFail || txs[i].IgnoreChecks {
 			continue
 		}
 
@@ -356,25 +423,11 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 	require.NoError(t, err)
 }
 
-// VerifyBlock takes a Block and verifies that it contains the given bid at the 0-th index, and the bundled txs immediately after
-func VerifyBlock(t *testing.T, block *rpctypes.ResultBlock, offset int, bidTxHash string, txs [][]byte) {
-	// verify the block
-	if bidTxHash != "" {
-		require.Equal(t, bidTxHash, TxHash(block.Block.Data.Txs[offset+1]))
-		offset += 1
-	}
-
-	// verify the txs in sequence
-	for i, tx := range txs {
-		require.Equal(t, TxHash(tx), TxHash(block.Block.Data.Txs[i+offset+1]))
-	}
-}
-
 // VerifyBlockWithExpectedBlock takes in a list of raw tx bytes and compares each tx hash to the tx hashes in the block.
 // The expected block is the block that should be returned by the chain at the given height.
 func VerifyBlockWithExpectedBlock(t *testing.T, chain *cosmos.CosmosChain, height uint64, txs [][]byte) {
 	block := Block(t, chain, int64(height))
-	blockTxs := block.Block.Data.Txs[1:]
+	blockTxs := block.Block.Data.Txs
 
 	t.Logf("verifying block %d", height)
 	require.Equal(t, len(txs), len(blockTxs))

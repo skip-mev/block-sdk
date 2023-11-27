@@ -2,6 +2,7 @@ package terminator
 
 import (
 	"context"
+	"fmt"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
@@ -46,7 +47,11 @@ func (t Terminator) PrepareLane(_ sdk.Context, proposal proposals.Proposal, _ bl
 }
 
 // ProcessLane is a no-op
-func (t Terminator) ProcessLane(_ sdk.Context, p proposals.Proposal, _ [][]byte, _ block.ProcessLanesHandler) (proposals.Proposal, error) {
+func (t Terminator) ProcessLane(_ sdk.Context, p proposals.Proposal, txs []sdk.Tx, _ block.ProcessLanesHandler) (proposals.Proposal, error) {
+	if len(txs) > 0 {
+		return p, fmt.Errorf("terminator lane should not have any transactions")
+	}
+
 	return p, nil
 }
 

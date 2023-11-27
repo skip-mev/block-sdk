@@ -15,7 +15,7 @@ type (
 	// ProcessLanesHandler wraps all of the lanes' ProcessLane functions into a single chained
 	// function. You can think of it like an AnteHandler, but for processing proposals in the
 	// context of lanes instead of modules.
-	ProcessLanesHandler func(ctx sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error)
+	ProcessLanesHandler func(ctx sdk.Context, proposal proposals.Proposal, txs []sdk.Tx) (proposals.Proposal, error)
 )
 
 // NoOpPrepareLanesHandler returns a no-op prepare lanes handler.
@@ -29,7 +29,7 @@ func NoOpPrepareLanesHandler() PrepareLanesHandler {
 // NoOpProcessLanesHandler returns a no-op process lanes handler.
 // This should only be used for testing.
 func NoOpProcessLanesHandler() ProcessLanesHandler {
-	return func(_ sdk.Context, p proposals.Proposal) (proposals.Proposal, error) {
+	return func(_ sdk.Context, p proposals.Proposal, _ []sdk.Tx) (proposals.Proposal, error) {
 		return p, nil
 	}
 }

@@ -111,33 +111,57 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 
 // DefaultProcessLaneHandler returns a default implementation of the ProcessLaneHandler. It verifies
 // the following invariants:
-// 1. All transactions belong to this lane.
-// 2. All transactions respect the priority defined by the mempool.
-// 3. All transactions are valid respecting the verification logic of the lane.
+//  1. Transactions belonging to the lane must be contiguous from the beginning of the partial proposal.
+//  2. Transactions that do not belong to the lane must be contiguous from the end of the partial proposal.
+//  3. Transactions must be ordered respecting the priority defined by the lane (e.g. gas price).
+//  4. Transactions must be valid according to the verification logic of the lane.
 func (l *BaseLane) DefaultProcessLaneHandler() ProcessLaneHandler {
-	return func(ctx sdk.Context, partialProposal []sdk.Tx) error {
-		// Process all transactions that match the lane's matcher.
+	return func(ctx sdk.Context, partialProposal []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
+		if len(partialProposal) == 0 {
+			return nil, nil, nil
+		}
+
 		for index, tx := range partialProposal {
 			if !l.Match(ctx, tx) {
-				return fmt.Errorf("the %s lane contains a transaction that belongs to another lane", l.Name())
+				// If the transaction does not belong to this lane, we return the remaining transactions
+				// iff there are no matches in the remaining transactions after this index.
+				if index+1 < len(partialProposal) {
+					if err := l.VerifyNoMatches(ctx, partialProposal[index+1:]); err != nil {
+						return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
+					}
+				}
+
+				return partialProposal[:index], partialProposal[index:], nil
 			}
 
 			// If the transactions do not respect the priority defined by the mempool, we consider the proposal
 			// to be invalid
 			if index > 0 {
 				if v, err := l.Compare(ctx, partialProposal[index-1], tx); v == -1 || err != nil {
-					return fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
+					return nil, nil, fmt.Errorf("transaction at index %d has a higher priority than %d", index, index-1)
 				}
 			}
 
 			if err := l.VerifyTx(ctx, tx, false); err != nil {
-				return fmt.Errorf("failed to verify tx: %w", err)
+				return nil, nil, fmt.Errorf("failed to verify tx: %w", err)
 			}
 		}
 
-		// This means we have processed all transactions in the partial proposal.
-		return nil
+		// This means we have processed all transactions in the partial proposal i.e.
+		// all of the transactions belong to this lane. There are no remaining transactions.
+		return partialProposal, nil, nil
 	}
+}
+
+// VerifyNoMatches returns an error if any of the transactions match the lane.
+func (l *BaseLane) VerifyNoMatches(ctx sdk.Context, txs []sdk.Tx) error {
+	for _, tx := range txs {
+		if l.Match(ctx, tx) {
+			return fmt.Errorf("transaction belongs to lane when it should not")
+		}
+	}
+
+	return nil
 }
 
 // DefaultMatchHandler returns a default implementation of the MatchHandler. It matches all

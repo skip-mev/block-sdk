@@ -76,42 +76,39 @@ func (l *BaseLane) PrepareLane(
 func (l *BaseLane) ProcessLane(
 	ctx sdk.Context,
 	proposal proposals.Proposal,
-	txs [][]byte,
+	txs []sdk.Tx,
 	next block.ProcessLanesHandler,
 ) (proposals.Proposal, error) {
-	l.Logger().Info("processing lane", "lane", l.Name(), "num_txs_to_verify", len(txs))
+	l.Logger().Info(
+		"processing lane",
+		"lane", l.Name(),
+		"num_txs_to_verify", len(txs),
+	)
 
-	// Assume that this lane is processing sdk.Tx's and decode the transactions.
-	decodedTxs, err := utils.GetDecodedTxs(l.TxDecoder(), txs)
-	if err != nil {
-		l.Logger().Error(
-			"failed to decode transactions",
-			"lane", l.Name(),
-			"err", err,
-		)
-
-		return proposal, err
+	if len(txs) == 0 {
+		return next(ctx, proposal, txs)
 	}
 
-	// Verify the transactions that belong to this lane according to the verification logic of the lane.
-	if err := l.processLaneHandler(ctx, decodedTxs); err != nil {
+	// Verify the transactions that belong to the lane and return any transactions that must be
+	// validated by the next lane in the chain.
+	txsFromLane, remainingTxs, err := l.processLaneHandler(ctx, txs)
+	if err != nil {
 		l.Logger().Error(
 			"failed to process lane",
 			"lane", l.Name(),
 			"err", err,
-			"num_txs_to_verify", len(decodedTxs),
 		)
 
 		return proposal, err
 	}
 
 	// Optimistically update the proposal with the partial proposal.
-	if err := proposal.UpdateProposal(l, decodedTxs); err != nil {
+	if err := proposal.UpdateProposal(l, txsFromLane); err != nil {
 		l.Logger().Error(
 			"failed to update proposal",
 			"lane", l.Name(),
+			"num_txs_verified", len(txsFromLane),
 			"err", err,
-			"num_txs_to_verify", len(decodedTxs),
 		)
 
 		return proposal, err
@@ -120,10 +117,12 @@ func (l *BaseLane) ProcessLane(
 	l.Logger().Info(
 		"lane processed",
 		"lane", l.Name(),
-		"num_txs_verified", len(decodedTxs),
+		"num_txs_verified", len(txsFromLane),
+		"num_txs_remaining", len(remainingTxs),
 	)
 
-	return next(ctx, proposal)
+	// Validate the remaining transactions with the next lane in the chain.
+	return next(ctx, proposal, remainingTxs)
 }
 
 // VerifyTx verifies that the transaction is valid respecting the ante verification logic of
