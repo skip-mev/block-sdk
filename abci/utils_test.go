@@ -55,9 +55,32 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 	return anteHandler
 }
 
+func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool, mh base.MatchHandler, name string) block.Lane {
+	cfg := base.LaneConfig{
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
+		AnteHandler:     s.setUpAnteHandler(expectedExecution),
+		MaxBlockSpace:   maxBlockSpace,
+		SignerExtractor: signeradaptors.NewDefaultAdapter(),
+	}
+
+	lane := base.NewBaseLane(
+		cfg,
+		name,
+		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
+		mh,
+	)
+
+	lane.SetPrepareLaneHandler(lane.DefaultPrepareLaneHandler())
+	lane.SetProcessLaneHandler(lane.DefaultProcessLaneHandler())
+
+	return lane
+}
+
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -71,7 +94,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -84,7 +107,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
@@ -97,7 +120,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 
 func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
-		Logger:          log.NewTestLogger(s.T()),
+		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		MaxBlockSpace:   maxBlockSpace,
@@ -136,14 +159,14 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 		})
 
 	mempool, err := block.NewLanedMempool(
-		log.NewTestLogger(s.T()),
+		log.NewNopLogger(),
 		lanes,
 		laneFetcher,
 	)
 	s.Require().NoError(err)
 
 	return abci.NewProposalHandler(
-		log.NewTestLogger(s.T()),
+		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		mempool,
