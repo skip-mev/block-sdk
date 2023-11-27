@@ -1283,7 +1283,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				return
 			default:
 				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-				require.NoError(s.T(), err)
+				s.NoError(err)
 				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 
 				s.T().Logf("height: %d", height+1)
@@ -1308,7 +1308,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				return
 			default:
 				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-				require.NoError(s.T(), err)
+				s.NoError(err)
 				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 
 				s.T().Logf("height: %d", height+1)
@@ -1332,7 +1332,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				return
 			default:
 				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-				require.NoError(s.T(), err)
+				s.NoError(err)
 				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 
 				s.T().Logf("height: %d", height+1)
@@ -1362,7 +1362,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				return
 			default:
 				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-				require.NoError(s.T(), err)
+				s.NoError(err)
 				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 
 				s.T().Logf("height: %d", height+1)
@@ -1416,7 +1416,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				return
 			default:
 				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
-				require.NoError(s.T(), err)
+				s.NoError(err)
 				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
 
 				s.T().Logf("height: %d", height+1)
