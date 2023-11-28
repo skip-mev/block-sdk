@@ -70,20 +70,8 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
-<<<<<<< HEAD
 		// Fill the proposal with transactions from each lane.
 		finalProposal, err := h.prepareLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
-=======
-		registry, err := h.mempool.Registry(ctx)
-		if err != nil {
-			h.logger.Error("failed to get lane registry", "err", err)
-			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
-		}
-
-		// Fill the proposal with transactions from each lane.
-		prepareLanesHandler := ChainPrepareLanes(registry)
-		finalProposal, err := prepareLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
@@ -133,37 +121,16 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
-<<<<<<< HEAD
-		// Extract all of the lanes and their corresponding transactions from the proposal.
-		proposalInfo, partialProposals, err := h.ExtractLanes(req.Txs)
-=======
 		// Decode the transactions in the proposal. These will be verified by each lane in a greedy fashion.
 		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, req.Txs)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 		if err != nil {
 			h.logger.Error("failed to decode txs", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
-<<<<<<< HEAD
-		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
-		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
-=======
-		registry, err := h.mempool.Registry(ctx)
-		if err != nil {
-			h.logger.Error("failed to get lane registry", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		}
-
-		// Verify the proposal.
-		processLanesHandler := ChainProcessLanes(registry)
-		finalProposal, err := processLanesHandler(
-			ctx,
-			proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder),
-			decodedTxs,
-		)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
+		processLanesHandler := ChainProcessLanes(h.mempool.Registry())
+		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder), decodedTxs)
 		if err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
