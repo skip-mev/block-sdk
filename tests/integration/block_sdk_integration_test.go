@@ -39,7 +39,7 @@ var (
 	}
 
 	consensusParams = ictestutil.Toml{
-		"timeout_commit": "3500ms",
+		"timeout_commit": "5000ms",
 	}
 
 	// interchain specification

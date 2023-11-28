@@ -7,11 +7,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
-)
-
-const (
-	// ProposalInfoIndex is the index of the proposal metadata in the proposal.
-	ProposalInfoIndex = 0
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 type (
@@ -78,16 +74,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
 		}
 
-		// Retrieve the proposal with metadata and transactions.
-		txs, err := finalProposal.GetProposalWithInfo()
-		if err != nil {
-			h.logger.Error("failed to get proposal with metadata", "err", err)
-			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
-		}
-
 		h.logger.Info(
 			"prepared proposal",
-			"num_txs", len(txs),
+			"num_txs", len(finalProposal.Txs),
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", finalProposal.Info.MaxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,
@@ -102,7 +91,7 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		)
 
 		return abci.ResponsePrepareProposal{
-			Txs: txs,
+			Txs: finalProposal.Txs,
 		}
 	}
 }
@@ -110,9 +99,9 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // ProcessProposalHandler processes the proposal by verifying all transactions in the proposal
 // according to each lane's verification logic. Proposals are verified similar to how they are
 // constructed. After a proposal is processed, it should amount to the same proposal that was prepared.
-// Each proposal will first be broken down by the lanes that prepared each partial proposal. Then, each
-// lane will iteratively verify the transactions that it belong to it. If any lane fails to verify the
-// transactions, then the proposal is rejected.
+// The proposal is verified in a greedy fashion, respecting the ordering of lanes. A lane will
+// verify all transactions in the proposal that belong to the lane and pass any remaining transactions
+// to the next lane in the chain.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 	return func(ctx sdk.Context, req abci.RequestProcessProposal) (resp abci.ResponseProcessProposal) {
 		if req.Height <= 1 {
@@ -128,30 +117,24 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			}
 		}()
 
-		// Extract all of the lanes and their corresponding transactions from the proposal.
-		proposalInfo, partialProposals, err := h.ExtractLanes(req.Txs)
+		// Decode the transactions in the proposal. These will be verified by each lane in a greedy fashion.
+		decodedTxs, err := utils.GetDecodedTxs(h.txDecoder, req.Txs)
 		if err != nil {
-			h.logger.Error("failed to validate proposal", "err", err)
+			h.logger.Error("failed to decode txs", "err", err)
 			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
-		processLanesHandler := ChainProcessLanes(partialProposals, h.mempool.Registry())
-		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder))
+		processLanesHandler := ChainProcessLanes(h.mempool.Registry())
+		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(h.logger, ctx, h.txEncoder), decodedTxs)
 		if err != nil {
-			h.logger.Error("failed to validate the proposal", "err", err)
-			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
-		}
-
-		// Ensure block size and gas limit are correct.
-		if err := h.ValidateBlockLimits(finalProposal, proposalInfo); err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}
 		}
 
 		h.logger.Info(
 			"processed proposal",
-			"num_txs", len(req.Txs),
+			"num_txs", len(finalProposal.Txs),
 			"total_tx_bytes", finalProposal.Info.BlockSize,
 			"max_tx_bytes", finalProposal.Info.MaxBlockSize,
 			"total_gas_limit", finalProposal.Info.GasLimit,

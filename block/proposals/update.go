@@ -1,7 +1,6 @@
 package proposals
 
 import (
-	"encoding/base64"
 	"fmt"
 
 	"cosmossdk.io/math"
@@ -48,15 +47,13 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 			return fmt.Errorf("err retrieving transaction info: %s", err)
 		}
 
-		p.Logger.Debug(
+		p.Logger.Info(
 			"updating proposal with tx",
 			"index", index,
 			"lane", lane.Name(),
 			"tx_hash", txInfo.Hash,
 			"tx_size", txInfo.Size,
 			"tx_gas_limit", txInfo.GasLimit,
-			"tx_bytes", txInfo.TxBytes,
-			"raw_tx", base64.StdEncoding.EncodeToString(txInfo.TxBytes),
 		)
 
 		// invariant check: Ensure that the transaction is not already in the proposal.
