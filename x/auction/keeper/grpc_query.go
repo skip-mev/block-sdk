@@ -29,5 +29,6 @@ func (q QueryServer) Params(c context.Context, _ *types.QueryParamsRequest) (*ty
 		return nil, err
 	}
 
-	return &types.QueryParamsResponse{Params: params}, nil
+	escrowAddress := sdk.AccAddress(params.EscrowAccountAddress)
+	return &types.QueryParamsResponse{Params: params, EscrowAddressString: escrowAddress.String()}, nil
 }
