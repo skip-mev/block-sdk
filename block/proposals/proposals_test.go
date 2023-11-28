@@ -9,10 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
 	"github.com/skip-mev/block-sdk/block/utils"
+	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/testutils"
 )
 
@@ -63,7 +66,10 @@ func TestUpdateProposal(t *testing.T) {
 		gasLimit := 100
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.NoError(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -109,7 +115,10 @@ func TestUpdateProposal(t *testing.T) {
 
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
 
-		err = proposal.UpdateProposal(lane, txs)
+		txsWithInfo, err := getTxsWithInfo(txs)
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.NoError(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -146,7 +155,10 @@ func TestUpdateProposal(t *testing.T) {
 		gasLimit := uint64(100)
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.NoError(t, err)
 
 		// Ensure that the proposal is empty.
@@ -161,8 +173,11 @@ func TestUpdateProposal(t *testing.T) {
 		otherlane.On("Name").Return("test").Maybe()
 		otherlane.On("GetMaxBlockSpace").Return(math.LegacyNewDec(1)).Maybe()
 
+		txsWithInfo, err = getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
 		// Attempt to add the same transaction again.
-		err = proposal.UpdateProposal(otherlane, []sdk.Tx{tx})
+		err = proposal.UpdateProposal(otherlane, txsWithInfo)
 		require.Error(t, err)
 
 		require.Equal(t, 1, len(proposal.Txs))
@@ -206,10 +221,16 @@ func TestUpdateProposal(t *testing.T) {
 		gasLimit := 200
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx2})
+		err = proposal.UpdateProposal(lane, txsWithInfo)
+		require.NoError(t, err)
+
+		txsWithInfo, err = getTxsWithInfo([]sdk.Tx{tx2})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.Error(t, err)
 
 		// Ensure that the proposal is not empty.
@@ -249,7 +270,10 @@ func TestUpdateProposal(t *testing.T) {
 		lane.On("Name").Return("test").Maybe()
 		lane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("0.5")).Maybe()
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -287,7 +311,10 @@ func TestUpdateProposal(t *testing.T) {
 		lane.On("Name").Return("test").Maybe()
 		lane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("0.5")).Maybe()
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -320,7 +347,10 @@ func TestUpdateProposal(t *testing.T) {
 		gasLimit := 100
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -353,7 +383,10 @@ func TestUpdateProposal(t *testing.T) {
 		gasLimit := 100
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.Error(t, err)
 
 		// Ensure that the proposal is empty.
@@ -394,14 +427,20 @@ func TestUpdateProposal(t *testing.T) {
 
 		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
 
-		err = proposal.UpdateProposal(lane, []sdk.Tx{tx})
+		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(lane, txsWithInfo)
 		require.NoError(t, err)
 
 		otherlane := mocks.NewLane(t)
 		otherlane.On("Name").Return("test2")
 		otherlane.On("GetMaxBlockSpace").Return(math.LegacyMustNewDecFromStr("1.0"))
 
-		err = proposal.UpdateProposal(otherlane, []sdk.Tx{tx2})
+		txsWithInfo, err = getTxsWithInfo([]sdk.Tx{tx2})
+		require.NoError(t, err)
+
+		err = proposal.UpdateProposal(otherlane, txsWithInfo)
 		require.NoError(t, err)
 
 		size := len(txBzs[0]) + len(txBzs[1])
@@ -539,4 +578,30 @@ func TestGetLaneLimits(t *testing.T) {
 			}
 		})
 	}
+}
+
+func getTxsWithInfo(txs []sdk.Tx) ([]utils.TxWithInfo, error) {
+	encoding := testutils.CreateTestEncodingConfig()
+
+	cfg := base.NewLaneConfig(
+		log.NewNopLogger(),
+		encoding.TxConfig.TxEncoder(),
+		encoding.TxConfig.TxDecoder(),
+		nil,
+		signerextraction.NewDefaultAdapter(),
+		math.LegacyNewDec(1),
+	)
+	lane := defaultlane.NewDefaultLane(cfg)
+
+	txsWithInfo := make([]utils.TxWithInfo, len(txs))
+	for i, tx := range txs {
+		txInfo, err := lane.GetTxInfo(sdk.Context{}, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		txsWithInfo[i] = txInfo
+	}
+
+	return txsWithInfo, nil
 }
