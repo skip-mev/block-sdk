@@ -175,8 +175,8 @@ func (s *IntegrationTestSuite) CreateDummyFreeTx(
 	sequenceOffset uint64,
 ) Tx {
 	delegateMsg := stakingtypes.NewMsgDelegate(
-		sdk.AccAddress(user.Address()).String(),
-		sdk.ValAddress(validator).String(),
+		sdk.AccAddress(user.Address()),
+		sdk.ValAddress(validator),
 		delegation,
 	)
 

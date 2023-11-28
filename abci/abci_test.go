@@ -16,12 +16,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
-<<<<<<< HEAD
-	"github.com/skip-mev/block-sdk/block/proposals"
-=======
-	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/lanes/free"
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
 
@@ -291,21 +286,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
-<<<<<<< HEAD
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
+		s.Require().Equal(1, len(resp.Txs))
+		s.Require().Equal(proposal, resp.Txs)
 	})
 
 	s.Run("can build a proposal where first lane cannot fit txs but second lane can", func() {
@@ -345,24 +327,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
 		s.Require().NotNil(resp)
 
-		s.Require().Equal(2, len(resp.Txs))
-		s.Require().Equal(proposal[1:], resp.Txs[1:])
-
-		info := s.getProposalInfo(resp.Txs[0])
-		s.Require().NotNil(info)
-		s.Require().Equal(1, len(info.TxsByLane))
-		s.Require().Equal(uint64(1), info.TxsByLane[defaultLane.Name()])
-
-		maxBlockSize, maxGasLimit := proposals.GetBlockLimits(s.ctx)
-		s.Require().Equal(maxBlockSize, info.MaxBlockSize)
-		s.Require().Equal(maxGasLimit, info.MaxGasLimit)
-
-		s.Require().LessOrEqual(info.BlockSize, info.MaxBlockSize)
-		s.Require().LessOrEqual(info.GasLimit, info.MaxGasLimit)
-=======
 		s.Require().Equal(1, len(resp.Txs))
-		s.Require().Equal(proposal, resp.Txs)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
+		s.Require().Equal(proposal[1:], resp.Txs)
 	})
 
 	s.Run("can build a proposal with single tx from middle lane", func() {
@@ -862,24 +828,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposal := s.createProposal(bidTx, bundleTxs[0], tx, freeTx) // tx and freeTx are out of order
 
-<<<<<<< HEAD
-		// modify the block size to be 1
-		info := s.getProposalInfo(proposal[0])
-		info.BlockSize--
-		infoBz, err := info.Marshal()
-		s.Require().NoError(err)
-		proposal[0] = infoBz
-
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("can reject a proposal with txs from multiple lanes (mev is mixed up)", func() {
@@ -933,24 +885,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 		proposal := s.createProposal(freeTx, tx, bidTx, bundleTxs[0])
 
-<<<<<<< HEAD
-		// modify the block size to be 1
-		info := s.getProposalInfo(proposal[0])
-		info.GasLimit--
-		infoBz, err := info.Marshal()
-		s.Require().NoError(err)
-		proposal[0] = infoBz
-
-		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
-		s.Require().Error(err)
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal with bad txs", func() {
@@ -1022,12 +960,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-<<<<<<< HEAD
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 	})
 
 	s.Run("can process a invalid proposal where first lane is valid second is not", func() {
@@ -1082,12 +1015,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-<<<<<<< HEAD
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much gas", func() {
@@ -1137,13 +1065,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-<<<<<<< HEAD
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 	})
 
 	s.Run("can process a invalid proposal where a lane consumes too much block space", func() {
@@ -1200,11 +1122,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).ProcessProposalHandler()
 		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-<<<<<<< HEAD
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
-=======
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
 	s.Run("rejects a proposal where there are transactions remaining that have been unverified", func() {
@@ -1259,11 +1177,9 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		proposal := s.createProposal(bidTx, freeTx, normalTx)
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane}).ProcessProposalHandler()
-		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
+		resp := proposalHandler(s.ctx, cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NotNil(resp)
-		s.Require().Error(err)
-		s.Require().Equal(&cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
+		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 }
 
@@ -1477,210 +1393,3 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	s.Require().NotNil(resp)
 	s.Require().Equal(cometabci.ResponseProcessProposal_ACCEPT, resp.Status)
 }
-<<<<<<< HEAD
-
-func (s *ProposalsTestSuite) TestValidateBasic() {
-	// Set up the default lane with no transactions
-	mevlane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), nil)
-	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), nil)
-	defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), nil)
-
-	proposalHandlers := s.setUpProposalHandlers([]block.Lane{
-		mevlane,
-		freelane,
-		defaultLane,
-	})
-
-	s.Run("can validate an empty proposal", func() {
-		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
-		proposal := [][]byte{info}
-
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().NoError(err)
-		s.Require().Equal(3, len(partialProposals))
-
-		for _, partialProposal := range partialProposals {
-			s.Require().Equal(0, len(partialProposal))
-		}
-	})
-
-	s.Run("should invalidate proposal with mismatch in transactions and proposal info", func() {
-		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
-		proposal := [][]byte{info, {0x01, 0x02, 0x03}}
-
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().Error(err)
-	})
-
-	s.Run("should invalidate proposal without info", func() {
-		proposal := [][]byte{{0x01, 0x02, 0x03}}
-
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().Error(err)
-	})
-
-	s.Run("should invalidate completely empty proposal", func() {
-		proposal := [][]byte{}
-
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().Error(err)
-	})
-
-	s.Run("should invalidate proposal with mismatch txs count with proposal info", func() {
-		info := s.createProposalInfoBytes(0, 0, 0, 0, nil)
-		proposal := [][]byte{info, {0x01, 0x02, 0x03}, {0x01, 0x02, 0x03}}
-
-		_, _, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().Error(err)
-	})
-
-	s.Run("can validate a proposal with a single tx", func() {
-		tx, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-		proposal := s.getTxBytes(tx)
-
-		size, limit := s.getTxInfos(tx)
-		maxSize, maxLimit := proposals.GetBlockLimits(s.ctx)
-		info := s.createProposalInfoBytes(
-			maxLimit,
-			limit,
-			maxSize,
-			size,
-			map[string]uint64{
-				defaultLane.Name(): 1,
-			},
-		)
-
-		proposal = append([][]byte{info}, proposal...)
-
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().NoError(err)
-
-		s.Require().Equal(3, len(partialProposals))
-		s.Require().Equal(0, len(partialProposals[0]))
-		s.Require().Equal(0, len(partialProposals[1]))
-		s.Require().Equal(1, len(partialProposals[2]))
-		s.Require().Equal(proposal[1], partialProposals[2][0])
-	})
-
-	s.Run("can validate a proposal with multiple txs from single lane", func() {
-		tx, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-
-		tx2, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[1],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-
-		proposal := s.getTxBytes(tx, tx2)
-
-		size, limit := s.getTxInfos(tx, tx2)
-		maxSize, maxLimit := proposals.GetBlockLimits(s.ctx)
-		info := s.createProposalInfoBytes(
-			maxLimit,
-			limit,
-			maxSize,
-			size,
-			map[string]uint64{
-				defaultLane.Name(): 2,
-			},
-		)
-
-		proposal = append([][]byte{info}, proposal...)
-
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().NoError(err)
-
-		s.Require().Equal(3, len(partialProposals))
-		s.Require().Equal(0, len(partialProposals[0]))
-		s.Require().Equal(0, len(partialProposals[1]))
-		s.Require().Equal(2, len(partialProposals[2]))
-		s.Require().Equal(proposal[1], partialProposals[2][0])
-		s.Require().Equal(proposal[2], partialProposals[2][1])
-	})
-
-	s.Run("can validate a proposal with 1 tx from each lane", func() {
-		tx, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-
-		tx2, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[1],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-
-		tx3, err := testutils.CreateRandomTx(
-			s.encodingConfig.TxConfig,
-			s.accounts[2],
-			0,
-			0,
-			0,
-			1,
-		)
-		s.Require().NoError(err)
-
-		proposal := s.getTxBytes(tx, tx2, tx3)
-
-		size, limit := s.getTxInfos(tx, tx2, tx3)
-		maxSize, maxLimit := proposals.GetBlockLimits(s.ctx)
-
-		info := s.createProposalInfoBytes(
-			maxLimit,
-			limit,
-			maxSize,
-			size,
-			map[string]uint64{
-				defaultLane.Name(): 1,
-				mevlane.Name():     1,
-				freelane.Name():    1,
-			},
-		)
-
-		proposal = append([][]byte{info}, proposal...)
-
-		_, partialProposals, err := proposalHandlers.ExtractLanes(proposal)
-		s.Require().NoError(err)
-
-		s.Require().Equal(3, len(partialProposals))
-		s.Require().Equal(1, len(partialProposals[0]))
-		s.Require().Equal(proposal[1], partialProposals[0][0])
-
-		s.Require().Equal(1, len(partialProposals[1]))
-		s.Require().Equal(proposal[2], partialProposals[1][0])
-
-		s.Require().Equal(1, len(partialProposals[2]))
-		s.Require().Equal(proposal[3], partialProposals[2][0])
-	})
-}
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))

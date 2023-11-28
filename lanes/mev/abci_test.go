@@ -270,10 +270,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().Error(err)
@@ -300,10 +296,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().Error(err)
@@ -330,10 +322,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[1], bundle[0]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().Error(err)
@@ -360,10 +348,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[0]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().Error(err)
@@ -390,10 +374,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().NoError(err)
@@ -420,10 +400,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().NoError(err)
@@ -450,10 +426,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 99)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().NoError(err)
@@ -480,10 +452,6 @@ func (s *MEVTestSuite) TestProcessLane() {
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
->>>>>>> f7dfbda (feat: Greedy Algorithm for Lane Verification (#236))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
 		s.Require().NoError(err)
