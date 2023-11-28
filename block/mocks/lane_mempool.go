@@ -17,17 +17,27 @@ type LaneMempool struct {
 }
 
 // Compare provides a mock function with given fields: ctx, this, other
-func (_m *LaneMempool) Compare(ctx types.Context, this types.Tx, other types.Tx) int {
+func (_m *LaneMempool) Compare(ctx types.Context, this types.Tx, other types.Tx) (int, error) {
 	ret := _m.Called(ctx, this, other)
 
 	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx, types.Tx) (int, error)); ok {
+		return rf(ctx, this, other)
+	}
 	if rf, ok := ret.Get(0).(func(types.Context, types.Tx, types.Tx) int); ok {
 		r0 = rf(ctx, this, other)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(types.Context, types.Tx, types.Tx) error); ok {
+		r1 = rf(ctx, this, other)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Contains provides a mock function with given fields: tx
@@ -107,8 +117,7 @@ func (_m *LaneMempool) Select(_a0 context.Context, _a1 [][]byte) mempool.Iterato
 func NewLaneMempool(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *LaneMempool {
+}) *LaneMempool {
 	mock := &LaneMempool{}
 	mock.Mock.Test(t)
 

@@ -24,17 +24,27 @@ type Lane struct {
 }
 
 // Compare provides a mock function with given fields: ctx, this, other
-func (_m *Lane) Compare(ctx types.Context, this types.Tx, other types.Tx) int {
+func (_m *Lane) Compare(ctx types.Context, this types.Tx, other types.Tx) (int, error) {
 	ret := _m.Called(ctx, this, other)
 
 	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx, types.Tx) (int, error)); ok {
+		return rf(ctx, this, other)
+	}
 	if rf, ok := ret.Get(0).(func(types.Context, types.Tx, types.Tx) int); ok {
 		r0 = rf(ctx, this, other)
 	} else {
 		r0 = ret.Get(0).(int)
 	}
 
-	return r0
+	if rf, ok := ret.Get(1).(func(types.Context, types.Tx, types.Tx) error); ok {
+		r1 = rf(ctx, this, other)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
 }
 
 // Contains provides a mock function with given fields: tx
@@ -145,23 +155,23 @@ func (_m *Lane) PrepareLane(ctx types.Context, proposal proposals.Proposal, next
 	return r0, r1
 }
 
-// ProcessLane provides a mock function with given fields: ctx, proposal, partialProposal, next
-func (_m *Lane) ProcessLane(ctx types.Context, proposal proposals.Proposal, partialProposal [][]byte, next block.ProcessLanesHandler) (proposals.Proposal, error) {
-	ret := _m.Called(ctx, proposal, partialProposal, next)
+// ProcessLane provides a mock function with given fields: ctx, proposal, txs, next
+func (_m *Lane) ProcessLane(ctx types.Context, proposal proposals.Proposal, txs []types.Tx, next block.ProcessLanesHandler) (proposals.Proposal, error) {
+	ret := _m.Called(ctx, proposal, txs, next)
 
 	var r0 proposals.Proposal
 	var r1 error
-	if rf, ok := ret.Get(0).(func(types.Context, proposals.Proposal, [][]byte, block.ProcessLanesHandler) (proposals.Proposal, error)); ok {
-		return rf(ctx, proposal, partialProposal, next)
+	if rf, ok := ret.Get(0).(func(types.Context, proposals.Proposal, []types.Tx, block.ProcessLanesHandler) (proposals.Proposal, error)); ok {
+		return rf(ctx, proposal, txs, next)
 	}
-	if rf, ok := ret.Get(0).(func(types.Context, proposals.Proposal, [][]byte, block.ProcessLanesHandler) proposals.Proposal); ok {
-		r0 = rf(ctx, proposal, partialProposal, next)
+	if rf, ok := ret.Get(0).(func(types.Context, proposals.Proposal, []types.Tx, block.ProcessLanesHandler) proposals.Proposal); ok {
+		r0 = rf(ctx, proposal, txs, next)
 	} else {
 		r0 = ret.Get(0).(proposals.Proposal)
 	}
 
-	if rf, ok := ret.Get(1).(func(types.Context, proposals.Proposal, [][]byte, block.ProcessLanesHandler) error); ok {
-		r1 = rf(ctx, proposal, partialProposal, next)
+	if rf, ok := ret.Get(1).(func(types.Context, proposals.Proposal, []types.Tx, block.ProcessLanesHandler) error); ok {
+		r1 = rf(ctx, proposal, txs, next)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -214,8 +224,7 @@ func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
 func NewLane(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *Lane {
+}) *Lane {
 	mock := &Lane{}
 	mock.Mock.Test(t)
 

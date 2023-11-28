@@ -230,23 +230,31 @@ func (s *MEVTestSuite) TestProcessLane() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
 		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200, 100)
 
-		proposal, err := lane.ProcessLane(s.ctx, proposal, nil, block.NoOpProcessLanesHandler())
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, nil)
+		s.Require().NoError(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal, err = lane.ProcessLane(s.ctx, proposal, nil, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 		s.Require().Equal(0, len(proposal.Txs))
-		s.Require().Equal(0, len(proposal.Info.TxsByLane))
-		s.Require().Equal(int64(0), proposal.Info.BlockSize)
-		s.Require().Equal(uint64(0), proposal.Info.GasLimit)
 	})
 
 	s.Run("can process a proposal with tx that does not belong to this lane", func() {
-		txBz, err := testutils.CreateRandomTxBz(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 100)
+		tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 100)
 		s.Require().NoError(err)
 
 		lane := s.initLane(math.LegacyOneDec(), nil)
 		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200, 100)
 
-		_, err = lane.ProcessLane(s.ctx, proposal, [][]byte{txBz}, block.NoOpProcessLanesHandler())
-		s.Require().Error(err)
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, []sdk.Tx{tx})
+		s.Require().NoError(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(1, len(remainingTxs))
+
+		finalProposal, err := lane.ProcessLane(s.ctx, proposal, []sdk.Tx{tx}, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+		s.Require().Equal(0, len(finalProposal.Txs))
 	})
 
 	s.Run("can process a proposal with bad bid tx", func() {
@@ -261,12 +269,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().Error(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -283,12 +295,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0], bundle[1]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().Error(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -305,12 +321,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[1], bundle[0]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[1], bundle[0]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().Error(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -327,12 +347,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[0]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().Error(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -349,12 +373,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0], bundle[1]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().NoError(err)
+		s.Require().Equal(3, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
@@ -371,12 +399,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().NoError(err)
+		s.Require().Equal(1, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
@@ -393,12 +425,16 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0], bundle[1]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 20000, 99)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().NoError(err)
+		s.Require().Equal(3, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 20000, 99)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -415,12 +451,80 @@ func (s *MEVTestSuite) TestProcessLane() {
 		)
 		s.Require().NoError(err)
 
-		partialProposal, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0], bundle[1]})
-		s.Require().NoError(err)
+		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
-		proposal := proposals.NewProposal(log.NewTestLogger(s.T()), s.encCfg.TxConfig.TxEncoder(), 200, 100)
 
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().NoError(err)
+		s.Require().Equal(3, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().Error(err)
+	})
+
+	s.Run("can accept a block proposal with bid and other txs", func() {
+		bidTx, bundle, err := testutils.CreateAuctionTx(
+			s.encCfg.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin("stake", math.NewInt(100)),
+			0,
+			0,
+			s.accounts[0:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		otherTx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 100)
+		s.Require().NoError(err)
+
+		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1], otherTx}
+
+		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().NoError(err)
+		s.Require().Equal(3, len(txsFromLane))
+		s.Require().Equal(1, len(remainingTxs))
+		s.Require().Equal(otherTx, remainingTxs[0])
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
+		s.Require().NoError(err)
+		s.Require().Len(proposal.Txs, 3)
+
+		encodedTxs, err := utils.GetEncodedTxs(s.encCfg.TxConfig.TxEncoder(), []sdk.Tx{bidTx, bundle[0], bundle[1]})
+		s.Require().NoError(err)
+		s.Require().Equal(encodedTxs, proposal.Txs)
+	})
+
+	s.Run("rejects a block where the bid tx is not the first tx", func() {
+		bidTx, bundle, err := testutils.CreateAuctionTx(
+			s.encCfg.TxConfig,
+			s.accounts[0],
+			sdk.NewCoin("stake", math.NewInt(100)),
+			0,
+			0,
+			s.accounts[0:2],
+			100,
+		)
+		s.Require().NoError(err)
+
+		otherTx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 100)
+		s.Require().NoError(err)
+
+		partialProposal := []sdk.Tx{otherTx, bidTx, bundle[0], bundle[1]}
+
+		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+
+		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, partialProposal)
+		s.Require().Error(err)
+		s.Require().Equal(0, len(txsFromLane))
+		s.Require().Equal(0, len(remainingTxs))
+
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})

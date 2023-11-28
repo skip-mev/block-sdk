@@ -48,6 +48,9 @@ func NewProposal(logger log.Logger, txEncoder sdk.TxEncoder, maxBlockSize int64,
 
 // GetProposalWithInfo returns all of the transactions in the proposal along with information
 // about the lanes that built the proposal.
+//
+// NOTE: This is currently not used in production but likely will be once
+// ABCI 3.0 is released.
 func (p *Proposal) GetProposalWithInfo() ([][]byte, error) {
 	// Marshall the proposal info into the first slot of the proposal.
 	infoBz, err := p.Info.Marshal()
