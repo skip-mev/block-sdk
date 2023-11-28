@@ -12,12 +12,6 @@ import (
 	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-const (
-	// DefaultLaneName is the default lane name. We enforce that a lane with the name
-	// "default" is provided when constructing the mempool.
-	DefaultLaneName = "default"
-)
-
 var _ Mempool = (*LanedMempool)(nil)
 
 // LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
@@ -76,47 +70,6 @@ func NewLanedMempool(
 	lanes []Lane,
 	laneFetcher LaneFetcher,
 ) (*LanedMempool, error) {
-	laneCache := make(map[Lane]struct{})
-	seenDefault := false
-
-	// Ensure that each of the lanes are mutually exclusive. The default lane should
-	// ignore all other lanes, while all other lanes should ignore every lane except
-	// the default lane.
-	for index, lane := range lanes {
-		if lane.Name() == DefaultLaneName {
-			lowerIgnoreList := make([]Lane, index)
-			copy(lowerIgnoreList, lanes[:index])
-
-			upperIgnoreList := make([]Lane, len(lanes)-index-1)
-			copy(upperIgnoreList, lanes[index+1:])
-
-			lane.SetIgnoreList(append(lowerIgnoreList, upperIgnoreList...))
-			seenDefault = true
-		} else {
-			laneCache[lane] = struct{}{}
-		}
-	}
-
-	if !seenDefault {
-		return nil, fmt.Errorf("default lane not found. a lane with the name %s must be provided", DefaultLaneName)
-	}
-
-	for _, lane := range lanes {
-		if lane.Name() == DefaultLaneName {
-			continue
-		}
-
-		delete(laneCache, lane)
-
-		ignoreList := make([]Lane, 0)
-		for otherLane := range laneCache {
-			ignoreList = append(ignoreList, otherLane)
-		}
-
-		lane.SetIgnoreList(ignoreList)
-		laneCache[lane] = struct{}{}
-	}
-
 	mempool := &LanedMempool{
 		logger:            logger,
 		registry:          lanes,

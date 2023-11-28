@@ -170,3 +170,17 @@ func DefaultMatchHandler() MatchHandler {
 		return true
 	}
 }
+
+// NewMatchHandler returns a match handler that matches transactions
+// that match the lane and do not match with any of the provided match handlers.
+func NewMatchHandler(mh MatchHandler, ignoreMHs ...MatchHandler) MatchHandler {
+	return func(ctx sdk.Context, tx sdk.Tx) bool {
+		for _, ignoreMH := range ignoreMHs {
+			if ignoreMH(ctx, tx) {
+				return false
+			}
+		}
+
+		return mh(ctx, tx)
+	}
+}

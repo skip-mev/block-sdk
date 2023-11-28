@@ -77,22 +77,6 @@ func (_m *Lane) CountTx() int {
 	return r0
 }
 
-// GetIgnoreList provides a mock function with given fields:
-func (_m *Lane) GetIgnoreList() []block.Lane {
-	ret := _m.Called()
-
-	var r0 []block.Lane
-	if rf, ok := ret.Get(0).(func() []block.Lane); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]block.Lane)
-		}
-	}
-
-	return r0
-}
-
 // GetMaxBlockSpace provides a mock function with given fields:
 func (_m *Lane) GetMaxBlockSpace() math.LegacyDec {
 	ret := _m.Called()
@@ -270,11 +254,6 @@ func (_m *Lane) Select(_a0 context.Context, _a1 [][]byte) mempool.Iterator {
 // SetAnteHandler provides a mock function with given fields: antehander
 func (_m *Lane) SetAnteHandler(antehander types.AnteHandler) {
 	_m.Called(antehander)
-}
-
-// SetIgnoreList provides a mock function with given fields: ignoreList
-func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
-	_m.Called(ignoreList)
 }
 
 // SetMaxBlockSpace provides a mock function with given fields: _a0

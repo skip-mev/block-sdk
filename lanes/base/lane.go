@@ -23,7 +23,7 @@ type DefaultLane struct {
 }
 
 // NewDefaultLane returns a new default lane.
-func NewDefaultLane(cfg base.LaneConfig) *DefaultLane {
+func NewDefaultLane(cfg base.LaneConfig, matchHandler base.MatchHandler) *DefaultLane {
 	lane := base.NewBaseLane(
 		cfg,
 		LaneName,
@@ -33,7 +33,7 @@ func NewDefaultLane(cfg base.LaneConfig) *DefaultLane {
 			cfg.SignerExtractor,
 			cfg.MaxTxs,
 		),
-		base.DefaultMatchHandler(),
+		matchHandler,
 	)
 
 	if err := lane.ValidateBasic(); err != nil {

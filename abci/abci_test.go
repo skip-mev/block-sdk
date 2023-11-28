@@ -522,7 +522,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -532,10 +532,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -588,7 +586,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -598,10 +596,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -661,7 +657,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -671,12 +667,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		panicLane.SetIgnoreList(nil)
-		panicLane2.SetIgnoreList(nil)
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -736,7 +728,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		}
 
 		mempool, err := block.NewLanedMempool(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			lanes,
 			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
 				return blocksdkmoduletypes.Lane{}, nil
@@ -746,12 +738,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		panicLane.SetIgnoreList(nil)
-		panicLane2.SetIgnoreList(nil)
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
-			log.NewNopLogger(),
+			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
