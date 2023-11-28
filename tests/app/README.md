@@ -1,4 +1,4 @@
-# Block SDK Enabled Test App
+# Block SDK Enabled Test App (10 min)
 
 ## Overview
 
@@ -10,16 +10,16 @@ go get github.com/skip-mev/block-sdk
 
 ## Building the Test App
 
-There are four critical steps to building a test app that uses the Block SDK:
+There are fix critical steps to building a test app that uses the Block SDK:
 
 1. Set up the signer extractor.
 2. Create the lane configurations for each individual lane i.e. `LaneConfig`.
 3. Configure the match handlers for each lane i.e. `MatchHandler`.
-4. Creating the `LanedMempool` object.
+4. Creating the Block SDK mempool i.e. `LanedMempool`.
 5. Setting the antehandlers - used for transaction validation - for each lane.
-6. Setting the proposal handlers - used for transaction execution - for the application to utilize the Block SDK's Prepare and Process Proposal handlers.
+6. Setting the proposal handlers - used for block creation and verification - for the application to utilize the Block SDK's Prepare and Process Proposal handlers.
 
-### Signer Extractor
+### 1. Signer Extractor
 
 The signer extractor is responsible for extracting signers and relevant information about who is signing the transaction. We recommend using the default implementation provided by the Block SDK. 
 
@@ -27,11 +27,11 @@ The signer extractor is responsible for extracting signers and relevant informat
 signerAdapter := signerextraction.NewDefaultAdapter()
 ```
 
-### Lane Configurations
+### 2. Lane Configurations
 
-This controls how many transactions can be stored by each lane, much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.
+This controls how many transactions can be stored by each lane, how much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.
 
-For example, in `lanes.go` we see the following:
+For example, in [`lanes.go`](./lanes.go) we see the following:
 
 ```go
 mevConfig := base.LaneConfig{
@@ -44,20 +44,20 @@ mevConfig := base.LaneConfig{
 }
 ```
 
-Following the example above, we can see the following:
+Following the example above:
 
-* `Logger`: This is the logger that will be utilized by the lane when outputting information as blocks are being processed and constructed. In this case, we utilize the logger provided by the application. **This is the recommended approach.**
-* `TxEncoder`: This is the encoder that will be used to encode transactions. In this case, we utilize the encoder provided by the application. **This is the recommended approach.**
-* `TxDecoder`: This is the decoder that will be used to decode transactions. In this case, we utilize the decoder provided by the application. **This is the recommended approach.**
+* `Logger`: This is the logger that will be utilized by the lane when outputting information as blocks are being processed and constructed. 
+* `TxEncoder`: This is the encoder that will be used to encode transactions.
+* `TxDecoder`: This is the decoder that will be used to decode transactions.
 * `MaxBlockSpace`: This is the maximum amount of block space that can be allocated to this lane. In this case, we allocate 20% of the block space to this lane.
 * `SignerExtractor`: This is the signer extractor that will be used to extract signers from transactions. In this case, we utilize the default signer extractor provided by the Block SDK. **This is the recommended approach.**
-* `MaxTxs`: This is the maximum number of transactions that can be stored in this lane. In this case, we allow up to 1000 transactions to be stored in this lane.
+* `MaxTxs`: This is the maximum number of transactions that can be stored in this lane. In this case, we allow up to 1000 transactions to be stored in this lane at any given time.
 
 ### Match Handlers
 
-Match handlers are responsible for matching transactions to lanes. Each lane should have a unique match handler. Since each lane has a unique match handler, it may be the case that we need to ignore transactions that otherwise would be matched to the lane. 
+Match handlers are responsible for matching transactions to lanes. Each lane should have a unique match handler. We want each lane to be mutually exclusive, so we create a match handler that matches transactions that belong in the lane and do not match with any of the other lanes.
 
-For example, the default match handler provided by the Block SDK matches all transactions to the lane. However, if we want to ignore transactions that would match to the `MEV` lane, we utilize the `base.NewMatchHandler` wrapper function. This allows us to input our match handler and all other match handlers we want to ignore. 
+For example, the default match handler provided by the Block SDK matches all transactions to the lane. However, if we want to ignore transactions that would match to the `MEV` and `Free` lanes, we utilize `base.NewMatchHandler`. This allows us to input our match handler and all other match handlers we want to ignore. 
 
 ```go
 // Create the final match handler for the default lane.
@@ -78,7 +78,7 @@ Following the example seen in `lanes.go`, we can see the following:
 
 ### Laned Mempool
 
-After constructing the lanes, we can create the `LanedMempool` object. This object is responsible for managing the lanes and processing transactions. 
+After constructing the lanes, we can create the Block SDK mempool. This object is responsible for managing the lanes and processing transactions. 
 
 ```go
 // STEP 1: Create the Block SDK lanes.
@@ -102,7 +102,7 @@ Note that we pass the lanes to the `block.NewLanedMempool` function. **The order
 
 ### AnteHandlers
 
-`AnteHandlers` are responsible for validating transactions. We recommend that developers utilize the same antehandler chain that is used by the application. In the example test app, we construct the `AnteHandler` with `NewBSDKAnteHandler`. In the case where the application should ignore certain lanes, we can wrap a `Decorator` with the `block.NewIgnoreDecorator` function as seen in `ante.go`.
+`AnteHandlers` are responsible for validating transactions. We recommend that developers utilize the same antehandler chain that is used by the application. In the example test app, we construct the `AnteHandler` with `NewBSDKAnteHandler`. In the case where the certain ante decorators should ignore certain lanes, we can wrap a `Decorator` with the `block.NewIgnoreDecorator` function as seen in `ante.go`.
 
 After constructing the `AnteHandler`, we can set it on the application and on the lanes.
 
@@ -128,7 +128,7 @@ options := BSDKHandlerOptions{
 anteHandler := NewBSDKAnteHandler(options)
 app.App.SetAnteHandler(anteHandler)
 
-// Set the lane config on the lanes.
+// Set the AnteHandlers on the lanes.
 mevLane.SetAnteHandler(anteHandler)
 freeLane.SetAnteHandler(anteHandler)
 defaultLane.SetAnteHandler(anteHandler)
@@ -152,4 +152,4 @@ app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
 ## Conclusion
 
-Adding the Block SDK to your application is a simple 5 step process. If you have any questions, please feel free to reach out to the Skip team. We are happy to help!
+Adding the Block SDK to your application is a simple 6 step process. If you have any questions, please feel free to reach out to the [Skip team](https://skip.money/contact). We are happy to help!

@@ -173,6 +173,8 @@ func DefaultMatchHandler() MatchHandler {
 
 // NewMatchHandler returns a match handler that matches transactions
 // that match the lane and do not match with any of the provided match handlers.
+// In the context of building an application, you would want to use this to
+// ignore the match handlers of other lanes in the application.
 func NewMatchHandler(mh MatchHandler, ignoreMHs ...MatchHandler) MatchHandler {
 	return func(ctx sdk.Context, tx sdk.Tx) bool {
 		for _, ignoreMH := range ignoreMHs {

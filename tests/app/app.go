@@ -211,7 +211,9 @@ func New(
 	// STEP 1: Create the Block SDK lanes.
 	mevLane, freeLane, defaultLane := CreateLanes(app)
 
-	// STEP 2: Construct a mempool based off the lanes.
+	// STEP 2: Construct a mempool based off the lanes. Note that the order of the lanes
+	// matters. Blocks are constructed from the top lane to the bottom lane. The top lane
+	// is the first lane in the array and the bottom lane is the last lane in the array.
 	mempool, err := block.NewLanedMempool(
 		app.Logger(),
 		[]block.Lane{mevLane, freeLane, defaultLane},
@@ -221,7 +223,7 @@ func New(
 		panic(err)
 	}
 
-	// STEP 3: Set the mempool on the app.
+	// STEP 3: Set the mempool on the app. The application is now powered by the Block SDK!
 	app.App.SetMempool(mempool)
 
 	// STEP 4: Create a global ante handler that will be called on each transaction when
@@ -245,12 +247,13 @@ func New(
 	anteHandler := NewBSDKAnteHandler(options)
 	app.App.SetAnteHandler(anteHandler)
 
-	// Set the lane config on the lanes.
+	// Set the ante handler on the lanes.
 	mevLane.SetAnteHandler(anteHandler)
 	freeLane.SetAnteHandler(anteHandler)
 	defaultLane.SetAnteHandler(anteHandler)
 
-	// Step 5: Create the proposal handler and set it on the app.
+	// Step 5: Create the proposal handler and set it on the app. Now the application
+	// will build and verify proposals using the Block SDK!
 	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
@@ -260,7 +263,8 @@ func New(
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
-	// Step 6: Set the custom CheckTx handler on BaseApp.
+	// Step 6: Set the custom CheckTx handler on BaseApp. This is only required if you
+	// use the MEV lane.
 	checkTxHandler := mev.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),

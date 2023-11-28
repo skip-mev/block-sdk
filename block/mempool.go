@@ -56,15 +56,6 @@ type (
 // to its own selection logic. The lanes are ordered according to their priority. The
 // first lane in the registry has the highest priority. Proposals are verified according
 // to the order of the lanes in the registry. Each transaction SHOULD only belong in one lane.
-// To enforce that transactions only belong to one lane, each lane has an ignore list.
-//
-// For example, say we have three lanes, MEV, default, and free. The ignore list of each
-// lane will look like the following:
-// - MEV: free
-// - default: MEV, free
-// - free: MEV.
-//
-// Note that a name with the value "default" MUST be provided.
 func NewLanedMempool(
 	logger log.Logger,
 	lanes []Lane,
