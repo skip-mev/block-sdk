@@ -38,6 +38,91 @@ If any of the lanes fail to `PrepareLane`, the next lane will be called and the 
 
 To customize how much block-space a given lane consumes, you have to configure the `MaxBlockSpace` variable in your lane configuration object (`LaneConfig`). Please visit [`lanes.go`](../tests/app/lanes.go) for an example. This variable is a map of lane name to the maximum block space that lane can consume. Note that if the Block SDK module is utilized, the `MaxBlockSpace` variable will be overwritten by the governance configured value.
 
+### Proposal Construction Example
+
+> Let's say your application has 3 lanes, `A`, `B`, and `C`, and the order of lanes is `A -> B -> C`. 
+> 
+> * Lane `A` has a `MaxBlockSpace` of 1000 bytes and 500 gas limit.
+> * Lane `B` has a `MaxBlockSpace` of 2000 bytes and 1000 gas limit.
+> * Lane `C` has a `MaxBlockSpace` of 3000 bytes and 1500 gas limit.
+
+Lane `A` currently contains 4 transactions:
+
+* Tx1: 100 bytes, 100 gas
+* Tx2: 800 bytes, 300 gas
+* Tx3: 200 bytes, 100 gas
+* Tx4: 100 bytes, 100 gas
+
+Lane `B` currently contains 4 transactions:
+
+* Tx5: 1000 bytes, 500 gas
+* Tx6: 1200 bytes, 600 gas
+* Tx7: 1500 bytes, 300 gas
+* Tx8: 1000 bytes, 400 gas
+
+Lane `C` currently contains 4 transactions:
+
+* Tx9: 1000 bytes, 500 gas
+* Tx10: 1200 bytes, 600 gas
+* Tx11: 1500 bytes, 300 gas
+* Tx12: 100 bytes, 400 gas
+
+Assuming all transactions are valid according to their respective lanes, the proposal will be built as follows:
+
+```golang
+// Somewhere in abci.go a new proposal is created:
+blockProposal := proposals.NewProposal(...)
+...
+// First lane to be called is lane A, this will return the following transactions to add after PrepareLane is called:
+partialProposalFromLaneA := {
+    Tx1, // 100 bytes, 100 gas
+    Tx2, // 800 bytes, 300 gas
+    Tx3, // 200 bytes, 100 gas
+}
+...
+// First Lane A will update the proposal.
+if err := blockProposal.Update(partialProposalFromLaneA); err != nil {
+    return err
+}
+...
+// Next, lane B will be called with the following transactions to add after PrepareLane is called:
+partialProposalFromLaneB := {
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+}
+...
+// Next, lane B will update the proposal.
+if err := blockProposal.Update(partialProposalFromLaneB); err != nil {
+    return err
+}
+...
+// Finally, lane C will be called with the following transactions to add after PrepareLane is called:
+partialProposalFromLaneC := {
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+...
+// Finally, lane C will update the proposal.
+if err := blockProposal.Update(partialProposalFromLaneC); err != nil {
+    return err
+}
+...
+// The final proposal will be:
+blockProposal := {
+    Tx1, // 100 bytes, 100 gas
+    Tx2, // 800 bytes, 300 gas
+    Tx3, // 200 bytes, 100 gas
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+```
+
+If any one of the transactions are invalid, they will not be included in the lane's partial proposal.
+
 ## Proposal Verification
 
 The `ProcessProposal` handler is called by the ABCI++ application when a new block has been proposed by the proposer and needs to be verified by the network. At runtime, the `ProcessProposal` handler will do the following steps:
@@ -47,3 +132,89 @@ The `ProcessProposal` handler is called by the ABCI++ application when a new blo
 3. Given that the proposal contains contiguous sections of transactions from a given lane, each lane will verify the transactions that belong to it and return the remaining transactions to verify for the next lane - see [`ProcessLane`](../block/base/abci.go).
 4. After determining and verifiying the transactions that belong to it, the lane will attempt to update the current proposal - so as to replicate the exact same steps done in `PrepareProposal`. If the lane is unable to update the proposal, it will return an error and the proposal will be rejected.
 5. Once all lanes have been called and no transactions are left to verify, the proposal outputted by `ProcessProposal` should be the same as the proposal outputted by `PrepareProposal`!
+
+If any of the lanes fail to `ProcessLane`, the entire proposal is rejected. There ensures that there is always parity between the proposal built and the proposal verified.
+
+### Proposal Verification Example
+
+Following the example above, let's say we recieve the same proposal from the network:
+
+```golang
+blockProposal := {
+    Tx1, // 100 bytes, 100 gas
+    Tx2, // 800 bytes, 300 gas
+    Tx3, // 200 bytes, 100 gas
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+```
+
+The proposal will be verified as follows:
+
+```golang
+// Somewhere in abci.go a new proposal is created:
+blockProposal := proposals.NewProposal(...)
+...
+// First lane to be called is lane A, this will return the following transactions that it verified and the remaining transactions to verify after calling ProcessLane:
+verifiedTransactionsFromLaneA, remainingTransactions := {
+    Tx1, // 100 bytes, 100 gas
+    Tx2, // 800 bytes, 300 gas
+    Tx3, // 200 bytes, 100 gas
+}, {
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+...
+// First Lane A will update the proposal.
+if err := blockProposal.Update(verifiedTransactionsFromLaneA); err != nil {
+    return err
+}
+...
+// Next, lane B will be called with the following transactions to verify and the remaining transactions to verify after calling ProcessLane:
+verifiedTransactionsFromLaneB, remainingTransactions := {
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+}, {
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+...
+// Next, lane B will update the proposal.
+if err := blockProposal.Update(verifiedTransactionsFromLaneB); err != nil {
+    return err
+}
+...
+// Finally, lane C will be called with the following transactions to verify and the remaining transactions to verify after calling ProcessLane:
+verifiedTransactionsFromLaneC, remainingTransactions := {
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}, {}
+...
+// Finally, lane C will update the proposal.
+if err := blockProposal.Update(verifiedTransactionsFromLaneC); err != nil {
+    return err
+}
+...
+// The final proposal will be:
+blockProposal := {
+    Tx1, // 100 bytes, 100 gas
+    Tx2, // 800 bytes, 300 gas
+    Tx3, // 200 bytes, 100 gas
+    Tx5, // 1000 bytes, 500 gas
+    Tx8, // 1000 bytes, 400 gas
+    Tx9, // 1000 bytes, 500 gas
+    Tx10, // 1200 bytes, 600 gas
+    Tx12, // 100 bytes, 400 gas
+}
+```
+
+As we can see, in the process of verifying a proposal, the proposal is updated to reflect the exact same steps done in `PrepareProposal`.
+
