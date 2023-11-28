@@ -8,7 +8,6 @@ import (
 
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // PrepareLaneHandler will attempt to select the highest bid transaction that is valid
@@ -35,7 +34,9 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				continue
 			}
 
-			bundle, err := l.VerifyBidBasic(bidTx, proposal, limit)
+			cacheCtx, write := ctx.CacheContext()
+
+			bundle, err := l.VerifyBidBasic(cacheCtx, bidTx, proposal, limit)
 			if err != nil {
 				l.Logger().Info(
 					"failed to select auction bid tx for lane; tx is invalid",
@@ -46,7 +47,6 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				continue
 			}
 
-			cacheCtx, write := ctx.CacheContext()
 			if err := l.VerifyBidTx(cacheCtx, bidTx, bundle); err != nil {
 				l.Logger().Info(
 					"failed to select auction bid tx for lane; tx is invalid",
@@ -161,6 +161,7 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 // VerifyBidBasic will verify that the bid transaction and all of its bundled
 // transactions respect the basic invariants of the lane (e.g. size, gas limit).
 func (l *MEVLane) VerifyBidBasic(
+	ctx sdk.Context,
 	bidTx sdk.Tx,
 	proposal proposals.Proposal,
 	limit proposals.LaneLimits,
@@ -175,7 +176,7 @@ func (l *MEVLane) VerifyBidBasic(
 		return nil, fmt.Errorf("bid info is nil")
 	}
 
-	txInfo, err := utils.GetTxInfo(l.TxEncoder(), bidTx)
+	txInfo, err := l.GetTxInfo(ctx, bidTx)
 	if err != nil {
 		return nil, fmt.Errorf("err retrieving transaction info: %s", err)
 	}
@@ -196,7 +197,7 @@ func (l *MEVLane) VerifyBidBasic(
 			return nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 		}
 
-		bundledTxInfo, err := utils.GetTxInfo(l.TxEncoder(), bundledTx)
+		bundledTxInfo, err := l.GetTxInfo(ctx, bundledTx)
 		if err != nil {
 			return nil, fmt.Errorf("err retrieving transaction info: %s", err)
 		}

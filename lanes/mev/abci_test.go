@@ -545,7 +545,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		)
 		s.Require().NoError(err)
 
-		bundle, err := lane.VerifyBidBasic(bidTx, proposal, limits)
+		bundle, err := lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
 		s.Require().NoError(err)
 		s.compare(bundle, expectedBundle)
 	})
@@ -561,7 +561,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		)
 		s.Require().NoError(err)
 
-		_, err = lane.VerifyBidBasic(tx, proposal, limits)
+		_, err = lane.VerifyBidBasic(s.ctx, tx, proposal, limits)
 		s.Require().Error(err)
 	})
 
@@ -577,7 +577,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		)
 		s.Require().NoError(err)
 
-		_, err = lane.VerifyBidBasic(bidTx, proposal, limits)
+		_, err = lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
 		s.Require().Error(err)
 	})
 
@@ -597,7 +597,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), size-1, 100)
 		limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
-		_, err = lane.VerifyBidBasic(bidTx, proposal, limits)
+		_, err = lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
 		s.Require().Error(err)
 	})
 
@@ -622,7 +622,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		)
 		s.Require().NoError(err)
 
-		_, err = lane.VerifyBidBasic(bidTx, proposal, limits)
+		_, err = lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
 		s.Require().Error(err)
 	})
 }

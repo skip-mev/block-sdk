@@ -6,47 +6,62 @@ import (
 	"strings"
 
 	comettypes "github.com/cometbft/cometbft/types"
-
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 )
 
-type (
-	// TxInfo contains the information required for a transaction to be
-	// included in a proposal.
-	TxInfo struct {
-		// Hash is the hex-encoded hash of the transaction.
-		Hash string
-		// Size is the size of the transaction in bytes.
-		Size int64
-		// GasLimit is the gas limit of the transaction.
-		GasLimit uint64
-		// TxBytes is the bytes of the transaction.
-		TxBytes []byte
+// TxWithInfo contains the information required for a transaction to be
+// included in a proposal.
+type TxWithInfo struct {
+	// Hash is the hex-encoded hash of the transaction.
+	Hash string
+	// Size is the size of the transaction in bytes.
+	Size int64
+	// GasLimit is the gas limit of the transaction.
+	GasLimit uint64
+	// TxBytes is the bytes of the transaction.
+	TxBytes []byte
+	// Priority defines the priority of the transaction.
+	Priority any
+	// Signers defines the signers of a transaction.
+	Signers []signerextraction.SignerData
+}
+
+// NewTxInfo returns a new TxInfo instance.
+func NewTxInfo(
+	hash string,
+	size int64,
+	gasLimit uint64,
+	txBytes []byte,
+	priority any,
+	signers []signerextraction.SignerData,
+) TxWithInfo {
+	return TxWithInfo{
+		Hash:     hash,
+		Size:     size,
+		GasLimit: gasLimit,
+		TxBytes:  txBytes,
+		Priority: priority,
+		Signers:  signers,
 	}
-)
+}
 
-// GetTxHashStr returns the TxInfo of a given transaction.
-func GetTxInfo(txEncoder sdk.TxEncoder, tx sdk.Tx) (TxInfo, error) {
-	txBz, err := txEncoder(tx)
+// String implements the fmt.Stringer interface.
+func (t TxWithInfo) String() string {
+	return fmt.Sprintf("TxWithInfo{Hash: %s, Size: %d, GasLimit: %d, Priority: %s, Signers: %v}",
+		t.Hash, t.Size, t.GasLimit, t.Priority, t.Signers)
+}
+
+// GetTxHash returns the string hash representation of a transaction.
+func GetTxHash(encoder sdk.TxEncoder, tx sdk.Tx) (string, error) {
+	txBz, err := encoder(tx)
 	if err != nil {
-		return TxInfo{}, fmt.Errorf("failed to encode transaction: %w", err)
+		return "", fmt.Errorf("failed to encode transaction: %w", err)
 	}
 
 	txHashStr := strings.ToUpper(hex.EncodeToString(comettypes.Tx(txBz).Hash()))
-
-	// TODO: Add an adapter to lanes so that this can be flexible to support EVM, etc.
-	gasTx, ok := tx.(sdk.FeeTx)
-	if !ok {
-		return TxInfo{}, fmt.Errorf("failed to cast transaction to GasTx")
-	}
-
-	return TxInfo{
-		Hash:     txHashStr,
-		Size:     int64(len(txBz)),
-		GasLimit: gasTx.GetGas(),
-		TxBytes:  txBz,
-	}, nil
+	return txHashStr, nil
 }
 
 // GetDecodedTxs returns the decoded transactions from the given bytes.
