@@ -59,36 +59,17 @@ func CreateLanes(app *TestApp) (*mevlane.MEVLane, *freelane.FreeLane, *defaultla
 	}
 
 	// 3. Create the match handlers for each lane. These match handlers determine whether or not
-	// a transaction belongs in the lane. We want each lane to be mutually exclusive, so we create
-	// a match handler that matches transactions that belong in the lane and do not match with any
-	// of the other lanes. The outcome of this looks like the following:
-	// - MEV Lane: Matches transactions that belong in the MEV lane and do not match the free lane
-	//   transactions. We do not consider the default lane transactions as this accepts all transactions
-	//   and would always return false.
-	// - Free Lane: Matches transactions that belong in the free lane and do not match the MEV lane
-	//   transactions.
-	// - Default Lane: Matches transactions that belong in the default lane and do not match the MEV
-	//   or free lane.
-	factory := mevlane.NewDefaultAuctionFactory(app.txConfig.TxDecoder(), signerAdapter)
+	// a transaction belongs in the lane.
 
 	// Create the final match handler for the mev lane.
-	mevMatchHandler := base.NewMatchHandler(
-		factory.MatchHandler(),
-		freelane.DefaultMatchHandler(),
-	)
+	factory := mevlane.NewDefaultAuctionFactory(app.txConfig.TxDecoder(), signerAdapter)
+	mevMatchHandler := factory.MatchHandler()
 
 	// Create the final match handler for the free lane.
-	freeMatchHandler := base.NewMatchHandler(
-		freelane.DefaultMatchHandler(),
-		factory.MatchHandler(),
-	)
+	freeMatchHandler := freelane.DefaultMatchHandler()
 
 	// Create the final match handler for the default lane.
-	defaultMatchHandler := base.NewMatchHandler(
-		base.DefaultMatchHandler(),
-		factory.MatchHandler(),
-		freelane.DefaultMatchHandler(),
-	)
+	defaultMatchHandler := base.DefaultMatchHandler()
 
 	// 4. Create the lanes.
 	mevLane := mevlane.NewMEVLane(

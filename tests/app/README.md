@@ -55,9 +55,13 @@ Following the example above:
 
 ### Match Handlers
 
-Match handlers are responsible for matching transactions to lanes. Each lane should have a unique match handler. We want each lane to be mutually exclusive, so we create a match handler that matches transactions that belong in the lane and do not match with any of the other lanes.
+Match handlers are responsible for matching transactions to lanes. Each lane should have a unique match handler. By default, we recommend that the default lane be the last lane in your application. This is because the default lane matches all transactions that do not match to any of the other lanes. If you want to have a lane after the default lane, please see the section below.
 
-For example, the default match handler provided by the Block SDK matches all transactions to the lane. However, if we want to ignore transactions that would match to the `MEV` and `Free` lanes, we utilize `base.NewMatchHandler`. This allows us to input our match handler and all other match handlers we want to ignore. 
+#### (OPTIONAL) Having Lanes after the Default Lane
+
+If you want to have lanes after the default lane, you will need to utilize the `base.NewMatchHandler` function. This function allows you to construct a match handler that can ignore other lane's match handlers.
+
+For example, if we wanted the free and MEV lanes to be processed after the default lane - default, MEV, free - we can do the following:
 
 ```go
 // Create the final match handler for the default lane.
@@ -68,7 +72,7 @@ defaultMatchHandler := base.NewMatchHandler(
 )
 ```
 
-Following the example seen in `lanes.go`, we can see the following:
+Following the example, we can see the following:
 
 * `base.DefaultMatchHandler()`: This is the default match handler provided by the Block SDK. This matches all transactions to the lane.
 * `factory.MatchHandler()`: This is the MEV lane's match handler. This is passed as a parameter to the `base.NewMatchHandler` function - which means that all transactions that match to the MEV lane will be ignored by the default match handler.
@@ -76,9 +80,9 @@ Following the example seen in `lanes.go`, we can see the following:
 
 **This will allow the default match handler to only match transactions that do not match to the MEV lane or the free lane.**
 
-### Laned Mempool
+### Block SDK Mempool
 
-After constructing the lanes, we can create the Block SDK mempool. This object is responsible for managing the lanes and processing transactions. 
+After constructing the lanes, we can create the Block SDK mempool - `LanedMempool`. This object is responsible for managing the lanes and processing transactions. 
 
 ```go
 // STEP 1: Create the Block SDK lanes.
