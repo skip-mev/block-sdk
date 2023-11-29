@@ -504,7 +504,38 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+<<<<<<< HEAD
 		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, panicLane, defaultLane)
+=======
+		lanes := []block.Lane{
+			panicLane,
+			defaultLane,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+		}
+
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+		)
+		s.Require().NoError(err)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -540,7 +571,38 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+<<<<<<< HEAD
 		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, defaultLane, panicLane)
+=======
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+		)
+		s.Require().NoError(err)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -577,7 +639,44 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+<<<<<<< HEAD
 		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, panicLane, panicLane2, defaultLane)
+=======
+		lanes := []block.Lane{
+			panicLane,
+			panicLane2,
+			defaultLane,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         2,
+			},
+		}
+
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+		)
+		s.Require().NoError(err)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),
@@ -614,7 +713,44 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
+<<<<<<< HEAD
 		mempool := block.NewLanedMempool(log.NewTMLogger(os.Stdout), false, defaultLane, panicLane, panicLane2)
+=======
+		lanes := []block.Lane{
+			defaultLane,
+			panicLane,
+			panicLane2,
+		}
+
+		chainLanes := []blocksdkmoduletypes.Lane{
+			{
+				Id:            panicLane.Name(),
+				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
+				Order:         1,
+			},
+			{
+				Id:            panicLane2.Name(),
+				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
+				Order:         2,
+			},
+			{
+				Id:            defaultLane.Name(),
+				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
+				Order:         0,
+			},
+		}
+
+		mempool, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
+			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+				return blocksdkmoduletypes.Lane{}, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return chainLanes
+			}),
+		)
+		s.Require().NoError(err)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTMLogger(os.Stdout),

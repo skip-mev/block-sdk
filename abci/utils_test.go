@@ -86,7 +86,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	return defaultlane.NewDefaultLane(cfg)
+	return defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
 }
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
@@ -99,7 +99,8 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder, signeradaptors.NewDefaultAdapter()))
+	factory := mev.NewDefaultAuctionFactory(cfg.TxDecoder, signeradaptors.NewDefaultAdapter())
+	return mev.NewMEVLane(cfg, factory, factory.MatchHandler())
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {

@@ -121,6 +121,7 @@ func (l *BaseLane) SetProcessLaneHandler(processLaneHandler ProcessLaneHandler) 
 // if the transaction is on the ignore list. If the transaction is on the ignore
 // list, it returns false.
 func (l *BaseLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
+<<<<<<< HEAD
 	return l.matchHandler(ctx, tx) && !l.CheckIgnoreList(ctx, tx)
 }
 
@@ -135,6 +136,9 @@ func (l *BaseLane) CheckIgnoreList(ctx sdk.Context, tx sdk.Tx) bool {
 	}
 
 	return false
+=======
+	return l.matchHandler(ctx, tx)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 }
 
 // Name returns the name of the lane.
@@ -142,12 +146,15 @@ func (l *BaseLane) Name() string {
 	return l.laneName
 }
 
+<<<<<<< HEAD
 // SetIgnoreList sets the ignore list for the lane. The ignore list is a list
 // of lanes that the lane should ignore when processing transactions.
 func (l *BaseLane) SetIgnoreList(lanes []block.Lane) {
 	l.cfg.IgnoreList = lanes
 }
 
+=======
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 // SetAnteHandler sets the ante handler for the lane.
 func (l *BaseLane) SetAnteHandler(anteHandler sdk.AnteHandler) {
 	l.cfg.AnteHandler = anteHandler

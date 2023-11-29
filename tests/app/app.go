@@ -6,7 +6,13 @@ import (
 	"io"
 	"os"
 	"path/filepath"
+<<<<<<< HEAD
 	"reflect"
+=======
+
+	"cosmossdk.io/log"
+	dbm "github.com/cosmos/cosmos-db"
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 	"cosmossdk.io/depinject"
 	"cosmossdk.io/math"
@@ -67,11 +73,7 @@ import (
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
 	"github.com/skip-mev/block-sdk/abci"
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
@@ -261,6 +263,7 @@ func New(
 	// }
 	// baseAppOptions = append(baseAppOptions, prepareOpt)
 
+<<<<<<< HEAD
 	app.App = appBuilder.Build(logger, db, traceStore, baseAppOptions...)
 
 	// Set POB's mempool into the app.
@@ -315,10 +318,34 @@ func New(
 		defaultLane,
 	}
 	mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
+=======
+	app.App = appBuilder.Build(db, traceStore, baseAppOptions...)
+
+	// ---------------------------------------------------------------------------- //
+	// ------------------------- Begin Custom Code -------------------------------- //
+	// ---------------------------------------------------------------------------- //
+	// STEP 1-3: Create the Block SDK lanes.
+	mevLane, freeLane, defaultLane := CreateLanes(app)
+
+	// STEP 4: Construct a mempool based off the lanes. Note that the order of the lanes
+	// matters. Blocks are constructed from the top lane to the bottom lane. The top lane
+	// is the first lane in the array and the bottom lane is the last lane in the array.
+	mempool, err := block.NewLanedMempool(
+		app.Logger(),
+		[]block.Lane{mevLane, freeLane, defaultLane},
+		&app.blocksdkKeeper,
+	)
+	if err != nil {
+		panic(err)
+	}
+
+	// The application's mempool is now powered by the Block SDK!
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 	app.App.SetMempool(mempool)
 
-	// Create a global ante handler that will be called on each transaction when
-	// proposals are being built and verified.
+	// STEP 5: Create a global ante handler that will be called on each transaction when
+	// proposals are being built and verified. Note that this step must be done before
+	// setting the ante handler on the lanes.
 	handlerOptions := ante.HandlerOptions{
 		AccountKeeper:   app.AccountKeeper,
 		BankKeeper:      app.BankKeeper,
@@ -335,14 +362,19 @@ func New(
 		MEVLane:       mevLane,
 	}
 	anteHandler := NewBSDKAnteHandler(options)
-
-	// Set the lane config on the lanes.
-	for _, lane := range lanes {
-		lane.SetAnteHandler(anteHandler)
-	}
 	app.App.SetAnteHandler(anteHandler)
 
+<<<<<<< HEAD
 	// Set the proposal handlers on base app
+=======
+	// Set the ante handler on the lanes.
+	mevLane.SetAnteHandler(anteHandler)
+	freeLane.SetAnteHandler(anteHandler)
+	defaultLane.SetAnteHandler(anteHandler)
+
+	// Step 6: Create the proposal handler and set it on the app. Now the application
+	// will build and verify proposals using the Block SDK!
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 	proposalHandler := abci.NewProposalHandler(
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
@@ -352,7 +384,8 @@ func New(
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
-	// Set the custom CheckTx handler on BaseApp.
+	// Step 7: Set the custom CheckTx handler on BaseApp. This is only required if you
+	// use the MEV lane.
 	checkTxHandler := mev.NewCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),

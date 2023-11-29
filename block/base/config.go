@@ -8,7 +8,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
 )
 
 // LaneConfig defines the basic configurations needed for a lane.
@@ -27,14 +26,6 @@ type LaneConfig struct {
 	// on the number of transactions that can be included in the block for this
 	// lane (up to maxTxBytes as provided by the request). This is useful for the default lane.
 	MaxBlockSpace math.LegacyDec
-
-	// IgnoreList defines the list of lanes to ignore when processing transactions. This
-	// is useful for when you want lanes to exist after the default lane. For example,
-	// say there are two lanes: default and free. The free lane should be processed after
-	// the default lane. In this case, the free lane should be added to the ignore list
-	// of the default lane. Otherwise, the transactions that belong to the free lane
-	// will be processed by the default lane (which accepts all transactions by default).
-	IgnoreList []block.Lane
 
 	// MaxTxs sets the maximum number of transactions allowed in the mempool with
 	// the semantics:

@@ -69,9 +69,11 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		AnteHandler:     nil,
 		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
+	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
+		factory,
+		factory.MatchHandler(),
 	)
 
 	// Free lane set up
@@ -100,6 +102,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,
+		base.DefaultMatchHandler(),
 	)
 
 	// Mempool set up
@@ -114,6 +117,138 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 }
 
+<<<<<<< HEAD
+=======
+func (suite *BlockBusterTestSuite) TestNewMempool() {
+	fetcher := mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
+		return blocksdkmoduletypes.Lane{}, nil
+	}, func() []blocksdkmoduletypes.Lane {
+		return nil
+	})
+
+	baseConfig := base.LaneConfig{
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyZeroDec(),
+	}
+
+	defaultLane := defaultlane.NewDefaultLane(baseConfig, base.DefaultMatchHandler())
+	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
+	mevLane := mev.NewMEVLane(
+		baseConfig,
+		factory,
+		factory.MatchHandler(),
+	)
+	freeLane := free.NewFreeLane(
+		baseConfig,
+		base.DefaultTxPriority(),
+		free.DefaultMatchHandler(),
+	)
+
+	suite.Run("works with a single lane", func() {
+		lanes := []block.Lane{defaultLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works mev and default lane", func() {
+		lanes := []block.Lane{mevLane, defaultLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works mev and default lane in reverse order", func() {
+		lanes := []block.Lane{mevLane, defaultLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works with mev, free, and default lane", func() {
+		lanes := []block.Lane{mevLane, freeLane, defaultLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works with mev, default, free lane", func() {
+		lanes := []block.Lane{mevLane, defaultLane, freeLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works with free, mev, and default lane", func() {
+		lanes := []block.Lane{freeLane, mevLane, defaultLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("works with default, free, mev lanes", func() {
+		lanes := []block.Lane{defaultLane, freeLane, mevLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("default lane not included", func() {
+		lanes := []block.Lane{mevLane, freeLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().NoError(err)
+	})
+
+	suite.Run("duplicate lanes", func() {
+		lanes := []block.Lane{mevLane, defaultLane, mevLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewTestLogger(suite.T()),
+			lanes,
+			fetcher,
+		)
+		suite.Require().Error(err)
+	})
+}
+
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 func (suite *BlockBusterTestSuite) TestInsert() {
 	cases := []struct {
 		name               string

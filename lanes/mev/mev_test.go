@@ -65,7 +65,7 @@ func (s *MEVTestSuite) initLane(
 	)
 
 	factory := mev.NewDefaultAuctionFactory(s.encCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
-	return mev.NewMEVLane(config, factory)
+	return mev.NewMEVLane(config, factory, factory.MatchHandler())
 }
 
 func (s *MEVTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {
