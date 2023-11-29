@@ -532,8 +532,6 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
@@ -597,8 +595,6 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			}),
 		)
 		s.Require().NoError(err)
-
-		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewNopLogger(),
@@ -671,10 +667,6 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		panicLane.SetIgnoreList(nil)
-		panicLane2.SetIgnoreList(nil)
-		defaultLane.SetIgnoreList(nil)
-
 		proposalHandler := abci.NewProposalHandler(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
@@ -745,10 +737,6 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			}),
 		)
 		s.Require().NoError(err)
-
-		panicLane.SetIgnoreList(nil)
-		panicLane2.SetIgnoreList(nil)
-		defaultLane.SetIgnoreList(nil)
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewNopLogger(),

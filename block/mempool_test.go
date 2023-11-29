@@ -78,9 +78,11 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		AnteHandler:     nil,
 		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
+	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
+		factory,
+		factory.MatchHandler(),
 	)
 
 	suite.mevSDKLane = blocksdkmoduletypes.Lane{
@@ -121,6 +123,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,
+		base.DefaultMatchHandler(),
 	)
 
 	suite.baseSDKLane = blocksdkmoduletypes.Lane{
@@ -169,10 +172,12 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 
-	defaultLane := defaultlane.NewDefaultLane(baseConfig)
+	defaultLane := defaultlane.NewDefaultLane(baseConfig, base.DefaultMatchHandler())
+	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	mevLane := mev.NewMEVLane(
 		baseConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
+		factory,
+		factory.MatchHandler(),
 	)
 	freeLane := free.NewFreeLane(
 		baseConfig,
@@ -189,9 +194,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(0, len(ignoreList))
 	})
 
 	suite.Run("works mev and default lane", func() {
@@ -203,12 +205,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(0, len(ignoreList))
 	})
 
 	suite.Run("works mev and default lane in reverse order", func() {
@@ -220,12 +216,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(0, len(ignoreList))
 	})
 
 	suite.Run("works with mev, free, and default lane", func() {
@@ -237,17 +227,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(2, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(freeLane, ignoreList[0])
-
-		ignoreList = freeLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(mevLane, ignoreList[0])
 	})
 
 	suite.Run("works with mev, default, free lane", func() {
@@ -259,17 +238,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(2, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(freeLane, ignoreList[0])
-
-		ignoreList = freeLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(mevLane, ignoreList[0])
 	})
 
 	suite.Run("works with free, mev, and default lane", func() {
@@ -281,17 +249,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(2, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(freeLane, ignoreList[0])
-
-		ignoreList = freeLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(mevLane, ignoreList[0])
 	})
 
 	suite.Run("works with default, free, mev lanes", func() {
@@ -303,17 +260,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			fetcher,
 		)
 		suite.Require().NoError(err)
-
-		ignoreList := defaultLane.GetIgnoreList()
-		suite.Require().Equal(2, len(ignoreList))
-
-		ignoreList = mevLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(freeLane, ignoreList[0])
-
-		ignoreList = freeLane.GetIgnoreList()
-		suite.Require().Equal(1, len(ignoreList))
-		suite.Require().Equal(mevLane, ignoreList[0])
 	})
 
 	suite.Run("default lane not included", func() {
@@ -324,7 +270,7 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			lanes,
 			fetcher,
 		)
-		suite.Require().Error(err)
+		suite.Require().NoError(err)
 	})
 
 	suite.Run("duplicate lanes", func() {
