@@ -85,7 +85,6 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		TxDecoder:       s.encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     s.setUpAnteHandler(expectedExecution),
 		MaxBlockSpace:   maxBlockSpace,
-		IgnoreList:      make([]block.Lane, 0),
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
