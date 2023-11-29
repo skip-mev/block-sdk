@@ -63,9 +63,12 @@ type Lane interface {
 	// SetAnteHandler sets the lane's antehandler.
 	SetAnteHandler(antehander sdk.AnteHandler)
 
+<<<<<<< HEAD
 	// SetIgnoreList sets the lanes that should be ignored by this lane.
 	SetIgnoreList(ignoreList []Lane)
 
+=======
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 }

@@ -9,6 +9,11 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+<<<<<<< HEAD
+=======
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 )
 
 var _ Mempool = (*LanedMempool)(nil)
@@ -40,6 +45,7 @@ type (
 	}
 )
 
+<<<<<<< HEAD
 // NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool is
 // comprised of a registry of lanes. Each lane is responsible for selecting
 // transactions according to its own selection logic. The lanes are ordered
@@ -52,6 +58,18 @@ type (
 // that mutex is set to true when creating the mempool. This will ensure that each
 // transaction cannot be inserted into the lanes before it.
 func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) Mempool {
+=======
+// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool comprises
+// a registry of lanes. Each lane is responsible for selecting transactions according
+// to its own selection logic. The lanes are ordered according to their priority. The
+// first lane in the registry has the highest priority. Proposals are verified according
+// to the order of the lanes in the registry. Each transaction SHOULD only belong in one lane.
+func NewLanedMempool(
+	logger log.Logger,
+	lanes []Lane,
+	laneFetcher LaneFetcher,
+) (*LanedMempool, error) {
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 	mempool := &LanedMempool{
 		logger:   logger,
 		registry: lanes,

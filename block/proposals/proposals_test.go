@@ -540,3 +540,32 @@ func TestGetLaneLimits(t *testing.T) {
 		})
 	}
 }
+<<<<<<< HEAD
+=======
+
+func getTxsWithInfo(txs []sdk.Tx) ([]utils.TxWithInfo, error) {
+	encoding := testutils.CreateTestEncodingConfig()
+
+	cfg := base.NewLaneConfig(
+		log.NewNopLogger(),
+		encoding.TxConfig.TxEncoder(),
+		encoding.TxConfig.TxDecoder(),
+		nil,
+		signerextraction.NewDefaultAdapter(),
+		math.LegacyNewDec(1),
+	)
+	lane := defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
+
+	txsWithInfo := make([]utils.TxWithInfo, len(txs))
+	for i, tx := range txs {
+		txInfo, err := lane.GetTxInfo(sdk.Context{}, tx)
+		if err != nil {
+			return nil, err
+		}
+
+		txsWithInfo[i] = txInfo
+	}
+
+	return txsWithInfo, nil
+}
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))

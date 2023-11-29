@@ -214,9 +214,15 @@ func (_m *Lane) SetAnteHandler(antehander types.AnteHandler) {
 	_m.Called(antehander)
 }
 
+<<<<<<< HEAD
 // SetIgnoreList provides a mock function with given fields: ignoreList
 func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
 	_m.Called(ignoreList)
+=======
+// SetMaxBlockSpace provides a mock function with given fields: _a0
+func (_m *Lane) SetMaxBlockSpace(_a0 math.LegacyDec) {
+	_m.Called(_a0)
+>>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 }
 
 // NewLane creates a new instance of Lane. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
