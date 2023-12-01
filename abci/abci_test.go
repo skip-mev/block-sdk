@@ -455,7 +455,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	s.Run("can build a proposal if a lane panics first", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -473,38 +473,16 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-<<<<<<< HEAD
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, defaultLane)
-=======
 		lanes := []block.Lane{
 			panicLane,
 			defaultLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -523,7 +501,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if second lane panics", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("kek", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -541,38 +519,16 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-<<<<<<< HEAD
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane)
-=======
 		lanes := []block.Lane{
 			defaultLane,
 			panicLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -591,8 +547,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if multiple consecutive lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("on god we can still build a proposal", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("dont trip shawty the proposal is coming :)", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -610,44 +566,17 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-<<<<<<< HEAD
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, panicLane, panicLane2, defaultLane)
-=======
 		lanes := []block.Lane{
 			panicLane,
 			panicLane2,
 			defaultLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-			{
-				Id:            panicLane2.Name(),
-				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         2,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -666,8 +595,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if the last few lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("lel", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("ahhhhh", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -685,44 +614,17 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		})
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
-<<<<<<< HEAD
-		mempool := block.NewLanedMempool(log.NewTestLogger(s.T()), false, defaultLane, panicLane, panicLane2)
-=======
 		lanes := []block.Lane{
 			defaultLane,
 			panicLane,
 			panicLane2,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            panicLane2.Name(),
-				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
-				Order:         2,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 
 		proposalHandler := abci.NewProposalHandler(
 			log.NewTestLogger(s.T()),
@@ -1021,7 +923,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 	s.Run("rejects a proposal when a lane panics", func() {
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.0"))
+		panicLane := s.setUpPanicLane("ahhhhh", math.LegacyMustNewDecFromStr("0.0"))
 
 		txbz, err := testutils.CreateRandomTxBz(
 			s.encodingConfig.TxConfig,

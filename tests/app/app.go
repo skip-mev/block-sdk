@@ -255,74 +255,18 @@ func New(
 	// STEP 1-3: Create the Block SDK lanes.
 	mevLane, freeLane, defaultLane := CreateLanes(app)
 
-<<<<<<< HEAD
-	// Set POB's mempool into the app.
-	// Create the lanes.
-	//
-	// NOTE: The lanes are ordered by priority. The first lane is the highest priority
-	// lane and the last lane is the lowest priority lane.
-	// MEV lane allows transactions to bid for inclusion at the top of the next block.
-	mevConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
-	}
-	mevLane := mev.NewMEVLane(
-		mevConfig,
-		mev.NewDefaultAuctionFactory(app.txConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
-	)
-
-	// Free lane allows transactions to be included in the next block for free.
-	freeConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.2"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
-	}
-	freeLane := free.NewFreeLane(
-		freeConfig,
-		base.DefaultTxPriority(),
-		free.DefaultMatchHandler(),
-	)
-
-	// Default lane accepts all other transactions.
-	defaultConfig := base.LaneConfig{
-		Logger:          app.Logger(),
-		TxEncoder:       app.txConfig.TxEncoder(),
-		TxDecoder:       app.txConfig.TxDecoder(),
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.6"),
-		SignerExtractor: signer_extraction.NewDefaultAdapter(),
-		MaxTxs:          1000,
-	}
-	defaultLane := defaultlane.NewDefaultLane(defaultConfig)
-
-	// Set the lanes into the mempool.
-	lanes := []block.Lane{
-		mevLane,
-		freeLane,
-		defaultLane,
-	}
-	mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
-=======
 	// STEP 4: Construct a mempool based off the lanes. Note that the order of the lanes
 	// matters. Blocks are constructed from the top lane to the bottom lane. The top lane
 	// is the first lane in the array and the bottom lane is the last lane in the array.
 	mempool, err := block.NewLanedMempool(
 		app.Logger(),
 		[]block.Lane{mevLane, freeLane, defaultLane},
-		&app.blocksdkKeeper,
 	)
 	if err != nil {
 		panic(err)
 	}
 
 	// The application's mempool is now powered by the Block SDK!
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
 	app.App.SetMempool(mempool)
 
 	// STEP 5: Create a global ante handler that will be called on each transaction when
