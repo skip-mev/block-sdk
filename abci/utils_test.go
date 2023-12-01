@@ -86,7 +86,7 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	return defaultlane.NewDefaultLane(cfg)
+	return defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
 }
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
@@ -99,7 +99,8 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	return mev.NewMEVLane(cfg, mev.NewDefaultAuctionFactory(cfg.TxDecoder, signeradaptors.NewDefaultAdapter()))
+	factory := mev.NewDefaultAuctionFactory(cfg.TxDecoder, signeradaptors.NewDefaultAdapter())
+	return mev.NewMEVLane(cfg, factory, factory.MatchHandler())
 }
 
 func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
@@ -115,7 +116,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 	return free.NewFreeLane(cfg, base.DefaultTxPriority(), free.DefaultMatchHandler())
 }
 
-func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
+func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
@@ -126,7 +127,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 
 	lane := base.NewBaseLane(
 		cfg,
-		"panic",
+		name,
 		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
 		base.DefaultMatchHandler(),
 	)
@@ -138,7 +139,8 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewNopLogger(), true, lanes...)
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
+	s.Require().NoError(err)
 
 	return abci.NewProposalHandler(
 		log.NewNopLogger(),

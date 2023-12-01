@@ -256,11 +256,6 @@ func (_m *Lane) SetAnteHandler(antehander types.AnteHandler) {
 	_m.Called(antehander)
 }
 
-// SetIgnoreList provides a mock function with given fields: ignoreList
-func (_m *Lane) SetIgnoreList(ignoreList []block.Lane) {
-	_m.Called(ignoreList)
-}
-
 // NewLane creates a new instance of Lane. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewLane(t interface {

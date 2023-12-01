@@ -591,7 +591,7 @@ func getTxsWithInfo(txs []sdk.Tx) ([]utils.TxWithInfo, error) {
 		signerextraction.NewDefaultAdapter(),
 		math.LegacyNewDec(1),
 	)
-	lane := defaultlane.NewDefaultLane(cfg)
+	lane := defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
 
 	txsWithInfo := make([]utils.TxWithInfo, len(txs))
 	for i, tx := range txs {

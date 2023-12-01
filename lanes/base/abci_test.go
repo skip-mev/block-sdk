@@ -11,7 +11,6 @@ import (
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	"github.com/stretchr/testify/mock"
 
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
@@ -540,22 +539,18 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
+		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+			return true
+		}
+
 		// Create a lane with a max block space of 1 but a proposal that is smaller than the tx
 		expectedExecution := map[sdk.Tx]bool{
 			tx: true,
 		}
-		lane := s.initLane(math.LegacyOneDec(), expectedExecution)
+		lane := s.initLaneWithMatchHandlers(math.LegacyOneDec(), expectedExecution, []base.MatchHandler{mh})
 
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(s.ctx, tx))
-
-		mockLane := mocks.NewLane(s.T())
-		mockLane.On(
-			"Match",
-			mock.Anything,
-			tx,
-		).Return(true, nil)
-		lane.SetIgnoreList([]block.Lane{mockLane})
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -1061,27 +1056,18 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		// First lane matches this lane the other does not.
-		otherLane := mocks.NewLane(s.T())
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx1,
-		).Return(true, nil)
+		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+			return tx == tx1
+		}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx2,
-		).Return(false, nil)
-
-		lane := s.initLane(
+		lane := s.initLaneWithMatchHandlers(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
 				tx2: true,
 			},
+			[]base.MatchHandler{mh},
 		)
-		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		proposal := []sdk.Tx{
 			tx1,
@@ -1333,39 +1319,22 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		otherLane := mocks.NewLane(s.T())
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx1,
-		).Return(false, nil)
+		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+			if tx == tx1 || tx == tx2 {
+				return false
+			}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx2,
-		).Return(false, nil)
+			return true
+		}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx3,
-		).Return(true, nil)
-
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx4,
-		).Return(true, nil)
-
-		lane := s.initLane(
+		lane := s.initLaneWithMatchHandlers(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
 				tx2: true,
 			},
+			[]base.MatchHandler{mh},
 		)
-		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
@@ -1437,36 +1406,15 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		otherLane := mocks.NewLane(s.T())
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx1,
-		).Return(true, nil)
+		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+			return true
+		}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx2,
-		).Return(true, nil)
-
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx3,
-		).Return(true, nil)
-
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx4,
-		).Return(true, nil)
-
-		lane := s.initLane(
+		lane := s.initLaneWithMatchHandlers(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{},
+			[]base.MatchHandler{mh},
 		)
-		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
@@ -1534,32 +1482,15 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		otherLane := mocks.NewLane(s.T())
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx1,
-		).Return(false, nil)
+		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+			if tx == tx1 || tx == tx3 {
+				return false
+			}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx2,
-		).Return(true, nil)
+			return true
+		}
 
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx3,
-		).Return(false, nil).Maybe()
-
-		otherLane.On(
-			"Match",
-			mock.Anything,
-			tx4,
-		).Return(true, nil).Maybe()
-
-		lane := s.initLane(
+		lane := s.initLaneWithMatchHandlers(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
@@ -1567,8 +1498,8 @@ func (s *BaseTestSuite) TestProcessLane() {
 				tx3: true,
 				tx4: true,
 			},
+			[]base.MatchHandler{mh},
 		)
-		lane.SetIgnoreList([]block.Lane{otherLane})
 
 		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
@@ -1740,7 +1671,26 @@ func (s *BaseTestSuite) initLane(
 		maxBlockSpace,
 	)
 
-	return defaultlane.NewDefaultLane(config)
+	return defaultlane.NewDefaultLane(config, base.DefaultMatchHandler())
+}
+
+func (s *BaseTestSuite) initLaneWithMatchHandlers(
+	maxBlockSpace math.LegacyDec,
+	expectedExecution map[sdk.Tx]bool,
+	matchHandlers []base.MatchHandler,
+) *defaultlane.DefaultLane {
+	config := base.NewLaneConfig(
+		log.NewNopLogger(),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		s.encodingConfig.TxConfig.TxDecoder(),
+		s.setUpAnteHandler(expectedExecution),
+		signer_extraction.NewDefaultAdapter(),
+		maxBlockSpace,
+	)
+
+	mh := base.NewMatchHandler(base.DefaultMatchHandler(), matchHandlers...)
+
+	return defaultlane.NewDefaultLane(config, mh)
 }
 
 func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {

@@ -3,7 +3,6 @@ package block
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
@@ -40,38 +39,25 @@ type (
 	}
 )
 
-// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool is
-// comprised of a registry of lanes. Each lane is responsible for selecting
-// transactions according to its own selection logic. The lanes are ordered
-// according to their priority. The first lane in the registry has the highest
-// priority. Proposals are verified according to the order of the lanes in the
-// registry. Each transaction should only belong in one lane but this is NOT enforced.
-// To enforce that each transaction belong to a single lane, you must configure the
-// ignore list of each lane to include all preceding lanes. Basic mempool API will
-// attempt to insert, remove transactions from all lanes it belongs to. It is recommended,
-// that mutex is set to true when creating the mempool. This will ensure that each
-// transaction cannot be inserted into the lanes before it.
-func NewLanedMempool(logger log.Logger, mutex bool, lanes ...Lane) Mempool {
+// NewLanedMempool returns a new Block SDK LanedMempool. The laned mempool comprises
+// a registry of lanes. Each lane is responsible for selecting transactions according
+// to its own selection logic. The lanes are ordered according to their priority. The
+// first lane in the registry has the highest priority. Proposals are verified according
+// to the order of the lanes in the registry. Each transaction SHOULD only belong in one lane.
+func NewLanedMempool(
+	logger log.Logger,
+	lanes []Lane,
+) (*LanedMempool, error) {
 	mempool := &LanedMempool{
 		logger:   logger,
 		registry: lanes,
 	}
 
 	if err := mempool.ValidateBasic(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
-	// Set the ignore list for each lane
-	if mutex {
-		registry := mempool.registry
-		for index, lane := range mempool.registry {
-			if index > 0 {
-				lane.SetIgnoreList(registry[:index])
-			}
-		}
-	}
-
-	return mempool
+	return mempool, nil
 }
 
 // CountTx returns the total number of transactions in the mempool. This will
@@ -106,25 +92,14 @@ func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 		}
 	}()
 
-	var errors []string
-
 	unwrappedCtx := sdk.UnwrapSDKContext(ctx)
 	for _, lane := range m.registry {
-		if !lane.Match(unwrappedCtx, tx) {
-			continue
-		}
-
-		if err := lane.Insert(ctx, tx); err != nil {
-			m.logger.Debug("failed to insert tx into lane", "lane", lane.Name(), "err", err)
-			errors = append(errors, fmt.Sprintf("failed to insert tx into lane %s: %s", lane.Name(), err.Error()))
+		if lane.Match(unwrappedCtx, tx) {
+			return lane.Insert(ctx, tx)
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf(strings.Join(errors, ";"))
+	return nil
 }
 
 // Insert returns a nil iterator.
@@ -137,7 +112,8 @@ func (m *LanedMempool) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator
 	return nil
 }
 
-// Remove removes a transaction from all of the lanes it is currently in.
+// Remove removes a transaction from the mempool. This assumes that the transaction
+// is contained in only one of the lanes.
 func (m *LanedMempool) Remove(tx sdk.Tx) (err error) {
 	defer func() {
 		if r := recover(); r != nil {
@@ -146,33 +122,13 @@ func (m *LanedMempool) Remove(tx sdk.Tx) (err error) {
 		}
 	}()
 
-	var errors []string
-
 	for _, lane := range m.registry {
-		if !lane.Contains(tx) {
-			continue
-		}
-
-		if err := lane.Remove(tx); err != nil {
-			m.logger.Debug("failed to remove tx from lane", "lane", lane.Name(), "err", err)
-
-			// We only care about errors that are not "tx not found" errors.
-			//
-			// TODO: Figure out whether we should be erroring in the mempool if
-			// the tx is not found in the lane. Downstream, if the removal fails runTx will
-			// error out and will NOT execute runMsgs (which is where the tx is actually
-			// executed).
-			if err != sdkmempool.ErrTxNotFound {
-				errors = append(errors, fmt.Sprintf("failed to remove tx from lane %s: %s;", lane.Name(), err.Error()))
-			}
+		if lane.Contains(tx) {
+			return lane.Remove(tx)
 		}
 	}
 
-	if len(errors) == 0 {
-		return nil
-	}
-
-	return fmt.Errorf(strings.Join(errors, ";"))
+	return nil
 }
 
 // Contains returns true if the transaction is contained in any of the lanes.
@@ -203,16 +159,27 @@ func (m *LanedMempool) Registry() []Lane {
 // - The sum of the lane max block space percentages is less than or equal to 1.
 // - There is no unused block space.
 func (m *LanedMempool) ValidateBasic() error {
+	if len(m.registry) == 0 {
+		return fmt.Errorf("registry cannot be nil; must configure at least one lane")
+	}
+
 	sum := math.LegacyZeroDec()
 	seenZeroMaxBlockSpace := false
+	seenLanes := make(map[string]struct{})
 
 	for _, lane := range m.registry {
+		name := lane.Name()
+		if _, seen := seenLanes[name]; seen {
+			return fmt.Errorf("duplicate lane name %s", name)
+		}
+
 		maxBlockSpace := lane.GetMaxBlockSpace()
 		if maxBlockSpace.IsZero() {
 			seenZeroMaxBlockSpace = true
 		}
 
 		sum = sum.Add(lane.GetMaxBlockSpace())
+		seenLanes[name] = struct{}{}
 	}
 
 	switch {
