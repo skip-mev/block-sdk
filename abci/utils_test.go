@@ -139,7 +139,8 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	mempool := block.NewLanedMempool(log.NewNopLogger(), true, lanes...)
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
+	s.Require().NoError(err)
 
 	return abci.NewProposalHandler(
 		log.NewNopLogger(),
