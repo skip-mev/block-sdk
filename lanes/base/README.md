@@ -22,6 +22,8 @@ $ go install github.com/skip-mev/block-sdk
 
 ## 📚 Usage
 
+> Note: Please visit [app.go](../../tests/app/lanes.go) to see a sample base app set up.
+
 1. First determine the set of lanes that you want to use in your application. The
 available lanes can be found in our 
 [Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/default). 
@@ -52,8 +54,7 @@ func NewApp() {
     // 1. Create the lanes.
     //
     // NOTE: The lanes are ordered by priority. The first lane is the highest priority
-    // lane and the last lane is the lowest priority lane. Top of block lane allows
-    // transactions to bid for inclusion at the top of the next block.
+    // lane and the last lane is the lowest priority lane.
     //
     // For more information on how to utilize the LaneConfig please
     // visit the README in docs.skip.money/chains/lanes/build-your-own-lane#-lane-config.
@@ -64,15 +65,15 @@ func NewApp() {
         TxEncoder:     app.txConfig.TxEncoder(),
         TxDecoder:     app.txConfig.TxDecoder(),
         MaxBlockSpace: math.LegacyZeroDec(),
-        MaxTxs:        0,
+        MaxTxs:        5000,
     }
-    defaultLane := defaultlane.NewDefaultLane(defaultConfig)
+    defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 
     // 2. Set up the relative priority of lanes
     lanes := []block.Lane{
         defaultLane,
     }
-    mempool := block.NewLanedMempool(app.Logger(), true, lanes...)
+    mempool := block.NewLanedMempool(app.Logger(), lanes)
     app.App.SetMempool(mempool)
 
     ...
