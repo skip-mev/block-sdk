@@ -7,6 +7,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"io"
+	"math/rand"
 	"os"
 	"path"
 	"strings"
@@ -183,7 +184,7 @@ func (s *IntegrationTestSuite) CreateDummyFreeTx(
 	return Tx{
 		User:               user,
 		Msgs:               []sdk.Msg{delegateMsg},
-		GasPrice:           1000,
+		GasPrice:           rand.Int63n(150000),
 		SequenceIncrement:  sequenceOffset,
 		SkipInclusionCheck: true,
 		IgnoreChecks:       true,

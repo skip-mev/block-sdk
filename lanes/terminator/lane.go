@@ -11,6 +11,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 const (
@@ -70,6 +71,11 @@ func (t Terminator) Name() string {
 	return LaneName
 }
 
+// GetTxInfo is a no-op
+func (t Terminator) GetTxInfo(_ sdk.Context, _ sdk.Tx) (utils.TxWithInfo, error) {
+	return utils.TxWithInfo{}, fmt.Errorf("terminator lane should not have any transactions")
+}
+
 // SetAnteHandler is a no-op
 func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 
@@ -106,7 +112,12 @@ func (t Terminator) Select(context.Context, [][]byte) sdkmempool.Iterator {
 	return nil
 }
 
-// HasHigherPriority is a no-op
+// Compare is a no-op
 func (t Terminator) Compare(sdk.Context, sdk.Tx, sdk.Tx) (int, error) {
 	return 0, nil
+}
+
+// Priority is a no-op
+func (t Terminator) Priority(sdk.Context, sdk.Tx) any {
+	return 0
 }
