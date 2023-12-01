@@ -486,7 +486,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	s.Run("can build a proposal if a lane panics first", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -531,7 +531,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if second lane panics", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -576,8 +576,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if multiple consecutive lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik1", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("panik sum mo", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -623,8 +623,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 	})
 
 	s.Run("can build a proposal if the last few lanes panic", func() {
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
-		panicLane2 := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.25"))
+		panicLane := s.setUpPanicLane("panik", math.LegacyMustNewDecFromStr("0.25"))
+		panicLane2 := s.setUpPanicLane("dont trip shawty proposal will be built", math.LegacyMustNewDecFromStr("0.25"))
 
 		tx, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -943,7 +943,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 
 	s.Run("rejects a proposal when a lane panics", func() {
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.25"), map[sdk.Tx]bool{})
-		panicLane := s.setUpPanicLane(math.LegacyMustNewDecFromStr("0.0"))
+		panicLane := s.setUpPanicLane("ahhhhhh", math.LegacyMustNewDecFromStr("0.0"))
 
 		txbz, err := testutils.CreateRandomTxBz(
 			s.encodingConfig.TxConfig,

@@ -105,6 +105,13 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		base.DefaultMatchHandler(),
 	)
 
+	// Lane set up
+	suite.lanes = []block.Lane{
+		suite.mevLane,
+		suite.freeLane,
+		suite.baseLane,
+	}
+
 	// Mempool set up
 	var err error
 	suite.mempool, err = block.NewLanedMempool(log.NewTMLogger(os.Stdout), suite.lanes)

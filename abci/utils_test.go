@@ -116,7 +116,7 @@ func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expecte
 	return free.NewFreeLane(cfg, base.DefaultTxPriority(), free.DefaultMatchHandler())
 }
 
-func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.BaseLane {
+func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.LegacyDec) *base.BaseLane {
 	cfg := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
@@ -127,7 +127,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(maxBlockSpace math.LegacyDec) *base.
 
 	lane := base.NewBaseLane(
 		cfg,
-		"panic",
+		name,
 		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
 		base.DefaultMatchHandler(),
 	)
