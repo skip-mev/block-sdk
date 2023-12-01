@@ -2,7 +2,6 @@ package proposals_test
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -33,11 +32,7 @@ func TestUpdateProposal(t *testing.T) {
 	lane.On("GetMaxBlockSpace").Return(math.LegacyNewDec(1)).Maybe()
 
 	t.Run("can update with no transactions", func(t *testing.T) {
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), nil, 100, 100)
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), nil, 100, 100)
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), nil, 100, 100)
 
 		err := proposal.UpdateProposal(lane, nil)
 		require.NoError(t, err)
@@ -69,11 +64,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
@@ -122,11 +113,7 @@ func TestUpdateProposal(t *testing.T) {
 			gasLimit += 100
 		}
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), gasLimit)
 
 		txsWithInfo, err := getTxsWithInfo(txs)
 		require.NoError(t, err)
@@ -166,11 +153,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := int64(len(txBzs[0]))
 		gasLimit := uint64(100)
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), size, gasLimit)
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
@@ -236,11 +219,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0]) + len(txBzs[1])
 		gasLimit := 200
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
@@ -284,11 +263,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		lane := mocks.NewLane(t)
 
@@ -329,11 +304,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit))
 
 		lane := mocks.NewLane(t)
 
@@ -374,11 +345,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size)-1, uint64(gasLimit))
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
@@ -414,11 +381,7 @@ func TestUpdateProposal(t *testing.T) {
 
 		size := len(txBzs[0])
 		gasLimit := 100
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), int64(size), uint64(gasLimit)-1)
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
@@ -462,11 +425,7 @@ func TestUpdateProposal(t *testing.T) {
 		txBzs, err := utils.GetEncodedTxs(encodingConfig.TxConfig.TxEncoder(), []sdk.Tx{tx, tx2})
 		require.NoError(t, err)
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
-=======
-		proposal := proposals.NewProposal(log.NewTestLogger(t), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
->>>>>>> be4465a (feat: Lane's with custom tx adapters (#239))
+		proposal := proposals.NewProposal(log.NewNopLogger(), encodingConfig.TxConfig.TxEncoder(), 10000, 10000)
 
 		txsWithInfo, err := getTxsWithInfo([]sdk.Tx{tx})
 		require.NoError(t, err)
