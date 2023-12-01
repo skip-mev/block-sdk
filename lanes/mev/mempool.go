@@ -14,8 +14,8 @@ func TxPriority(config Factory) base.TxPriority[string] {
 	return base.TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
 			bidInfo, err := config.GetAuctionBidInfo(tx)
-			if err != nil {
-				panic(err)
+			if err != nil || bidInfo == nil || bidInfo.Bid.IsNil() {
+				return ""
 			}
 
 			return bidInfo.Bid.String()

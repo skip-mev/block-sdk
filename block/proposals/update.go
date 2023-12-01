@@ -4,15 +4,14 @@ import (
 	"fmt"
 
 	"cosmossdk.io/math"
-	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // Lane defines the contract interface for a lane.
 type Lane interface {
-	GetMaxBlockSpace() math.LegacyDec
 	Name() string
+	GetMaxBlockSpace() math.LegacyDec
 }
 
 // UpdateProposal updates the proposal with the given transactions and lane limits. There are a
@@ -25,7 +24,7 @@ type Lane interface {
 //     the lane.
 //  5. The lane must not have already prepared a partial proposal.
 //  6. The transaction must not already be in the proposal.
-func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
+func (p *Proposal) UpdateProposal(lane Lane, partialProposal []utils.TxWithInfo) error {
 	if len(partialProposal) == 0 {
 		return nil
 	}
@@ -42,29 +41,26 @@ func (p *Proposal) UpdateProposal(lane Lane, partialProposal []sdk.Tx) error {
 	partialProposalGasLimit := uint64(0)
 
 	for index, tx := range partialProposal {
-		txInfo, err := utils.GetTxInfo(p.TxEncoder, tx)
-		if err != nil {
-			return fmt.Errorf("err retrieving transaction info: %s", err)
-		}
-
 		p.Logger.Info(
 			"updating proposal with tx",
-			"index", index,
+			"index", index+len(p.Txs),
 			"lane", lane.Name(),
-			"tx_hash", txInfo.Hash,
-			"tx_size", txInfo.Size,
-			"tx_gas_limit", txInfo.GasLimit,
+			"hash", tx.Hash,
+			"size", tx.Size,
+			"gas_limit", tx.GasLimit,
+			"signers", tx.Signers,
+			"priority", tx.Priority,
 		)
 
 		// invariant check: Ensure that the transaction is not already in the proposal.
-		if _, ok := p.Cache[txInfo.Hash]; ok {
-			return fmt.Errorf("transaction %s is already in the proposal", txInfo.Hash)
+		if _, ok := p.Cache[tx.Hash]; ok {
+			return fmt.Errorf("transaction %s is already in the proposal", tx.Hash)
 		}
 
-		hashes[txInfo.Hash] = struct{}{}
-		partialProposalSize += txInfo.Size
-		partialProposalGasLimit += txInfo.GasLimit
-		txs[index] = txInfo.TxBytes
+		hashes[tx.Hash] = struct{}{}
+		partialProposalSize += tx.Size
+		partialProposalGasLimit += tx.GasLimit
+		txs[index] = tx.TxBytes
 	}
 
 	// invariant check: Ensure that the partial proposal is not too large.
