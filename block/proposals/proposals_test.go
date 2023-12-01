@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/block/mocks"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/proposals/types"
@@ -541,8 +542,6 @@ func TestGetLaneLimits(t *testing.T) {
 		})
 	}
 }
-<<<<<<< HEAD
-=======
 
 func getTxsWithInfo(txs []sdk.Tx) ([]utils.TxWithInfo, error) {
 	encoding := testutils.CreateTestEncodingConfig()
@@ -569,4 +568,3 @@ func getTxsWithInfo(txs []sdk.Tx) ([]utils.TxWithInfo, error) {
 
 	return txsWithInfo, nil
 }
->>>>>>> b91cfb6 (fix: Removing IgnoreList from Lane Interface (#245))
