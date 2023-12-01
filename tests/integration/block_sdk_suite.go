@@ -1269,7 +1269,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 }
 
 func (s *IntegrationTestSuite) TestNetwork() {
-	amountToTest := time.NewTicker(time.Second * 45)
+	amountToTest := time.NewTicker(time.Second * 30)
 	defer amountToTest.Stop()
 
 	numTxs := 10
@@ -1355,7 +1355,7 @@ func (s *IntegrationTestSuite) TestNetwork() {
 		}
 	})
 
-	amountToTest.Reset(3 * time.Minute)
+	amountToTest.Reset(1 * time.Minute)
 	s.Run("can produce blocks with all types of transactions", func() {
 		for {
 			select {
