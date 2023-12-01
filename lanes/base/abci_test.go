@@ -510,7 +510,10 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		mockLane.On("Name").Return("test")
 		mockLane.On("GetMaxBlockSpace").Return(math.LegacyOneDec())
 
-		err = emptyProposal.UpdateProposal(mockLane, []sdk.Tx{tx})
+		txWithInfo, err := lane.GetTxInfo(s.ctx, tx)
+		s.Require().NoError(err)
+
+		err = emptyProposal.UpdateProposal(mockLane, []utils.TxWithInfo{txWithInfo})
 		s.Require().NoError(err)
 
 		finalProposal, err := lane.PrepareLane(s.ctx, emptyProposal, block.NoOpPrepareLanesHandler())

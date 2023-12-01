@@ -12,6 +12,19 @@ type SignerData struct {
 	Sequence uint64
 }
 
+// NewSignerData returns a new SignerData instance.
+func NewSignerData(signer sdk.AccAddress, sequence uint64) SignerData {
+	return SignerData{
+		Signer:   signer,
+		Sequence: sequence,
+	}
+}
+
+// String implements the fmt.Stringer interface.
+func (s SignerData) String() string {
+	return fmt.Sprintf("SignerData{Signer: %s, Sequence: %d}", s.Signer, s.Sequence)
+}
+
 // SignerExtractionAdapter is an interface used to determine how the signers of a transaction should be extracted
 // from the transaction.
 type Adapter interface {

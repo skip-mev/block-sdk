@@ -82,6 +82,22 @@ func (_m *LaneMempool) Insert(_a0 context.Context, _a1 types.Tx) error {
 	return r0
 }
 
+// Priority provides a mock function with given fields: ctx, tx
+func (_m *LaneMempool) Priority(ctx types.Context, tx types.Tx) interface{} {
+	ret := _m.Called(ctx, tx)
+
+	var r0 interface{}
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) interface{}); ok {
+		r0 = rf(ctx, tx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(interface{})
+		}
+	}
+
+	return r0
+}
+
 // Remove provides a mock function with given fields: _a0
 func (_m *LaneMempool) Remove(_a0 types.Tx) error {
 	ret := _m.Called(_a0)

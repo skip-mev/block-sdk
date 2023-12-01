@@ -6,6 +6,7 @@ import (
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
 	"github.com/skip-mev/block-sdk/block/proposals"
+	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // LaneMempool defines the interface a lane's mempool should implement. The basic API
@@ -23,6 +24,9 @@ type LaneMempool interface {
 
 	// Contains returns true if the transaction is contained in the mempool.
 	Contains(tx sdk.Tx) bool
+
+	// Priority returns the priority of a transaction that belongs to this lane.
+	Priority(ctx sdk.Context, tx sdk.Tx) any
 }
 
 // Lane defines an interface used for matching transactions to lanes, storing transactions,
@@ -65,4 +69,9 @@ type Lane interface {
 
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
+
+	// GetTxInfo returns various information about the transaction that
+	// belongs to the lane including its priority, signer's, sequence number,
+	// size and more.
+	GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxWithInfo, error)
 }
