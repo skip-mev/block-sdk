@@ -8,7 +8,7 @@
 
 After a given lane executes its `PrepareLaneHandler` or `ProcessLaneHandler`, it will return a set of transactions that need to be added to the current proposal that is being constructed. To update the proposal, `Update` is called with the lane that needs to add transactions to the proposal as well as the transactions that need to be added.
 
-Proposals are updated iff:
+Proposals are updated _iff_:
 
 1. The total gas utilization of the partial proposal (i.e. the transactions it wants to add) are under the limits allocated for the lane and are less than the maximum gas utilization of the proposal.
 2. The total size in bytes of the partial proposal is under the limits allocated for the lane and is less than the maximum size of the proposal.
