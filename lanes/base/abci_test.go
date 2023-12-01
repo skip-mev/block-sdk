@@ -45,8 +45,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			int64(len(txBz)),
 			1,
 		)
@@ -89,8 +93,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
 		)
@@ -134,8 +142,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
 		)
@@ -178,8 +190,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 			MaxGasLimit: 10,
 		}
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			limit.MaxTxBytes,
 			limit.MaxGasLimit,
 		)
@@ -219,8 +235,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			int64(len(txBz)),
 			10,
 		)
@@ -279,8 +299,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2))
 		gasLimit := uint64(20)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			size,
 			gasLimit,
 		)
@@ -336,8 +360,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2))
 		gasLimit := uint64(2)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			size,
 			gasLimit,
 		)
@@ -396,8 +424,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
 		gasLimit := uint64(3)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			size,
 			gasLimit,
 		)
@@ -456,8 +488,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		size := int64(len(txBz1)) + int64(len(txBz2)) - 1
 		gasLimit := uint64(1)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			size,
 			gasLimit,
 		)
@@ -498,8 +534,12 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			int64(len(txBz))*10,
 			1000000,
 		)
@@ -556,7 +596,6 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		emptyProposal := proposals.NewProposal(
 			log.NewNopLogger(),
-			s.encodingConfig.TxConfig.TxEncoder(),
 			int64(len(txBz))*10,
 			1000000,
 		)
@@ -610,8 +649,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -681,8 +724,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -764,8 +811,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -807,8 +858,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -850,8 +905,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -912,8 +971,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -964,8 +1027,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -1021,8 +1088,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -1079,8 +1150,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			100000,
 			100000,
 		)
@@ -1119,8 +1194,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 		// Set the size to be 1 less than the size of the transaction
 		maxSize := s.getTxSize(tx1) - 1
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			maxSize,
 			1000000,
 		)
@@ -1158,8 +1237,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		maxSize := s.getTxSize(tx1)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			maxSize,
 			9,
 		)
@@ -1209,8 +1292,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2)
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			maxSize,
 			19,
 		)
@@ -1260,8 +1347,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		maxSize := s.getTxSize(tx1) + s.getTxSize(tx2) - 1
 		emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 			log.NewTestLogger(s.T()),
 			s.encodingConfig.TxConfig.TxEncoder(),
+=======
+			log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 			maxSize,
 			20,
 		)
@@ -1343,7 +1434,6 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		emptyProposal := proposals.NewProposal(
 			log.NewNopLogger(),
-			s.encodingConfig.TxConfig.TxEncoder(),
 			1000,
 			1000,
 		)
@@ -1423,7 +1513,6 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		emptyProposal := proposals.NewProposal(
 			log.NewNopLogger(),
-			s.encodingConfig.TxConfig.TxEncoder(),
 			1000,
 			1000,
 		)
@@ -1507,7 +1596,6 @@ func (s *BaseTestSuite) TestProcessLane() {
 
 		emptyProposal := proposals.NewProposal(
 			log.NewNopLogger(),
-			s.encodingConfig.TxConfig.TxEncoder(),
 			1000,
 			1000,
 		)
@@ -1558,8 +1646,12 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 
 	// Construct a block proposal with the transactions in the mempool
 	emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
+=======
+		log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 		1000000000000000,
 		1000000000000000,
 	)
@@ -1579,8 +1671,12 @@ func (s *BaseTestSuite) TestPrepareProcessParity() {
 
 	// Verify the same proposal with the process lanes handler
 	emptyProposal = proposals.NewProposal(
+<<<<<<< HEAD
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
+=======
+		log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 		1000000000000000,
 		1000000000000000,
 	)
@@ -1638,8 +1734,12 @@ func (s *BaseTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
 
 	emptyProposal := proposals.NewProposal(
+<<<<<<< HEAD
 		log.NewTestLogger(s.T()),
 		s.encodingConfig.TxConfig.TxEncoder(),
+=======
+		log.NewNopLogger(),
+>>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 		1000000000000000,
 		1000000000000000,
 	)
