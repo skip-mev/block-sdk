@@ -2,11 +2,11 @@
 
 ## Overview
 
-The Signer Extraction Adapter is utilized to retrieve the signer information of a given transaction. This is purposefully built to allow application developers to retrieve signer information in the case where the default Cosmos SDK signing information is not applicable. 
+The Signer Extraction Adapter is utilized to retrieve the signature information of a given transaction. This is purposefully built to allow application developers to retrieve signer information in the case where the default Cosmos SDK signature information is not applicable. 
 
 ## Utilization within the Block SDK
 
-Each lane can configure it's own signer extraction adapter (SEA). However, for almost all cases each lane will have the same SEA. The SEA is utilized to retrieve the address of the signer and nonce of the transaction. It's utilized by each lane's mempool to retrieve signer information as transactions are being inserted and for logging purposes as a proposal is being created / verified.
+Each lane can configure it's own Signer Extraction Adapter (SEA). However, for almost all cases each lane will have the same SEA. The SEA is utilized to retrieve the address of the signer and nonce of the transaction. It's utilized by each lane's mempool to retrieve signer information as transactions are being inserted and for logging purposes as a proposal is being created / verified.
 
 ## Configuration
 
