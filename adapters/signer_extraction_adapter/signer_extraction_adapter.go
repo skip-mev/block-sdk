@@ -25,7 +25,7 @@ func (s SignerData) String() string {
 	return fmt.Sprintf("SignerData{Signer: %s, Sequence: %d}", s.Signer, s.Sequence)
 }
 
-// SignerExtractionAdapter is an interface used to determine how the signers of a transaction should be extracted
+// Adapter is an interface used to determine how the signers of a transaction should be extracted
 // from the transaction.
 type Adapter interface {
 	GetSigners(sdk.Tx) ([]SignerData, error)
