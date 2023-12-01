@@ -45,6 +45,7 @@ type (
 func NewMEVLane(
 	cfg base.LaneConfig,
 	factory Factory,
+	matchHandler base.MatchHandler,
 ) *MEVLane {
 	lane := &MEVLane{
 		BaseLane: base.NewBaseLane(
@@ -56,7 +57,7 @@ func NewMEVLane(
 				cfg.SignerExtractor,
 				cfg.MaxTxs,
 			),
-			factory.MatchHandler(),
+			matchHandler,
 		),
 		Factory: factory,
 	}

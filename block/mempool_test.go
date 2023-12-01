@@ -68,9 +68,11 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		AnteHandler:     nil,
 		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
+	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.mevLane = mev.NewMEVLane(
 		mevConfig,
-		mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter()),
+		factory,
+		factory.MatchHandler(),
 	)
 
 	// Free lane set up
@@ -99,11 +101,14 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	}
 	suite.baseLane = defaultlane.NewDefaultLane(
 		baseConfig,
+		base.DefaultMatchHandler(),
 	)
 
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.mempool = block.NewLanedMempool(log.NewTestLogger(suite.T()), true, suite.lanes...)
+	var err error
+	suite.mempool, err = block.NewLanedMempool(log.NewTestLogger(suite.T()), suite.lanes)
+	suite.Require().NoError(err)
 
 	// Accounts set up
 	suite.accounts = testutils.RandomAccounts(suite.random, 10)
