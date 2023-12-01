@@ -6,7 +6,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/utils"
 )
 
 // DefaultPrepareLaneHandler returns a default implementation of the PrepareLaneHandler. It
@@ -27,7 +26,7 @@ func (l *BaseLane) DefaultPrepareLaneHandler() PrepareLaneHandler {
 		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			tx := iterator.Tx()
 
-			txInfo, err := utils.GetTxInfo(l.TxEncoder(), tx)
+			txInfo, err := l.GetTxInfo(ctx, tx)
 			if err != nil {
 				l.Logger().Info("failed to get hash of tx", "err", err)
 
