@@ -442,19 +442,6 @@ transactions as possible.
 If a block proposal request has a `MaxTxBytes` of 1000 and the lane has a 
 `MaxBlockSpace` of 0.5, the lane will attempt to fill the block with 500 bytes.
 
-<<<<<<< HEAD
-#### **[OPTIONAL] IgnoreList**
-
-`IgnoreList` defines the list of lanes to ignore when processing transactions. 
-For example, say there are two lanes: default and free. The free lane is 
-processed after the default lane. In this case, the free lane should be added 
-to the ignore list of the default lane. Otherwise, the transactions that belong 
-to the free lane will be processed by the default lane (which accepts all 
-transactions by default).
-
-
-=======
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 ### Set up
 
 Once you have created your custom lane, you can configure it in the application 
