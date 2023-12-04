@@ -17,27 +17,24 @@ type (
 		Txs [][]byte
 		// Cache is a cache of the selected transactions in the proposal.
 		Cache map[string]struct{}
-		// TxEncoder is the transaction encoder.
-		TxEncoder sdk.TxEncoder
 		// Info contains information about the state of the proposal.
 		Info types.ProposalInfo
 	}
 )
 
 // NewProposalWithContext returns a new empty proposal.
-func NewProposalWithContext(logger log.Logger, ctx sdk.Context, txEncoder sdk.TxEncoder) Proposal {
+func NewProposalWithContext(ctx sdk.Context, logger log.Logger) Proposal {
 	maxBlockSize, maxGasLimit := GetBlockLimits(ctx)
-	return NewProposal(logger, txEncoder, maxBlockSize, maxGasLimit)
+	return NewProposal(logger, maxBlockSize, maxGasLimit)
 }
 
 // NewProposal returns a new empty proposal. Any transactions added to the proposal
 // will be subject to the given max block size and max gas limit.
-func NewProposal(logger log.Logger, txEncoder sdk.TxEncoder, maxBlockSize int64, maxGasLimit uint64) Proposal {
+func NewProposal(logger log.Logger, maxBlockSize int64, maxGasLimit uint64) Proposal {
 	return Proposal{
-		Logger:    logger,
-		TxEncoder: txEncoder,
-		Txs:       make([][]byte, 0),
-		Cache:     make(map[string]struct{}),
+		Logger: logger,
+		Txs:    make([][]byte, 0),
+		Cache:  make(map[string]struct{}),
 		Info: types.ProposalInfo{
 			TxsByLane:    make(map[string]uint64),
 			MaxBlockSize: maxBlockSize,

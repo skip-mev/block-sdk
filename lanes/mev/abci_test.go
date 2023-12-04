@@ -1,8 +1,6 @@
 package mev_test
 
 import (
-	"os"
-
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,7 +14,7 @@ import (
 func (s *MEVTestSuite) TestPrepareLane() {
 	s.Run("can prepare a lane with no txs in mempool", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		proposal, err := lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -42,7 +40,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -84,7 +82,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().NoError(lane.Insert(s.ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.ctx, bidTx2))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -126,7 +124,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().NoError(lane.Insert(s.ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.ctx, bidTx2))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -156,7 +154,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -187,7 +185,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), s.getTxSize(bidTx), 100000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 100000)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -212,7 +210,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), s.getTxSize(bidTx), 99)
+		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 99)
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -226,7 +224,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 func (s *MEVTestSuite) TestProcessLane() {
 	s.Run("can process an empty proposal", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, nil)
 		s.Require().NoError(err)
@@ -243,7 +241,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		lane := s.initLane(math.LegacyOneDec(), nil)
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, []sdk.Tx{tx})
 		s.Require().NoError(err)
@@ -276,7 +274,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(0, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -302,7 +300,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(0, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -328,7 +326,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(0, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -354,7 +352,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(0, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -380,7 +378,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(3, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
@@ -406,7 +404,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(1, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 	})
@@ -432,7 +430,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(3, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 20000, 99)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 99)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -458,7 +456,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(3, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -488,7 +486,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(1, len(remainingTxs))
 		s.Require().Equal(otherTx, remainingTxs[0])
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		proposal, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().NoError(err)
 		s.Require().Len(proposal.Txs, 3)
@@ -522,7 +520,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().Equal(0, len(txsFromLane))
 		s.Require().Equal(0, len(remainingTxs))
 
-		proposal := proposals.NewProposal(log.NewNopLogger(), s.encCfg.TxConfig.TxEncoder(), 200000, 1000000)
+		proposal := proposals.NewProposal(log.NewNopLogger(), 200000, 1000000)
 		_, err = lane.ProcessLane(s.ctx, proposal, partialProposal, block.NoOpProcessLanesHandler())
 		s.Require().Error(err)
 	})
@@ -530,7 +528,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 func (s *MEVTestSuite) TestVerifyBidBasic() {
 	lane := s.initLane(math.LegacyOneDec(), nil)
-	proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
+	proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 	limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
 	s.Run("can verify a bid with no bundled txs", func() {
@@ -594,7 +592,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		s.Require().NoError(err)
 
 		size := s.getTxSize(bidTx)
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), size-1, 100)
+		proposal := proposals.NewProposal(log.NewNopLogger(), size-1, 100)
 		limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
 		_, err = lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
