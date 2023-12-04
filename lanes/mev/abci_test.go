@@ -1,8 +1,6 @@
 package mev_test
 
 import (
-	"os"
-
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -16,11 +14,7 @@ import (
 func (s *MEVTestSuite) TestPrepareLane() {
 	s.Run("can prepare a lane with no txs in mempool", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err := lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -46,11 +40,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -92,11 +82,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().NoError(lane.Insert(s.ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.ctx, bidTx2))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -138,11 +124,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().NoError(lane.Insert(s.ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.ctx, bidTx2))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -172,11 +154,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 20000, 100000)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -207,11 +185,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), s.getTxSize(bidTx), 100000)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 100000)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -236,11 +210,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		lane := s.initLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
 		s.Require().NoError(lane.Insert(s.ctx, bidTx))
 
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), s.getTxSize(bidTx), 99)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 99)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		proposal, err = lane.PrepareLane(s.ctx, proposal, block.NoOpPrepareLanesHandler())
 		s.Require().NoError(err)
@@ -254,11 +224,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 func (s *MEVTestSuite) TestProcessLane() {
 	s.Run("can process an empty proposal", func() {
 		lane := s.initLane(math.LegacyOneDec(), nil)
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, nil)
 		s.Require().NoError(err)
@@ -275,11 +241,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		lane := s.initLane(math.LegacyOneDec(), nil)
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 
 		txsFromLane, remainingTxs, err := lane.ProcessLaneHandler()(s.ctx, []sdk.Tx{tx})
 		s.Require().NoError(err)
@@ -566,11 +528,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 func (s *MEVTestSuite) TestVerifyBidBasic() {
 	lane := s.initLane(math.LegacyOneDec(), nil)
-<<<<<<< HEAD
-	proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), 200, 100)
-=======
 	proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 	limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
 	s.Run("can verify a bid with no bundled txs", func() {
@@ -634,11 +592,7 @@ func (s *MEVTestSuite) TestVerifyBidBasic() {
 		s.Require().NoError(err)
 
 		size := s.getTxSize(bidTx)
-<<<<<<< HEAD
-		proposal := proposals.NewProposal(log.NewTMLogger(os.Stdout), s.encCfg.TxConfig.TxEncoder(), size-1, 100)
-=======
 		proposal := proposals.NewProposal(log.NewNopLogger(), size-1, 100)
->>>>>>> 4bfb7ce (chore: Update Lane Specific Readmes (#254))
 		limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
 		_, err = lane.VerifyBidBasic(s.ctx, bidTx, proposal, limits)
