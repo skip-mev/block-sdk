@@ -15,11 +15,13 @@ $ go install github.com/skip-mev/block-sdk
 
 ## 📚 Usage
 
+> Note: Please visit [app.go](../../tests/app/lanes.go) to see a sample base app set up.
+
 1. This guide assumes you have already set up the [Block SDK (and the default lane)](https://docs.skip.money/chains/overview)
 2. You will need to instantiate the `x/auction` module into your application. This
 module is responsible for processing auction transactions and distributing revenue
 to the auction house. The `x/auction` module is also responsible for ensuring the
-validity of auction transactions. *The `x/auction` module should not exist on its
+validity of auction transactions. The `x/auction` module should not exist on its
 own. **This is the most intensive part of the set up process.**
 3. Next, add the MEV lane into the `lane` object on your `app.go`. The first 
 lane is the highest priority lane and the last lane is the lowest priority lane.
@@ -137,7 +139,7 @@ NOTE: This example walks through setting up the MEV and Default lanes.
         MaxBlockSpace: math.LegacyZeroDec(),
         MaxTxs:        0,
     }
-    defaultLane := base.NewStandardLane(defaultConfig)
+    defaultLane := base.NewStandardLane(defaultConfig, base.DefaultMatchHandler())
 
     // 2. Set up the relative priority of lanes
     lanes := []block.Lane{

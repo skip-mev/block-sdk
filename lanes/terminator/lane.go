@@ -79,9 +79,6 @@ func (t Terminator) GetTxInfo(_ sdk.Context, _ sdk.Tx) (utils.TxWithInfo, error)
 // SetAnteHandler is a no-op
 func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 
-// SetIgnoreList is a no-op
-func (t Terminator) SetIgnoreList([]block.Lane) {}
-
 // Match is a no-op
 func (t Terminator) Match(sdk.Context, sdk.Tx) bool {
 	return false
