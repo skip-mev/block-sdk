@@ -54,4 +54,4 @@ To read more about how to build your own custom `lanes`, check out the [Build Yo
 
 The Block SDK has undergone audits by the following firms:
 
-* [OtterSec (Sept 9th, 2023)](audits/ottersec_sept_9_2023.pdf): Post audit code released as [v1.2.0](https://github.com/skip-mev/block-sdk/releases/tag/v1.2.0 and [v2.0.0](https://github.com/skip-mev/block-sdk/releases/tag/v2.0.0) for the `v1.x.x` and `v2.x.x` release families, respectively.
+* [OtterSec (Sept 9th, 2023)](audits/ottersec_sept_9_2023.pdf): Post audit code released as [v1.2.0](https://github.com/skip-mev/block-sdk/releases/tag/v1.2.0) and [v2.0.0](https://github.com/skip-mev/block-sdk/releases/tag/v2.0.0) for the `v1.x.x` and `v2.x.x` release families, respectively.
