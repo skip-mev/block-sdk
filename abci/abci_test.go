@@ -61,7 +61,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 		s.Require().Equal(0, len(resp.Txs))
 	})
@@ -84,7 +85,9 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -123,7 +126,9 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx2, tx1)
@@ -162,7 +167,9 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{defaultLane}).PrepareProposalHandler()
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx1)
@@ -176,7 +183,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 		s.Require().Equal(0, len(resp.Txs))
 	})
@@ -205,7 +213,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -243,7 +252,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx, bundleTxs[0])
@@ -282,7 +292,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, defaultLane}).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(bundleTxs[0])
@@ -324,7 +335,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		size := int64(len(proposal[0]) - 1)
 
 		s.setBlockParams(10000000, size)
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -359,7 +371,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 
 		proposal := s.getTxBytes(freeTx)
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -425,7 +438,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).PrepareProposalHandler()
 		proposal := s.getTxBytes(tx, bundleTxs[0], bundleTxs[1], bundleTxs[2], bundleTxs[3], freeTx, normalTx)
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(7, len(resp.Txs))
@@ -476,7 +490,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		proposal := s.getTxBytes(tx, bundleTxs[0], normalTx)
 
 		// Should be theoretically sufficient to fit the bid tx and the bundled tx + normal tx
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		s.Require().Equal(1, len(resp.Txs))
@@ -522,7 +537,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -567,7 +583,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -614,7 +631,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -661,7 +679,8 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			mempool,
 		).PrepareProposalHandler()
 
-		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+		resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 		s.Require().NotNil(resp)
 
 		proposal := s.getTxBytes(tx)
@@ -1308,7 +1327,9 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	// Create a proposal with the retrieved transactions
 	// Set up the default lane with no transactions
 	proposalHandler := s.setUpProposalHandlers([]block.Lane{freelane, defaultLane}).PrepareProposalHandler()
-	resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2})
+
+	maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
+	resp := proposalHandler(s.ctx, cometabci.RequestPrepareProposal{Height: 2, MaxTxBytes: maxTxBytes})
 	s.Require().NotNil(resp)
 
 	// Ensure the transactions are in the correct order for the free lane
