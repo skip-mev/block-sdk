@@ -48,8 +48,8 @@ func NewMEVLane(
 	matchHandler base.MatchHandler,
 ) *MEVLane {
 	options := []base.LaneOption{
-		base.SetMatchHandler(matchHandler),
-		base.SetMempoolWithConfigs[string](cfg, TxPriority(factory)),
+		base.WithMatchHandler(matchHandler),
+		base.WithMempoolConfigs[string](cfg, TxPriority(factory)),
 	}
 
 	baseLane, err := base.NewBaseLane(
@@ -64,8 +64,8 @@ func NewMEVLane(
 	// Create the mev proposal handler.
 	handler := NewProposalHandler(baseLane, factory)
 	baseLane.WithOptions(
-		base.SetPrepareLaneHandler(handler.PrepareLaneHandler()),
-		base.SetProcessLaneHandler(handler.ProcessLaneHandler()),
+		base.WithPrepareLaneHandler(handler.PrepareLaneHandler()),
+		base.WithProcessLaneHandler(handler.ProcessLaneHandler()),
 	)
 
 	return &MEVLane{

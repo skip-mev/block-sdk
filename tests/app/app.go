@@ -250,7 +250,7 @@ func New(
 
 	// Set the ante handler on the lanes.
 	opt := []base.LaneOption{
-		base.SetAnteHandler(anteHandler),
+		base.WithAnteHandler(anteHandler),
 	}
 	mevLane.WithOptions(
 		opt...,

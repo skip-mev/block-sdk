@@ -16,7 +16,7 @@ const (
 // blocks pre SDK version 0.47.0.
 func NewDefaultLane(cfg base.LaneConfig, matchHandler base.MatchHandler) *base.BaseLane {
 	options := []base.LaneOption{
-		base.SetMatchHandler(matchHandler),
+		base.WithMatchHandler(matchHandler),
 	}
 
 	lane, err := base.NewBaseLane(

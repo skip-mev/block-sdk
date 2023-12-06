@@ -66,8 +66,8 @@ func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.Lega
 	}
 
 	options := []base.LaneOption{
-		base.SetMatchHandler(mh),
-		base.SetMempoolWithConfigs[string](cfg, base.DefaultTxPriority()),
+		base.WithMatchHandler(mh),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
 	}
 
 	lane, err := base.NewBaseLane(
@@ -130,10 +130,10 @@ func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.Lega
 	}
 
 	options := []base.LaneOption{
-		base.SetMatchHandler(base.DefaultMatchHandler()),
-		base.SetMempoolWithConfigs[string](cfg, base.DefaultTxPriority()),
-		base.SetPrepareLaneHandler(base.PanicPrepareLaneHandler()),
-		base.SetProcessLaneHandler(base.PanicProcessLaneHandler()),
+		base.WithMatchHandler(base.DefaultMatchHandler()),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
+		base.WithPrepareLaneHandler(base.PanicPrepareLaneHandler()),
+		base.WithProcessLaneHandler(base.PanicProcessLaneHandler()),
 	}
 
 	lane, err := base.NewBaseLane(

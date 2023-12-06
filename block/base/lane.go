@@ -57,30 +57,21 @@ func NewBaseLane(
 		laneName: laneName,
 	}
 
-	for _, option := range options {
-		option(lane)
-	}
+	lane.LaneMempool = NewMempool(
+		DefaultTxPriority(),
+		lane.cfg.TxEncoder,
+		lane.cfg.SignerExtractor,
+		lane.cfg.MaxTxs,
+	)
 
-	if lane.LaneMempool == nil {
-		lane.LaneMempool = NewMempool(
-			DefaultTxPriority(),
-			lane.cfg.TxEncoder,
-			lane.cfg.SignerExtractor,
-			lane.cfg.MaxTxs,
-		)
-	}
-
-	if lane.matchHandler == nil {
-		lane.matchHandler = DefaultMatchHandler()
-	}
+	lane.matchHandler = DefaultMatchHandler()
 
 	handler := NewDefaultProposalHandler(lane)
-	if lane.prepareLaneHandler == nil {
-		lane.prepareLaneHandler = handler.PrepareLaneHandler()
-	}
+	lane.prepareLaneHandler = handler.PrepareLaneHandler()
+	lane.processLaneHandler = handler.ProcessLaneHandler()
 
-	if lane.processLaneHandler == nil {
-		lane.processLaneHandler = handler.ProcessLaneHandler()
+	for _, option := range options {
+		option(lane)
 	}
 
 	if err := lane.ValidateBasic(); err != nil {
