@@ -67,9 +67,6 @@ type Lane interface {
 	// Name returns the name of the lane.
 	Name() string
 
-	// SetAnteHandler sets the lane's antehandler.
-	SetAnteHandler(antehander sdk.AnteHandler)
-
 	// Match determines if a transaction belongs to this lane.
 	Match(ctx sdk.Context, tx sdk.Tx) bool
 

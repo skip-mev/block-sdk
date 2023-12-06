@@ -251,11 +251,6 @@ func (_m *Lane) Select(_a0 context.Context, _a1 [][]byte) mempool.Iterator {
 	return r0
 }
 
-// SetAnteHandler provides a mock function with given fields: antehander
-func (_m *Lane) SetAnteHandler(antehander types.AnteHandler) {
-	_m.Called(antehander)
-}
-
 // SetMaxBlockSpace provides a mock function with given fields: _a0
 func (_m *Lane) SetMaxBlockSpace(_a0 math.LegacyDec) {
 	_m.Called(_a0)

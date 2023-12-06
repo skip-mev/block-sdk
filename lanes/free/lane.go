@@ -4,7 +4,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/x/staking/types"
 
-	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 )
 
@@ -13,39 +12,27 @@ const (
 	LaneName = "free"
 )
 
-var _ block.Lane = (*FreeLane)(nil)
-
-// FreeLane defines the lane that is responsible for processing free transactions.
-// By default, transactions that are staking related are considered free.
-type FreeLane struct { //nolint
-	*base.BaseLane
-}
-
 // NewFreeLane returns a new free lane.
-func NewFreeLane(
+func NewFreeLane[C comparable](
 	cfg base.LaneConfig,
-	txPriority base.TxPriority[string],
+	txPriority base.TxPriority[C],
 	matchFn base.MatchHandler,
-) *FreeLane {
-	lane := base.NewBaseLane(
+) *base.BaseLane {
+	options := []base.LaneOption{
+		base.WithMatchHandler(matchFn),
+		base.WithMempoolConfigs[C](cfg, txPriority),
+	}
+
+	lane, err := base.NewBaseLane(
 		cfg,
 		LaneName,
-		base.NewMempool[string](
-			txPriority,
-			cfg.TxEncoder,
-			cfg.SignerExtractor,
-			cfg.MaxTxs,
-		),
-		matchFn,
+		options...,
 	)
-
-	if err := lane.ValidateBasic(); err != nil {
+	if err != nil {
 		panic(err)
 	}
 
-	return &FreeLane{
-		BaseLane: lane,
-	}
+	return lane
 }
 
 // DefaultMatchHandler returns the default match handler for the free lane. The

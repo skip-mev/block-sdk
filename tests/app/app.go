@@ -43,6 +43,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 	blocksdkkeeper "github.com/skip-mev/block-sdk/x/blocksdk/keeper"
@@ -248,9 +249,18 @@ func New(
 	app.App.SetAnteHandler(anteHandler)
 
 	// Set the ante handler on the lanes.
-	mevLane.SetAnteHandler(anteHandler)
-	freeLane.SetAnteHandler(anteHandler)
-	defaultLane.SetAnteHandler(anteHandler)
+	opt := []base.LaneOption{
+		base.WithAnteHandler(anteHandler),
+	}
+	mevLane.WithOptions(
+		opt...,
+	)
+	freeLane.WithOptions(
+		opt...,
+	)
+	defaultLane.WithOptions(
+		opt...,
+	)
 
 	// Step 6: Create the proposal handler and set it on the app. Now the application
 	// will build and verify proposals using the Block SDK!
