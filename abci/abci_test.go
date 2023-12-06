@@ -3,7 +3,6 @@ package abci_test
 import (
 	"context"
 	"math/rand"
-	"os"
 	"testing"
 
 	"cosmossdk.io/math"
@@ -531,7 +530,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTMLogger(os.Stdout),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -577,7 +576,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTMLogger(os.Stdout),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -625,7 +624,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTMLogger(os.Stdout),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -673,7 +672,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTMLogger(os.Stdout),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,

@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"os"
 
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
@@ -1633,7 +1632,7 @@ func (s *BaseTestSuite) initLane(
 	expectedExecution map[sdk.Tx]bool,
 ) *base.BaseLane {
 	config := base.NewLaneConfig(
-		log.NewTMLogger(os.Stdout),
+		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),
