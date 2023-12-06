@@ -63,20 +63,22 @@ func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.Lega
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	lane := base.NewBaseLane(
+	options := []base.LaneOption{
+		base.WithMatchHandler(mh),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
+	}
+
+	lane, err := base.NewBaseLane(
 		cfg,
 		name,
-		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
-		mh,
+		options...,
 	)
-
-	lane.SetPrepareLaneHandler(lane.DefaultPrepareLaneHandler())
-	lane.SetProcessLaneHandler(lane.DefaultProcessLaneHandler())
+	s.Require().NoError(err)
 
 	return lane
 }
 
-func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *defaultlane.DefaultLane {
+func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *base.BaseLane {
 	cfg := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
@@ -103,7 +105,7 @@ func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expected
 	return mev.NewMEVLane(cfg, factory, factory.MatchHandler())
 }
 
-func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *free.FreeLane {
+func (s *ProposalsTestSuite) setUpFreeLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *base.BaseLane {
 	cfg := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
@@ -125,15 +127,19 @@ func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.Lega
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	lane := base.NewBaseLane(
+	options := []base.LaneOption{
+		base.WithMatchHandler(base.DefaultMatchHandler()),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
+		base.WithPrepareLaneHandler(base.PanicPrepareLaneHandler()),
+		base.WithProcessLaneHandler(base.PanicProcessLaneHandler()),
+	}
+
+	lane, err := base.NewBaseLane(
 		cfg,
 		name,
-		base.NewMempool[string](base.DefaultTxPriority(), cfg.TxEncoder, cfg.SignerExtractor, 0),
-		base.DefaultMatchHandler(),
+		options...,
 	)
-
-	lane.SetPrepareLaneHandler(base.PanicPrepareLaneHandler())
-	lane.SetProcessLaneHandler(base.PanicProcessLaneHandler())
+	s.Require().NoError(err)
 
 	return lane
 }
