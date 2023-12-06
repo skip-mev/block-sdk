@@ -251,11 +251,6 @@ func (_m *Lane) Select(_a0 context.Context, _a1 [][]byte) mempool.Iterator {
 	return r0
 }
 
-// SetAnteHandler provides a mock function with given fields: antehander
-func (_m *Lane) SetAnteHandler(antehander types.AnteHandler) {
-	_m.Called(antehander)
-}
-
 // NewLane creates a new instance of Lane. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewLane(t interface {

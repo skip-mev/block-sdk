@@ -31,8 +31,8 @@ type BlockBusterTestSuite struct {
 
 	// Define all of the lanes utilized in the test suite
 	mevLane       *mev.MEVLane
-	baseLane      *defaultlane.DefaultLane
-	freeLane      *free.FreeLane
+	baseLane      *base.BaseLane
+	freeLane      *base.BaseLane
 	gasTokenDenom string
 
 	lanes   []block.Lane
