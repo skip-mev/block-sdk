@@ -1,7 +1,6 @@
 package base
 
 import (
-	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 )
 
@@ -10,36 +9,24 @@ const (
 	LaneName = "default"
 )
 
-var _ block.Lane = (*DefaultLane)(nil)
+// NewDefaultLane returns a new default lane. The DefaultLane defines a default
+// lane implementation. The default lane orders transactions by the transaction fees.
+// The default lane accepts any transaction. The default lane builds and verifies blocks
+// in a similar fashion to how the CometBFT/Tendermint consensus engine builds and verifies
+// blocks pre SDK version 0.47.0.
+func NewDefaultLane(cfg base.LaneConfig, matchHandler base.MatchHandler) *base.BaseLane {
+	options := []base.LaneOption{
+		base.SetMatchHandler(matchHandler),
+	}
 
-// DefaultLane defines a default lane implementation. The default lane orders
-// transactions by the transaction fees. The default lane accepts any transaction.
-// The default lane builds and verifies blocks in a similar fashion to how the
-// CometBFT/Tendermint consensus engine builds and verifies blocks pre SDK version
-// 0.47.0.
-type DefaultLane struct {
-	*base.BaseLane
-}
-
-// NewDefaultLane returns a new default lane.
-func NewDefaultLane(cfg base.LaneConfig, matchHandler base.MatchHandler) *DefaultLane {
-	lane := base.NewBaseLane(
+	lane, err := base.NewBaseLane(
 		cfg,
 		LaneName,
-		base.NewMempool[string](
-			base.DefaultTxPriority(),
-			cfg.TxEncoder,
-			cfg.SignerExtractor,
-			cfg.MaxTxs,
-		),
-		matchHandler,
+		options...,
 	)
-
-	if err := lane.ValidateBasic(); err != nil {
+	if err != nil {
 		panic(err)
 	}
 
-	return &DefaultLane{
-		BaseLane: lane,
-	}
+	return lane
 }
