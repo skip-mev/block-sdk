@@ -67,8 +67,24 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 			"height", req.Height,
 		)
 
+<<<<<<< HEAD
 		// Fill the proposal with transactions from each lane.
 		finalProposal, err := h.prepareLanesHandler(ctx, proposals.NewProposalWithContext(ctx, h.logger))
+=======
+		registry, err := h.mempool.Registry(ctx)
+		if err != nil {
+			h.logger.Error("failed to get lane registry", "err", err)
+			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
+		}
+
+		// Get the max gas limit and max block size for the proposal.
+		_, maxGasLimit := proposals.GetBlockLimits(ctx)
+		proposal := proposals.NewProposal(h.logger, req.MaxTxBytes, maxGasLimit)
+
+		// Fill the proposal with transactions from each lane.
+		prepareLanesHandler := ChainPrepareLanes(registry)
+		finalProposal, err := prepareLanesHandler(ctx, proposal)
+>>>>>>> 43d6b04 (req size check (#269))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
