@@ -593,7 +593,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 0)
@@ -663,7 +663,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		)
 
 		//
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 3)
 		s.Require().Len(remainingTxs, 0)
@@ -745,7 +745,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 4)
 		s.Require().Len(remainingTxs, 0)
@@ -787,7 +787,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 1)
 		s.Require().Len(remainingTxs, 0)
@@ -829,7 +829,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 0)
@@ -890,7 +890,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 0)
@@ -941,7 +941,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 0)
@@ -997,7 +997,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 0)
@@ -1054,7 +1054,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx2,
 		}
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 0)
@@ -1091,7 +1091,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 1)
 		s.Require().Len(remainingTxs, 0)
@@ -1130,7 +1130,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 1)
 		s.Require().Len(remainingTxs, 0)
@@ -1180,7 +1180,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 0)
@@ -1230,7 +1230,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 0)
@@ -1311,7 +1311,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			[]base.MatchHandler{mh},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 2)
@@ -1390,7 +1390,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			[]base.MatchHandler{mh},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().NoError(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 4)
@@ -1474,7 +1474,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			[]base.MatchHandler{mh},
 		)
 
-		txsFromLane, remainingTxs, err := lane.DefaultProcessLaneHandler()(s.ctx, proposal)
+		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
 		s.Require().Error(err)
 		s.Require().Len(txsFromLane, 0)
 		s.Require().Len(remainingTxs, 0)
@@ -1630,7 +1630,7 @@ func (s *BaseTestSuite) TestIterateMempoolAndProcessProposalParity() {
 func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
-) *defaultlane.DefaultLane {
+) *base.BaseLane {
 	config := base.NewLaneConfig(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),
@@ -1647,7 +1647,7 @@ func (s *BaseTestSuite) initLaneWithMatchHandlers(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
 	matchHandlers []base.MatchHandler,
-) *defaultlane.DefaultLane {
+) *base.BaseLane {
 	config := base.NewLaneConfig(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),

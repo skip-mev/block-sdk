@@ -13,7 +13,7 @@ import (
 // we create three separate lanes - MEV, Free, and Default - and then return them.
 //
 // NOTE: Application Developers should closely replicate this function in their own application.
-func CreateLanes(app *TestApp) (*mevlane.MEVLane, *freelane.FreeLane, *defaultlane.DefaultLane) {
+func CreateLanes(app *TestApp) (*mevlane.MEVLane, *base.BaseLane, *base.BaseLane) {
 	// 1. Create the signer extractor. This is used to extract the expected signers from
 	// a transaction. Each lane can have a different signer extractor if needed.
 	signerAdapter := signerextraction.NewDefaultAdapter()

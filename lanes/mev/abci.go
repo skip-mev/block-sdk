@@ -10,11 +10,25 @@ import (
 	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
+// Implements the MEV lane's PrepareLaneHandler and ProcessLaneHandler.
+type ProposalHandler struct {
+	lane    *base.BaseLane
+	factory Factory
+}
+
+// NewProposalHandler returns a new mev proposal handler.
+func NewProposalHandler(lane *base.BaseLane, factory Factory) *ProposalHandler {
+	return &ProposalHandler{
+		lane:    lane,
+		factory: factory,
+	}
+}
+
 // PrepareLaneHandler will attempt to select the highest bid transaction that is valid
 // and whose bundled transactions are valid and include them in the proposal. It
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
-func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
+func (h *ProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
@@ -24,11 +38,11 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 
 		// Attempt to select the highest bid transaction that is valid and whose
 		// bundled transactions are valid.
-		for iterator := l.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
+		for iterator := h.lane.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			bidTx := iterator.Tx()
 
-			if !l.Match(ctx, bidTx) {
-				l.Logger().Info("failed to select auction bid tx for lane; tx does not match lane")
+			if !h.lane.Match(ctx, bidTx) {
+				h.lane.Logger().Info("failed to select auction bid tx for lane; tx does not match lane")
 
 				txsToRemove = append(txsToRemove, bidTx)
 				continue
@@ -36,9 +50,9 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 
 			cacheCtx, write := ctx.CacheContext()
 
-			bundle, err := l.VerifyBidBasic(cacheCtx, bidTx, proposal, limit)
+			bundle, err := h.VerifyBidBasic(cacheCtx, bidTx, proposal, limit)
 			if err != nil {
-				l.Logger().Info(
+				h.lane.Logger().Info(
 					"failed to select auction bid tx for lane; tx is invalid",
 					"err", err,
 				)
@@ -47,8 +61,8 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 				continue
 			}
 
-			if err := l.VerifyBidTx(cacheCtx, bidTx, bundle); err != nil {
-				l.Logger().Info(
+			if err := h.VerifyBidTx(cacheCtx, bidTx, bundle); err != nil {
+				h.lane.Logger().Info(
 					"failed to select auction bid tx for lane; tx is invalid",
 					"err", err,
 				)
@@ -84,18 +98,18 @@ func (l *MEVLane) PrepareLaneHandler() base.PrepareLaneHandler {
 //  4. The bundled transactions must match the transactions in the block proposal in the
 //     same order they were defined in the bid transaction.
 //  5. The bundled transactions must not be bid transactions.
-func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
+func (h *ProposalHandler) ProcessLaneHandler() base.ProcessLaneHandler {
 	return func(ctx sdk.Context, partialProposal []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
 		if len(partialProposal) == 0 {
 			return nil, nil, nil
 		}
 
 		bidTx := partialProposal[0]
-		if !l.Match(ctx, bidTx) {
+		if !h.lane.Match(ctx, bidTx) {
 			// If the transaction does not belong to this lane, we return the remaining transactions
 			// iff there are no matches in the remaining transactions after this index.
 			if len(partialProposal) > 1 {
-				if err := l.VerifyNoMatches(ctx, partialProposal[1:]); err != nil {
+				if err := h.lane.VerifyNoMatches(ctx, partialProposal[1:]); err != nil {
 					return nil, nil, fmt.Errorf("failed to verify no matches: %w", err)
 				}
 			}
@@ -103,9 +117,9 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 			return nil, partialProposal, nil
 		}
 
-		bidInfo, err := l.GetAuctionBidInfo(bidTx)
+		bidInfo, err := h.factory.GetAuctionBidInfo(bidTx)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
+			return nil, nil, fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", h.lane.Name(), err)
 		}
 
 		if bidInfo == nil {
@@ -118,7 +132,7 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 			return nil, nil, fmt.Errorf(
 				"expected %d transactions in lane %s but got %d",
 				bundleSize,
-				l.Name(),
+				h.lane.Name(),
 				len(partialProposal),
 			)
 		}
@@ -126,17 +140,17 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 		// Ensure the transactions in the proposal match the bundled transactions in the bid transaction.
 		bundle := partialProposal[1:bundleSize]
 		for index, bundledTxBz := range bidInfo.Transactions {
-			bundledTx, err := l.WrapBundleTransaction(bundledTxBz)
+			bundledTx, err := h.factory.WrapBundleTransaction(bundledTxBz)
 			if err != nil {
 				return nil, nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 			}
 
-			expectedTxBz, err := l.TxEncoder()(bundledTx)
+			expectedTxBz, err := h.lane.TxEncoder()(bundledTx)
 			if err != nil {
 				return nil, nil, fmt.Errorf("invalid bid tx; failed to encode bundled tx: %w", err)
 			}
 
-			actualTxBz, err := l.TxEncoder()(bundle[index])
+			actualTxBz, err := h.lane.TxEncoder()(bundle[index])
 			if err != nil {
 				return nil, nil, fmt.Errorf("invalid bid tx; failed to encode tx: %w", err)
 			}
@@ -150,7 +164,7 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 		// Verify the top-level bid transaction.
 		//
 		// TODO: There is duplicate work being done in VerifyBidTx and here.
-		if err := l.VerifyBidTx(ctx, bidTx, bundle); err != nil {
+		if err := h.VerifyBidTx(ctx, bidTx, bundle); err != nil {
 			return nil, nil, fmt.Errorf("invalid bid tx; failed to verify bid tx: %w", err)
 		}
 
@@ -160,23 +174,23 @@ func (l *MEVLane) ProcessLaneHandler() base.ProcessLaneHandler {
 
 // VerifyBidBasic will verify that the bid transaction and all of its bundled
 // transactions respect the basic invariants of the lane (e.g. size, gas limit).
-func (l *MEVLane) VerifyBidBasic(
+func (h *ProposalHandler) VerifyBidBasic(
 	ctx sdk.Context,
 	bidTx sdk.Tx,
 	proposal proposals.Proposal,
 	limit proposals.LaneLimits,
 ) ([]sdk.Tx, error) {
 	// Verify the transaction is a bid transaction.
-	bidInfo, err := l.GetAuctionBidInfo(bidTx)
+	bidInfo, err := h.factory.GetAuctionBidInfo(bidTx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
+		return nil, fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", h.lane.Name(), err)
 	}
 
 	if bidInfo == nil {
 		return nil, fmt.Errorf("bid info is nil")
 	}
 
-	txInfo, err := l.GetTxInfo(ctx, bidTx)
+	txInfo, err := h.lane.GetTxInfo(ctx, bidTx)
 	if err != nil {
 		return nil, fmt.Errorf("err retrieving transaction info: %s", err)
 	}
@@ -192,12 +206,12 @@ func (l *MEVLane) VerifyBidBasic(
 
 	// Verify size and gas limit of the bundled transactions.
 	for index, bundledTxBz := range bidInfo.Transactions {
-		bundledTx, err := l.WrapBundleTransaction(bundledTxBz)
+		bundledTx, err := h.factory.WrapBundleTransaction(bundledTxBz)
 		if err != nil {
 			return nil, fmt.Errorf("invalid bid tx; failed to decode bundled tx: %w", err)
 		}
 
-		bundledTxInfo, err := l.GetTxInfo(ctx, bundledTx)
+		bundledTxInfo, err := h.lane.GetTxInfo(ctx, bundledTx)
 		if err != nil {
 			return nil, fmt.Errorf("err retrieving transaction info: %s", err)
 		}
@@ -232,10 +246,10 @@ func (l *MEVLane) VerifyBidBasic(
 
 // VerifyBidTx will verify that the bid transaction and all of its bundled
 // transactions are valid.
-func (l *MEVLane) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) error {
-	bidInfo, err := l.GetAuctionBidInfo(bidTx)
+func (h *ProposalHandler) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) error {
+	bidInfo, err := h.factory.GetAuctionBidInfo(bidTx)
 	if err != nil {
-		return fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", l.Name(), err)
+		return fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", h.lane.Name(), err)
 	}
 
 	if bidInfo == nil {
@@ -243,17 +257,17 @@ func (l *MEVLane) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) er
 	}
 
 	// verify the top-level bid transaction
-	if err = l.VerifyTx(ctx, bidTx, false); err != nil {
+	if err = h.lane.VerifyTx(ctx, bidTx, false); err != nil {
 		return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 	}
 
 	// verify all of the bundled transactions
 	for _, bundledTx := range bundle {
-		if l.Match(ctx, bundledTx) {
+		if h.lane.Match(ctx, bundledTx) {
 			return fmt.Errorf("invalid bid tx; bundled tx is another bid transaction")
 		}
 
-		if err = l.VerifyTx(ctx, bundledTx, false); err != nil {
+		if err = h.lane.VerifyTx(ctx, bundledTx, false); err != nil {
 			return fmt.Errorf("invalid bid tx; failed to execute bundled transaction: %w", err)
 		}
 	}

@@ -44,7 +44,7 @@ func DefaultMatchHandler() base.MatchHandler {
 }
 ```
 
-The default `MatchHandler` is implemented in the [base lane](./handlers.go) and matches all transactions.
+The default `MatchHandler` is implemented in the [base lane](./match.go) and matches all transactions.
 
 ## PrepareLaneHandler
 
@@ -60,7 +60,7 @@ PrepareLaneHandler func(
 
 To create a custom lane with a custom `PrepareLaneHandler`, you must implement this function and set it on the lane after it has been created. Please visit the [MEV lane's](../../lanes/mev/abci.go) `PrepareLaneHandler` for an example of how to implement this function.
 
-The default `PrepareLaneHandler` is implemented in the [base lane](./handlers.go). It reaps transactions from the mempool, validates them, ensures that the lane's block space limit is not exceeded, and returns the transactions to be included in the block and the ones that need to be removed.
+The default `PrepareLaneHandler` is implemented in the [base lane](./proposals.go). It reaps transactions from the mempool, validates them, ensures that the lane's block space limit is not exceeded, and returns the transactions to be included in the block and the ones that need to be removed.
 
 ## ProcessLaneHandler
 
@@ -74,7 +74,7 @@ ProcessLaneHandler func(ctx sdk.Context, partialProposal []sdk.Tx) (
 )
 ```
 
-Note that block proposals built using the Block SDK contain contiguous sections of transactions in the block that belong to a given lane, to read more about how proposals are constructed relative to other lanes, please visit the [abci section](../../abci/README.md). As such, a given lane will recieve some transactions in (partialProposal) that belong to it and some that do not. The transactions that belong to it must be contiguous from the start, and the transactions that do not belong to it must be contiguous from the end. The lane must return the transactions that belong to it and the transactions that do not belong to it. The transactions that do not belong to it will be passed to the next lane in the proposal. The default `ProcessLaneHandler` is implemented in the [base lane](./handlers.go). It verifies the transactions that belong to the lane and returns them alongside the transactions that do not belong to the lane.
+Note that block proposals built using the Block SDK contain contiguous sections of transactions in the block that belong to a given lane, to read more about how proposals are constructed relative to other lanes, please visit the [abci section](../../abci/README.md). As such, a given lane will recieve some transactions in (partialProposal) that belong to it and some that do not. The transactions that belong to it must be contiguous from the start, and the transactions that do not belong to it must be contiguous from the end. The lane must return the transactions that belong to it and the transactions that do not belong to it. The transactions that do not belong to it will be passed to the next lane in the proposal. The default `ProcessLaneHandler` is implemented in the [base lane](./proposals.go). It verifies the transactions that belong to the lane and returns them alongside the transactions that do not belong to the lane.
 
 Please visit the [MEV lane's](../../lanes/mev/abci.go) `ProcessLaneHandler` for an example of how to implement a custom handler.
 
