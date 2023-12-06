@@ -55,7 +55,7 @@ func (s *MEVTestSuite) initLane(
 	expectedExecution map[sdk.Tx]bool,
 ) *mev.MEVLane {
 	config := base.NewLaneConfig(
-		log.NewTestLogger(s.T()),
+		log.NewNopLogger(),
 		s.encCfg.TxConfig.TxEncoder(),
 		s.encCfg.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),

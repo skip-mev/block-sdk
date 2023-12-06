@@ -1632,7 +1632,7 @@ func (s *BaseTestSuite) initLane(
 	expectedExecution map[sdk.Tx]bool,
 ) *defaultlane.DefaultLane {
 	config := base.NewLaneConfig(
-		log.NewTestLogger(s.T()),
+		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),
