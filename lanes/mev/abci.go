@@ -10,15 +10,15 @@ import (
 	"github.com/skip-mev/block-sdk/block/proposals"
 )
 
-// MEVProposalHandler implements the MEV lane's PrepareLaneHandler and ProcessLaneHandler.
-type MEVProposalHandler struct {
+// Implements the MEV lane's PrepareLaneHandler and ProcessLaneHandler.
+type ProposalHandler struct {
 	lane    *base.BaseLane
 	factory Factory
 }
 
-// NewMEVProposalHandler returns a new mev proposal handler.
-func NewMEVProposalHandler(lane *base.BaseLane, factory Factory) *MEVProposalHandler {
-	return &MEVProposalHandler{
+// NewProposalHandler returns a new mev proposal handler.
+func NewProposalHandler(lane *base.BaseLane, factory Factory) *ProposalHandler {
+	return &ProposalHandler{
 		lane:    lane,
 		factory: factory,
 	}
@@ -28,7 +28,7 @@ func NewMEVProposalHandler(lane *base.BaseLane, factory Factory) *MEVProposalHan
 // and whose bundled transactions are valid and include them in the proposal. It
 // will return no transactions if no valid bids are found. If any of the bids are invalid,
 // it will return them and will only remove the bids and not the bundled transactions.
-func (h *MEVProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
+func (h *ProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 	return func(ctx sdk.Context, proposal proposals.Proposal, limit proposals.LaneLimits) ([]sdk.Tx, []sdk.Tx, error) {
 		// Define all of the info we need to select transactions for the partial proposal.
 		var (
@@ -98,7 +98,7 @@ func (h *MEVProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 //  4. The bundled transactions must match the transactions in the block proposal in the
 //     same order they were defined in the bid transaction.
 //  5. The bundled transactions must not be bid transactions.
-func (h *MEVProposalHandler) ProcessLaneHandler() base.ProcessLaneHandler {
+func (h *ProposalHandler) ProcessLaneHandler() base.ProcessLaneHandler {
 	return func(ctx sdk.Context, partialProposal []sdk.Tx) ([]sdk.Tx, []sdk.Tx, error) {
 		if len(partialProposal) == 0 {
 			return nil, nil, nil
@@ -174,7 +174,7 @@ func (h *MEVProposalHandler) ProcessLaneHandler() base.ProcessLaneHandler {
 
 // VerifyBidBasic will verify that the bid transaction and all of its bundled
 // transactions respect the basic invariants of the lane (e.g. size, gas limit).
-func (h *MEVProposalHandler) VerifyBidBasic(
+func (h *ProposalHandler) VerifyBidBasic(
 	ctx sdk.Context,
 	bidTx sdk.Tx,
 	proposal proposals.Proposal,
@@ -246,7 +246,7 @@ func (h *MEVProposalHandler) VerifyBidBasic(
 
 // VerifyBidTx will verify that the bid transaction and all of its bundled
 // transactions are valid.
-func (h *MEVProposalHandler) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) error {
+func (h *ProposalHandler) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sdk.Tx) error {
 	bidInfo, err := h.factory.GetAuctionBidInfo(bidTx)
 	if err != nil {
 		return fmt.Errorf("failed to get bid info from auction bid tx for lane %s: %w", h.lane.Name(), err)

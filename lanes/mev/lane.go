@@ -62,7 +62,7 @@ func NewMEVLane(
 	}
 
 	// Create the mev proposal handler.
-	handler := NewMEVProposalHandler(baseLane, factory)
+	handler := NewProposalHandler(baseLane, factory)
 	baseLane.WithOptions(
 		base.SetPrepareLaneHandler(handler.PrepareLaneHandler()),
 		base.SetProcessLaneHandler(handler.ProcessLaneHandler()),
