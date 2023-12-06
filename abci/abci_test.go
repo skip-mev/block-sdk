@@ -499,7 +499,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -546,7 +546,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -595,7 +595,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
@@ -644,7 +644,7 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		s.Require().NoError(err)
 
 		proposalHandler := abci.NewProposalHandler(
-			log.NewTestLogger(s.T()),
+			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
