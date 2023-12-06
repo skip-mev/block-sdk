@@ -2,7 +2,6 @@ package block_test
 
 import (
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
@@ -32,8 +31,8 @@ type BlockBusterTestSuite struct {
 
 	// Define all of the lanes utilized in the test suite
 	mevLane       *mev.MEVLane
-	baseLane      *defaultlane.DefaultLane
-	freeLane      *free.FreeLane
+	baseLane      *base.BaseLane
+	freeLane      *base.BaseLane
 	gasTokenDenom string
 
 	lanes   []block.Lane
@@ -114,7 +113,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 
 	// Mempool set up
 	var err error
-	suite.mempool, err = block.NewLanedMempool(log.NewTMLogger(os.Stdout), suite.lanes)
+	suite.mempool, err = block.NewLanedMempool(log.NewNopLogger(), suite.lanes)
 	suite.Require().NoError(err)
 
 	// Accounts set up

@@ -47,30 +47,29 @@ func NewMEVLane(
 	factory Factory,
 	matchHandler base.MatchHandler,
 ) *MEVLane {
-	lane := &MEVLane{
-		BaseLane: base.NewBaseLane(
-			cfg,
-			LaneName,
-			base.NewMempool[string](
-				TxPriority(factory),
-				cfg.TxEncoder,
-				cfg.SignerExtractor,
-				cfg.MaxTxs,
-			),
-			matchHandler,
-		),
-		Factory: factory,
+	options := []base.LaneOption{
+		base.WithMatchHandler(matchHandler),
+		base.WithMempoolConfigs[string](cfg, TxPriority(factory)),
 	}
 
-	// Set the prepare lane handler to the TOB one
-	lane.SetPrepareLaneHandler(lane.PrepareLaneHandler())
-
-	// Set the process lane handler to the TOB one
-	lane.SetProcessLaneHandler(lane.ProcessLaneHandler())
-
-	if err := lane.ValidateBasic(); err != nil {
+	baseLane, err := base.NewBaseLane(
+		cfg,
+		LaneName,
+		options...,
+	)
+	if err != nil {
 		panic(err)
 	}
 
-	return lane
+	// Create the mev proposal handler.
+	handler := NewProposalHandler(baseLane, factory)
+	baseLane.WithOptions(
+		base.WithPrepareLaneHandler(handler.PrepareLaneHandler()),
+		base.WithProcessLaneHandler(handler.ProcessLaneHandler()),
+	)
+
+	return &MEVLane{
+		BaseLane: baseLane,
+		Factory:  factory,
+	}
 }

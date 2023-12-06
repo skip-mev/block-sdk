@@ -50,17 +50,35 @@ type BaseLane struct { //nolint
 func NewBaseLane(
 	cfg LaneConfig,
 	laneName string,
-	laneMempool block.LaneMempool,
-	matchHandlerFn MatchHandler,
-) *BaseLane {
+	options ...LaneOption,
+) (*BaseLane, error) {
 	lane := &BaseLane{
-		cfg:          cfg,
-		laneName:     laneName,
-		LaneMempool:  laneMempool,
-		matchHandler: matchHandlerFn,
+		cfg:      cfg,
+		laneName: laneName,
 	}
 
-	return lane
+	lane.LaneMempool = NewMempool(
+		DefaultTxPriority(),
+		lane.cfg.TxEncoder,
+		lane.cfg.SignerExtractor,
+		lane.cfg.MaxTxs,
+	)
+
+	lane.matchHandler = DefaultMatchHandler()
+
+	handler := NewDefaultProposalHandler(lane)
+	lane.prepareLaneHandler = handler.PrepareLaneHandler()
+	lane.processLaneHandler = handler.ProcessLaneHandler()
+
+	for _, option := range options {
+		option(lane)
+	}
+
+	if err := lane.ValidateBasic(); err != nil {
+		return nil, err
+	}
+
+	return lane, nil
 }
 
 // ValidateBasic ensures that the lane was constructed properly. In the case that
@@ -83,37 +101,14 @@ func (l *BaseLane) ValidateBasic() error {
 	}
 
 	if l.prepareLaneHandler == nil {
-		l.prepareLaneHandler = l.DefaultPrepareLaneHandler()
+		return fmt.Errorf("prepare lane handler cannot be nil")
 	}
 
 	if l.processLaneHandler == nil {
-		l.processLaneHandler = l.DefaultProcessLaneHandler()
+		return fmt.Errorf("process lane handler cannot be nil")
 	}
 
 	return nil
-}
-
-// SetPrepareLaneHandler sets the prepare lane handler for the lane. This handler
-// is called when a new proposal is being requested and the lane needs to submit
-// transactions it wants included in the block.
-func (l *BaseLane) SetPrepareLaneHandler(prepareLaneHandler PrepareLaneHandler) {
-	if prepareLaneHandler == nil {
-		panic("prepare lane handler cannot be nil")
-	}
-
-	l.prepareLaneHandler = prepareLaneHandler
-}
-
-// SetProcessLaneHandler sets the process lane handler for the lane. This handler
-// is called when a new proposal is being verified and the lane needs to verify
-// that the transactions included in the proposal are valid respecting the verification
-// logic of the lane.
-func (l *BaseLane) SetProcessLaneHandler(processLaneHandler ProcessLaneHandler) {
-	if processLaneHandler == nil {
-		panic("process lane handler cannot be nil")
-	}
-
-	l.processLaneHandler = processLaneHandler
 }
 
 // Match returns true if the transaction should be processed by this lane. This
@@ -127,11 +122,6 @@ func (l *BaseLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
 // Name returns the name of the lane.
 func (l *BaseLane) Name() string {
 	return l.laneName
-}
-
-// SetAnteHandler sets the ante handler for the lane.
-func (l *BaseLane) SetAnteHandler(anteHandler sdk.AnteHandler) {
-	l.cfg.AnteHandler = anteHandler
 }
 
 // Logger returns the logger for the lane.
@@ -153,4 +143,13 @@ func (l *BaseLane) TxEncoder() sdk.TxEncoder {
 // allowed to consume as a percentage of the total block space.
 func (l *BaseLane) GetMaxBlockSpace() math.LegacyDec {
 	return l.cfg.MaxBlockSpace
+}
+
+// WithOptions returns a new lane with the given options.
+func (l *BaseLane) WithOptions(options ...LaneOption) *BaseLane {
+	for _, option := range options {
+		option(l)
+	}
+
+	return l
 }

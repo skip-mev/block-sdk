@@ -5,7 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 	"math/rand"
-	"os"
 	"testing"
 	"time"
 
@@ -56,7 +55,7 @@ func (s *MEVTestSuite) initLane(
 	expectedExecution map[sdk.Tx]bool,
 ) *mev.MEVLane {
 	config := base.NewLaneConfig(
-		log.NewTMLogger(os.Stdout),
+		log.NewNopLogger(),
 		s.encCfg.TxConfig.TxEncoder(),
 		s.encCfg.TxConfig.TxDecoder(),
 		s.setUpAnteHandler(expectedExecution),
