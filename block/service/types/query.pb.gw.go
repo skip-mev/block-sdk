@@ -145,7 +145,7 @@ func RegisterServiceHandlerClient(ctx context.Context, mux *runtime.ServeMux, cl
 }
 
 var (
-	pattern_Service_GetTxDistribution_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"v1", "mempool", "distribution"}, "", runtime.AssumeColonVerbOpt(false)))
+	pattern_Service_GetTxDistribution_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3}, []string{"block-sdk", "mempool", "v1", "distribution"}, "", runtime.AssumeColonVerbOpt(false)))
 )
 
 var (

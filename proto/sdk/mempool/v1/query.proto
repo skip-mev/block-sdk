@@ -10,7 +10,7 @@ service Service {
     // GetTxDistribution returns the distribution of transactions in the mempool.
     rpc GetTxDistribution(GetTxDistributionRequest) returns (GetTxDistributionResponse) {
         option (google.api.http) = {
-            get: "/v1/mempool/distribution"
+            get: "/block-sdk/mempool/v1/distribution"
         };
     }
 }
