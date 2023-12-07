@@ -399,16 +399,16 @@ func (app *TestApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APICo
 }
 
 // RegisterTxService implements the Application.RegisterTxService method.
-func (a *TestApp) RegisterTxService(clientCtx client.Context) {
+func (app *TestApp) RegisterTxService(clientCtx client.Context) {
 	// Register the base app transaction service.
-	a.App.RegisterTxService(clientCtx)
+	app.App.RegisterTxService(clientCtx)
 
 	// Register the Block SDK mempool transaction service.
-	mempool, ok := a.App.Mempool().(block.Mempool)
+	mempool, ok := app.App.Mempool().(block.Mempool)
 	if !ok {
 		panic("mempool is not a block.Mempool")
 	}
-	service.RegisterMempoolService(clientCtx, a.GRPCQueryRouter(), mempool)
+	service.RegisterMempoolService(app.GRPCQueryRouter(), mempool)
 }
 
 // GetMaccPerms returns a copy of the module account permissions

@@ -3,7 +3,6 @@ package service
 import (
 	"context"
 
-	"github.com/cosmos/cosmos-sdk/client"
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
@@ -32,8 +31,8 @@ func NewQueryService(mempool block.Mempool) *QueryService {
 // GetTxDistribution returns the current distribution of transactions in the
 // mempool.
 func (s *QueryService) GetTxDistribution(
-	ctx context.Context,
-	req *types.GetTxDistributionRequest,
+	_ context.Context,
+	_ *types.GetTxDistributionRequest,
 ) (*types.GetTxDistributionResponse, error) {
 	distribution := s.mempool.GetTxDistribution()
 	return &types.GetTxDistributionResponse{Distribution: distribution}, nil
@@ -41,7 +40,6 @@ func (s *QueryService) GetTxDistribution(
 
 // RegisterMempoolService registers the Block SDK mempool queries on the gRPC router.
 func RegisterMempoolService(
-	clientCtx client.Context,
 	server gogogrpc.Server,
 	mempool block.Mempool,
 ) {
