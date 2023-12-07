@@ -1,0 +1,27 @@
+syntax = "proto3";
+package sdk.mempool.v1;
+
+option go_package = "github.com/skip-mev/block-sdk/block/service/types";
+
+import "google/api/annotations.proto";
+
+// Service defines the gRPC querier service for the Block SDK mempool.
+service Service {
+    // GetTxDistribution returns the distribution of transactions in the mempool.
+    rpc GetTxDistribution(GetTxDistributionRequest) returns (GetTxDistributionResponse) {
+        option (google.api.http) = {
+            get: "/v1/mempool/distribution"
+        };
+    }
+}
+
+// GetTxDistributionRequest is the request type for the Service.GetTxDistribution
+// RPC method.
+message GetTxDistributionRequest {}
+
+// GetTxDistributionResponse is the response type for the Service.GetTxDistribution
+// RPC method.
+message GetTxDistributionResponse {
+    // Distribution is a map of lane to the number of transactions in the mempool for that lane.
+    map<string, uint64> distribution = 1;
+}
