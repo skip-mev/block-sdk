@@ -76,10 +76,10 @@ $(BUILD_DIR)/:
 # This will allow users to bootstrap their wallet with a balance.
 build-and-start-app: build-test-app
 	./build/testappd init validator1 --chain-id chain-id-0
-	./build/testappd keys add validator1
-	./build/testappd genesis add-genesis-account validator1 10000000000000000000000000stake
-	./build/testappd genesis add-genesis-account cosmos1see0htr47uapjvcvh0hu6385rp8lw3em24hysg 10000000000000000000000000stake
-	./build/testappd genesis gentx validator1 1000000000stake --chain-id chain-id-0
+	./build/testappd keys add validator1 --keyring-backend test
+	./build/testappd genesis add-genesis-account validator1 10000000000000000000000000stake --keyring-backend test
+	./build/testappd genesis add-genesis-account cosmos1see0htr47uapjvcvh0hu6385rp8lw3em24hysg 10000000000000000000000000stake --keyring-backend test
+	./build/testappd genesis gentx validator1 1000000000stake --chain-id chain-id-0 --keyring-backend test
 	./build/testappd genesis collect-gentxs
 	./build/testappd start --api.enable true --api.enabled-unsafe-cors true --log_level info
 
