@@ -38,7 +38,8 @@ func (s *QueryService) GetTxDistribution(
 	return &types.GetTxDistributionResponse{Distribution: distribution}, nil
 }
 
-// RegisterMempoolService registers the Block SDK mempool queries on the gRPC router.
+// RegisterMempoolService registers the Block SDK mempool queries on the gRPC server.
+
 func RegisterMempoolService(
 	server gogogrpc.Server,
 	mempool block.Mempool,

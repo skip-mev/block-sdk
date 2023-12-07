@@ -433,8 +433,8 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			suite.fillTOBLane(tc.numTobTxs)
 
 			// Remove all transactions from the lanes
-			mevCount := uint64(tc.numTobTxs)
-			baseCount := uint64(tc.numBaseTxs)
+			mevCount := tc.numTobTxs
+			baseCount := tc.numBaseTxs
 			for iterator := suite.baseLane.Select(suite.ctx, nil); iterator != nil; {
 				tx := iterator.Tx()
 
