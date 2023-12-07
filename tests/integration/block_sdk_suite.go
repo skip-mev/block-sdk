@@ -121,6 +121,12 @@ func (s *IntegrationTestSuite) TestQueryParams() {
 	require.NoError(s.T(), params.Validate())
 }
 
+func (s *IntegrationTestSuite) TestMempoolService() {
+	resp, err := QueryMempool(s.T(), s.chain)
+	s.Require().NoError(err)
+	s.Require().Len(resp.Distribution, 3)
+}
+
 // TestValidBids tests the execution of various valid auction bids. There are a few
 // invariants that are tested:
 //
