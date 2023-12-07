@@ -78,13 +78,15 @@ $(BUILD_DIR)/:
 # other addresses using "genesis add-genesis-account address 10000000000000000000000000stake".
 # This will allow users to bootstrap their wallet with a balance.
 build-and-start-app: build-test-app
+	rm -rf $(HOMEDIR)
+
 	./build/testappd init validator1 --chain-id chain-id-0 --home $(HOMEDIR)
 	./build/testappd keys add validator1 --home $(HOMEDIR) --keyring-backend test
 	./build/testappd genesis add-genesis-account validator1 10000000000000000000000000stake --home $(HOMEDIR) --keyring-backend test
 	./build/testappd genesis add-genesis-account cosmos1see0htr47uapjvcvh0hu6385rp8lw3em24hysg 10000000000000000000000000stake --home $(HOMEDIR) --keyring-backend test
 	./build/testappd genesis gentx validator1 1000000000stake --chain-id chain-id-0 --home $(HOMEDIR) --keyring-backend test
 	./build/testappd genesis collect-gentxs --home $(HOMEDIR)
-	./build/testappd start --api.enable true --api.enabled-unsafe-cors true --log_level info --home $(HOMEDIR)
+	./build/testappd start --api.enable false --api.enabled-unsafe-cors false --log_level info --home $(HOMEDIR)
 
 .PHONY: build-test-app build-and-start-app
 
