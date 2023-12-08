@@ -9,13 +9,10 @@ BUILD_DIR ?= $(CURDIR)/build
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 HTTPS_GIT := https://github.com/skip-mev/block-sdk.git
 DOCKER := $(shell which docker)
-<<<<<<< HEAD
-=======
 HOMEDIR ?= $(CURDIR)/tests/.testappd
 GENESIS ?= $(HOMEDIR)/config/genesis.json
 GENESIS_TMP ?= $(HOMEDIR)/config/genesis_tmp.json
 COVER_FILE ?= "cover.out"
->>>>>>> 7d8a695 (feat: gRPC mempool service (#275))
 
 ###############################################################################
 ###                                Test App                                 ###

@@ -12,17 +12,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-<<<<<<< HEAD
+	"github.com/skip-mev/block-sdk/lanes/base"
+	"github.com/skip-mev/block-sdk/lanes/free"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v7"
 	"github.com/strangelove-ventures/interchaintest/v7/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v7/ibc"
-=======
-	"github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
-	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
-	"github.com/strangelove-ventures/interchaintest/v8/ibc"
->>>>>>> 7d8a695 (feat: gRPC mempool service (#275))
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 )

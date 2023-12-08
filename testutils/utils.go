@@ -4,13 +4,8 @@ import (
 	"math/rand"
 	"testing"
 
-<<<<<<< HEAD
-=======
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	storetypes "cosmossdk.io/store/types"
-	txsigning "cosmossdk.io/x/tx/signing"
->>>>>>> 7d8a695 (feat: gRPC mempool service (#275))
+	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -18,6 +13,7 @@ import (
 	"github.com/cosmos/cosmos-sdk/crypto/keys/ed25519"
 	"github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
 	cryptotypes "github.com/cosmos/cosmos-sdk/crypto/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	"github.com/cosmos/cosmos-sdk/testutil"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/cosmos/cosmos-sdk/types/tx/signing"
@@ -29,7 +25,6 @@ import (
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/mocks"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
@@ -95,7 +90,7 @@ func CreateMempool() *block.LanedMempool {
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 
 	lanes := []block.Lane{mevLane, freeLane, defaultLane}
-	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes, mocks.MockLaneFetcher{})
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
 	if err != nil {
 		panic(err)
 	}
