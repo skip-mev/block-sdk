@@ -34,10 +34,16 @@ jobs:
         if: env.GIT_DIFF
         run: |
           go work init
+<<<<<<< HEAD
           make test-unit
       - name: Test Coverage
         run: |
           go work init ||:
+=======
+          make test
+      - name: Test Coverage
+        run: |
+>>>>>>> 56eeeb3 (chore: Add codecov (#276))
           make test-cover
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
