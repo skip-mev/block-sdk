@@ -9,6 +9,7 @@ BUILD_DIR ?= $(CURDIR)/build
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 HTTPS_GIT := https://github.com/skip-mev/block-sdk.git
 DOCKER := $(shell which docker)
+COVER_FILE ?= "cover.out"
 
 ###############################################################################
 ###                                Test App                                 ###
@@ -127,6 +128,15 @@ test-integration: $(TEST_INTEGRATION_DEPS)
 
 test: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
+
+test-cover: tidy
+	@echo Running unit tests and creating coverage report...
+	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
+	@sed -i '/.pb.go/d' $(COVER_FILE)
+	@sed -i '/.pulsar.go/d' $(COVER_FILE)
+	@sed -i '/.proto/d' $(COVER_FILE)
+	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
+
 
 .PHONY: test test-integration
 
