@@ -37,6 +37,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
+	servicetypes "github.com/skip-mev/block-sdk/block/service/types"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -365,6 +366,18 @@ func QueryValidators(t *testing.T, chain *cosmos.CosmosChain) []sdk.ValAddress {
 		addrs[i] = sdk.ValAddress(addrBz)
 	}
 	return addrs
+}
+
+// QueryMempool queries the mempool of the given chain
+func QueryMempool(t *testing.T, chain ibc.Chain) (*servicetypes.GetTxDistributionResponse, error) {
+	// get grpc client of the node
+	grpcAddr := chain.GetHostGRPCAddress()
+	cc, err := grpc.Dial(grpcAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
+
+	require.NoError(t, err)
+
+	client := servicetypes.NewServiceClient(cc)
+	return client.GetTxDistribution(context.Background(), &servicetypes.GetTxDistributionRequest{})
 }
 
 // QueryAccountBalance queries a given account's balance on the chain

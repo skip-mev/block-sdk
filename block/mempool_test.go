@@ -121,43 +121,43 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 func (suite *BlockBusterTestSuite) TestInsert() {
 	cases := []struct {
 		name               string
-		insertDistribution map[string]int
+		insertDistribution map[string]uint64
 	}{
 		{
 			"insert 1 mev tx",
-			map[string]int{
+			map[string]uint64{
 				suite.mevLane.Name(): 1,
 			},
 		},
 		{
 			"insert 10 mev txs",
-			map[string]int{
+			map[string]uint64{
 				suite.mevLane.Name(): 10,
 			},
 		},
 		{
 			"insert 1 base tx",
-			map[string]int{
+			map[string]uint64{
 				suite.baseLane.Name(): 1,
 			},
 		},
 		{
 			"insert 10 base txs and 10 mev txs",
-			map[string]int{
+			map[string]uint64{
 				suite.baseLane.Name(): 10,
 				suite.mevLane.Name():  10,
 			},
 		},
 		{
 			"insert 100 base txs and 100 mev txs",
-			map[string]int{
+			map[string]uint64{
 				suite.baseLane.Name(): 100,
 				suite.mevLane.Name():  100,
 			},
 		},
 		{
 			"insert 100 base txs, 100 mev txs, and 100 free txs",
-			map[string]int{
+			map[string]uint64{
 				suite.baseLane.Name(): 100,
 				suite.mevLane.Name():  100,
 				suite.freeLane.Name(): 100,
@@ -165,20 +165,20 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 		},
 		{
 			"insert 10 free txs",
-			map[string]int{
+			map[string]uint64{
 				suite.freeLane.Name(): 10,
 			},
 		},
 		{
 			"insert 10 free txs and 10 base txs",
-			map[string]int{
+			map[string]uint64{
 				suite.freeLane.Name(): 10,
 				suite.baseLane.Name(): 10,
 			},
 		},
 		{
 			"insert 10 mev txs and 10 free txs",
-			map[string]int{
+			map[string]uint64{
 				suite.mevLane.Name():  10,
 				suite.freeLane.Name(): 10,
 			},
@@ -198,18 +198,18 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 			// Fill the Free lane with numFreeTxs transactions
 			suite.fillFreeLane(tc.insertDistribution[suite.freeLane.Name()])
 
-			sum := 0
+			sum := uint64(0)
 			for _, v := range tc.insertDistribution {
 				sum += v
 			}
 
 			// Validate the mempool
-			suite.Require().Equal(sum, suite.mempool.CountTx())
+			suite.Require().Equal(int(sum), suite.mempool.CountTx())
 
 			// Validate the lanes
-			suite.Require().Equal(tc.insertDistribution[suite.mevLane.Name()], suite.mevLane.CountTx())
-			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], suite.baseLane.CountTx())
-			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], suite.freeLane.CountTx())
+			suite.Require().Equal(tc.insertDistribution[suite.mevLane.Name()], uint64(suite.mevLane.CountTx()))
+			suite.Require().Equal(tc.insertDistribution[suite.baseLane.Name()], uint64(suite.baseLane.CountTx()))
+			suite.Require().Equal(tc.insertDistribution[suite.freeLane.Name()], uint64(suite.freeLane.CountTx()))
 
 			// Validate the lane counts
 			laneCounts := suite.mempool.GetTxDistribution()
@@ -225,8 +225,8 @@ func (suite *BlockBusterTestSuite) TestInsert() {
 func (suite *BlockBusterTestSuite) TestRemove() {
 	cases := []struct {
 		name       string
-		numTobTxs  int
-		numBaseTxs int
+		numTobTxs  uint64
+		numBaseTxs uint64
 	}{
 		{
 			"insert 1 mev tx",
@@ -279,7 +279,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 
 				// Ensure the number of transactions in the lane is correct
 				baseCount--
-				suite.Require().Equal(suite.baseLane.CountTx(), baseCount)
+				suite.Require().Equal(suite.baseLane.CountTx(), int(baseCount))
 
 				distribution := suite.mempool.GetTxDistribution()
 				suite.Require().Equal(distribution[suite.baseLane.Name()], baseCount)
@@ -288,7 +288,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			}
 
 			suite.Require().Equal(0, suite.baseLane.CountTx())
-			suite.Require().Equal(mevCount, suite.mevLane.CountTx())
+			suite.Require().Equal(int(mevCount), suite.mevLane.CountTx())
 
 			// Remove all transactions from the lanes
 			for iterator := suite.mevLane.Select(suite.ctx, nil); iterator != nil; {
@@ -302,7 +302,7 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 
 				// Ensure the number of transactions in the lane is correct
 				mevCount--
-				suite.Require().Equal(suite.mevLane.CountTx(), mevCount)
+				suite.Require().Equal(suite.mevLane.CountTx(), int(mevCount))
 
 				distribution := suite.mempool.GetTxDistribution()
 				suite.Require().Equal(distribution[suite.mevLane.Name()], mevCount)
@@ -318,15 +318,15 @@ func (suite *BlockBusterTestSuite) TestRemove() {
 			distribution := suite.mempool.GetTxDistribution()
 
 			// Ensure that the lane counts are correct
-			suite.Require().Equal(distribution[suite.mevLane.Name()], 0)
-			suite.Require().Equal(distribution[suite.baseLane.Name()], 0)
+			suite.Require().Equal(distribution[suite.mevLane.Name()], uint64(0))
+			suite.Require().Equal(distribution[suite.baseLane.Name()], uint64(0))
 		})
 	}
 }
 
 // fillBaseLane fills the base lane with numTxs transactions that are randomly created.
-func (suite *BlockBusterTestSuite) fillBaseLane(numTxs int) {
-	for i := 0; i < numTxs; i++ {
+func (suite *BlockBusterTestSuite) fillBaseLane(numTxs uint64) {
+	for i := uint64(0); i < numTxs; i++ {
 		// randomly select an account to create the tx
 		randomIndex := suite.random.Intn(len(suite.accounts))
 		acc := suite.accounts[randomIndex]
@@ -345,8 +345,8 @@ func (suite *BlockBusterTestSuite) fillBaseLane(numTxs int) {
 }
 
 // fillTOBLane fills the TOB lane with numTxs transactions that are randomly created.
-func (suite *BlockBusterTestSuite) fillTOBLane(numTxs int) {
-	for i := 0; i < numTxs; i++ {
+func (suite *BlockBusterTestSuite) fillTOBLane(numTxs uint64) {
+	for i := uint64(0); i < numTxs; i++ {
 		// randomly select a bidder to create the tx
 		randomIndex := suite.random.Intn(len(suite.accounts))
 		acc := suite.accounts[randomIndex]
@@ -365,8 +365,8 @@ func (suite *BlockBusterTestSuite) fillTOBLane(numTxs int) {
 }
 
 // filleFreeLane fills the free lane with numTxs transactions that are randomly created.
-func (suite *BlockBusterTestSuite) fillFreeLane(numTxs int) {
-	for i := 0; i < numTxs; i++ {
+func (suite *BlockBusterTestSuite) fillFreeLane(numTxs uint64) {
+	for i := uint64(0); i < numTxs; i++ {
 		// randomly select an account to create the tx
 		randomIndex := suite.random.Intn(len(suite.accounts))
 		acc := suite.accounts[randomIndex]
