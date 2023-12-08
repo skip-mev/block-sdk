@@ -44,6 +44,7 @@ import (
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
+	service "github.com/skip-mev/block-sdk/block/service"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 	blocksdkkeeper "github.com/skip-mev/block-sdk/x/blocksdk/keeper"
@@ -385,11 +386,29 @@ func (app *TestApp) SimulationManager() *module.SimulationManager {
 // RegisterAPIRoutes registers all application module routes with the provided
 // API server.
 func (app *TestApp) RegisterAPIRoutes(apiSvr *api.Server, apiConfig config.APIConfig) {
+	// Register the base app API routes.
 	app.App.RegisterAPIRoutes(apiSvr, apiConfig)
+
+	// Register the Block SDK mempool API routes.
+	service.RegisterGRPCGatewayRoutes(apiSvr.ClientCtx, apiSvr.GRPCGatewayRouter)
+
 	// register swagger API in app.go so that other applications can override easily
 	if err := server.RegisterSwaggerAPI(apiSvr.ClientCtx, apiSvr.Router, apiConfig.Swagger); err != nil {
 		panic(err)
 	}
+}
+
+// RegisterTxService implements the Application.RegisterTxService method.
+func (app *TestApp) RegisterTxService(clientCtx client.Context) {
+	// Register the base app transaction service.
+	app.App.RegisterTxService(clientCtx)
+
+	// Register the Block SDK mempool transaction service.
+	mempool, ok := app.App.Mempool().(block.Mempool)
+	if !ok {
+		panic("mempool is not a block.Mempool")
+	}
+	service.RegisterMempoolService(app.GRPCQueryRouter(), mempool)
 }
 
 // GetMaccPerms returns a copy of the module account permissions
