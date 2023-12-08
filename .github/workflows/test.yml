@@ -34,7 +34,20 @@ jobs:
         if: env.GIT_DIFF
         run: |
           go work init
+<<<<<<< HEAD
           make test-unit
+=======
+          make test
+      - name: Test Coverage
+        run: |
+          make test-cover
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: cover.out
+>>>>>>> 56eeeb3 (chore: Add codecov (#276))
 
   test-integration:
     runs-on: ubuntu-latest
