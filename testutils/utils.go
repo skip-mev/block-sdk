@@ -28,7 +28,6 @@ import (
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/mocks"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
@@ -94,7 +93,7 @@ func CreateMempool() *block.LanedMempool {
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 
 	lanes := []block.Lane{mevLane, freeLane, defaultLane}
-	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes, mocks.MockLaneFetcher{})
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
 	if err != nil {
 		panic(err)
 	}
