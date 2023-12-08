@@ -24,7 +24,7 @@ type (
 		Contains(tx sdk.Tx) bool
 
 		// GetTxDistribution returns the number of transactions in each lane.
-		GetTxDistribution() map[string]int
+		GetTxDistribution() map[string]uint64
 	}
 
 	// LanedMempool defines the Block SDK mempool implementation. It contains a registry
@@ -72,11 +72,11 @@ func (m *LanedMempool) CountTx() int {
 }
 
 // GetTxDistribution returns the number of transactions in each lane.
-func (m *LanedMempool) GetTxDistribution() map[string]int {
-	counts := make(map[string]int, len(m.registry))
+func (m *LanedMempool) GetTxDistribution() map[string]uint64 {
+	counts := make(map[string]uint64, len(m.registry))
 
 	for _, lane := range m.registry {
-		counts[lane.Name()] = lane.CountTx()
+		counts[lane.Name()] = uint64(lane.CountTx())
 	}
 
 	return counts
