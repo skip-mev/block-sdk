@@ -2,6 +2,7 @@ package integration
 
 import (
 	"context"
+	"github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"math/rand"
 	"time"
 
@@ -1420,6 +1421,66 @@ func (s *IntegrationTestSuite) TestNetwork() {
 				}
 
 				s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), txs)
+			}
+		}
+	})
+	s.Run("app-side mempool mirrors consensus-side mempool", func() {
+		for {
+			select {
+			case <-amountToTest.C:
+				return
+			default:
+				height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
+				s.NoError(err)
+				WaitForHeight(s.T(), s.chain.(*cosmos.CosmosChain), height+1)
+
+				s.T().Logf("height: %d", height+1)
+
+				txs := []Tx{}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[0:3] {
+						bid := rand.Int63n(1000000)
+						bidAmount := sdk.NewCoin(s.denom, math.NewInt(bid))
+
+						bidTx := s.CreateDummyAuctionBidTx(
+							height+2,
+							user,
+							bidAmount,
+						)
+						txs = append(txs, bidTx)
+					}
+				}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[3:6] {
+						sequenceOffset := uint64(i)
+
+						freeTx := s.CreateDummyFreeTx(user, validators[0], delegation, sequenceOffset)
+						txs = append(txs, freeTx)
+
+					}
+				}
+
+				for i := 0; i < numTxs; i++ {
+					for _, user := range s.fuzzusers[6:10] {
+						fee := rand.Int63n(100000)
+						sequenceOffset := uint64(i)
+						normalTx := s.CreateDummyNormalTx(user, s.user1, sendAmount, sequenceOffset, fee)
+						txs = append(txs, normalTx)
+					}
+				}
+
+				s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), txs)
+				singleNode := s.chain.(*cosmos.CosmosChain).GetNode()
+				_ = testutil.WaitForBlocksUtil(1, func(_ int) error {
+					cometMempool, err := singleNode.Client.NumUnconfirmedTxs(context.Background())
+					s.Require().NoError(err)
+					appMempool, err := QueryMempool(s.T(), singleNode.Chain)
+					s.Require().NoError(err)
+					s.Require().Equal(cometMempool.Total, appMempool.Size())
+					return nil
+				})
 			}
 		}
 	})
