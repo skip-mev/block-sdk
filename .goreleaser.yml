@@ -5,6 +5,7 @@ release:
   github:
     owner: skip-mev
     name: block-sdk
+  prerelease: true
 
 builds:
   - skip: true
@@ -24,3 +25,7 @@ snapshot:
 
 changelog:
   skip: false
+  use: 'github'
+
+checksum:
+  disable: false
