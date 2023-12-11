@@ -29,3 +29,6 @@ changelog:
 
 checksum:
   disable: false
+
+source:
+  enabled: true
