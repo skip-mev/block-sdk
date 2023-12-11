@@ -32,3 +32,5 @@ checksum:
 
 source:
   enabled: true
+  files:
+    - **/*
