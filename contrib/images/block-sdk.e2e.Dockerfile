@@ -3,7 +3,7 @@ FROM golang:1.21-bullseye AS builder
 WORKDIR /src/bsdk
 COPY . .
 
-RUN go mod tidy && RUN make build-test-app
+RUN go mod tidy && make build-test-app
 
 ## Prepare the final clear binary
 FROM ubuntu:rolling
