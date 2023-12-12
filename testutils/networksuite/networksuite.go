@@ -41,7 +41,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 		cfg.GenesisState[moduleName] = buf
 	}
 
-	// initialize fee market
+	// initialize genesis
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[auctiontypes.ModuleName], &nts.AuctionState))
 	nts.AuctionState = populateAuction(r, nts.AuctionState)
 	updateGenesisConfigState(auctiontypes.ModuleName, &nts.AuctionState)
