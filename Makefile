@@ -131,10 +131,10 @@ test-e2e: $(TEST_E2E_DEPS)
 	@ echo "Running e2e tests..."
 	@go test ./tests/e2e/block_sdk_e2e_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_E2E_TAGS)'
 
-test-unit:
+test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
-test-integration:
+test-integration: tidy
 	@go test -v -race ./tests/integration
 
 test-cover: tidy
@@ -186,7 +186,7 @@ proto-update-deps:
 ###                                Linting                                  ###
 ###############################################################################
 
-lint:
+lint: use-main
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --out-format=tab
 
@@ -204,7 +204,7 @@ lint-markdown:
 ###                                Formatting                               ###
 ###############################################################################
 
-format:
+format: use-main
 
 format:
 	@find . -name '*.go' -type f -not -path "*.git*" -not -path "./client/docs/statik/statik.go" -not -name '*.pb.go' -not -name '*.pulsar.go' -not -name '*.gw.go' | xargs go run mvdan.cc/gofumpt -w .
