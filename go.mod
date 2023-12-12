@@ -1,8 +1,6 @@
 module github.com/skip-mev/block-sdk
 
-go 1.21.4
-
-toolchain go1.21.5
+go 1.21.5
 
 require (
 	cosmossdk.io/api v0.7.2
