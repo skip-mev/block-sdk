@@ -14,13 +14,13 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  test:
+  test-unit:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-go@v4
         with:
-          go-version: 1.21
+          go-version: 1.21.5
           cache: true
           cache-dependency-path: go.sum
       - uses: technote-space/get-diff-action@v6.1.2
@@ -34,7 +34,7 @@ jobs:
         if: env.GIT_DIFF
         run: |
           go work init
-          make test
+          make test-unit
       - name: Test Coverage
         run: |
           make test-cover
@@ -44,7 +44,26 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: cover.out
-
+  test-integration:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v4
+        with:
+          go-version: 1.21.5
+          cache: true
+          cache-dependency-path: go.sum
+      - uses: technote-space/get-diff-action@v6.1.2
+        id: git_diff
+        with:
+          PATTERNS: |
+            **/*.go
+            go.mod
+            go.sum
+      - name: tests
+        if: env.GIT_DIFF
+        run: |
+          make test-integration
   test-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25
@@ -59,7 +78,7 @@ jobs:
       - uses: actions/setup-go@v4
         if: env.GIT_DIFF
         with:
-          go-version: "1.21"
+          go-version: 1.21.5
           cache: true
 
       # In this step, this action saves a list of existing images, the cache is

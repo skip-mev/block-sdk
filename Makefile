@@ -131,8 +131,11 @@ test-e2e: $(TEST_E2E_DEPS)
 	@ echo "Running e2e tests..."
 	@go test ./tests/e2e/block_sdk_e2e_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_E2E_TAGS)'
 
-test: use-main
+test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
+
+test-integration: use-main
+	@go test -v -race ./tests/integration
 
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
@@ -142,8 +145,9 @@ test-cover: tidy
 	@sed -i '/.proto/d' $(COVER_FILE)
 	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
 
+test-all: test-unit test-integration test-e2e
 
-.PHONY: test test-e2e
+.PHONY: test-unit test-integration test-e2e test-all
 
 ###############################################################################
 ###                                Protobuf                                 ###
