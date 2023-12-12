@@ -45,7 +45,7 @@ jobs:
         with:
           files: cover.out
 
-  test-integration:
+  test-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
@@ -71,8 +71,8 @@ jobs:
         # Ignore the failure of a step and avoid terminating the job.
         continue-on-error: true
 
-      - name: Integration Tests
+      - name: E2E Tests
         if: env.GIT_DIFF
         run: |
           go work init
-          make test-integration
+          make test-e2e
