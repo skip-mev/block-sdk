@@ -44,7 +44,7 @@ func CmdQueryLane() *cobra.Command {
 			queryClient := types.NewQueryClient(clientCtx)
 
 			request := &types.QueryLaneRequest{}
-			response, err := queryClient.Lane(clientCtx.CmdContext, request)
+			response, err := queryClient.Lane(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
@@ -71,9 +71,8 @@ func CmdQueryLanes() *cobra.Command {
 			}
 
 			queryClient := types.NewQueryClient(clientCtx)
-
 			request := &types.QueryLanesRequest{}
-			response, err := queryClient.Lanes(clientCtx.CmdContext, request)
+			response, err := queryClient.Lanes(cmd.Context(), request)
 			if err != nil {
 				return err
 			}
