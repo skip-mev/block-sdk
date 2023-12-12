@@ -1,6 +1,6 @@
 module github.com/skip-mev/block-sdk/tests/e2e
 
-go 1.21.4
+go 1.21.5
 
 toolchain go1.21.5
 
