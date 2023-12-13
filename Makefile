@@ -147,7 +147,7 @@ test-cover: tidy
 
 test-all: test-unit test-integration test-e2e
 
-.PHONY: test-unit test-integration test-e2e test-all
+.PHONY: test-unit test-integration test-e2e test-all test-cover
 
 ###############################################################################
 ###                                Protobuf                                 ###
