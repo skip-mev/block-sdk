@@ -41,14 +41,8 @@ var (
 type NetworkTestSuite struct {
 	suite.Suite
 
-<<<<<<< HEAD
-	Network      *network.Network
+	NetworkSuite *network.TestSuite
 	AuctionState auctiontypes.GenesisState
-=======
-	NetworkSuite  *network.TestSuite
-	AuctionState  auctiontypes.GenesisState
-	BlockSDKState blocksdktypes.GenesisState
->>>>>>> af3bb52 (refactor(tests): use grpc instead of cli for all network testing (#301))
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -69,14 +63,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	nts.AuctionState = populateAuction(r, nts.AuctionState)
 	updateGenesisConfigState(auctiontypes.ModuleName, &nts.AuctionState)
 
-<<<<<<< HEAD
-	nts.Network = network.New(nts.T(), cfg)
-=======
-	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
-	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
-
 	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
->>>>>>> af3bb52 (refactor(tests): use grpc instead of cli for all network testing (#301))
 }
 
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {

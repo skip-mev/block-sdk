@@ -12,10 +12,6 @@ import (
 
 	"github.com/skip-mev/block-sdk/testutils/networksuite"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-<<<<<<< HEAD
-=======
-	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
->>>>>>> af3bb52 (refactor(tests): use grpc instead of cli for all network testing (#301))
 )
 
 // NetworkTestSuite is a test suite for network integration tests.
@@ -28,44 +24,6 @@ func TestNetworkTestSuite(t *testing.T) {
 	suite.Run(t, new(NetworkTestSuite))
 }
 
-<<<<<<< HEAD
-=======
-func (s *NetworkTestSuite) TestGetLanes() {
-	s.T().Parallel()
-
-	common := []string{
-		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
-	}
-	for _, tc := range []struct {
-		name string
-
-		args []string
-		err  error
-		obj  []blocksdktypes.Lane
-	}{
-		{
-			name: "should return default lanes",
-			args: common,
-			obj:  s.BlockSDKState.Lanes,
-		},
-	} {
-		s.T().Run(tc.name, func(t *testing.T) {
-			tc := tc
-			resp, err := s.QueryBlockSDKLanes()
-			if tc.err != nil {
-				stat, ok := status.FromError(tc.err)
-				require.True(t, ok)
-				require.ErrorIs(t, stat.Err(), tc.err)
-			} else {
-				require.NoError(t, err)
-				require.NotNil(t, resp.Lanes)
-				require.ElementsMatch(t, tc.obj, resp.Lanes)
-			}
-		})
-	}
-}
-
->>>>>>> af3bb52 (refactor(tests): use grpc instead of cli for all network testing (#301))
 func (s *NetworkTestSuite) TestGetAuctionParams() {
 	s.T().Parallel()
 
@@ -110,15 +68,4 @@ func (s *NetworkTestSuite) QueryAuctionParams() (*auctiontypes.QueryParamsRespon
 
 	client := auctiontypes.NewQueryClient(cc)
 	return client.Params(context.Background(), &auctiontypes.QueryParamsRequest{})
-}
-
-func (s *NetworkTestSuite) QueryBlockSDKLanes() (*blocksdktypes.QueryLanesResponse, error) {
-	s.T().Helper()
-
-	cc, closeConn, err := s.NetworkSuite.GetGRPC()
-	s.Require().NoError(err)
-	defer closeConn()
-
-	client := blocksdktypes.NewQueryClient(cc)
-	return client.Lanes(context.Background(), &blocksdktypes.QueryLanesRequest{})
 }
