@@ -133,6 +133,9 @@ test-e2e: $(TEST_E2E_DEPS)
 test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
+test-integration: tidy
+	@go test -v -race ./tests/integration
+
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
 	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
@@ -141,9 +144,9 @@ test-cover: tidy
 	@sed -i '/.proto/d' $(COVER_FILE)
 	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
 
-test-all: test-unit test-e2e
+test-all: test-unit test-integration test-e2e
 
-.PHONY: test-unit test-e2e test-cover
+.PHONY: test-unit test-e2e test-cover test-integration
 
 ###############################################################################
 ###                                Protobuf                                 ###
