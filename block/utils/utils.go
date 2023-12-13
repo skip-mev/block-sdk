@@ -8,6 +8,7 @@ import (
 	comettypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 )
 

@@ -1,4 +1,4 @@
-module github.com/skip-mev/block-sdk/tests/integration
+module github.com/skip-mev/block-sdk/tests/e2e
 
 go 1.20
 
