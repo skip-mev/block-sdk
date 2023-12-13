@@ -20,7 +20,11 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/huandu/skiplist v1.2.0
+<<<<<<< HEAD
 	github.com/skip-mev/chaintestutil v0.0.0-20231207155412-975710cc9051
+=======
+	github.com/skip-mev/chaintestutil v0.0.0-20231213172849-7c623445dde1
+>>>>>>> af3bb52 (refactor(tests): use grpc instead of cli for all network testing (#301))
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.16.0
 	github.com/stretchr/testify v1.8.4
