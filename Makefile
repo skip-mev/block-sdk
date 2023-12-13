@@ -114,17 +114,11 @@ tidy:
 
 docker-build: use-main
 	@echo "Building E2E Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/pob.e2e.Dockerfile .
+	@DOCKER_BUILDKIT=1 docker build -t skip-mev/pob-e2e -f contrib/images/block-sdk.e2e.Dockerfile .
 
-<<<<<<< HEAD
-docker-build-integration: use-main
-	@echo "Building integration-test Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t block-sdk-integration -f contrib/images/pob.integration.Dockerfile .
-=======
 docker-build-e2e: use-main
 	@echo "Building e2e-test Docker image..."
 	@DOCKER_BUILDKIT=1 docker build -t block-sdk-e2e -f contrib/images/block-sdk.e2e.Dockerfile .
->>>>>>> 7e279c5 (chore: rename `integration` to `e2e` (#291))
 
 ###############################################################################
 ###                                  Tests                                  ###
@@ -140,9 +134,6 @@ test-e2e: $(TEST_E2E_DEPS)
 test: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
-<<<<<<< HEAD
-.PHONY: test test-integration
-=======
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
 	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
@@ -152,8 +143,7 @@ test-cover: tidy
 	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
 
 
-.PHONY: test test-e2e
->>>>>>> 7e279c5 (chore: rename `integration` to `e2e` (#291))
+.PHONY: test test-e2e test-cover
 
 ###############################################################################
 ###                                Protobuf                                 ###
