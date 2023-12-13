@@ -7,6 +7,7 @@ import (
 
 	comettypes "github.com/cometbft/cometbft/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+
 	"github.com/skip-mev/block-sdk/block/utils"
 )
 

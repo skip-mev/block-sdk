@@ -1,4 +1,4 @@
-package integration_test
+package e2e_test
 
 import (
 	"fmt"
@@ -11,7 +11,7 @@ import (
 	ictestutil "github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/tests/integration"
+	"github.com/skip-mev/block-sdk/tests/e2e"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -22,7 +22,7 @@ var (
 	denom         = "stake"
 
 	image = ibc.DockerImage{
-		Repository: "block-sdk-integration",
+		Repository: "block-sdk-e2e",
 		Version:    "latest",
 		UidGid:     "1000:1000",
 	}
@@ -80,6 +80,6 @@ func MakeEncodingConfig() *testutil.TestEncodingConfig {
 	return &cfg
 }
 
-func TestIntegrationTestSuite(t *testing.T) {
-	suite.Run(t, integration.NewIntegrationTestSuiteFromSpec(spec))
+func TestE2ETestSuite(t *testing.T) {
+	suite.Run(t, e2e.NewE2ETestSuiteFromSpec(spec))
 }
