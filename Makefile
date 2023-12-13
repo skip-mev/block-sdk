@@ -96,16 +96,15 @@ build-and-start-app: build-test-app
 ###############################################################################
 
 use-main:
-	go work edit -use .
-	go work edit -dropuse ./tests/e2e
+	@go work edit -use .
+	@go work edit -dropuse ./tests/e2e
 
 use-e2e:
-	go work edit -dropuse .
-	go work edit -use ./tests/e2e
+	@go work edit -dropuse .
+	@go work edit -use ./tests/e2e
 
-tidy:
-	go mod tidy
-	gofmt -s -w ./
+tidy: format
+	@go mod tidy
 
 .PHONY: docker-build docker-build-e2e
 ###############################################################################
@@ -131,8 +130,11 @@ test-e2e: $(TEST_E2E_DEPS)
 	@ echo "Running e2e tests..."
 	@go test ./tests/e2e/block_sdk_e2e_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_E2E_TAGS)'
 
-test: use-main
+test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
+
+test-integration: tidy
+	@go test -v -race ./tests/integration
 
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
@@ -142,8 +144,13 @@ test-cover: tidy
 	@sed -i '/.proto/d' $(COVER_FILE)
 	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
 
+test-all: test-unit test-integration test-e2e
 
+<<<<<<< HEAD
 .PHONY: test test-e2e test-cover
+=======
+.PHONY: test-unit test-integration test-e2e test-all test-cover
+>>>>>>> b48073d (test: use `chaintestutil` (#296))
 
 ###############################################################################
 ###                                Protobuf                                 ###
@@ -186,7 +193,7 @@ lint: use-main
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --out-format=tab
 
-lint-fix: use-main
+lint-fix:
 	@echo "--> Running linter"
 	@go run github.com/golangci/golangci-lint/cmd/golangci-lint run --fix --out-format=tab --issues-exit-code=0
 
