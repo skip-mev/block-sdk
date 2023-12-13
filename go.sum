@@ -1223,8 +1223,8 @@ github.com/sivchari/nosnakecase v1.7.0 h1:7QkpWIRMe8x25gckkFd2A5Pi6Ymo0qgr4JrhGt
 github.com/sivchari/nosnakecase v1.7.0/go.mod h1:CwDzrzPea40/GB6uynrNLiorAlgFRvRbFSgJx2Gs+QY=
 github.com/sivchari/tenv v1.7.1 h1:PSpuD4bu6fSmtWMxSGWcvqUUgIn7k3yOJhOIzVWn8Ak=
 github.com/sivchari/tenv v1.7.1/go.mod h1:64yStXKSOxDfX47NlhVwND4dHwfZDdbp2Lyl018Icvg=
-github.com/skip-mev/chaintestutil v0.0.0-20231212161650-5a0fb41c56cc h1:raXVdBCZVt9HV8nA7yspL4rVswLtCxV40cTjEviaKgM=
-github.com/skip-mev/chaintestutil v0.0.0-20231212161650-5a0fb41c56cc/go.mod h1:mcyq67cXQTzyhCg2LSBeFS+u7GzWng5xnTFfUAqIHn4=
+github.com/skip-mev/chaintestutil v0.0.0-20231213172849-7c623445dde1 h1:x1hie4oqAp0Ay0ijolPKaKVFAHXKuMulBir2RGe1oc0=
+github.com/skip-mev/chaintestutil v0.0.0-20231213172849-7c623445dde1/go.mod h1:mcyq67cXQTzyhCg2LSBeFS+u7GzWng5xnTFfUAqIHn4=
 github.com/smartystreets/assertions v0.0.0-20180927180507-b2de0cb4f26d/go.mod h1:OnSkiWE9lh6wB0YB77sQom3nweQdgAjqCqsofrRNTgc=
 github.com/smartystreets/goconvey v1.6.4/go.mod h1:syvi0/a8iFYH4r/RixwvyeAJjdLS9QV7WQ/tjFTllLA=
 github.com/soheilhy/cmux v0.1.4/go.mod h1:IM3LyeVVIOuxMH7sFAkER9+bJ4dT7Ms6E4xg4kGIyLM=
