@@ -14,11 +14,11 @@ import (
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-// NetworkTestSuite is a test suite for query tests that initializes a network instance.
+// NetworkTestSuite is a test suite for tests that initializes a network instance.
 type NetworkTestSuite struct {
 	suite.Suite
 
-	Network      *network.Network
+	NetworkSuite *network.TestSuite
 	AuctionState auctiontypes.GenesisState
 }
 
@@ -40,7 +40,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	nts.AuctionState = populateAuction(r, nts.AuctionState)
 	updateGenesisConfigState(auctiontypes.ModuleName, &nts.AuctionState)
 
-	nts.Network = network.New(nts.T(), cfg)
+	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
 }
 
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {
