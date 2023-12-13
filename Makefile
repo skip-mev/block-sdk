@@ -97,17 +97,17 @@ build-and-start-app: build-test-app
 
 use-main:
 	go work edit -use .
-	go work edit -dropuse ./tests/integration
+	go work edit -dropuse ./tests/e2e
 
-use-integration:
+use-e2e:
 	go work edit -dropuse .
-	go work edit -use ./tests/integration
+	go work edit -use ./tests/e2e
 
 tidy:
 	go mod tidy
 	gofmt -s -w ./
 
-.PHONY: docker-build docker-build-integration
+.PHONY: docker-build docker-build-e2e
 ###############################################################################
 ##                                  Docker                                   ##
 ###############################################################################
@@ -116,25 +116,38 @@ docker-build: use-main
 	@echo "Building E2E Docker image..."
 	@DOCKER_BUILDKIT=1 docker build -t skip-mev/block-sdk-e2e -f contrib/images/block-sdk.e2e.Dockerfile .
 
-docker-build-integration: use-main
-	@echo "Building integration-test Docker image..."
-	@DOCKER_BUILDKIT=1 docker build -t block-sdk-integration -f contrib/images/block-sdk.integration.Dockerfile .
+docker-build-e2e: use-main
+	@echo "Building e2e-test Docker image..."
+	@DOCKER_BUILDKIT=1 docker build -t block-sdk-e2e -f contrib/images/block-sdk.e2e.Dockerfile .
 
 ###############################################################################
 ###                                  Tests                                  ###
 ###############################################################################
 
-TEST_INTEGRATION_DEPS = docker-build-integration use-integration
-TEST_INTEGRATION_TAGS = integration
+TEST_E2E_DEPS = docker-build-e2e use-e2e
+TEST_E2E_TAGS = e2e
 
-test-integration: $(TEST_INTEGRATION_DEPS)
-	@ echo "Running integration tests..."
-	@go test ./tests/integration/block_sdk_integration_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_INTEGRATION_TAGS)'
+test-e2e: $(TEST_E2E_DEPS)
+	@ echo "Running e2e tests..."
+	@go test ./tests/e2e/block_sdk_e2e_test.go -timeout 30m -p 1 -race -v -tags='$(TEST_E2E_TAGS)'
 
 test: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
+<<<<<<< HEAD
 .PHONY: test test-integration
+=======
+test-cover: tidy
+	@echo Running unit tests and creating coverage report...
+	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
+	@sed -i '/.pb.go/d' $(COVER_FILE)
+	@sed -i '/.pulsar.go/d' $(COVER_FILE)
+	@sed -i '/.proto/d' $(COVER_FILE)
+	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
+
+
+.PHONY: test test-e2e
+>>>>>>> 7e279c5 (chore: rename `integration` to `e2e` (#291))
 
 ###############################################################################
 ###                                Protobuf                                 ###

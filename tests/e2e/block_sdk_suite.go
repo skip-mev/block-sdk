@@ -1,4 +1,4 @@
-package integration
+package e2e
 
 import (
 	"context"
@@ -12,13 +12,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-	"github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	"github.com/skip-mev/block-sdk/lanes/base"
+	"github.com/skip-mev/block-sdk/lanes/free"
 )
 
 const (
@@ -30,8 +31,8 @@ type committedTx struct {
 	res *rpctypes.ResultTx
 }
 
-// IntegrationTestSuite runs the Block SDK integration test-suite against a given interchaintest specification
-type IntegrationTestSuite struct {
+// E2ETestSuite runs the Block SDK e2e test-suite against a given interchaintest specification
+type E2ETestSuite struct {
 	suite.Suite
 	// spec
 	spec *interchaintest.ChainSpec
@@ -53,14 +54,14 @@ type IntegrationTestSuite struct {
 	bc *cosmos.Broadcaster
 }
 
-func NewIntegrationTestSuiteFromSpec(spec *interchaintest.ChainSpec) *IntegrationTestSuite {
-	return &IntegrationTestSuite{
+func NewE2ETestSuiteFromSpec(spec *interchaintest.ChainSpec) *E2ETestSuite {
+	return &E2ETestSuite{
 		spec:  spec,
 		denom: "stake",
 	}
 }
 
-func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
+func (s *E2ETestSuite) WithDenom(denom string) *E2ETestSuite {
 	s.denom = denom
 
 	// update the bech32 prefixes
@@ -70,14 +71,14 @@ func (s *IntegrationTestSuite) WithDenom(denom string) *IntegrationTestSuite {
 	return s
 }
 
-func (s *IntegrationTestSuite) WithKeyringOptions(cdc codec.Codec, opts keyring.Option) {
+func (s *E2ETestSuite) WithKeyringOptions(cdc codec.Codec, opts keyring.Option) {
 	s.broadcasterOverrides = &KeyringOverride{
 		cdc:            cdc,
 		keyringOptions: opts,
 	}
 }
 
-func (s *IntegrationTestSuite) SetupSuite() {
+func (s *E2ETestSuite) SetupSuite() {
 	// build the chain
 	s.T().Log("building chain with spec", s.spec)
 	s.chain = ChainBuilderFromChainSpec(s.T(), s.spec)
@@ -101,12 +102,12 @@ func (s *IntegrationTestSuite) SetupSuite() {
 	s.setupBroadcaster()
 }
 
-func (s *IntegrationTestSuite) TearDownSuite() {
+func (s *E2ETestSuite) TearDownSuite() {
 	// close the interchain
 	s.ic.Close()
 }
 
-func (s *IntegrationTestSuite) SetupSubTest() {
+func (s *E2ETestSuite) SetupSubTest() {
 	// wait for 1 block height
 	// query height
 	height, err := s.chain.(*cosmos.CosmosChain).Height(context.Background())
@@ -115,7 +116,7 @@ func (s *IntegrationTestSuite) SetupSubTest() {
 	s.T().Logf("reached height %d", height+2)
 }
 
-func (s *IntegrationTestSuite) TestQueryParams() {
+func (s *E2ETestSuite) TestQueryParams() {
 	// query params
 	params := QueryAuctionParams(s.T(), s.chain)
 
@@ -123,7 +124,7 @@ func (s *IntegrationTestSuite) TestQueryParams() {
 	require.NoError(s.T(), params.Validate())
 }
 
-func (s *IntegrationTestSuite) TestMempoolService() {
+func (s *E2ETestSuite) TestMempoolService() {
 	resp, err := QueryMempool(s.T(), s.chain)
 	s.Require().NoError(err)
 	s.Require().Len(resp.Distribution, 3)
@@ -136,7 +137,7 @@ func (s *IntegrationTestSuite) TestMempoolService() {
 //  2. All transactions execute as expected.
 //  3. The balance of the escrow account should be updated correctly.
 //  4. Top of block bids will be included in block proposals before other transactions
-func (s *IntegrationTestSuite) TestValidBids() {
+func (s *E2ETestSuite) TestValidBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
@@ -383,7 +384,7 @@ func (s *IntegrationTestSuite) TestValidBids() {
 //     that are included in the same block.
 //  5. If there is a block that has multiple valid bids with timeouts that are sufficiently far apart,
 //     the bids should be executed respecting the highest bids until the timeout is reached.
-func (s *IntegrationTestSuite) TestMultipleBids() {
+func (s *E2ETestSuite) TestMultipleBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 	escrowAddr := sdk.AccAddress(params.EscrowAccountAddress).String()
 
@@ -515,7 +516,7 @@ func (s *IntegrationTestSuite) TestMultipleBids() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestInvalidBids() {
+func (s *E2ETestSuite) TestInvalidBids() {
 	params := QueryAuctionParams(s.T(), s.chain)
 
 	s.Run("searcher is attempting to submit a bundle that includes another bid tx", func() {
@@ -853,7 +854,7 @@ func (s *IntegrationTestSuite) TestInvalidBids() {
 //
 // 1. Transactions that qualify as free should not be deducted any fees.
 // 2. Transactions that do not qualify as free should be deducted the correct fees.
-func (s *IntegrationTestSuite) TestFreeLane() {
+func (s *E2ETestSuite) TestFreeLane() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 
@@ -977,7 +978,7 @@ func (s *IntegrationTestSuite) TestFreeLane() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestLanes() {
+func (s *E2ETestSuite) TestLanes() {
 	validators := QueryValidators(s.T(), s.chain.(*cosmos.CosmosChain))
 	require.True(s.T(), len(validators) > 0)
 
@@ -1276,7 +1277,7 @@ func (s *IntegrationTestSuite) TestLanes() {
 	})
 }
 
-func (s *IntegrationTestSuite) TestNetwork() {
+func (s *E2ETestSuite) TestNetwork() {
 	amountToTest := time.NewTicker(time.Second * 30)
 	defer amountToTest.Stop()
 

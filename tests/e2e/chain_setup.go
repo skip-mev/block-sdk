@@ -1,4 +1,4 @@
-package integration
+package e2e
 
 import (
 	"archive/tar"
@@ -90,7 +90,7 @@ func BuildInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *interc
 }
 
 // CreateTx creates a new transaction to be signed by the given user, including a provided set of messages
-func (s *IntegrationTestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height uint64, GasPrice int64, msgs ...sdk.Msg) []byte {
+func (s *E2ETestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height uint64, GasPrice int64, msgs ...sdk.Msg) []byte {
 	// create tx factory + Client Context
 	txf, err := s.bc.GetFactory(ctx, user)
 	s.Require().NoError(err)
@@ -127,7 +127,7 @@ func (s *IntegrationTestSuite) CreateTx(ctx context.Context, chain *cosmos.Cosmo
 	return bz
 }
 
-func (s *IntegrationTestSuite) CreateDummyAuctionBidTx(
+func (s *E2ETestSuite) CreateDummyAuctionBidTx(
 	height uint64,
 	searcher ibc.Wallet,
 	bid sdk.Coin,
@@ -148,7 +148,7 @@ func (s *IntegrationTestSuite) CreateDummyAuctionBidTx(
 	}
 }
 
-func (s *IntegrationTestSuite) CreateDummyNormalTx(
+func (s *E2ETestSuite) CreateDummyNormalTx(
 	from, to ibc.Wallet,
 	coins sdk.Coins,
 	sequenceOffset uint64,
@@ -170,7 +170,7 @@ func (s *IntegrationTestSuite) CreateDummyNormalTx(
 	}
 }
 
-func (s *IntegrationTestSuite) CreateDummyFreeTx(
+func (s *E2ETestSuite) CreateDummyFreeTx(
 	user ibc.Wallet,
 	validator sdk.ValAddress,
 	delegation sdk.Coin,
@@ -193,7 +193,7 @@ func (s *IntegrationTestSuite) CreateDummyFreeTx(
 }
 
 // SimulateTx simulates the provided messages, and checks whether the provided failure condition is met
-func (s *IntegrationTestSuite) SimulateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
+func (s *E2ETestSuite) SimulateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
 	// create tx factory + Client Context
 	txf, err := s.bc.GetFactory(ctx, user)
 	s.Require().NoError(err)
@@ -226,7 +226,7 @@ type Tx struct {
 }
 
 // CreateAuctionBidMsg creates a new AuctionBid tx signed by the given user, the order of txs in the MsgAuctionBid will be determined by the contents + order of the MessageForUsers
-func (s *IntegrationTestSuite) CreateAuctionBidMsg(ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*auctiontypes.MsgAuctionBid, [][]byte) {
+func (s *E2ETestSuite) CreateAuctionBidMsg(ctx context.Context, searcher cosmos.User, chain *cosmos.CosmosChain, bid sdk.Coin, txsPerUser []Tx) (*auctiontypes.MsgAuctionBid, [][]byte) {
 	// for each MessagesForUser get the signed bytes
 	txs := make([][]byte, len(txsPerUser))
 	for i, tx := range txsPerUser {
@@ -248,7 +248,7 @@ func (s *IntegrationTestSuite) CreateAuctionBidMsg(ctx context.Context, searcher
 // BroadcastTxs broadcasts the given messages for each user. This function returns the broadcasted txs. If a message
 // is not expected to be included in a block, set SkipInclusionCheck to true and the method
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion
-func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, txs []Tx) [][]byte {
+func (s *E2ETestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.CosmosChain, txs []Tx) [][]byte {
 	return s.BroadcastTxsWithCallback(ctx, chain, txs, nil)
 }
 
@@ -256,7 +256,7 @@ func (s *IntegrationTestSuite) BroadcastTxs(ctx context.Context, chain *cosmos.C
 // is not expected to be included in a block, set SkipInclusionCheck to true and the method
 // will not block on the tx's inclusion in a block, otherwise this method will block on the tx's inclusion. The callback
 // function is called for each tx that is included in a block.
-func (s *IntegrationTestSuite) BroadcastTxsWithCallback(
+func (s *E2ETestSuite) BroadcastTxsWithCallback(
 	ctx context.Context,
 	chain *cosmos.CosmosChain,
 	txs []Tx,
@@ -455,7 +455,7 @@ func TxHash(tx []byte) string {
 	return strings.ToUpper(hex.EncodeToString(comettypes.Tx(tx).Hash()))
 }
 
-func (s *IntegrationTestSuite) setupBroadcaster() {
+func (s *E2ETestSuite) setupBroadcaster() {
 	bc := cosmos.NewBroadcaster(s.T(), s.chain.(*cosmos.CosmosChain))
 
 	if s.broadcasterOverrides == nil {
@@ -487,7 +487,7 @@ func (s *IntegrationTestSuite) setupBroadcaster() {
 }
 
 // sniped from here: https://github.com/strangelove-ventures/interchaintest ref: 9341b001214d26be420f1ca1ab0f15bad17faee6
-func (s *IntegrationTestSuite) keyringDirFromNode() string {
+func (s *E2ETestSuite) keyringDirFromNode() string {
 	node := s.chain.(*cosmos.CosmosChain).Nodes()[0]
 
 	// create a temp-dir
