@@ -96,16 +96,15 @@ build-and-start-app: build-test-app
 ###############################################################################
 
 use-main:
-	go work edit -use .
-	go work edit -dropuse ./tests/e2e
+	@go work edit -use .
+	@go work edit -dropuse ./tests/e2e
 
 use-e2e:
-	go work edit -dropuse .
-	go work edit -use ./tests/e2e
+	@go work edit -dropuse .
+	@go work edit -use ./tests/e2e
 
-tidy:
-	go mod tidy
-	gofmt -s -w ./
+tidy: format
+	@go mod tidy
 
 .PHONY: docker-build docker-build-e2e
 ###############################################################################
