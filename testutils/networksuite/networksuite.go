@@ -19,11 +19,11 @@ import (
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-// NetworkTestSuite is a test suite for query tests that initializes a network instance.
+// NetworkTestSuite is a test suite for tests that initializes a network instance.
 type NetworkTestSuite struct {
 	suite.Suite
 
-	Network       *network.Network
+	NetworkSuite  *network.TestSuite
 	AuctionState  auctiontypes.GenesisState
 	BlockSDKState blocksdktypes.GenesisState
 }
@@ -49,7 +49,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
 	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
 
-	nts.Network = network.New(nts.T(), cfg)
+	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
 }
 
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {
