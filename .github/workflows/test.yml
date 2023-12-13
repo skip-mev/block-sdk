@@ -63,6 +63,7 @@ jobs:
       - name: tests
         if: env.GIT_DIFF
         run: |
+          go work init
           make test-integration
   test-e2e:
     runs-on: ubuntu-latest
