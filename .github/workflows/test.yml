@@ -34,7 +34,7 @@ jobs:
         if: env.GIT_DIFF
         run: |
           go work init
-          make test
+          make test-unit
 
   test-e2e:
     runs-on: ubuntu-latest
