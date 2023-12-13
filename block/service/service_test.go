@@ -8,6 +8,8 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/service"
 	"github.com/skip-mev/block-sdk/block/service/types"
@@ -15,7 +17,6 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	"github.com/skip-mev/block-sdk/testutils"
-	"github.com/stretchr/testify/require"
 )
 
 func TestGetTxDistribution(t *testing.T) {
