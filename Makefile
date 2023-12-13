@@ -146,11 +146,7 @@ test-cover: tidy
 
 test-all: test-unit test-integration test-e2e
 
-<<<<<<< HEAD
-.PHONY: test test-e2e test-cover
-=======
 .PHONY: test-unit test-integration test-e2e test-all test-cover
->>>>>>> b48073d (test: use `chaintestutil` (#296))
 
 ###############################################################################
 ###                                Protobuf                                 ###

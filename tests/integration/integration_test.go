@@ -10,7 +10,6 @@ import (
 
 	testkeeper "github.com/skip-mev/block-sdk/testutils/keeper"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
 type IntegrationTestSuite struct {
@@ -29,7 +28,6 @@ func TestIntegrationTestSuite(t *testing.T) {
 func (s *IntegrationTestSuite) SetupTest() {
 	s.encCfg = encoding.MakeTestEncodingConfig(func(registry types.InterfaceRegistry) {
 		auctiontypes.RegisterInterfaces(registry)
-		blocksdktypes.RegisterInterfaces(registry)
 	})
 
 	s.ctx, s.TestKeepers, s.TestMsgServers = testkeeper.NewTestSetup(s.T())

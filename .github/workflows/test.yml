@@ -34,10 +34,6 @@ jobs:
         if: env.GIT_DIFF
         run: |
           go work init
-<<<<<<< HEAD
-          make test
-
-=======
           make test-unit
       - name: Test Coverage
         run: |
@@ -48,6 +44,7 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: cover.out
+
   test-integration:
     runs-on: ubuntu-latest
     steps:
@@ -69,7 +66,7 @@ jobs:
         run: |
           go work init
           make test-integration
->>>>>>> b48073d (test: use `chaintestutil` (#296))
+
   test-e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 25
