@@ -2,14 +2,15 @@
 package networksuite
 
 import (
+	"math/rand"
+	"os"
+
 	"cosmossdk.io/log"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	"math/rand"
-	"os"
 
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
