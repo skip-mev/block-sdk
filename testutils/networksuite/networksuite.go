@@ -3,6 +3,14 @@ package networksuite
 
 import (
 	"math/rand"
+	"os"
+
+	"cosmossdk.io/log"
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 
 	tmdb "github.com/cometbft/cometbft-db"
 	tmrand "github.com/cometbft/cometbft/libs/rand"
@@ -48,9 +56,27 @@ type NetworkTestSuite struct {
 // SetupSuite setups the local network with a genesis state.
 func (nts *NetworkTestSuite) SetupSuite() {
 	var (
+<<<<<<< HEAD
 		r   = sample.Rand()
 		cfg = network.NewConfig(DefaultAppConstructor, app.ModuleBasics, chainID)
+=======
+		r       = sample.Rand()
+		cfg     = network.NewConfig(app.AppConfig)
+		appCons = func(val network.ValidatorI) servertypes.Application {
+			return app.New(
+				log.NewLogger(os.Stdout),
+				dbm.NewMemDB(),
+				nil,
+				true,
+				simtestutil.NewAppOptionsWithFlagHome(val.GetCtx().Config.RootDir),
+				baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
+				baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
+				baseapp.SetChainID(cfg.ChainID),
+			)
+		}
+>>>>>>> 4b6e481 (test: Update networksuite with testapp builder (#304))
 	)
+	cfg.AppConstructor = appCons
 
 	updateGenesisConfigState := func(moduleName string, moduleState proto.Message) {
 		buf, err := cfg.Codec.MarshalJSON(moduleState)
