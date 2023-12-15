@@ -6,12 +6,6 @@ import (
 	"os"
 
 	"cosmossdk.io/log"
-	pruningtypes "cosmossdk.io/store/pruning/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/skip-mev/chaintestutil/network"
@@ -21,6 +15,7 @@ import (
 
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	cmthttp "github.com/cometbft/cometbft/rpc/client/http"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -42,7 +37,7 @@ var (
 
 	DefaultAppConstructor = func(val network.ValidatorI) servertypes.Application {
 		return app.New(
-			val.GetCtx().Logger,
+			log.NewLogger(os.Stdout),
 			dbm.NewMemDB(),
 			nil,
 			true,
@@ -96,6 +91,9 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	)
 	cfg.AppConstructor = appCons
 
+	cfg.AppConstructor = DefaultAppConstructor
+	cfg.ChainID = chainID
+
 	updateGenesisConfigState := func(moduleName string, moduleState proto.Message) {
 		buf, err := cfg.Codec.MarshalJSON(moduleState)
 		require.NoError(nts.T(), err)
@@ -119,6 +117,11 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &nts.BankState))
 
 	addGenesisAccounts(&nts.AuthState, &nts.BankState, nts.Accounts)
+	
+	// update genesis
+	updateGenesisConfigState(authtypes.ModuleName, &nts.AuthState)
+	updateGenesisConfigState(banktypes.ModuleName, &nts.BankState)
+	
 
 	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
 }
@@ -129,15 +132,15 @@ func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *bank
 	accounts := make(authtypes.GenesisAccounts, len(accs))
 
 	// create accounts / update bank state w/ account + gen balance
-	for _, acc := range accs {
+	for i, acc := range accs {
 		// base account
 		bacc := authtypes.NewBaseAccount(acc.Address(), acc.PubKey(), 0, 0)
-
-		accounts = append(accounts, bacc)
-		balances = append(balances, banktypes.Balance{
+		
+		accounts[i] = bacc
+		balances[i] = banktypes.Balance{
 			Address: acc.Address().String(),
 			Coins:   sdk.NewCoins(genBalance),
-		})
+		}
 	}
 
 	// update auth state w/ accounts
@@ -176,4 +179,8 @@ func populateBlockSDK(_ *rand.Rand, bsdkState blocksdktypes.GenesisState) blocks
 	}
 
 	return bsdkState
+}
+
+func (s *NetworkTestSuite) GetTMClient() (*cmthttp.HTTP, error) {
+	return cmthttp.New(s.NetworkSuite.Network.Validators[0].RPCAddress, "/websocket")
 }

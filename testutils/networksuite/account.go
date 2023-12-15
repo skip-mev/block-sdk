@@ -2,6 +2,7 @@ package networksuite
 
 import (
 	"context"
+
 	"cosmossdk.io/math"
 	"github.com/cosmos/cosmos-sdk/client/tx"
 	secp256k1 "github.com/cosmos/cosmos-sdk/crypto/keys/secp256k1"
@@ -46,18 +47,16 @@ func (a Account) CreateTx(ctx context.Context, accNum, seq, gasLimit, fee, timeo
 	txb.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(int64(fee)))))
 	txb.SetTimeoutHeight(timeoutHeight)
 
-	sigsV2 := []signing.SignatureV2{
-		{
-			PubKey: a.pk.PubKey(),
-			Data: &signing.SingleSignatureData{
-				SignMode:  signing.SignMode(txc.SignModeHandler().DefaultMode()),
-				Signature: nil,
-			},
-			Sequence: seq,
+	sigV2 := signing.SignatureV2{
+		PubKey: a.pk.PubKey(),
+		Data: &signing.SingleSignatureData{
+			SignMode:  signing.SignMode(txc.SignModeHandler().DefaultMode()),
+			Signature: nil,
 		},
+		Sequence: seq,
 	}
 
-	if err := txb.SetSignatures(sigsV2...); err != nil {
+	if err := txb.SetSignatures(sigV2); err != nil {
 		return nil, err
 	}
 
@@ -66,6 +65,7 @@ func (a Account) CreateTx(ctx context.Context, accNum, seq, gasLimit, fee, timeo
 		ChainID: 	 chainID,
 		AccountNumber: accNum,
 		Sequence: 	 seq,
+		PubKey: a.pk.PubKey(),
 	}
 
 	sigV2, err := tx.SignWithPrivKey(
@@ -76,8 +76,7 @@ func (a Account) CreateTx(ctx context.Context, accNum, seq, gasLimit, fee, timeo
 		return nil, err
 	}
 
-	sigsV2 = append(sigsV2, sigV2)
-	if err := txb.SetSignatures(sigsV2...); err != nil {
+	if err := txb.SetSignatures(sigV2); err != nil {
 		return nil, err
 	}
 
