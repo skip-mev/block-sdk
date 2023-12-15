@@ -42,7 +42,7 @@ func (a Account) CreateTx(ctx context.Context, accNum, seq, gasLimit, fee, timeo
 		return nil, err
 	}
 
-	// set params 
+	// set params
 	txb.SetGasLimit(gasLimit)
 	txb.SetFeeAmount(sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(int64(fee)))))
 	txb.SetTimeoutHeight(timeoutHeight)
@@ -62,10 +62,10 @@ func (a Account) CreateTx(ctx context.Context, accNum, seq, gasLimit, fee, timeo
 
 	// now actually sign
 	signerData := authsigning.SignerData{
-		ChainID: 	 chainID,
+		ChainID:       chainID,
 		AccountNumber: accNum,
-		Sequence: 	 seq,
-		PubKey: a.pk.PubKey(),
+		Sequence:      seq,
+		PubKey:        a.pk.PubKey(),
 	}
 
 	sigV2, err := tx.SignWithPrivKey(

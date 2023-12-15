@@ -280,6 +280,7 @@ func New(
 		app.App,
 		app.txConfig.TxDecoder(),
 		mevLane,
+		mempool,
 		anteHandler,
 	)
 	app.SetCheckTx(checkTxHandler.CheckTx())

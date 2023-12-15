@@ -2,23 +2,24 @@ package integration_test
 
 import (
 	"context"
-
+	"fmt"
 	"time"
-	"fmt" 
+
 	"cosmossdk.io/math"
 	cmthttp "github.com/cometbft/cometbft/rpc/client/http"
+	cmttypes "github.com/cometbft/cometbft/types"
 	"github.com/cosmos/cosmos-sdk/codec"
 	codectypes "github.com/cosmos/cosmos-sdk/codec/types"
 	cryptocodec "github.com/cosmos/cosmos-sdk/crypto/codec"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"google.golang.org/grpc"
+
 	blockservicetypes "github.com/skip-mev/block-sdk/block/service/types"
-	cmttypes "github.com/cometbft/cometbft/types"
 	testutils "github.com/skip-mev/block-sdk/testutils/networksuite"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 const (
@@ -27,9 +28,7 @@ const (
 	mev  = "mev"
 )
 
-var (
-	cdc *codec.ProtoCodec
-)
+var cdc *codec.ProtoCodec
 
 func init() {
 	ir := codectypes.NewInterfaceRegistry()
@@ -55,7 +54,7 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 	val, err := getFirstValidator(ctx, stakingtypes.NewQueryClient(cc))
 	s.Require().NoError(err)
 	acc := *s.Accounts[0]
-	
+
 	s.Run("test free-lane sync", func() {
 		s.Run("all valid txs", func() {
 			// create a bunch of delegation txs and check the app-mempool v. comet-mempool
@@ -108,7 +107,7 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 			s.Require().NoError(err)
 
 			// ordered after bid, and shld fail in PrepareProposal as there will be no funds to pay (will be removed from lane)
-			secondDelegateTx, err := zeroAccount.CreateTx(ctx, num2, seq2 + 1, 1000000, 1000000, 1000000, msg)
+			secondDelegateTx, err := zeroAccount.CreateTx(ctx, num2, seq2+1, 1000000, 1000000, 1000000, msg)
 			s.Require().NoError(err)
 
 			// create a bid wrapping firstDelegateTx, tx2 -> i.e spend funds in zeroAccount and refill
@@ -137,7 +136,7 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 			s.Require().NoError(err)
 
 			cmtTxs := uint64(txs.Total)
-		
+
 			// check app mempool size
 			appTxDist, err := blockClient.GetTxDistribution(ctx, &blockservicetypes.GetTxDistributionRequest{})
 			s.Require().NoError(err)
@@ -151,9 +150,6 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 			s.Require().Equal(appTxs, int(cmtTxs))
 		})
 	})
-
-	// test base-lane sync w/ comet
-	// test all together
 }
 
 func createFreeTx(delegator sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coin) sdk.Msg {
@@ -188,9 +184,9 @@ func getAccount(ctx context.Context, cc authtypes.QueryClient, acc testutils.Acc
 }
 
 func checkParity(
-	ctx context.Context, tmClient *cmthttp.HTTP, blockClient blockservicetypes.ServiceClient, 
-	cc *grpc.ClientConn, acc testutils.Account, lane string, msg sdk.Msg) error {
-
+	ctx context.Context, tmClient *cmthttp.HTTP, blockClient blockservicetypes.ServiceClient,
+	cc *grpc.ClientConn, acc testutils.Account, lane string, msg sdk.Msg,
+) error {
 	seq, num, err := getAccount(ctx, authtypes.NewQueryClient(cc), acc)
 	if err != nil {
 		return err
@@ -206,7 +202,7 @@ func checkParity(
 	numTxs := 100
 	txsCh := make(chan []byte, numTxs)
 	done := make(chan struct{})
-	
+
 	// spin GR to wait on tx inclusions
 	go func() {
 		for tx := range txsCh {
@@ -216,13 +212,12 @@ func checkParity(
 		close(done)
 	}()
 
-
 	for i := 0; i < numTxs; i++ {
-		tx, err := acc.CreateTx(ctx, num, seq + uint64(i), 1000000, 1000000, uint64(height + 10), msg)
+		tx, err := acc.CreateTx(ctx, num, seq+uint64(i), 1000000, 1000000, uint64(height+10), msg)
 		if err != nil {
 			return err
 		}
-		
+
 		res, err := tmClient.BroadcastTxSync(ctx, tx)
 		if err != nil {
 			return err
@@ -250,7 +245,7 @@ func checkParity(
 		return err
 	}
 
-	if cmtTxs != appTxs.Distribution[free] {
+	if cmtTxs != appTxs.Distribution[lane] {
 		return fmt.Errorf("mempool size mismatch: %d != %d", cmtTxs, appTxs.Distribution[free])
 	}
 

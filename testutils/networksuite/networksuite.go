@@ -24,6 +24,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
@@ -67,7 +68,7 @@ type NetworkTestSuite struct {
 	AuctionState  auctiontypes.GenesisState
 	BlockSDKState blocksdktypes.GenesisState
 	AuthState     authtypes.GenesisState
-	BankState 	  banktypes.GenesisState
+	BankState     banktypes.GenesisState
 	Accounts      []*Account
 }
 
@@ -117,11 +118,10 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &nts.BankState))
 
 	addGenesisAccounts(&nts.AuthState, &nts.BankState, nts.Accounts)
-	
+
 	// update genesis
 	updateGenesisConfigState(authtypes.ModuleName, &nts.AuthState)
 	updateGenesisConfigState(banktypes.ModuleName, &nts.BankState)
-	
 
 	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
 }
@@ -135,7 +135,7 @@ func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *bank
 	for i, acc := range accs {
 		// base account
 		bacc := authtypes.NewBaseAccount(acc.Address(), acc.PubKey(), 0, 0)
-		
+
 		accounts[i] = bacc
 		balances[i] = banktypes.Balance{
 			Address: acc.Address().String(),
@@ -181,6 +181,6 @@ func populateBlockSDK(_ *rand.Rand, bsdkState blocksdktypes.GenesisState) blocks
 	return bsdkState
 }
 
-func (s *NetworkTestSuite) GetTMClient() (*cmthttp.HTTP, error) {
-	return cmthttp.New(s.NetworkSuite.Network.Validators[0].RPCAddress, "/websocket")
+func (nts *NetworkTestSuite) GetTMClient() (*cmthttp.HTTP, error) {
+	return cmthttp.New(nts.NetworkSuite.Network.Validators[0].RPCAddress, "/websocket")
 }

@@ -10,6 +10,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -30,6 +31,9 @@ type (
 		// MEVLane is utilized to retrieve the bid info of a transaction and to
 		// insert a bid transaction into the application-side mempool.
 		mevLane MEVLaneI
+
+		// mempool is used for inclusion tests with transactions
+		mempool block.Mempool
 
 		// anteHandler is utilized to verify the bid transaction against the latest
 		// committed state.
@@ -64,17 +68,20 @@ type (
 	}
 )
 
-// NewCheckTxHandler constructs a new CheckTxHandler instance.
+// NewCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
+// adhering to the MevLaneI interface
 func NewCheckTxHandler(
 	baseApp BaseApp,
 	txDecoder sdk.TxDecoder,
 	mevLane MEVLaneI,
+	mempool block.Mempool,
 	anteHandler sdk.AnteHandler,
 ) *CheckTxHandler {
 	return &CheckTxHandler{
 		baseApp:     baseApp,
 		txDecoder:   txDecoder,
 		mevLane:     mevLane,
+		mempool:     mempool,
 		anteHandler: anteHandler,
 	}
 }
@@ -114,6 +121,23 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 
 			return sdkerrors.ResponseCheckTxWithEvents(
 				fmt.Errorf("failed to decode tx: %w", err),
+				0,
+				0,
+				nil,
+				false,
+			), nil
+		}
+
+		// if the mode is ReCheck and the app's mempool does not contain the given tx, we fail
+		// immediately, to purge the tx from the comet mempool.
+		if req.Type == cometabci.CheckTxType_Recheck && !handler.mempool.Contains(tx) {
+			handler.baseApp.Logger().Error(
+				"tx from comet mempool not found in app-side mempool",
+				"tx", tx,
+			)
+
+			return sdkerrors.ResponseCheckTxWithEvents(
+				fmt.Errorf("tx from comet mempool not found in app-side mempool"),
 				0,
 				0,
 				nil,
