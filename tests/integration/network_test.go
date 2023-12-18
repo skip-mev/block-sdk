@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/skip-mev/chaintestutil/network"
+
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
 	"cosmossdk.io/math"
@@ -128,29 +130,35 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	s.T().Parallel()
 
 	val := s.NetworkSuite.Network.Validators[0]
+	acc := *s.Accounts[0]
 
 	cc, closeConn, err := s.NetworkSuite.GetGRPC()
 	s.Require().NoError(err)
 	defer closeConn()
 
+	// Get original acc balance
 	bankClient := banktypes.NewQueryClient(cc)
 	resp, err := bankClient.Balance(context.Background(), &banktypes.QueryBalanceRequest{
-		Address: val.Address.String(),
+		Address: acc.Address().String(),
 		Denom:   s.NetworkSuite.Network.Config.BondDenom,
 	})
 	require.NoError(s.T(), err)
 	originalBalance := resp.Balance.Amount
 
+	// Send a free tx (delegation)
 	coin := sdk.NewCoin(s.NetworkSuite.Network.Config.BondDenom, math.NewInt(10))
 	txBz, err := s.NetworkSuite.CreateTxBytes(
-		coin,
-		999999999,
-		[]sdk.Msg{
-			&stakingtypes.MsgDelegate{
-				DelegatorAddress: val.Address.String(),
-				ValidatorAddress: val.ValAddress.String(),
-				Amount:           coin,
-			},
+		context.Background(),
+		network.TxGenInfo{
+			Account:       *s.Accounts[0],
+			GasLimit:      999999999,
+			TimeoutHeight: 999999999,
+			Fee:           sdk.Coins{coin},
+		},
+		&stakingtypes.MsgDelegate{
+			DelegatorAddress: acc.Address().String(),
+			ValidatorAddress: val.ValAddress.String(),
+			Amount:           coin,
 		},
 	)
 	bcastResp, err := val.RPCClient.BroadcastTxCommit(context.Background(), txBz)
@@ -158,10 +166,12 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code)
 	require.Equal(s.T(), uint32(0), bcastResp.TxResult.Code)
 
+	// Get updated acc balance
 	resp, err = bankClient.Balance(context.Background(), &banktypes.QueryBalanceRequest{
-		Address: val.Address.String(),
+		Address: acc.Address().String(),
 		Denom:   s.NetworkSuite.Network.Config.BondDenom,
 	})
 	require.NoError(s.T(), err)
-	require.Equal(s.T(), originalBalance, resp.Balance.Amount)
+	// Assert update acc balance is equal to original balance less the delegation
+	require.Equal(s.T(), originalBalance.Sub(coin.Amount), resp.Balance.Amount)
 }

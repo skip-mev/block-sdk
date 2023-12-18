@@ -5,6 +5,11 @@ import (
 	"math/rand"
 	"os"
 
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	"github.com/skip-mev/chaintestutil/account"
+
 	"cosmossdk.io/log"
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	dbm "github.com/cosmos/cosmos-db"
@@ -34,6 +39,9 @@ type NetworkTestSuite struct {
 	NetworkSuite  *network.TestSuite
 	AuctionState  auctiontypes.GenesisState
 	BlockSDKState blocksdktypes.GenesisState
+	AuthState     authtypes.GenesisState
+	BankState     banktypes.GenesisState
+	Accounts      []*account.Account
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -70,7 +78,49 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
 	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
 
+	// add genesis accounts
+	nts.Accounts = []*account.Account{
+		account.NewAccount(),
+	}
+
+	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &nts.AuthState))
+	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &nts.BankState))
+
+	addGenesisAccounts(&nts.AuthState, &nts.BankState, nts.Accounts)
+
+	// update genesis
+	updateGenesisConfigState(authtypes.ModuleName, &nts.AuthState)
+	updateGenesisConfigState(banktypes.ModuleName, &nts.BankState)
+
 	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
+}
+
+// addGenesisAccount adds a genesis account to the auth / bank genesis state.
+func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *banktypes.GenesisState, accs []*account.Account) {
+	balances := make([]banktypes.Balance, len(accs))
+	accounts := make(authtypes.GenesisAccounts, len(accs))
+
+	// create accounts / update bank state w/ account + gen balance
+	for i, acc := range accs {
+		// base account
+		bacc := authtypes.NewBaseAccount(acc.Address(), acc.PubKey(), 0, 0)
+
+		accounts[i] = bacc
+		balances[i] = banktypes.Balance{
+			Address: acc.Address().String(),
+			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))),
+		}
+	}
+
+	// update auth state w/ accounts
+	var err error
+	authGenState.Accounts, err = authtypes.PackAccounts(accounts)
+	if err != nil {
+		panic(err)
+	}
+
+	// update bank state w/ balances
+	bankGenState.Balances = balances
 }
 
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {
