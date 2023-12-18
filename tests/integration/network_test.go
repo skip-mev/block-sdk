@@ -161,6 +161,7 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 			Amount:           coin,
 		},
 	)
+	require.NoError(s.T(), err)
 	bcastResp, err := val.RPCClient.BroadcastTxCommit(context.Background(), txBz)
 	require.NoError(s.T(), err)
 	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code)
