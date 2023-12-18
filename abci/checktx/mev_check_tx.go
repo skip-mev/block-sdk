@@ -251,7 +251,11 @@ func (handler *MEVCheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, b
 		}
 
 		// bid txs cannot be included in bundled txs
-		bidInfo, _ := handler.mevLane.GetAuctionBidInfo(bundledTx)
+		bidInfo, err := handler.mevLane.GetAuctionBidInfo(bundledTx)
+		if err != nil {
+			return gasInfo, fmt.Errorf("invalid bid tx; failed to get bid info: %w", err)
+		}
+
 		if bidInfo != nil {
 			return gasInfo, fmt.Errorf("invalid bid tx; bundled tx cannot be a bid tx")
 		}
