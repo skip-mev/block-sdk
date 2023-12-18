@@ -31,6 +31,7 @@ import (
 	"github.com/skip-mev/block-sdk/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/chaintestutil/account"
 )
 
 var (
@@ -56,7 +57,7 @@ type NetworkTestSuite struct {
 	BlockSDKState blocksdktypes.GenesisState
 	AuthState     authtypes.GenesisState
 	BankState     banktypes.GenesisState
-	Accounts      []*Account
+	Accounts      []*account.Account
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -95,8 +96,8 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
 
 	// add genesis accounts
-	nts.Accounts = []*Account{
-		NewAccount(),
+	nts.Accounts = []*account.Account{
+		account.NewAccount(),
 	}
 
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &nts.AuthState))
@@ -112,7 +113,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 }
 
 // addGenesisAccount adds a genesis account to the auth / bank genesis state.
-func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *banktypes.GenesisState, accs []*Account) {
+func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *banktypes.GenesisState, accs []*account.Account) {
 	balances := make([]banktypes.Balance, len(accs))
 	accounts := make(authtypes.GenesisAccounts, len(accs))
 

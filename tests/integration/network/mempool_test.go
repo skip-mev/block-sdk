@@ -18,8 +18,9 @@ import (
 	"google.golang.org/grpc"
 
 	blockservicetypes "github.com/skip-mev/block-sdk/block/service/types"
-	testutils "github.com/skip-mev/block-sdk/testutils/networksuite"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/chaintestutil/account"
+	"github.com/skip-mev/chaintestutil/network"
 )
 
 const (
@@ -59,21 +60,31 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 		s.Run("all valid txs", func() {
 			// create a bunch of delegation txs and check the app-mempool v. comet-mempool
 			msg := createFreeTx(acc.Address(), val, sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(10)))
-			s.Require().NoError(checkParity(ctx, tmClient, blockClient, cc, acc, free, msg))
+			s.Require().NoError(s.checkParity(ctx, tmClient, blockClient, cc, acc, free, msg))
 		})
 
 		s.Run("bid Verify invalidates later tx Verify", func() {
 			// create a new account
-			zeroAccount := testutils.NewAccount()
+			zeroAccount := account.NewAccount()
+
+			status, err := tmClient.Status(ctx)
+			s.Require().NoError(err)
 
 			// initialize the account w/ enough for a single tx
 			send := banktypes.NewMsgSend(acc.Address(), zeroAccount.Address(), sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(3000100))))
 
-			seq, num, err := getAccount(ctx, authtypes.NewQueryClient(cc), acc)
+			seq, _, err := getAccount(ctx, authtypes.NewQueryClient(cc), acc)
 			s.Require().NoError(err)
 
 			// send the tx (pay for fees)
-			tx, err := acc.CreateTx(ctx, num, seq, 1000000, 1000000, 1000000, send)
+			tx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  acc,
+				GasLimit: 1000000,
+				TimeoutHeight: uint64(status.SyncInfo.LatestBlockHeight) + 1,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence: seq,
+				OverrideSequence: true,
+			}, send)
 			s.Require().NoError(err)
 
 			// commit tx
@@ -87,32 +98,67 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 			// update the balance of zeroAccount to pay for the next tx
 			updateMsg := banktypes.NewMsgSend(acc.Address(), zeroAccount.Address(), sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000))))
 
-			status, err := tmClient.Status(ctx)
+			status, err = tmClient.Status(ctx)
 			s.Require().NoError(err)
 			nextHeight := uint64(status.SyncInfo.LatestBlockHeight) + 1
 
 			// pay for fees of next tx for zeroAccount (account for bid sequence)
-			tx2, err := acc.CreateTx(ctx, num, seq+2, 1000000, 1000000, nextHeight, updateMsg)
+			tx2, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  acc,
+				GasLimit: 1000000,
+				TimeoutHeight: nextHeight,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence: seq + 2,
+				OverrideSequence: true,
+			}, updateMsg)
 			s.Require().NoError(err)
 
-			seq2, num2, err := getAccount(ctx, authtypes.NewQueryClient(cc), *zeroAccount)
+			seq2, _, err := getAccount(ctx, authtypes.NewQueryClient(cc), *zeroAccount)
 			s.Require().NoError(err)
 
 			// spends all funds in account on fee deduction -> fees are refilled after bid
-			txToWrap, err := zeroAccount.CreateTx(ctx, num2, seq2, 1000000, 3000000, 3000000, msg)
+			txToWrap, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  *zeroAccount,
+				GasLimit: 1000000,
+				TimeoutHeight: 100000000,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 3000000)),
+				Sequence: seq2,
+				OverrideSequence: true,
+			}, msg)
 			s.Require().NoError(err)
 
 			// first delegate tx (just used to increment sequence)
-			firstDelegateTx, err := zeroAccount.CreateTx(ctx, num2, seq2, 1000000, 1000000, 1000000, msg)
+			firstDelegateTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  *zeroAccount,
+				GasLimit: 1000000,
+				TimeoutHeight: 100000000,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence: seq2,
+				OverrideSequence: true,
+			}, msg)
 			s.Require().NoError(err)
 
 			// ordered after bid, and shld fail in PrepareProposal as there will be no funds to pay (will be removed from lane)
-			secondDelegateTx, err := zeroAccount.CreateTx(ctx, num2, seq2+1, 1000000, 1000000, 1000000, msg)
+			secondDelegateTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  *zeroAccount,
+				GasLimit: 1000000,
+				TimeoutHeight: 100000000,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence: seq2 + 1,
+				OverrideSequence: true,
+			}, msg)	
 			s.Require().NoError(err)
 
 			// create a bid wrapping firstDelegateTx, tx2 -> i.e spend funds in zeroAccount and refill
 			bid := auctiontypes.NewMsgAuctionBid(acc.Address(), sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000)), [][]byte{txToWrap, tx2})
-			bidTx, err := acc.CreateTx(ctx, num, seq+1, 1000000, 1000000, nextHeight, bid)
+			bidTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+				Account:  acc,
+				GasLimit: 1000000,
+				TimeoutHeight: nextHeight,
+				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence: seq + 1,
+				OverrideSequence: true,
+			}, bid)	
 			s.Require().NoError(err)
 
 			// broadcast txs
@@ -156,7 +202,7 @@ func createFreeTx(delegator sdk.AccAddress, validator sdk.ValAddress, amount sdk
 	return stakingtypes.NewMsgDelegate(delegator.String(), validator.String(), amount)
 }
 
-func getAccount(ctx context.Context, cc authtypes.QueryClient, acc testutils.Account) (uint64, uint64, error) {
+func getAccount(ctx context.Context, cc authtypes.QueryClient, acc account.Account) (uint64, uint64, error) {
 	resp, err := cc.Account(ctx, &authtypes.QueryAccountRequest{Address: acc.Address().String()})
 	if err != nil {
 		return 0, 0, err
@@ -170,11 +216,11 @@ func getAccount(ctx context.Context, cc authtypes.QueryClient, acc testutils.Acc
 	return accI.GetSequence(), accI.GetAccountNumber(), nil
 }
 
-func checkParity(
+func (s *NetworkTestSuite) checkParity(
 	ctx context.Context, tmClient *cmthttp.HTTP, blockClient blockservicetypes.ServiceClient,
-	cc *grpc.ClientConn, acc testutils.Account, lane string, msg sdk.Msg,
+	cc *grpc.ClientConn, acc account.Account, lane string, msg sdk.Msg,
 ) error {
-	seq, num, err := getAccount(ctx, authtypes.NewQueryClient(cc), acc)
+	seq, _, err := getAccount(ctx, authtypes.NewQueryClient(cc), acc)
 	if err != nil {
 		return err
 	}
@@ -200,7 +246,14 @@ func checkParity(
 	}()
 
 	for i := 0; i < numTxs; i++ {
-		tx, err := acc.CreateTx(ctx, num, seq+uint64(i), 1000000, 1000000, uint64(height+10), msg)
+		tx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
+			Account:  acc,
+			GasLimit: 1000000,
+			TimeoutHeight: uint64(height + 10),
+			Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+			Sequence: seq + uint64(i),
+			OverrideSequence: true,
+		}, msg)
 		if err != nil {
 			return err
 		}
