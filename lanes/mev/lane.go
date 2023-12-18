@@ -1,11 +1,6 @@
 package mev
 
 import (
-	"context"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-
-	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 )
 
@@ -21,14 +16,6 @@ const (
 // The bundled transactions of the selected bid transaction are also included in the
 // next block.
 type (
-	// MEVLaneI defines the interface for the mev auction lane. This interface
-	// is utilized by both the x/auction module and the checkTx handler.
-	MEVLaneI interface { //nolint
-		block.Lane
-		Factory
-		GetTopAuctionTx(ctx context.Context) sdk.Tx
-	}
-
 	MEVLane struct { //nolint
 		*base.BaseLane
 
