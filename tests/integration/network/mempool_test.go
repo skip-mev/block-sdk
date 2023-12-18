@@ -78,11 +78,11 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 
 			// send the tx (pay for fees)
 			tx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  acc,
-				GasLimit: 1000000,
-				TimeoutHeight: uint64(status.SyncInfo.LatestBlockHeight) + 1,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-				Sequence: seq,
+				Account:          acc,
+				GasLimit:         1000000,
+				TimeoutHeight:    uint64(status.SyncInfo.LatestBlockHeight) + 1,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence:         seq,
 				OverrideSequence: true,
 			}, send)
 			s.Require().NoError(err)
@@ -104,11 +104,11 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 
 			// pay for fees of next tx for zeroAccount (account for bid sequence)
 			tx2, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  acc,
-				GasLimit: 1000000,
-				TimeoutHeight: nextHeight,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-				Sequence: seq + 2,
+				Account:          acc,
+				GasLimit:         1000000,
+				TimeoutHeight:    nextHeight,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence:         seq + 2,
 				OverrideSequence: true,
 			}, updateMsg)
 			s.Require().NoError(err)
@@ -118,47 +118,47 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 
 			// spends all funds in account on fee deduction -> fees are refilled after bid
 			txToWrap, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  *zeroAccount,
-				GasLimit: 1000000,
-				TimeoutHeight: 100000000,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 3000000)),
-				Sequence: seq2,
+				Account:          *zeroAccount,
+				GasLimit:         1000000,
+				TimeoutHeight:    100000000,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 3000000)),
+				Sequence:         seq2,
 				OverrideSequence: true,
 			}, msg)
 			s.Require().NoError(err)
 
 			// first delegate tx (just used to increment sequence)
 			firstDelegateTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  *zeroAccount,
-				GasLimit: 1000000,
-				TimeoutHeight: 100000000,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-				Sequence: seq2,
+				Account:          *zeroAccount,
+				GasLimit:         1000000,
+				TimeoutHeight:    100000000,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence:         seq2,
 				OverrideSequence: true,
 			}, msg)
 			s.Require().NoError(err)
 
 			// ordered after bid, and shld fail in PrepareProposal as there will be no funds to pay (will be removed from lane)
 			secondDelegateTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  *zeroAccount,
-				GasLimit: 1000000,
-				TimeoutHeight: 100000000,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-				Sequence: seq2 + 1,
+				Account:          *zeroAccount,
+				GasLimit:         1000000,
+				TimeoutHeight:    100000000,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence:         seq2 + 1,
 				OverrideSequence: true,
-			}, msg)	
+			}, msg)
 			s.Require().NoError(err)
 
 			// create a bid wrapping firstDelegateTx, tx2 -> i.e spend funds in zeroAccount and refill
 			bid := auctiontypes.NewMsgAuctionBid(acc.Address(), sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000)), [][]byte{txToWrap, tx2})
 			bidTx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-				Account:  acc,
-				GasLimit: 1000000,
-				TimeoutHeight: nextHeight,
-				Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-				Sequence: seq + 1,
+				Account:          acc,
+				GasLimit:         1000000,
+				TimeoutHeight:    nextHeight,
+				Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+				Sequence:         seq + 1,
 				OverrideSequence: true,
-			}, bid)	
+			}, bid)
 			s.Require().NoError(err)
 
 			// broadcast txs
@@ -247,11 +247,11 @@ func (s *NetworkTestSuite) checkParity(
 
 	for i := 0; i < numTxs; i++ {
 		tx, err := s.NetworkSuite.CreateTxBytes(ctx, network.TxGenInfo{
-			Account:  acc,
-			GasLimit: 1000000,
-			TimeoutHeight: uint64(height + 10),
-			Fee: sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
-			Sequence: seq + uint64(i),
+			Account:          acc,
+			GasLimit:         1000000,
+			TimeoutHeight:    uint64(height + 10),
+			Fee:              sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000)),
+			Sequence:         seq + uint64(i),
 			OverrideSequence: true,
 		}, msg)
 		if err != nil {

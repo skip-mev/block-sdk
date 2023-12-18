@@ -18,7 +18,6 @@ import (
 	cmthttp "github.com/cometbft/cometbft/rpc/client/http"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
-	"github.com/cosmos/cosmos-sdk/client"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -38,15 +37,7 @@ var (
 	chainID = "chain-" + cmtrand.NewRand().Str(6)
 
 	genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
-
-	txc client.TxConfig
 )
-
-func init() {
-	// initialize tx config
-	fixture := app.NewTestNetworkFixture()
-	txc = fixture.EncodingConfig.TxConfig
-}
 
 // NetworkTestSuite is a test suite for query tests that initializes a network instance.
 type NetworkTestSuite struct {
