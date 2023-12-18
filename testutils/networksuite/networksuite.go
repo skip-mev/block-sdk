@@ -36,19 +36,6 @@ import (
 var (
 	chainID = "chain-" + cmtrand.NewRand().Str(6)
 
-	DefaultAppConstructor = func(val network.ValidatorI) servertypes.Application {
-		return app.New(
-			log.NewLogger(os.Stdout),
-			dbm.NewMemDB(),
-			nil,
-			true,
-			simtestutil.EmptyAppOptions{},
-			baseapp.SetPruning(pruningtypes.NewPruningOptionsFromString(val.GetAppConfig().Pruning)),
-			baseapp.SetMinGasPrices(val.GetAppConfig().MinGasPrices),
-			baseapp.SetChainID(chainID),
-		)
-	}
-
 	genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
 
 	txc client.TxConfig
@@ -91,8 +78,6 @@ func (nts *NetworkTestSuite) SetupSuite() {
 		}
 	)
 	cfg.AppConstructor = appCons
-
-	cfg.AppConstructor = DefaultAppConstructor
 	cfg.ChainID = chainID
 
 	updateGenesisConfigState := func(moduleName string, moduleState proto.Message) {
@@ -181,6 +166,6 @@ func populateBlockSDK(_ *rand.Rand, bsdkState blocksdktypes.GenesisState) blocks
 	return bsdkState
 }
 
-func (nts *NetworkTestSuite) GetTMClient() (*cmthttp.HTTP, error) {
+func (nts *NetworkTestSuite) GetCometRPCClient() (*cmthttp.HTTP, error) {
 	return cmthttp.New(nts.NetworkSuite.Network.Validators[0].RPCAddress, "/websocket")
 }

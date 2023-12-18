@@ -1,28 +1,41 @@
-package mev_test
+package check_tx_test
 
 import (
 	"fmt"
+	"testing"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"cosmossdk.io/store"
 	storetypes "cosmossdk.io/store/types"
+
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	db "github.com/cosmos/cosmos-db"
 	sdk "github.com/cosmos/cosmos-sdk/types"
+	"github.com/stretchr/testify/suite"
 
+	"github.com/skip-mev/block-sdk/abci/check_tx"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/lanes/mev"
+	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-func (s *MEVTestSuite) TestCheckTx() {
+type CheckTxTestSuite struct {
+	mevlanetestutils.MEVLaneTestSuiteBase
+}
+
+func TestCheckTxTestSuite(t *testing.T) {
+	suite.Run(t, new(CheckTxTestSuite))
+}
+
+func (s *CheckTxTestSuite) TestCheckTx() {
 	bidTx, _, err := testutils.CreateAuctionTx(
-		s.encCfg.TxConfig,
-		s.accounts[0],
-		sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
 		0,
 		0,
 		nil,
@@ -32,9 +45,9 @@ func (s *MEVTestSuite) TestCheckTx() {
 
 	// create a tx that should not be inserted in the mev-lane
 	bidTx2, _, err := testutils.CreateAuctionTx(
-		s.encCfg.TxConfig,
-		s.accounts[0],
-		sdk.NewCoin(s.gasTokenDenom, math.NewInt(100)),
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
 		1,
 		0,
 		nil,
@@ -46,25 +59,33 @@ func (s *MEVTestSuite) TestCheckTx() {
 		bidTx: true,
 	}
 
-	mevLane := s.initLane(math.LegacyOneDec(), txs)
-	mempool, err := block.NewLanedMempool(s.ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
+	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
 		mevLane,
 	})
 	s.Require().NoError(err)
 
-	handler := mev.NewCheckTxHandler(
-		&baseApp{
-			s.ctx,
-		},
-		s.encCfg.TxConfig.TxDecoder(),
+	ba := &baseApp{
+		s.Ctx,
+	}
+	mevLaneHandler := check_tx.NewMEVCheckTxHandler(
+		ba,
+		s.EncCfg.TxConfig.TxDecoder(),
 		mevLane,
+		s.SetUpAnteHandler(txs),
+		ba.CheckTx,
+	).CheckTx()
+
+	handler := check_tx.NewMempoolParityCheckTx(
+		s.Ctx.Logger(),
 		mempool,
-		s.setUpAnteHandler(txs),
+		s.EncCfg.TxConfig.TxDecoder(),
+		mevLaneHandler,
 	).CheckTx()
 
 	// test that a bid can be successfully inserted to mev-lane on CheckTx
 	s.Run("test bid insertion on CheckTx", func() {
-		txBz, err := s.encCfg.TxConfig.TxEncoder()(bidTx)
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(bidTx)
 		s.Require().NoError(err)
 
 		// check tx
@@ -83,7 +104,7 @@ func (s *MEVTestSuite) TestCheckTx() {
 		s.Require().False(mevLane.Contains(bidTx2))
 
 		// check tx
-		txBz, err := s.encCfg.TxConfig.TxEncoder()(bidTx2)
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(bidTx2)
 		s.Require().NoError(err)
 
 		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_Recheck})

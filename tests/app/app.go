@@ -42,10 +42,10 @@ import (
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
 	"github.com/skip-mev/block-sdk/abci"
+	"github.com/skip-mev/block-sdk/abci/check_tx"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	service "github.com/skip-mev/block-sdk/block/service"
-	"github.com/skip-mev/block-sdk/lanes/mev"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 	blocksdkkeeper "github.com/skip-mev/block-sdk/x/blocksdk/keeper"
 )
@@ -93,7 +93,7 @@ type TestApp struct {
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
-	checkTxHandler mev.CheckTx
+	checkTxHandler check_tx.CheckTx
 }
 
 func init() {
@@ -276,13 +276,18 @@ func New(
 
 	// Step 7: Set the custom CheckTx handler on BaseApp. This is only required if you
 	// use the MEV lane.
-	checkTxHandler := mev.NewCheckTxHandler(
+	mevCheckTx := check_tx.NewMEVCheckTxHandler(
 		app.App,
 		app.txConfig.TxDecoder(),
 		mevLane,
-		mempool,
 		anteHandler,
+		app.App.CheckTx,
 	)
+	checkTxHandler := check_tx.NewMempoolParityCheckTx(
+		app.Logger(), mempool,
+		app.txConfig.TxDecoder(), mevCheckTx.CheckTx(),
+	)
+
 	app.SetCheckTx(checkTxHandler.CheckTx())
 
 	// ---------------------------------------------------------------------------- //
@@ -326,7 +331,7 @@ func (app *TestApp) CheckTx(req *cometabci.RequestCheckTx) (*cometabci.ResponseC
 }
 
 // SetCheckTx sets the checkTxHandler for the app.
-func (app *TestApp) SetCheckTx(handler mev.CheckTx) {
+func (app *TestApp) SetCheckTx(handler check_tx.CheckTx) {
 	app.checkTxHandler = handler
 }
 

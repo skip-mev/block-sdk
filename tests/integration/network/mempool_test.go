@@ -44,14 +44,14 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 	s.Require().NoError(err)
 	defer closefn()
 
-	tmClient, err := s.GetTMClient()
+	tmClient, err := s.GetCometRPCClient()
 	s.Require().NoError(err)
 
 	blockClient := blockservicetypes.NewServiceClient(cc)
 
 	ctx, closeCtx := context.WithTimeout(context.Background(), 1*time.Minute)
 	defer closeCtx()
-	val, err := getFirstValidator(ctx, stakingtypes.NewQueryClient(cc))
+	val := s.NetworkSuite.Network.Validators[0].ValAddress
 	s.Require().NoError(err)
 	acc := *s.Accounts[0]
 
@@ -154,19 +154,6 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 
 func createFreeTx(delegator sdk.AccAddress, validator sdk.ValAddress, amount sdk.Coin) sdk.Msg {
 	return stakingtypes.NewMsgDelegate(delegator.String(), validator.String(), amount)
-}
-
-func getFirstValidator(ctx context.Context, cc stakingtypes.QueryClient) (sdk.ValAddress, error) {
-	resp, err := cc.Validators(ctx, &stakingtypes.QueryValidatorsRequest{})
-	if err != nil {
-		return nil, err
-	}
-
-	if len(resp.Validators) == 0 {
-		return nil, nil
-	}
-
-	return sdk.ValAddressFromBech32(resp.Validators[0].OperatorAddress)
 }
 
 func getAccount(ctx context.Context, cc authtypes.QueryClient, acc testutils.Account) (uint64, uint64, error) {

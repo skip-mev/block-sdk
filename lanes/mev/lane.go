@@ -14,8 +14,6 @@ const (
 	LaneName = "mev"
 )
 
-var _ MEVLaneI = (*MEVLane)(nil)
-
 // MEVLane defines a MEV (Maximal Extracted Value) auction lane. The MEV auction lane
 // hosts transactions that want to bid for inclusion at the top of the next block.
 // The MEV auction lane stores bid transactions that are sorted by their bid price.
