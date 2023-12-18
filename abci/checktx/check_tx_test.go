@@ -20,6 +20,7 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
@@ -177,6 +178,104 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 
 		s.Require().Equal(uint32(0), res.Code)
 		s.Require().Equal(normalTx, gotTx)
+	})
+}
+
+func (s *CheckTxTestSuite) TestValidateBidTx() {
+	validBidTx, bundled, err := testutils.CreateAuctionTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
+		0,
+		0,
+		[]testutils.Account{s.Accounts[0]},
+		100,
+	)
+	s.Require().NoError(err)
+
+	txBz, err := s.EncCfg.TxConfig.TxEncoder()(validBidTx)
+	s.Require().NoError(err)
+
+	// create an invalid bid-tx (nested)
+	bidMsg := auctiontypes.NewMsgAuctionBid(s.Accounts[0].Address, sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)), [][]byte{
+		txBz,
+	})
+	nestedBidTx, err := testutils.CreateTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		0,
+		0,
+		[]sdk.Msg{bidMsg},
+	)
+	s.Require().NoError(err)
+
+	// create an invalid bid-tx (signer invalid)
+	invalidBidMsg := auctiontypes.MsgAuctionBid{
+		Bidder:       "",
+		Bid:          sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
+		Transactions: nil,
+	}
+	invalidBidTx, err := testutils.CreateTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		0,
+		0,
+		[]sdk.Msg{&invalidBidMsg},
+	)
+	s.Require().NoError(err)
+
+	// create a tx that should not be inserted in the mev-lane
+	s.Require().NoError(err)
+
+	txs := map[sdk.Tx]bool{
+		validBidTx:   true,
+		bundled[0]:   true,
+		nestedBidTx:  true,
+		invalidBidTx: true,
+	}
+
+	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+
+	ba := &baseApp{
+		s.Ctx,
+	}
+	mevLaneHandler := checktx.NewMEVCheckTxHandler(
+		ba,
+		s.EncCfg.TxConfig.TxDecoder(),
+		mevLane,
+		s.SetUpAnteHandler(txs),
+		ba.CheckTx,
+	)
+	s.Run("expected bid-tx", func() {
+		bundledTx, err := s.EncCfg.TxConfig.TxEncoder()(bundled[0])
+		s.Require().NoError(err)
+
+		_, err = mevLaneHandler.ValidateBidTx(s.Ctx, validBidTx, &auctiontypes.BidInfo{
+			Transactions: [][]byte{bundledTx},
+		})
+		s.Require().NoError(err)
+	})
+
+	s.Run("nested bid-tx", func() {
+		nestedBidTxBz, err := s.EncCfg.TxConfig.TxEncoder()(nestedBidTx)
+		s.Require().NoError(err)
+
+		_, err = mevLaneHandler.ValidateBidTx(s.Ctx, nestedBidTx, &auctiontypes.BidInfo{
+			Transactions: [][]byte{nestedBidTxBz},
+		})
+		s.Require().Error(err)
+		s.Require().Contains(err.Error(), "bundled tx cannot be a bid tx")
+	})
+
+	s.Run("invalid bid-tx", func() {
+		invalidBidTxBz, err := s.EncCfg.TxConfig.TxEncoder()(invalidBidTx)
+		s.Require().NoError(err)
+
+		_, err = mevLaneHandler.ValidateBidTx(s.Ctx, invalidBidTx, &auctiontypes.BidInfo{
+			Transactions: [][]byte{invalidBidTxBz},
+		})
+		s.Require().Error(err)
+		s.Require().Contains(err.Error(), "failed to get bid info")
 	})
 }
 
