@@ -31,7 +31,7 @@ func TestCheckTxTestSuite(t *testing.T) {
 	suite.Run(t, new(CheckTxTestSuite))
 }
 
-func (s *CheckTxTestSuite) TestCheckTx() {
+func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	bidTx, _, err := testutils.CreateAuctionTx(
 		s.EncCfg.TxConfig,
 		s.Accounts[0],
@@ -111,6 +111,72 @@ func (s *CheckTxTestSuite) TestCheckTx() {
 		s.Require().NoError(err)
 
 		s.Require().Equal(uint32(1), res.Code)
+	})
+}
+
+func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
+	s.Run("tx fails tx-decoding", func() {
+		handler := checktx.NewMempoolParityCheckTx(
+			s.Ctx.Logger(),
+			nil,
+			s.EncCfg.TxConfig.TxDecoder(),
+			nil,
+		)
+
+		res, err := handler.CheckTx()(&cometabci.RequestCheckTx{Tx: []byte("invalid-tx")})
+		s.Require().NoError(err)
+
+		s.Require().Equal(uint32(1), res.Code)
+	})
+}
+
+func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
+	txs := map[sdk.Tx]bool{}
+
+	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
+		mevLane,
+	})
+	s.Require().NoError(err)
+
+	ba := &baseApp{
+		s.Ctx,
+	}
+
+	acc := s.Accounts[0]
+	// create a tx that should not be inserted in the mev-lane
+	normalTx, err := testutils.CreateRandomTxBz(s.EncCfg.TxConfig, acc, 0, 1, 0, 0)
+	s.Require().NoError(err)
+
+	var gotTx []byte
+	mevLaneHandler := checktx.NewMEVCheckTxHandler(
+		ba,
+		s.EncCfg.TxConfig.TxDecoder(),
+		mevLane,
+		s.SetUpAnteHandler(txs),
+		func(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
+			// expect the above free tx to be sent here
+			gotTx = req.Tx
+			return &cometabci.ResponseCheckTx{
+				Code: uint32(0),
+			}, nil
+		},
+	).CheckTx()
+
+	handler := checktx.NewMempoolParityCheckTx(
+		s.Ctx.Logger(),
+		mempool,
+		s.EncCfg.TxConfig.TxDecoder(),
+		mevLaneHandler,
+	).CheckTx()
+
+	// test that a normal tx can be successfully inserted to the mempool
+	s.Run("test non-mev tx insertion on CheckTx", func() {
+		res, err := handler(&cometabci.RequestCheckTx{Tx: normalTx, Type: cometabci.CheckTxType_New})
+		s.Require().NoError(err)
+
+		s.Require().Equal(uint32(0), res.Code)
+		s.Require().Equal(normalTx, gotTx)
 	})
 }
 

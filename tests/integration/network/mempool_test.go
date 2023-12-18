@@ -45,7 +45,7 @@ func (s *NetworkTestSuite) TestLanedMempoolSyncWithComet() {
 	s.Require().NoError(err)
 	defer closefn()
 
-	tmClient, err := s.GetCometRPCClient()
+	tmClient, err := s.NetworkSuite.GetCometClient()
 	s.Require().NoError(err)
 
 	blockClient := blockservicetypes.NewServiceClient(cc)

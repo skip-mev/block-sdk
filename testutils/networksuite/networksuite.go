@@ -15,7 +15,6 @@ import (
 
 	pruningtypes "cosmossdk.io/store/pruning/types"
 	cmtrand "github.com/cometbft/cometbft/libs/rand"
-	cmthttp "github.com/cometbft/cometbft/rpc/client/http"
 	dbm "github.com/cosmos/cosmos-db"
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
@@ -156,8 +155,4 @@ func populateBlockSDK(_ *rand.Rand, bsdkState blocksdktypes.GenesisState) blocks
 	}
 
 	return bsdkState
-}
-
-func (nts *NetworkTestSuite) GetCometRPCClient() (*cmthttp.HTTP, error) {
-	return cmthttp.New(nts.NetworkSuite.Network.Validators[0].RPCAddress, "/websocket")
 }
