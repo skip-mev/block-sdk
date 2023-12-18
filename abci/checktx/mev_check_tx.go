@@ -1,4 +1,4 @@
-package check_tx
+package checktx
 
 import (
 	"context"
@@ -44,7 +44,7 @@ type MEVCheckTxHandler struct {
 
 // MEVLaneI defines the interface for the mev auction lane. This interface
 // is utilized by both the x/auction module and the checkTx handler.
-type MEVLaneI interface { //nolint
+type MEVLaneI interface {
 	block.Lane
 	mevlane.Factory
 	GetTopAuctionTx(ctx context.Context) sdk.Tx
@@ -79,10 +79,10 @@ func NewMEVCheckTxHandler(
 	checkTxHandler CheckTx,
 ) *MEVCheckTxHandler {
 	return &MEVCheckTxHandler{
-		baseApp:     baseApp,
-		txDecoder:   txDecoder,
-		mevLane:     mevLane,
-		anteHandler: anteHandler,
+		baseApp:        baseApp,
+		txDecoder:      txDecoder,
+		mevLane:        mevLane,
+		anteHandler:    anteHandler,
 		checkTxHandler: checkTxHandler,
 	}
 }

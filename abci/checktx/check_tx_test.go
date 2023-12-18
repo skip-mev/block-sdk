@@ -1,4 +1,4 @@
-package check_tx_test
+package checktx_test
 
 import (
 	"fmt"
@@ -15,7 +15,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/abci/check_tx"
+	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
@@ -68,7 +68,7 @@ func (s *CheckTxTestSuite) TestCheckTx() {
 	ba := &baseApp{
 		s.Ctx,
 	}
-	mevLaneHandler := check_tx.NewMEVCheckTxHandler(
+	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
 		s.EncCfg.TxConfig.TxDecoder(),
 		mevLane,
@@ -76,7 +76,7 @@ func (s *CheckTxTestSuite) TestCheckTx() {
 		ba.CheckTx,
 	).CheckTx()
 
-	handler := check_tx.NewMempoolParityCheckTx(
+	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
 		s.EncCfg.TxConfig.TxDecoder(),

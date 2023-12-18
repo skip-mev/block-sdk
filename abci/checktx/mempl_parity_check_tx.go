@@ -1,4 +1,4 @@
-package check_tx
+package checktx
 
 import (
 	"fmt"
