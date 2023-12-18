@@ -17,10 +17,11 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"google.golang.org/grpc"
 
-	blockservicetypes "github.com/skip-mev/block-sdk/block/service/types"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 	"github.com/skip-mev/chaintestutil/account"
 	"github.com/skip-mev/chaintestutil/network"
+
+	blockservicetypes "github.com/skip-mev/block-sdk/block/service/types"
+	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 const (
