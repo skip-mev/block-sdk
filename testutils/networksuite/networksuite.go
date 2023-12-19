@@ -6,18 +6,24 @@ import (
 	"os"
 
 	"cosmossdk.io/log"
-	pruningtypes "cosmossdk.io/store/pruning/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/skip-mev/chaintestutil/network"
 	"github.com/skip-mev/chaintestutil/sample"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
+
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/skip-mev/chaintestutil/account"
 
 	"github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
@@ -27,13 +33,22 @@ import (
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-// NetworkTestSuite is a test suite for tests that initializes a network instance.
+var (
+	chainID = "chain-" + cmtrand.NewRand().Str(6)
+
+	genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
+)
+
+// NetworkTestSuite is a test suite for query tests that initializes a network instance.
 type NetworkTestSuite struct {
 	suite.Suite
 
 	NetworkSuite  *network.TestSuite
 	AuctionState  auctiontypes.GenesisState
 	BlockSDKState blocksdktypes.GenesisState
+	AuthState     authtypes.GenesisState
+	BankState     banktypes.GenesisState
+	Accounts      []*account.Account
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -55,6 +70,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 		}
 	)
 	cfg.AppConstructor = appCons
+	cfg.ChainID = chainID
 
 	updateGenesisConfigState := func(moduleName string, moduleState proto.Message) {
 		buf, err := cfg.Codec.MarshalJSON(moduleState)
@@ -70,7 +86,49 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
 	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
 
+	// add genesis accounts
+	nts.Accounts = []*account.Account{
+		account.NewAccount(),
+	}
+
+	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[authtypes.ModuleName], &nts.AuthState))
+	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[banktypes.ModuleName], &nts.BankState))
+
+	addGenesisAccounts(&nts.AuthState, &nts.BankState, nts.Accounts)
+
+	// update genesis
+	updateGenesisConfigState(authtypes.ModuleName, &nts.AuthState)
+	updateGenesisConfigState(banktypes.ModuleName, &nts.BankState)
+
 	nts.NetworkSuite = network.NewSuite(nts.T(), cfg)
+}
+
+// addGenesisAccount adds a genesis account to the auth / bank genesis state.
+func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *banktypes.GenesisState, accs []*account.Account) {
+	balances := make([]banktypes.Balance, len(accs))
+	accounts := make(authtypes.GenesisAccounts, len(accs))
+
+	// create accounts / update bank state w/ account + gen balance
+	for i, acc := range accs {
+		// base account
+		bacc := authtypes.NewBaseAccount(acc.Address(), acc.PubKey(), 0, 0)
+
+		accounts[i] = bacc
+		balances[i] = banktypes.Balance{
+			Address: acc.Address().String(),
+			Coins:   sdk.NewCoins(genBalance),
+		}
+	}
+
+	// update auth state w/ accounts
+	var err error
+	authGenState.Accounts, err = authtypes.PackAccounts(accounts)
+	if err != nil {
+		panic(err)
+	}
+
+	// update bank state w/ balances
+	bankGenState.Balances = balances
 }
 
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {

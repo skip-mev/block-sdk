@@ -26,8 +26,6 @@ func TestNetworkTestSuite(t *testing.T) {
 }
 
 func (s *NetworkTestSuite) TestGetLanes() {
-	s.T().Parallel()
-
 	common := []string{
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
