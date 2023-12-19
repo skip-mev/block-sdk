@@ -19,7 +19,7 @@ func (s *MEVTestSuite) TestIsAuctionTx() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 2, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 2, 0, 0)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -29,13 +29,13 @@ func (s *MEVTestSuite) TestIsAuctionTx() {
 		{
 			"malformed auction bid tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				msgs := testutils.CreateRandomMsgs(s.accounts[0].Address, 2)
+				msgs := testutils.CreateRandomMsgs(s.Accounts[0].Address, 2)
 				msgs = append(msgs, msgAuctionBid)
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -45,12 +45,12 @@ func (s *MEVTestSuite) TestIsAuctionTx() {
 		{
 			"valid auction bid tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -60,15 +60,15 @@ func (s *MEVTestSuite) TestIsAuctionTx() {
 		{
 			"tx with multiple MsgAuctionBid messages",
 			func() sdk.Tx {
-				bid1, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				bid1, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				bid2, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 1, 2)
+				bid2, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 1, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{bid1, bid2}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -81,7 +81,7 @@ func (s *MEVTestSuite) TestIsAuctionTx() {
 		s.Run(tc.name, func() {
 			tx := tc.createTx()
 
-			bidInfo, err := s.config.GetAuctionBidInfo(tx)
+			bidInfo, err := s.Config.GetAuctionBidInfo(tx)
 
 			s.Require().Equal(tc.isAuctionTx, bidInfo != nil)
 			if tc.expectedError {
@@ -104,12 +104,12 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 			"normal auction tx",
 			func() sdk.Tx {
 				tx, err := testutils.CreateAuctionTxWithSigners(
-					s.encCfg.TxConfig,
-					s.accounts[0],
+					s.EncCfg.TxConfig,
+					s.Accounts[0],
 					sdk.NewCoin("stake", math.NewInt(100)),
 					1,
 					0,
-					s.accounts[0:1],
+					s.Accounts[0:1],
 				)
 				s.Require().NoError(err)
 
@@ -117,7 +117,7 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 			},
 			[]map[string]struct{}{
 				{
-					s.accounts[0].Address.String(): {},
+					s.Accounts[0].Address.String(): {},
 				},
 			},
 			false,
@@ -125,7 +125,7 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 10, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 10, 0, 0)
 				s.Require().NoError(err)
 
 				return tx
@@ -137,12 +137,12 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 			"multiple signers on auction tx",
 			func() sdk.Tx {
 				tx, err := testutils.CreateAuctionTxWithSigners(
-					s.encCfg.TxConfig,
-					s.accounts[0],
+					s.EncCfg.TxConfig,
+					s.Accounts[0],
 					sdk.NewCoin("stake", math.NewInt(100)),
 					1,
 					0,
-					s.accounts[0:3],
+					s.Accounts[0:3],
 				)
 				s.Require().NoError(err)
 
@@ -150,13 +150,13 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 			},
 			[]map[string]struct{}{
 				{
-					s.accounts[0].Address.String(): {},
+					s.Accounts[0].Address.String(): {},
 				},
 				{
-					s.accounts[1].Address.String(): {},
+					s.Accounts[1].Address.String(): {},
 				},
 				{
-					s.accounts[2].Address.String(): {},
+					s.Accounts[2].Address.String(): {},
 				},
 			},
 			false,
@@ -167,7 +167,7 @@ func (s *MEVTestSuite) TestGetTransactionSigners() {
 		s.Run(tc.name, func() {
 			tx := tc.createTx()
 
-			bidInfo, _ := s.config.GetAuctionBidInfo(tx)
+			bidInfo, _ := s.Config.GetAuctionBidInfo(tx)
 			if tc.expectedError {
 				s.Require().Nil(bidInfo)
 			} else {
@@ -186,10 +186,10 @@ func (s *MEVTestSuite) TestWrapBundleTransaction() {
 		{
 			"normal sdk tx",
 			func() (sdk.Tx, []byte) {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 0, 0)
 				s.Require().NoError(err)
 
-				bz, err := s.encCfg.TxConfig.TxEncoder()(tx)
+				bz, err := s.EncCfg.TxConfig.TxEncoder()(tx)
 				s.Require().NoError(err)
 
 				return tx, bz
@@ -212,16 +212,16 @@ func (s *MEVTestSuite) TestWrapBundleTransaction() {
 		s.Run(tc.name, func() {
 			tx, bz := tc.createBundleTx()
 
-			wrappedTx, err := s.config.WrapBundleTransaction(bz)
+			wrappedTx, err := s.Config.WrapBundleTransaction(bz)
 			if tc.expectedError {
 				s.Require().Error(err)
 			} else {
 				s.Require().NoError(err)
 
-				txBytes, err := s.encCfg.TxConfig.TxEncoder()(tx)
+				txBytes, err := s.EncCfg.TxConfig.TxEncoder()(tx)
 				s.Require().NoError(err)
 
-				wrappedTxBytes, err := s.encCfg.TxConfig.TxEncoder()(wrappedTx)
+				wrappedTxBytes, err := s.EncCfg.TxConfig.TxEncoder()(wrappedTx)
 				s.Require().NoError(err)
 
 				s.Require().Equal(txBytes, wrappedTxBytes)
@@ -241,7 +241,7 @@ func (s *MEVTestSuite) TestGetBidder() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 0, 0)
 				s.Require().NoError(err)
 
 				return tx
@@ -253,31 +253,31 @@ func (s *MEVTestSuite) TestGetBidder() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
-			s.accounts[0].Address.String(),
+			s.Accounts[0].Address.String(),
 			false,
 			true,
 		},
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				randomMsg := testutils.CreateRandomMsgs(s.accounts[0].Address, 1)[0]
+				randomMsg := testutils.CreateRandomMsgs(s.Accounts[0].Address, 1)[0]
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid, randomMsg}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -291,7 +291,7 @@ func (s *MEVTestSuite) TestGetBidder() {
 		s.Run(tc.name, func() {
 			tx := tc.createTx()
 
-			bidInfo, err := s.config.GetAuctionBidInfo(tx)
+			bidInfo, err := s.Config.GetAuctionBidInfo(tx)
 			if tc.expectedError {
 				s.Require().Error(err)
 			} else {
@@ -316,7 +316,7 @@ func (s *MEVTestSuite) TestGetBid() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 0, 0)
 				s.Require().NoError(err)
 
 				return tx
@@ -328,12 +328,12 @@ func (s *MEVTestSuite) TestGetBid() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -344,15 +344,15 @@ func (s *MEVTestSuite) TestGetBid() {
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				randomMsg := testutils.CreateRandomMsgs(s.accounts[0].Address, 1)[0]
+				randomMsg := testutils.CreateRandomMsgs(s.Accounts[0].Address, 1)[0]
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid, randomMsg}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -366,7 +366,7 @@ func (s *MEVTestSuite) TestGetBid() {
 		s.Run(tc.name, func() {
 			tx := tc.createTx()
 
-			bidInfo, err := s.config.GetAuctionBidInfo(tx)
+			bidInfo, err := s.Config.GetAuctionBidInfo(tx)
 			if tc.expectedError {
 				s.Require().Error(err)
 			} else {
@@ -390,7 +390,7 @@ func (s *MEVTestSuite) TestGetBundledTransactions() {
 		{
 			"normal sdk tx",
 			func() (sdk.Tx, [][]byte) {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 0, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 0, 0)
 				s.Require().NoError(err)
 
 				return tx, nil
@@ -401,12 +401,12 @@ func (s *MEVTestSuite) TestGetBundledTransactions() {
 		{
 			"valid auction tx",
 			func() (sdk.Tx, [][]byte) {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx, msgAuctionBid.Transactions
 			},
@@ -416,15 +416,15 @@ func (s *MEVTestSuite) TestGetBundledTransactions() {
 		{
 			"invalid auction tx",
 			func() (sdk.Tx, [][]byte) {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				randomMsg := testutils.CreateRandomMsgs(s.accounts[0].Address, 1)[0]
+				randomMsg := testutils.CreateRandomMsgs(s.Accounts[0].Address, 1)[0]
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid, randomMsg}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 0, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 0, msgs)
 				s.Require().NoError(err)
 				return tx, nil
 			},
@@ -437,7 +437,7 @@ func (s *MEVTestSuite) TestGetBundledTransactions() {
 		s.Run(tc.name, func() {
 			tx, expectedBundledTxs := tc.createTx()
 
-			bidInfo, err := s.config.GetAuctionBidInfo(tx)
+			bidInfo, err := s.Config.GetAuctionBidInfo(tx)
 			if tc.expectedError {
 				s.Require().Error(err)
 			} else {
@@ -462,7 +462,7 @@ func (s *MEVTestSuite) TestGetTimeout() {
 		{
 			"normal sdk tx",
 			func() sdk.Tx {
-				tx, err := testutils.CreateRandomTx(s.encCfg.TxConfig, s.accounts[0], 0, 1, 1, 0)
+				tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 1, 0)
 				s.Require().NoError(err)
 
 				return tx
@@ -474,12 +474,12 @@ func (s *MEVTestSuite) TestGetTimeout() {
 		{
 			"valid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 10, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 10, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -490,15 +490,15 @@ func (s *MEVTestSuite) TestGetTimeout() {
 		{
 			"invalid auction tx",
 			func() sdk.Tx {
-				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.encCfg.TxConfig, s.accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
+				msgAuctionBid, err := testutils.CreateMsgAuctionBid(s.EncCfg.TxConfig, s.Accounts[0], sdk.NewInt64Coin("stake", 100), 0, 2)
 				s.Require().NoError(err)
 
-				randomMsg := testutils.CreateRandomMsgs(s.accounts[0].Address, 1)[0]
+				randomMsg := testutils.CreateRandomMsgs(s.Accounts[0].Address, 1)[0]
 				s.Require().NoError(err)
 
 				msgs := []sdk.Msg{msgAuctionBid, randomMsg}
 
-				tx, err := testutils.CreateTx(s.encCfg.TxConfig, s.accounts[0], 0, 10, msgs)
+				tx, err := testutils.CreateTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 10, msgs)
 				s.Require().NoError(err)
 				return tx
 			},
@@ -512,7 +512,7 @@ func (s *MEVTestSuite) TestGetTimeout() {
 		s.Run(tc.name, func() {
 			tx := tc.createTx()
 
-			bidInfo, err := s.config.GetAuctionBidInfo(tx)
+			bidInfo, err := s.Config.GetAuctionBidInfo(tx)
 			if tc.expectedError {
 				s.Require().Error(err)
 			} else {
