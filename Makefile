@@ -197,7 +197,12 @@ lint-markdown:
 	@echo "--> Running markdown linter"
 	@markdownlint **/*.md
 
-.PHONY: lint lint-fix lint-markdown
+govulncheck:
+	@echo "--> Running govulncheck"
+	@go run golang.org/x/vuln/cmd/govulncheck -test ./...
+
+
+.PHONY: lint lint-fix lint-markdown govulncheck
 
 ###############################################################################
 ###                                Formatting                               ###
