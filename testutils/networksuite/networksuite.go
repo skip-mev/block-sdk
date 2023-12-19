@@ -5,11 +5,6 @@ import (
 	"math/rand"
 	"os"
 
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-	"github.com/skip-mev/chaintestutil/account"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
@@ -24,6 +19,12 @@ import (
 	"github.com/cosmos/cosmos-sdk/baseapp"
 	servertypes "github.com/cosmos/cosmos-sdk/server/types"
 	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/skip-mev/chaintestutil/account"
+
 	"github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
