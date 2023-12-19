@@ -11,12 +11,6 @@ import (
 	"github.com/skip-mev/chaintestutil/account"
 
 	"cosmossdk.io/log"
-	pruningtypes "cosmossdk.io/store/pruning/types"
-	dbm "github.com/cosmos/cosmos-db"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-
 	"cosmossdk.io/math"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/skip-mev/chaintestutil/network"
@@ -24,6 +18,12 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
 	"github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
@@ -32,7 +32,13 @@ import (
 	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
 )
 
-// NetworkTestSuite is a test suite for tests that initializes a network instance.
+var (
+	chainID = "chain-" + cmtrand.NewRand().Str(6)
+
+	genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
+)
+
+// NetworkTestSuite is a test suite for query tests that initializes a network instance.
 type NetworkTestSuite struct {
 	suite.Suite
 
@@ -63,6 +69,7 @@ func (nts *NetworkTestSuite) SetupSuite() {
 		}
 	)
 	cfg.AppConstructor = appCons
+	cfg.ChainID = chainID
 
 	updateGenesisConfigState := func(moduleName string, moduleState proto.Message) {
 		buf, err := cfg.Codec.MarshalJSON(moduleState)
@@ -108,7 +115,7 @@ func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *bank
 		accounts[i] = bacc
 		balances[i] = banktypes.Balance{
 			Address: acc.Address().String(),
-			Coins:   sdk.NewCoins(sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))),
+			Coins:   sdk.NewCoins(genBalance),
 		}
 	}
 
