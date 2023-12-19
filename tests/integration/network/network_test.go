@@ -125,8 +125,6 @@ func (s *NetworkTestSuite) QueryBlockSDKLanes() (*blocksdktypes.QueryLanesRespon
 }
 
 func (s *NetworkTestSuite) TestFreeTxNoFees() {
-	s.T().Parallel()
-
 	val := s.NetworkSuite.Network.Validators[0]
 	acc := *s.Accounts[0]
 
@@ -148,10 +146,10 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	txBz, err := s.NetworkSuite.CreateTxBytes(
 		context.Background(),
 		network.TxGenInfo{
-			Account:       *s.Accounts[0],
+			Account:       acc,
 			GasLimit:      999999999,
 			TimeoutHeight: 999999999,
-			Fee:           sdk.Coins{coin},
+			Fee:           sdk.NewCoins(coin),
 		},
 		&stakingtypes.MsgDelegate{
 			DelegatorAddress: acc.Address().String(),
