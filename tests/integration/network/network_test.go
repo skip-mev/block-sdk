@@ -59,8 +59,6 @@ func (s *NetworkTestSuite) TestGetLanes() {
 }
 
 func (s *NetworkTestSuite) TestGetAuctionParams() {
-	s.T().Parallel()
-
 	common := []string{
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
