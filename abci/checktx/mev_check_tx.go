@@ -1,83 +1,90 @@
-package mev
+package checktx
 
 import (
+	"context"
 	"fmt"
 
 	cometabci "github.com/cometbft/cometbft/abci/types"
 	"github.com/cometbft/cometbft/libs/log"
-	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+	"github.com/skip-mev/block-sdk/block"
+	mevlane "github.com/skip-mev/block-sdk/lanes/mev"
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-type (
-	// CheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
-	// verify bid transactions against the latest committed state. All other transactions
-	// are executed normally using base app's CheckTx. This defines all of the
-	// dependencies that are required to verify a bid transaction.
-	CheckTxHandler struct {
-		// baseApp is utilized to retrieve the latest committed state and to call
-		// baseapp's CheckTx method.
-		baseApp BaseApp
+// MevCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
+// verify bid transactions against the latest committed state. All other transactions
+// are executed normally using base app's CheckTx. This defines all of the
+// dependencies that are required to verify a bid transaction.
+type MEVCheckTxHandler struct {
+	// baseApp is utilized to retrieve the latest committed state and to call
+	// baseapp's CheckTx method.
+	baseApp BaseApp
 
-		// txDecoder is utilized to decode transactions to determine if they are
-		// bid transactions.
-		txDecoder sdk.TxDecoder
+	// txDecoder is utilized to decode transactions to determine if they are
+	// bid transactions.
+	txDecoder sdk.TxDecoder
 
-		// MEVLane is utilized to retrieve the bid info of a transaction and to
-		// insert a bid transaction into the application-side mempool.
-		mevLane MEVLaneI
+	// MEVLane is utilized to retrieve the bid info of a transaction and to
+	// insert a bid transaction into the application-side mempool.
+	mevLane MEVLaneI
 
-		// anteHandler is utilized to verify the bid transaction against the latest
-		// committed state.
-		anteHandler sdk.AnteHandler
+	// anteHandler is utilized to verify the bid transaction against the latest
+	// committed state.
+	anteHandler sdk.AnteHandler
 
-		// chainID is the chain id of the application.
-		chainID string
-	}
+	// checkTxHandler is the wrapped CheckTx handler that is used to execute all non-bid txs
+	checkTxHandler CheckTx
 
-	// CheckTx is baseapp's CheckTx method that checks the validity of a
-	// transaction.
-	CheckTx func(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx
+	// chainID is the chainID of the application.
+	chainID string
+}
 
-	// BaseApp is an interface that allows us to call baseapp's CheckTx method
-	// as well as retrieve the latest committed state.
-	BaseApp interface {
-		// CommitMultiStore is utilized to retrieve the latest committed state.
-		CommitMultiStore() storetypes.CommitMultiStore
+// MEVLaneI defines the interface for the mev auction lane. This interface
+// is utilized by both the x/auction module and the checkTx handler.
+type MEVLaneI interface {
+	block.Lane
+	mevlane.Factory
+	GetTopAuctionTx(ctx context.Context) sdk.Tx
+}
 
-		// CheckTx is baseapp's CheckTx method that checks the validity of a
-		// transaction.
-		CheckTx(req cometabci.RequestCheckTx) cometabci.ResponseCheckTx
+// BaseApp is an interface that allows us to call baseapp's CheckTx method
+// as well as retrieve the latest committed state.
+type BaseApp interface {
+	// CommitMultiStore is utilized to retrieve the latest committed state.
+	CommitMultiStore() storetypes.CommitMultiStore
 
-		// Logger is utilized to log errors.
-		Logger() log.Logger
+	// Logger is utilized to log errors.
+	Logger() log.Logger
 
-		// LastBlockHeight is utilized to retrieve the latest block height.
-		LastBlockHeight() int64
+	// LastBlockHeight is utilized to retrieve the latest block height.
+	LastBlockHeight() int64
 
-		// GetConsensusParams is utilized to retrieve the consensus params.
-		GetConsensusParams(ctx sdk.Context) *tmproto.ConsensusParams
-	}
-)
+	// GetConsensusParams is utilized to retrieve the consensus params.
+	GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams
+}
 
-// NewCheckTxHandler constructs a new CheckTxHandler instance.
-func NewCheckTxHandler(
+// NewCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
+// adhering to the MevLaneI interface
+func NewMEVCheckTxHandler(
 	baseApp BaseApp,
 	txDecoder sdk.TxDecoder,
 	mevLane MEVLaneI,
 	anteHandler sdk.AnteHandler,
+	checkTxHandler CheckTx,
 	chainID string,
-) *CheckTxHandler {
-	return &CheckTxHandler{
-		baseApp:     baseApp,
-		txDecoder:   txDecoder,
-		mevLane:     mevLane,
-		anteHandler: anteHandler,
-		chainID:     chainID,
+) *MEVCheckTxHandler {
+	return &MEVCheckTxHandler{
+		baseApp:        baseApp,
+		txDecoder:      txDecoder,
+		mevLane:        mevLane,
+		anteHandler:    anteHandler,
+		checkTxHandler: checkTxHandler,
+		chainID:        chainID,
 	}
 }
 
@@ -87,7 +94,7 @@ func NewCheckTxHandler(
 // before we can insert it into the mempool against the latest commit state because
 // otherwise the auction can be griefed. No state changes are applied to the state
 // during this process.
-func (handler *CheckTxHandler) CheckTx() CheckTx {
+func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 	return func(req cometabci.RequestCheckTx) (resp cometabci.ResponseCheckTx) {
 		defer func() {
 			if rec := recover(); rec != nil {
@@ -142,7 +149,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 
 		// If this is not a bid transaction, we just execute it normally.
 		if bidInfo == nil {
-			return handler.baseApp.CheckTx(req)
+			return handler.checkTxHandler(req)
 		}
 
 		// We attempt to get the latest committed state in order to verify transactions
@@ -216,7 +223,7 @@ func (handler *CheckTxHandler) CheckTx() CheckTx {
 }
 
 // ValidateBidTx is utilized to verify the bid transaction against the latest committed state.
-func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidInfo *types.BidInfo) (sdk.GasInfo, error) {
+func (handler *MEVCheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidInfo *types.BidInfo) (sdk.GasInfo, error) {
 	// Verify the bid transaction.
 	ctx, err := handler.anteHandler(ctx, bidTx, false)
 	if err != nil {
@@ -237,7 +244,11 @@ func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidI
 		}
 
 		// bid txs cannot be included in bundled txs
-		bidInfo, _ := handler.mevLane.GetAuctionBidInfo(bundledTx)
+		bidInfo, err := handler.mevLane.GetAuctionBidInfo(bundledTx)
+		if err != nil {
+			return gasInfo, fmt.Errorf("invalid bid tx; failed to get bid info: %w", err)
+		}
+
 		if bidInfo != nil {
 			return gasInfo, fmt.Errorf("invalid bid tx; bundled tx cannot be a bid tx")
 		}
@@ -252,12 +263,12 @@ func (handler *CheckTxHandler) ValidateBidTx(ctx sdk.Context, bidTx sdk.Tx, bidI
 
 // GetContextForBidTx is returns the latest committed state and sets the context given
 // the checkTx request.
-func (handler *CheckTxHandler) GetContextForBidTx(req cometabci.RequestCheckTx) sdk.Context {
+func (handler *MEVCheckTxHandler) GetContextForBidTx(req cometabci.RequestCheckTx) sdk.Context {
 	// Retrieve the commit multi-store which is used to retrieve the latest committed state.
 	ms := handler.baseApp.CommitMultiStore().CacheMultiStore()
 
 	// Create a new context based off of the latest committed state.
-	header := tmproto.Header{
+	header := cmtproto.Header{
 		Height:  handler.baseApp.LastBlockHeight(),
 		ChainID: handler.chainID, // TODO: Replace with actual chain ID. This is currently not exposed by the app.
 	}

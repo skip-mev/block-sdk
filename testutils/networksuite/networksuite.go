@@ -5,15 +5,6 @@ import (
 	"math/rand"
 
 	"cosmossdk.io/math"
-	tmdb "github.com/cometbft/cometbft-db"
-	tmrand "github.com/cometbft/cometbft/libs/rand"
-	"github.com/cosmos/cosmos-sdk/baseapp"
-	servertypes "github.com/cosmos/cosmos-sdk/server/types"
-	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
-	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	"github.com/cosmos/gogoproto/proto"
 	"github.com/skip-mev/chaintestutil/account"
 	"github.com/skip-mev/chaintestutil/network"
@@ -21,18 +12,30 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+	cmtdb "github.com/cometbft/cometbft-db"
+
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	pruningtypes "github.com/cosmos/cosmos-sdk/store/pruning/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
 	"github.com/skip-mev/block-sdk/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
 var (
-	chainID    = "chain-" + tmrand.NewRand().Str(6)
+	chainID = "chain-" + cmtrand.NewRand().Str(6)
+
 	genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
 
 	DefaultAppConstructor = func(val network.ValidatorI) servertypes.Application {
 		return app.New(
 			val.GetCtx().Logger,
-			tmdb.NewMemDB(),
+			cmtdb.NewMemDB(),
 			nil,
 			true,
 			simtestutil.EmptyAppOptions{},
@@ -43,7 +46,7 @@ var (
 	}
 )
 
-// NetworkTestSuite is a test suite for tests that initializes a network instance.
+// NetworkTestSuite is a test suite for query tests that initializes a network instance.
 type NetworkTestSuite struct {
 	suite.Suite
 
