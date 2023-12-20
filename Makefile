@@ -136,7 +136,7 @@ test-unit: use-main
 test-integration: tidy
 	@go test -v -race ./tests/integration/... 
 
-test-cover: tidy
+test-cover: use-main tidy
 	@echo Running unit tests and creating coverage report...
 	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
 	@sed -i '/.pb.go/d' $(COVER_FILE)
