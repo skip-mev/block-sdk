@@ -134,7 +134,11 @@ test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
 test-integration: tidy
+<<<<<<< HEAD
 	@go test -v -race ./tests/integration
+=======
+	@go test -v ./tests/integration/...
+>>>>>>> 0612051 (chore: add `govulncheck` (#316))
 
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
@@ -197,7 +201,12 @@ lint-markdown:
 	@echo "--> Running markdown linter"
 	@markdownlint **/*.md
 
-.PHONY: lint lint-fix lint-markdown
+govulncheck:
+	@echo "--> Running govulncheck"
+	@go run golang.org/x/vuln/cmd/govulncheck -test ./...
+
+
+.PHONY: lint lint-fix lint-markdown govulncheck
 
 ###############################################################################
 ###                                Formatting                               ###

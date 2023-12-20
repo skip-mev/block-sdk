@@ -32,7 +32,12 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
+<<<<<<< HEAD
 	golang.org/x/tools v0.16.0
+=======
+	golang.org/x/tools v0.16.1
+	golang.org/x/vuln v1.0.1
+>>>>>>> 0612051 (chore: add `govulncheck` (#316))
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17
 	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0
@@ -330,7 +335,7 @@ require (
 	honnef.co/go/tools v0.4.6 // indirect
 	mvdan.cc/interfacer v0.0.0-20180901003855-c20040233aed // indirect
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
-	mvdan.cc/unparam v0.0.0-20221223090309-7455f1af531d // indirect
+	mvdan.cc/unparam v0.0.0-20230312165513-e84e2d14e3b8 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
