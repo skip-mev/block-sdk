@@ -31,6 +31,13 @@ Some examples of ChainSpecs follow:
 
 ### Instantiate the test suite and run the tests  
 
+You will need to pull the Block SDK's tests into your project as a separate dependency. It might be useful to do this in
+a separate go submodule specifically for running these tests ([for example](https://github.com/CascadiaFoundation/cascadia/tree/main/interchaintest))
+
+```text
+github.com/skip-mev/block-sdk/tests/integration {vLatest}
+```
+
 The following snippet is usually suitable.
 
 ```go
@@ -44,3 +51,7 @@ func TestBlockSDKSuite(t *testing.T) {
 ### Run the tests
 
 Add a separate makefile target to run your tests.
+
+```shell
+go test -v -race -run TestBlockSDKSuite
+```
