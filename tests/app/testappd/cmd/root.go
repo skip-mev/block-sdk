@@ -227,7 +227,7 @@ func initRootCmd(
 }
 
 func addModuleInitFlags(cmd *cobra.Command) {
-	cmd.Flags().String(flagCrisisDummy, "", "dummy flag for crisis module")
+	cmd.Flags().Bool(flagCrisisDummy, true, "dummy flag for crisis module")
 }
 
 // genesisCommand builds genesis-related `simd genesis` command. Users may provide application specific commands as a parameter
