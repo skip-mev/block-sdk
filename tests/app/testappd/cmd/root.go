@@ -22,7 +22,11 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
+<<<<<<< HEAD
 	"github.com/cosmos/cosmos-sdk/x/crisis"
+=======
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+>>>>>>> 0612051 (chore: add `govulncheck` (#316))
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -177,8 +181,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 }
 
-func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
+func addModuleInitFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool(flagCrisisDummy, true, "dummy flag for crisis module")
 }
 
 func genesisCommand(encodingConfig params.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {
