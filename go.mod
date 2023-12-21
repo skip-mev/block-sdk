@@ -20,16 +20,12 @@ require (
 	github.com/gorilla/mux v1.8.1
 	github.com/grpc-ecosystem/grpc-gateway v1.16.0
 	github.com/huandu/skiplist v1.2.0
-	github.com/skip-mev/chaintestutil v0.0.0-20231213230652-c159341203f6
+	github.com/skip-mev/chaintestutil v0.0.0-20231221140417-3ef0d790573c
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
-<<<<<<< HEAD
-	golang.org/x/tools v0.16.0
-=======
 	golang.org/x/tools v0.16.1
 	golang.org/x/vuln v1.0.1
->>>>>>> 0612051 (chore: add `govulncheck` (#316))
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17
 	google.golang.org/grpc v1.60.0
 	google.golang.org/protobuf v1.31.0

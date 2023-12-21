@@ -22,11 +22,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-<<<<<<< HEAD
-	"github.com/cosmos/cosmos-sdk/x/crisis"
-=======
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
->>>>>>> 0612051 (chore: add `govulncheck` (#316))
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -34,6 +29,8 @@ import (
 	"github.com/skip-mev/block-sdk/tests/app"
 	"github.com/skip-mev/block-sdk/tests/app/params"
 )
+
+var flagCrisisDummy = "x-crisis-skip-assert-invariants" // dummy flag so that the crisis module does not need to be imported for security reasons
 
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
