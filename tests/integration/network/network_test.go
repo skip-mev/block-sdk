@@ -91,7 +91,7 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	originalBalance := resp.Balance.Amount
 
 	// Send a free tx (delegation)
-	coin := sdk.NewCoin(s.NetworkSuite.Network.Config.BondDenom, math.NewInt(10))
+	coin := sdk.NewCoin(s.NetworkSuite.Network.Config.BondDenom, math.NewInt(6000))
 	txBz, err := s.NetworkSuite.CreateTxBytes(
 		context.Background(),
 		network.TxGenInfo{
@@ -109,8 +109,8 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	require.NoError(s.T(), err)
 	bcastResp, err := val.RPCClient.BroadcastTxCommit(context.Background(), txBz)
 	require.NoError(s.T(), err)
-	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code)
-	require.Equal(s.T(), uint32(0), bcastResp.TxResult.Code)
+	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code, bcastResp.CheckTx)
+	require.Equal(s.T(), uint32(0), bcastResp.TxResult.Code, bcastResp.TxResult)
 
 	// Get updated acc balance
 	resp, err = bankClient.Balance(context.Background(), &banktypes.QueryBalanceRequest{
@@ -119,5 +119,6 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	})
 	require.NoError(s.T(), err)
 	// Assert update acc balance is equal to original balance less the delegation
-	require.Equal(s.T(), originalBalance.Sub(coin.Amount), resp.Balance.Amount)
+	// subtract fee and delegation
+	require.Equal(s.T(), originalBalance.Sub(coin.Amount).Sub(coin.Amount), resp.Balance.Amount)
 }
