@@ -49,6 +49,8 @@ type NetworkTestSuite struct {
 	AuthState     authtypes.GenesisState
 	BankState     banktypes.GenesisState
 	Accounts      []*account.Account
+
+	AuctionEscrow *account.Account
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -81,6 +83,8 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	// initialize genesis
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[auctiontypes.ModuleName], &nts.AuctionState))
 	nts.AuctionState = populateAuction(r, nts.AuctionState)
+	nts.AuctionEscrow = account.NewAccount()
+	nts.AuctionState.Params.EscrowAccountAddress = nts.AuctionEscrow.Address().Bytes()
 	updateGenesisConfigState(auctiontypes.ModuleName, &nts.AuctionState)
 
 	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
