@@ -71,8 +71,6 @@ func (s *NetworkTestSuite) TestGetAuctionParams() {
 	common := []string{
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
-	defaultParams := auctiontypes.DefaultParams()
-	defaultParams.EscrowAccountAddress = s.AuctionEscrow.Address().Bytes()
 	for _, tc := range []struct {
 		name string
 
@@ -83,7 +81,7 @@ func (s *NetworkTestSuite) TestGetAuctionParams() {
 		{
 			name: "should return default params w/ modified escrow acc",
 			args: common,
-			obj:  defaultParams,
+			obj:  s.AuctionState.Params,
 		},
 	} {
 		s.T().Run(tc.name, func(t *testing.T) {

@@ -16,14 +16,14 @@ import (
 )
 
 func (s *NetworkTestSuite) TestAuctionWithValidBids() {
-	cc, _, err := s.NetworkSuite.GetGRPC()
+	cc, closeFn, err := s.NetworkSuite.GetGRPC()
 	require.NoError(s.T(), err)
-	auctionClient := auctiontypes.NewQueryClient(cc)
+	defer closeFn()
 
 	cmtClient, err := s.NetworkSuite.GetCometClient()
 	require.NoError(s.T(), err)
 
-	paramsResp, err := auctionClient.Params(context.Background(), &auctiontypes.QueryParamsRequest{})
+	params, err := s.QueryAuctionParams()
 	require.NoError(s.T(), err)
 
 	fee := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000))
@@ -31,7 +31,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 	// Get the escrow account's initial balance
 	beginEscrowBalances, err := s.NetworkSuite.Balances(*s.AuctionEscrow)
 	require.NoError(s.T(), err)
-	beginEscrowBalance := beginEscrowBalances.AmountOf(paramsResp.Params.ReserveFee.Denom)
+	beginEscrowBalance := beginEscrowBalances.AmountOf(params.Params.ReserveFee.Denom)
 
 	// Create and fund the bidders
 	bidder1 := account.NewAccount()
@@ -86,7 +86,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 		// Store the receiver's initial balance
 		beginReceiverBalances, err := s.NetworkSuite.Balances(*receiver)
 		require.NoError(s.T(), err)
-		beginReceiverBalance := beginReceiverBalances.AmountOf(paramsResp.Params.ReserveFee.Denom)
+		beginReceiverBalance := beginReceiverBalances.AmountOf(params.Params.ReserveFee.Denom)
 
 		bid1Seq, _, err := getAccount(context.Background(), authtypes.NewQueryClient(cc), *bidder1)
 		s.Require().NoError(err)
@@ -109,7 +109,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 				Sequence:         bid1Seq + 1,
 				OverrideSequence: true,
 			},
-			banktypes.NewMsgSend(bidder1.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(paramsResp.Params.ReserveFee.Denom, math.NewInt(1)))),
+			banktypes.NewMsgSend(bidder1.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(params.Params.ReserveFee.Denom, math.NewInt(1)))),
 		)
 		require.NoError(s.T(), err)
 
@@ -126,7 +126,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 			},
 			auctiontypes.NewMsgAuctionBid(
 				bidder1.Address(),
-				paramsResp.Params.ReserveFee,
+				params.Params.ReserveFee,
 				[][]byte{send1Tx},
 			),
 		)
@@ -143,7 +143,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 				Sequence:         bid2Seq + 1,
 				OverrideSequence: true,
 			},
-			banktypes.NewMsgSend(bidder2.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(paramsResp.Params.ReserveFee.Denom, math.NewInt(2)))),
+			banktypes.NewMsgSend(bidder2.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(params.Params.ReserveFee.Denom, math.NewInt(2)))),
 		)
 		require.NoError(s.T(), err)
 
@@ -160,7 +160,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 			},
 			auctiontypes.NewMsgAuctionBid(
 				bidder2.Address(),
-				paramsResp.Params.ReserveFee.Add(paramsResp.Params.MinBidIncrement),
+				params.Params.ReserveFee.Add(params.Params.MinBidIncrement),
 				[][]byte{send2Tx},
 			),
 		)
@@ -177,13 +177,13 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 		// Validate that the receiver got the funds
 		endReceiverBalances, err := s.NetworkSuite.Balances(*receiver)
 		require.NoError(s.T(), err)
-		endReceiverBalance := endReceiverBalances.AmountOf(paramsResp.Params.ReserveFee.Denom)
+		endReceiverBalance := endReceiverBalances.AmountOf(params.Params.ReserveFee.Denom)
 		require.Equal(s.T(), beginReceiverBalance.Add(math.NewInt(2)), endReceiverBalance)
 
 		// Validate that the escrow got the funds
 		endEscrowBalances, err := s.NetworkSuite.Balances(*s.AuctionEscrow)
 		require.NoError(s.T(), err)
-		endEscrowBalance := endEscrowBalances.AmountOf(paramsResp.Params.ReserveFee.Denom)
+		endEscrowBalance := endEscrowBalances.AmountOf(params.Params.ReserveFee.Denom)
 		require.Equal(s.T(), beginEscrowBalance.Add(math.NewInt(2)), endEscrowBalance)
 	})
 	s.Run("bid w/ too many txs", func() {
@@ -208,7 +208,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 					Sequence:         bid1Seq + 1,
 					OverrideSequence: true,
 				},
-				banktypes.NewMsgSend(bidder1.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(paramsResp.Params.ReserveFee.Denom, math.NewInt(1)))),
+				banktypes.NewMsgSend(bidder1.Address(), receiver.Address(), sdk.NewCoins(sdk.NewCoin(params.Params.ReserveFee.Denom, math.NewInt(1)))),
 			)
 			require.NoError(s.T(), err)
 			bundle = append(bundle, sendTx)
@@ -227,7 +227,7 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 			},
 			auctiontypes.NewMsgAuctionBid(
 				bidder1.Address(),
-				paramsResp.Params.ReserveFee,
+				params.Params.ReserveFee,
 				bundle,
 			),
 		)
