@@ -17,6 +17,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
+
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
@@ -302,4 +303,3 @@ func (ba *baseApp) LastBlockHeight() int64 {
 func (baseApp) GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams {
 	return ctx.ConsensusParams()
 }
-
