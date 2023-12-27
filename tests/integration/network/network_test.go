@@ -79,7 +79,7 @@ func (s *NetworkTestSuite) TestGetAuctionParams() {
 		obj  auctiontypes.Params
 	}{
 		{
-			name: "should return default params w/ modified escrow acc",
+			name: "should return default params",
 			args: common,
 			obj:  auctiontypes.DefaultParams(),
 		},
