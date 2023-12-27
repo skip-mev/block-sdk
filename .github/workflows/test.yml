@@ -35,9 +35,7 @@ jobs:
         run: |
           go work init
           make test-unit
-<<<<<<< HEAD
 
-=======
       - name: Test Coverage
         run: |
           go work init ||:
@@ -48,7 +46,6 @@ jobs:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           files: cover.out
->>>>>>> 4e7e7ac (chore: Add e2e test readme (#319))
   test-integration:
     runs-on: ubuntu-latest
     steps:
