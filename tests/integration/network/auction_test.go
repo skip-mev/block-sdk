@@ -28,9 +28,14 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 
 	fee := sdk.NewCoins(sdk.NewInt64Coin(sdk.DefaultBondDenom, 1000000))
 
-	// Get the escrow account's initial balance
-	beginEscrowBalances, err := s.NetworkSuite.Balances(*s.AuctionEscrow)
+	bankClient := banktypes.NewQueryClient(cc)
+	resp, err := bankClient.AllBalances(context.Background(), &banktypes.QueryAllBalancesRequest{
+		Address:      params.EscrowAddressString,
+		Pagination:   nil,
+		ResolveDenom: false,
+	})
 	require.NoError(s.T(), err)
+	beginEscrowBalances := resp.Balances
 	beginEscrowBalance := beginEscrowBalances.AmountOf(params.Params.ReserveFee.Denom)
 
 	// Create and fund the bidders
@@ -181,8 +186,14 @@ func (s *NetworkTestSuite) TestAuctionWithValidBids() {
 		require.Equal(s.T(), beginReceiverBalance.Add(math.NewInt(2)), endReceiverBalance)
 
 		// Validate that the escrow got the funds
-		endEscrowBalances, err := s.NetworkSuite.Balances(*s.AuctionEscrow)
+		// endEscrowBalances, err := s.NetworkSuite.Balances(*s.AuctionEscrow)
+		balResp, err := bankClient.AllBalances(context.Background(), &banktypes.QueryAllBalancesRequest{
+			Address:      params.EscrowAddressString,
+			Pagination:   nil,
+			ResolveDenom: false,
+		})
 		require.NoError(s.T(), err)
+		endEscrowBalances := balResp.Balances
 		endEscrowBalance := endEscrowBalances.AmountOf(params.Params.ReserveFee.Denom)
 		require.Equal(s.T(), beginEscrowBalance.Add(math.NewInt(2)), endEscrowBalance)
 	})
