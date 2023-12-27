@@ -9,12 +9,9 @@ BUILD_DIR ?= $(CURDIR)/build
 PROJECT_NAME = $(shell git remote get-url origin | xargs basename -s .git)
 HTTPS_GIT := https://github.com/skip-mev/block-sdk.git
 DOCKER := $(shell which docker)
-<<<<<<< HEAD
 HOMEDIR ?= $(CURDIR)/tests/.testappd
 GENESIS ?= $(HOMEDIR)/config/genesis.json
 GENESIS_TMP ?= $(HOMEDIR)/config/genesis_tmp.json
-=======
->>>>>>> 56eeeb3 (chore: Add codecov (#276))
 COVER_FILE ?= "cover.out"
 
 ###############################################################################
@@ -136,12 +133,9 @@ test-e2e: $(TEST_E2E_DEPS)
 test-unit: use-main
 	@go test -v -race $(shell go list ./... | grep -v tests/)
 
-<<<<<<< HEAD
 test-integration: tidy
 	@go test -v ./tests/integration/...
 
-=======
->>>>>>> 56eeeb3 (chore: Add codecov (#276))
 test-cover: tidy
 	@echo Running unit tests and creating coverage report...
 	@go test -mod=readonly -v -timeout 30m -coverprofile=$(COVER_FILE) -covermode=atomic $(shell go list ./... | grep -v tests/)
@@ -150,14 +144,9 @@ test-cover: tidy
 	@sed -i '/.proto/d' $(COVER_FILE)
 	@sed -i '/.pb.gw.go/d' $(COVER_FILE)
 
-<<<<<<< HEAD
 test-all: test-unit test-integration test-e2e
 
 .PHONY: test-unit test-e2e test-cover test-integration
-=======
-
-.PHONY: test test-integration
->>>>>>> 56eeeb3 (chore: Add codecov (#276))
 
 ###############################################################################
 ###                                Protobuf                                 ###
