@@ -144,7 +144,6 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
 		}
 
-		h.logger.Info("mempool distribution before proposal processing", "distribution", h.mempool.GetTxDistribution())
 		// Verify the proposal.
 		processLanesHandler := ChainProcessLanes(registry)
 		finalProposal, err := processLanesHandler(

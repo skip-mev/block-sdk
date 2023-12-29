@@ -4,8 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"strings"
 	"strconv"
+	"strings"
+
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -126,9 +127,8 @@ func IntFromString(str string) (math.Int, bool) {
 	return math.NewIntFromString(str)
 }
 
-// compareCoins compares two coins, returning 1 if a > b, -1 if a < b, and 0 if a == b.
-// a > b iff the denoms in either coin are the same, and the value for each of a's denoms
-// is greater than the value for each of b's denoms.
+// compareCoins compares two coins, a and b. It returns true if a is strictly greater 
+// than b, and false otherwise.
 func compareCoins(a, b Coins) bool {
 	// if a or b is nil, then return whether a is non-nil
 	if a == nil || b == nil {
