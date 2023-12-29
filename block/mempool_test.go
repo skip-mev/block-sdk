@@ -650,13 +650,14 @@ func (suite *BlockBusterTestSuite) TestLanedMempool_Registry() {
 			)
 			suite.Require().NoError(err)
 
-			gotOrderedLanes, err := mempool.Registry(suite.ctx)
 			if tc.wantErr {
-				suite.Require().Error(err)
+				suite.Require().Panics(func() {
+					mempool.Registry(suite.ctx)
+				})
 				return
 			}
 
-			suite.Require().NoError(err)
+			gotOrderedLanes := mempool.Registry(suite.ctx)
 			suite.Require().Equal(tc.expectedNewRegistry, gotOrderedLanes)
 		})
 	}

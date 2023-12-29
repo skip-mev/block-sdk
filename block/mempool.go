@@ -26,7 +26,7 @@ type (
 		sdkmempool.Mempool
 
 		// Registry returns the mempool's lane registry.
-		Registry(ctx sdk.Context) ([]Lane, error)
+		Registry(ctx sdk.Context) []Lane
 
 		// Contains returns true if any of the lanes currently contain the transaction.
 		Contains(tx sdk.Tx) bool
@@ -164,18 +164,24 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 }
 
 // Registry returns the mempool's lane registry.
-func (m *LanedMempool) Registry(ctx sdk.Context) (newRegistry []Lane, err error) {
-	if m.moduleLaneFetcher == nil {
-		return m.registry, fmt.Errorf("module lane fetcher not set")
-	}
+//
+// CONTRACT: this function panics if it fails.  It should be wrapped in a recover() mechanism.
+// This function will NEVER panic if x/blocksdk is disabled.
+func (m *LanedMempool) Registry(ctx sdk.Context) []Lane {
+	// TODO check enabled param
+	// if !enabled fall back to default registry and return
 
 	// TODO add a last block updated check ?
 	// potential future optimization
 	chainLanes := m.moduleLaneFetcher.GetLanes(ctx)
 
 	// order lanes and populate the necessary fields (maxBlockSize, etc)
+	var err error
 	m.registry, err = m.OrderLanes(chainLanes)
-	return m.registry, err
+	if err != nil {
+		panic(err)
+	}
+	return m.registry
 }
 
 func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (orderedLanes []Lane, err error) {
@@ -211,6 +217,10 @@ func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (ordere
 func (m *LanedMempool) ValidateBasic() error {
 	if len(m.registry) == 0 {
 		return fmt.Errorf("registry cannot be nil; must configure at least one lane")
+	}
+
+	if m.moduleLaneFetcher == nil {
+		return fmt.Errorf("module lane fetcher cannot be nil; must be set")
 	}
 
 	sum := math.LegacyZeroDec()
