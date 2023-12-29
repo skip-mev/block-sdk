@@ -7,6 +7,7 @@ import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "cosmos/query/v1/query.proto";
 import "sdk/blocksdk/v1/blocksdk.proto";
+import "sdk/blocksdk/v1/params.proto";
 
 // Query defines the x/blocksdk querier service.
 service Query {
@@ -20,6 +21,12 @@ service Query {
   rpc Lanes(QueryLanesRequest) returns (QueryLanesResponse) {
     option (cosmos.query.v1.module_query_safe) = true;
     option (google.api.http).get = "/block-sdk/blocksdk/v1/lanes";
+  }
+
+  // Params queries the parameters of the x/blocksdk module.
+  rpc Params(QueryParamsRequest) returns (QueryParamsResponse) {
+    option (cosmos.query.v1.module_query_safe) = true;
+    option (google.api.http).get = "/block-sdk/blocksdk/v1/params";
   }
 }
 
@@ -35,4 +42,13 @@ message QueryLanesRequest {}
 // QueryLaneResponse is the response type for the Query/Lanes RPC method.
 message QueryLanesResponse {
   repeated Lane lanes = 1 [ (gogoproto.nullable) = false ];
+}
+
+// QueryParamsRequest is the request type for the Query/Params RPC method.
+message QueryParamsRequest {}
+
+// QueryParamsResponse is the response type for the Query/Params RPC method.
+message QueryParamsResponse {
+  // Params defines the parameters of the module.
+  Params params = 1 [ (gogoproto.nullable) = false ];
 }

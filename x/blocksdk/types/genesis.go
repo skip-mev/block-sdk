@@ -13,11 +13,17 @@ func NewGenesisState() *GenesisState {
 
 // DefaultGenesisState returns the default GenesisState instance.
 func DefaultGenesisState() *GenesisState {
-	return &GenesisState{}
+	return &GenesisState{
+		Params: DefaultParams(),
+	}
 }
 
 // Validate performs basic validation of the blocksdk module genesis state.
 func (gs GenesisState) Validate() error {
+	if err := gs.Params.Validate(); err != nil {
+		return err
+	}
+
 	return Lanes(gs.Lanes).ValidateBasic()
 }
 
