@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
-
+	"strconv"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
@@ -82,7 +82,7 @@ func coinsToString(coins sdk.Coins) string {
 	// e.g. 10000,stake,10000,atom
 	coinString := ""
 	for i, coin := range coins {
-		coinString += fmt.Sprintf("%s,%s", coin.Amount, coin.Denom)
+		coinString += coin.Amount.String() + "," + coin.Denom
 		if i != len(coins)-1 {
 			coinString += ","
 		}
@@ -104,15 +104,26 @@ func coinsFromString(coinsString string) (Coins, error) {
 	coins := make(Coins)
 	for i := 0; i < len(coinStrings); i += 2 {
 		// split the string by pipe
-		amount, ok := math.NewIntFromString(coinStrings[i])
+		amount, ok := IntFromString(coinStrings[i])
 		if !ok {
-			return nil, fmt.Errorf("invalid coin string: %s,%s", coinStrings[i], coinStrings[i+1])
+			return nil, fmt.Errorf("invalid amount: %s, denom: %s", coinStrings[i], coinStrings[i+1])
 		}
 
 		coins[coinStrings[i+1]] = amount
 	}
 
 	return coins, nil
+}
+
+func IntFromString(str string) (math.Int, bool) {
+	// first attempt to get int64 from the string
+	int64Val, err := strconv.ParseInt(str, 10, 64)
+	if err == nil {
+		return math.NewInt(int64Val), true
+	}
+
+	// if we can't get an int64, then get raw math.Int
+	return math.NewIntFromString(str)
 }
 
 // compareCoins compares two coins, returning 1 if a > b, -1 if a < b, and 0 if a == b.
@@ -144,6 +155,47 @@ func compareCoins(a, b Coins) bool {
 	}
 
 	return true
+}
+
+func DeprecatedTxPriority() TxPriority[string] {
+	return TxPriority[string]{
+		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
+			feeTx, ok := tx.(sdk.FeeTx)
+			if !ok {
+				return ""
+			}
+
+			return feeTx.GetFee().String()
+		},
+		Compare: func(a, b string) int {
+			aCoins, _ := sdk.ParseCoinsNormalized(a)
+			bCoins, _ := sdk.ParseCoinsNormalized(b)
+
+			switch {
+			case aCoins == nil && bCoins == nil:
+				return 0
+
+			case aCoins == nil:
+				return -1
+
+			case bCoins == nil:
+				return 1
+
+			default:
+				switch {
+				case aCoins.IsAllGT(bCoins):
+					return 1
+
+				case aCoins.IsAllLT(bCoins):
+					return -1
+
+				default:
+					return 0
+				}
+			}
+		},
+		MinValue: "",
+	}
 }
 
 // NewMempool returns a new Mempool.
