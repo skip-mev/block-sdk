@@ -4,7 +4,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"strings"
 
+	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
@@ -42,6 +44,8 @@ type (
 	}
 )
 
+type Coins = map[string]math.Int
+
 // DefaultTxPriority returns a default implementation of the TxPriority. It prioritizes
 // transactions by their fee.
 func DefaultTxPriority() TxPriority[string] {
@@ -52,37 +56,94 @@ func DefaultTxPriority() TxPriority[string] {
 				return ""
 			}
 
-			return feeTx.GetFee().String()
+			return coinsToString(feeTx.GetFee())
 		},
 		Compare: func(a, b string) int {
-			aCoins, _ := sdk.ParseCoinsNormalized(a)
-			bCoins, _ := sdk.ParseCoinsNormalized(b)
+			aCoins, _ := coinsFromString(a)
+			bCoins, _ := coinsFromString(b)
 
 			switch {
-			case aCoins == nil && bCoins == nil:
-				return 0
-
-			case aCoins == nil:
-				return -1
-
-			case bCoins == nil:
+			case compareCoins(aCoins, bCoins):
 				return 1
 
+			case compareCoins(bCoins, aCoins):
+				return -1
+
 			default:
-				switch {
-				case aCoins.IsAllGT(bCoins):
-					return 1
-
-				case aCoins.IsAllLT(bCoins):
-					return -1
-
-				default:
-					return 0
-				}
+				return 0
 			}
 		},
 		MinValue: "",
 	}
+}
+
+func coinsToString(coins sdk.Coins) string {
+	// to avoid dealing with regex, etc. we use a , to separate denominations from amounts
+	// e.g. 10000,stake,10000,atom
+	coinString := ""
+	for i, coin := range coins {
+		coinString += fmt.Sprintf("%s,%s", coin.Amount, coin.Denom)
+		if i != len(coins)-1 {
+			coinString += ","
+		}
+	}
+
+	return coinString
+}
+
+// coinsFromString converts a string of coins to a sdk.Coins object.
+func coinsFromString(coinsString string) (Coins, error) {
+	// split the string by commas
+	coinStrings := strings.Split(coinsString, ",")
+
+	// if the length is odd, then the given string is invalid
+	if len(coinStrings)%2 != 0 {
+		return nil, nil
+	}
+
+	coins := make(Coins)
+	for i := 0; i < len(coinStrings); i += 2 {
+		// split the string by pipe
+		amount, ok := math.NewIntFromString(coinStrings[i])
+		if !ok {
+			return nil, fmt.Errorf("invalid coin string: %s,%s", coinStrings[i], coinStrings[i+1])
+		}
+
+		coins[coinStrings[i+1]] = amount
+	}
+
+	return coins, nil
+}
+
+// compareCoins compares two coins, returning 1 if a > b, -1 if a < b, and 0 if a == b.
+// a > b iff the denoms in either coin are the same, and the value for each of a's denoms
+// is greater than the value for each of b's denoms.
+func compareCoins(a, b Coins) bool {
+	// if a or b is nil, then return whether a is non-nil
+	if a == nil || b == nil {
+		return a != nil
+	}
+
+	// for each of a's denoms, check if b has the same denom
+	if len(a) != len(b) {
+		return false
+	}
+
+	// for each of a's denoms, check if a is greater
+	for denom, aAmount := range a {
+		// b does not have the corresponding denom, a is not greater
+		bAmount, ok := b[denom]
+		if !ok {
+			return false
+		}
+
+		// a is not greater than b
+		if !aAmount.GT(bAmount) {
+			return false
+		}
+	}
+
+	return true
 }
 
 // NewMempool returns a new Mempool.
