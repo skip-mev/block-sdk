@@ -24,7 +24,7 @@ message QueryParamsRequest {}
 message QueryParamsResponse {
   // Params defines the parameters of the module.
   Params params = 1 [ (gogoproto.nullable) = false ];
-  // EscrowAddressString is the string representation of the escrow address stored
-  // in params.
+  // EscrowAddressString is the string representation of the escrow address
+  // stored in params.
   string escrow_address_string = 2;
 }
