@@ -19,7 +19,6 @@ pull_request_rules:
   - name: backport patches to v1.x.x branch
     conditions:
       - base=main
-      - label=backport/v1.x.x
     actions:
       backport:
         branches:
@@ -27,7 +26,6 @@ pull_request_rules:
   - name: backport patches to v2.x.x branch
     conditions:
       - base=main
-      - label=backport/v2.x.x
     actions:
       backport:
         branches:
