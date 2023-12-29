@@ -326,3 +326,7 @@ func (mlf moduleLaneFetcher) GetLane(sdk.Context, string) (lane blocksdktypes.La
 func (mlf moduleLaneFetcher) GetLanes(sdk.Context) []blocksdktypes.Lane {
 	return nil
 }
+
+func (mlf moduleLaneFetcher) GetParams(sdk.Context) (params blocksdktypes.Params, err error) {
+	return blocksdktypes.DefaultParams(), nil
+}

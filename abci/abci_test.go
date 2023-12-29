@@ -22,14 +22,20 @@ import (
 )
 
 type MockLaneFetcher struct {
-	getLaneHandler  func() (blocksdkmoduletypes.Lane, error)
-	getLanesHandler func() []blocksdkmoduletypes.Lane
+	getLaneHandler   func() (blocksdkmoduletypes.Lane, error)
+	getLanesHandler  func() []blocksdkmoduletypes.Lane
+	getParamsHandler func() (blocksdkmoduletypes.Params, error)
 }
 
-func NewMockLaneFetcher(getLane func() (blocksdkmoduletypes.Lane, error), getLanes func() []blocksdkmoduletypes.Lane) MockLaneFetcher {
+func NewMockLaneFetcher(
+	getLane func() (blocksdkmoduletypes.Lane, error),
+	getLanes func() []blocksdkmoduletypes.Lane,
+	getParams func() (blocksdkmoduletypes.Params, error),
+) MockLaneFetcher {
 	return MockLaneFetcher{
-		getLaneHandler:  getLane,
-		getLanesHandler: getLanes,
+		getLaneHandler:   getLane,
+		getLanesHandler:  getLanes,
+		getParamsHandler: getParams,
 	}
 }
 
@@ -47,6 +53,10 @@ func (m *MockLaneFetcher) SetGetLanesHandler(h func() []blocksdkmoduletypes.Lane
 
 func (m MockLaneFetcher) GetLanes(_ sdk.Context) []blocksdkmoduletypes.Lane {
 	return m.getLanesHandler()
+}
+
+func (m MockLaneFetcher) GetParams(_ sdk.Context) (blocksdkmoduletypes.Params, error) {
+	return m.getParamsHandler()
 }
 
 type ProposalsTestSuite struct {
@@ -538,11 +548,15 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
+			mocks.NewMockLaneFetcher(
+				func() (blocksdkmoduletypes.Lane, error) {
+					return blocksdkmoduletypes.Lane{}, nil
+				}, func() []blocksdkmoduletypes.Lane {
+					return chainLanes
+				},
+				func() (blocksdkmoduletypes.Params, error) {
+					return blocksdkmoduletypes.Params{Enabled: true}, nil
+				}),
 		)
 		s.Require().NoError(err)
 
@@ -603,11 +617,16 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
+			mocks.NewMockLaneFetcher(
+				func() (blocksdkmoduletypes.Lane, error) {
+					return blocksdkmoduletypes.Lane{}, nil
+				},
+				func() []blocksdkmoduletypes.Lane {
+					return chainLanes
+				},
+				func() (blocksdkmoduletypes.Params, error) {
+					return blocksdkmoduletypes.Params{Enabled: true}, nil
+				}),
 		)
 		s.Require().NoError(err)
 
@@ -675,11 +694,16 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
+			mocks.NewMockLaneFetcher(
+				func() (blocksdkmoduletypes.Lane, error) {
+					return blocksdkmoduletypes.Lane{}, nil
+				},
+				func() []blocksdkmoduletypes.Lane {
+					return chainLanes
+				},
+				func() (blocksdkmoduletypes.Params, error) {
+					return blocksdkmoduletypes.Params{Enabled: true}, nil
+				}),
 		)
 		s.Require().NoError(err)
 
@@ -747,11 +771,16 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
+			mocks.NewMockLaneFetcher(
+				func() (blocksdkmoduletypes.Lane, error) {
+					return blocksdkmoduletypes.Lane{}, nil
+				},
+				func() []blocksdkmoduletypes.Lane {
+					return chainLanes
+				},
+				func() (blocksdkmoduletypes.Params, error) {
+					return blocksdkmoduletypes.Params{Enabled: true}, nil
+				}),
 		)
 		s.Require().NoError(err)
 
@@ -780,7 +809,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
 
 		proposalHandler := s.setUpProposalHandlers([]block.Lane{mevLane, freeLane, defaultLane}).ProcessProposalHandler()
-		proposal := [][]byte{}
+		var proposal [][]byte
 
 		resp, err := proposalHandler(s.ctx, &cometabci.RequestProcessProposal{Txs: proposal, Height: 2})
 		s.Require().NoError(err)
@@ -819,7 +848,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		defaultLane.Insert(sdk.Context{}, tx1)
 		defaultLane.Insert(sdk.Context{}, tx2)
 
-		txs := [][]sdk.Tx{}
+		var txs [][]sdk.Tx
 
 		for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 			txs = append(txs, []sdk.Tx{iterator.Tx()})

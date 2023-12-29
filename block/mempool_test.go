@@ -45,6 +45,7 @@ type BlockBusterTestSuite struct {
 	freeSDKLane blocksdkmoduletypes.Lane
 
 	chainLanes []blocksdkmoduletypes.Lane
+	params     blocksdkmoduletypes.Params
 	lanes      []block.Lane
 	mempool    *block.LanedMempool
 
@@ -135,16 +136,21 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
 	suite.chainLanes = []blocksdkmoduletypes.Lane{suite.mevSDKLane, suite.freeSDKLane, suite.baseSDKLane}
+	suite.params = blocksdkmoduletypes.Params{Enabled: true}
 
 	var err error
 	suite.mempool, err = block.NewLanedMempool(
 		log.NewNopLogger(),
 		suite.lanes,
-		mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-			return suite.baseSDKLane, nil
-		}, func() []blocksdkmoduletypes.Lane {
-			return suite.chainLanes
-		}),
+		mocks.NewMockLaneFetcher(
+			func() (blocksdkmoduletypes.Lane, error) {
+				return suite.baseSDKLane, nil
+			}, func() []blocksdkmoduletypes.Lane {
+				return suite.chainLanes
+			},
+			func() (blocksdkmoduletypes.Params, error) {
+				return suite.params, nil
+			}),
 	)
 	suite.Require().NoError(err)
 
@@ -157,11 +163,15 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 }
 
 func (suite *BlockBusterTestSuite) TestNewMempool() {
-	fetcher := mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-		return blocksdkmoduletypes.Lane{}, nil
-	}, func() []blocksdkmoduletypes.Lane {
-		return nil
-	})
+	fetcher := mocks.NewMockLaneFetcher(
+		func() (blocksdkmoduletypes.Lane, error) {
+			return blocksdkmoduletypes.Lane{}, nil
+		}, func() []blocksdkmoduletypes.Lane {
+			return nil
+		},
+		func() (blocksdkmoduletypes.Params, error) {
+			return suite.params, nil
+		})
 
 	baseConfig := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
@@ -642,11 +652,16 @@ func (suite *BlockBusterTestSuite) TestLanedMempool_Registry() {
 			mempool, err := block.NewLanedMempool(
 				log.NewNopLogger(),
 				tc.registryLanes,
-				mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-					return blocksdkmoduletypes.Lane{}, nil
-				}, func() []blocksdkmoduletypes.Lane {
-					return tc.chainLanes
-				}),
+				mocks.NewMockLaneFetcher(
+					func() (blocksdkmoduletypes.Lane, error) {
+						return blocksdkmoduletypes.Lane{}, nil
+					},
+					func() []blocksdkmoduletypes.Lane {
+						return tc.chainLanes
+					},
+					func() (blocksdkmoduletypes.Params, error) {
+						return suite.params, nil
+					}),
 			)
 			suite.Require().NoError(err)
 
@@ -756,11 +771,16 @@ func (suite *BlockBusterTestSuite) TestLanedMempool_OrderLanes() {
 			mempool, err := block.NewLanedMempool(
 				log.NewNopLogger(),
 				tc.registryLanes,
-				mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-					return blocksdkmoduletypes.Lane{}, nil
-				}, func() []blocksdkmoduletypes.Lane {
-					return []blocksdkmoduletypes.Lane{}
-				}),
+				mocks.NewMockLaneFetcher(
+					func() (blocksdkmoduletypes.Lane, error) {
+						return blocksdkmoduletypes.Lane{}, nil
+					},
+					func() []blocksdkmoduletypes.Lane {
+						return []blocksdkmoduletypes.Lane{}
+					},
+					func() (blocksdkmoduletypes.Params, error) {
+						return suite.params, nil
+					}),
 			)
 			suite.Require().NoError(err)
 

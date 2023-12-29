@@ -94,7 +94,7 @@ func CreateMempool() *block.LanedMempool {
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 
 	lanes := []block.Lane{mevLane, freeLane, defaultLane}
-	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes, mocks.MockLaneFetcher{})
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes, &mocks.MockLaneFetcher{})
 	if err != nil {
 		panic(err)
 	}

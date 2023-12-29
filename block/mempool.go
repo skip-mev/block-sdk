@@ -18,6 +18,7 @@ var _ Mempool = (*LanedMempool)(nil)
 type LaneFetcher interface {
 	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
 	GetLanes(ctx sdk.Context) []blocksdkmoduletypes.Lane
+	GetParams(ctx sdk.Context) (params blocksdkmoduletypes.Params, err error)
 }
 
 type (
@@ -168,15 +169,21 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 // CONTRACT: this function panics if it fails.  It should be wrapped in a recover() mechanism.
 // This function will NEVER panic if x/blocksdk is disabled.
 func (m *LanedMempool) Registry(ctx sdk.Context) []Lane {
-	// TODO check enabled param
 	// if !enabled fall back to default registry and return
+	params, err := m.moduleLaneFetcher.GetParams(ctx)
+	if err != nil {
+		panic(err)
+	}
+
+	if !params.Enabled {
+		return m.registry
+	}
 
 	// TODO add a last block updated check ?
 	// potential future optimization
 	chainLanes := m.moduleLaneFetcher.GetLanes(ctx)
 
 	// order lanes and populate the necessary fields (maxBlockSize, etc)
-	var err error
 	m.registry, err = m.OrderLanes(chainLanes)
 	if err != nil {
 		panic(err)

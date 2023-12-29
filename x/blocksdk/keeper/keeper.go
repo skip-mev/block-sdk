@@ -110,6 +110,10 @@ func (k *Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
 	key := types.KeyParams
 	bz := store.Get(key)
 
+	if len(bz) == 0 {
+		return types.Params{}, nil
+	}
+
 	params := types.Params{}
 	if err := params.Unmarshal(bz); err != nil {
 		return types.Params{}, err

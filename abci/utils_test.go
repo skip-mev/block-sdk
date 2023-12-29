@@ -162,7 +162,9 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 		},
 		func() []blocksdkmoduletypes.Lane {
 			return blocksdkLanes
-		})
+		},
+		func() (blocksdkmoduletypes.Params, error) { return blocksdkmoduletypes.Params{Enabled: true}, nil },
+	)
 
 	mempool, err := block.NewLanedMempool(
 		log.NewNopLogger(),

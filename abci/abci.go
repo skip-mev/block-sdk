@@ -69,11 +69,6 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		)
 
 		registry := h.mempool.Registry(ctx)
-		if r := recover(); r != nil {
-			h.logger.Error("failed to get lane registry", "err", err)
-			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
-		}
-
 		// Get the max gas limit and max block size for the proposal.
 		_, maxGasLimit := proposals.GetBlockLimits(ctx)
 		proposal := proposals.NewProposal(h.logger, req.MaxTxBytes, maxGasLimit)
@@ -139,10 +134,6 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
 		registry := h.mempool.Registry(ctx)
-		if r := recover(); r != nil {
-			h.logger.Error("failed to get lane registry", "err", err)
-			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}, err
-		}
 
 		// Verify the proposal.
 		processLanesHandler := ChainProcessLanes(registry)
