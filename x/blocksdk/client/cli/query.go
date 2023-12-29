@@ -24,6 +24,7 @@ func GetQueryCmd() *cobra.Command {
 	cmd.AddCommand(
 		CmdQueryLane(),
 		CmdQueryLanes(),
+		CmdQueryParams(),
 	)
 
 	return cmd
@@ -78,6 +79,35 @@ func CmdQueryLanes() *cobra.Command {
 			}
 
 			return clientCtx.PrintProto(response)
+		},
+	}
+
+	flags.AddQueryFlagsToCmd(cmd)
+
+	return cmd
+}
+
+// CmdQueryParams implements a command that will return the current parameters of the blocksdk module.
+func CmdQueryParams() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "params",
+		Short: "Query the current parameters of the blocksdk module",
+		Args:  cobra.NoArgs,
+		RunE: func(cmd *cobra.Command, args []string) error {
+			clientCtx, err := client.GetClientQueryContext(cmd)
+			if err != nil {
+				return err
+			}
+
+			queryClient := types.NewQueryClient(clientCtx)
+
+			request := &types.QueryParamsRequest{}
+			response, err := queryClient.Params(cmd.Context(), request)
+			if err != nil {
+				return err
+			}
+
+			return clientCtx.PrintProto(&response.Params)
 		},
 	}
 

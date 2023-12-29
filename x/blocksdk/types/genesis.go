@@ -19,8 +19,8 @@ func DefaultGenesisState() *GenesisState {
 }
 
 // Validate performs basic validation of the blocksdk module genesis state.
-func (gs GenesisState) Validate() error {
-	if err := gs.Params.Validate(); err != nil {
+func (gs *GenesisState) Validate() error {
+	if err := gs.Params.ValidateBasic(); err != nil {
 		return err
 	}
 

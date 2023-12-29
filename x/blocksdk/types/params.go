@@ -20,7 +20,7 @@ func DefaultParams() Params {
 	)
 }
 
-// Validate performs basic validation on the parameters.
-func (p *Params) Validate() error {
+// ValidateBasic performs basic validation on the parameters.
+func (p *Params) ValidateBasic() error {
 	return nil
 }

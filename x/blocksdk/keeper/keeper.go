@@ -102,3 +102,32 @@ func (k *Keeper) DeleteLane(ctx sdk.Context, id string) {
 	// Delete the Lane
 	store.Delete([]byte(id))
 }
+
+// GetParams returns the blocksdk module's parameters.
+func (k *Keeper) GetParams(ctx sdk.Context) (types.Params, error) {
+	store := ctx.KVStore(k.storeKey)
+
+	key := types.KeyParams
+	bz := store.Get(key)
+
+	params := types.Params{}
+	if err := params.Unmarshal(bz); err != nil {
+		return types.Params{}, err
+	}
+
+	return params, nil
+}
+
+// SetParams sets the blocksdk module's parameters.
+func (k *Keeper) SetParams(ctx sdk.Context, params types.Params) error {
+	store := ctx.KVStore(k.storeKey)
+
+	bz, err := params.Marshal()
+	if err != nil {
+		return err
+	}
+
+	store.Set(types.KeyParams, bz)
+
+	return nil
+}
