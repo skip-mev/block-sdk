@@ -68,7 +68,7 @@ func coinsFromString(coinsString string) (Coins, error) {
 
 	// if the length is odd, then the given string is invalid
 	if len(coinStrings)%2 != 0 {
-		return nil, nil
+		return nil, fmt.Errorf("invalid coins string: %s", coinsString)
 	}
 
 	coins := make(Coins)
