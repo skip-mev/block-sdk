@@ -100,6 +100,34 @@ func TestDefaultTxPriority(t *testing.T) {
 		require.Equal(t, -1, priority.Compare(priority2, priority1))
 		require.Equal(t, 0, priority.Compare(priority2, priority2))
 	})
+
+	t.Run("incorrectly ordered fee tokens", func(t *testing.T) {
+		tx1, err := testutils.CreateTx(txc, acct[0], 0, 0, nil, sdk.NewCoin("stake", math.NewInt(1)), sdk.NewCoin("atom", math.NewInt(2)), sdk.NewCoin("btc", math.NewInt(3)))
+		require.NoError(t, err)
+
+		tx2, err := testutils.CreateTx(txc, acct[0], 0, 0, nil, sdk.NewCoin("atom", math.NewInt(2)), sdk.NewCoin("stake", math.NewInt(1)), sdk.NewCoin("btc", math.NewInt(3)))
+		require.NoError(t, err)
+
+		priority1 := priority.GetTxPriority(nil, tx1)
+		priority2 := priority.GetTxPriority(nil, tx2)
+
+		require.Equal(t, priority1, priority2)
+	})
+
+	t.Run("IBC tokens", func(t *testing.T) {
+		tx1, err := testutils.CreateTx(txc, acct[0], 0, 0, nil, sdk.NewCoin("ibc/7F1D3FCF4AE79E1554D670D1AD949A9BA4E4A3C76C63093E17E446A46061A7A2", math.NewInt(1)))
+		require.NoError(t, err)
+
+		tx2, err := testutils.CreateTx(txc, acct[0], 0, 0, nil, sdk.NewCoin("ibc/7F1D3FCF4AE79E1554D670D1AD949A9BA4E4A3C76C63093E17E446A46061A7A2", math.NewInt(2)))
+		require.NoError(t, err)
+
+		priority1 := priority.GetTxPriority(nil, tx1)
+		priority2 := priority.GetTxPriority(nil, tx2)
+
+		require.Equal(t, -1, priority.Compare(priority1, priority2))
+		require.Equal(t, 1, priority.Compare(priority2, priority1))
+		require.Equal(t, 0, priority.Compare(priority2, priority2))
+	})
 }
 
 func BenchmarkDefaultTxPriority(b *testing.B) {
