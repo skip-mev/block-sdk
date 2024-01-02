@@ -5,6 +5,8 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/skip-mev/block-sdk/abci/precommit"
+
 	"cosmossdk.io/log"
 	dbm "github.com/cosmos/cosmos-db"
 
@@ -289,6 +291,15 @@ func New(
 	)
 
 	app.SetCheckTx(checkTxHandler.CheckTx())
+
+	mempoolPreCommitter := precommit.NewMempoolEvictionPreCommiter(
+		app.Logger(),
+		mempool,
+		app.ModuleManager,
+		app.AnteHandler(),
+	)
+
+	app.App.SetPrecommiter(mempoolPreCommitter.PreCommit())
 
 	// ---------------------------------------------------------------------------- //
 	// ------------------------- End Custom Code ---------------------------------- //
