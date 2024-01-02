@@ -9,6 +9,7 @@ import (
 	"github.com/skip-mev/block-sdk/block"
 )
 
+// MempoolEvictionPreCommiter is a PreCommit function that evicts txs that invalid from the app-side mempool.
 type MempoolEvictionPreCommiter struct {
 	// logger
 	logger log.Logger
@@ -23,6 +24,7 @@ type MempoolEvictionPreCommiter struct {
 	anteHandler sdk.AnteHandler
 }
 
+// NewMempoolEvictionPreCommiter returns a new MempoolEvictionPreCommiter handler.
 func NewMempoolEvictionPreCommiter(
 	logger log.Logger,
 	mempl block.Mempool,
@@ -37,9 +39,11 @@ func NewMempoolEvictionPreCommiter(
 	}
 }
 
+// PreCommit returns a PreCommit handler that wraps the default PrecCommit handler and evicts invalid txs from the
+// app-side mempool
 func (m *MempoolEvictionPreCommiter) PreCommit() sdk.Precommiter {
 	return func(ctx sdk.Context) {
-		// Precommiter application updates every commit
+		// call precommit per module
 		err := m.mm.Precommit(ctx)
 		if err != nil {
 			panic(err)
