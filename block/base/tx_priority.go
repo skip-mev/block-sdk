@@ -63,6 +63,11 @@ func coinsToString(coins sdk.Coins) string {
 
 // coinsFromString converts a string of coins to a sdk.Coins object.
 func coinsFromString(coinsString string) (Coins, error) {
+	// if its empty string (zero value), we return nil
+	if coinsString == "" {
+		return nil, nil
+	}
+
 	// split the string by commas
 	coinStrings := strings.Split(coinsString, ",")
 

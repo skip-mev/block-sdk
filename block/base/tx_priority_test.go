@@ -59,6 +59,16 @@ func TestTxPriority(t *testing.T) {
 		require.Equal(t, 1, priority.Compare(priority.GetTxPriority(nil, tx), priority.GetTxPriority(nil, tx2)))
 	})
 
+	t.Run("test invalid priorities", func(t *testing.T) {
+		priority := base.DefaultTxPriority()
+
+		invalidAmount := "a,b"
+		invalidCoins := "1,stake,2"
+
+		require.Equal(t, 0, priority.Compare(invalidAmount, ""))
+		require.Equal(t, 0, priority.Compare("", invalidCoins))
+	})
+
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("test with non-tx: %s", tc.name), func(t *testing.T) {
 			require.Equal(t, "", tc.priority.GetTxPriority(nil, nil))
