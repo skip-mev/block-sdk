@@ -119,6 +119,6 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	})
 	require.NoError(s.T(), err)
 	// Assert update acc balance is equal to original balance less the delegation
-	// subtract fee and delegation
-	require.Equal(s.T(), originalBalance.Sub(coin.Amount).Sub(coin.Amount), resp.Balance.Amount)
+	// subtract delegation from original balance
+	require.Equal(s.T(), originalBalance.Sub(coin.Amount), resp.Balance.Amount)
 }
