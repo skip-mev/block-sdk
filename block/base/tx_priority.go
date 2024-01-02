@@ -11,7 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-type Coins = map[string]math.Int
+type Coins map[string]math.Int
 
 // DefaultTxPriority returns a default implementation of the TxPriority. It prioritizes
 // transactions by their fee.
@@ -30,10 +30,10 @@ func DefaultTxPriority() TxPriority[string] {
 			bCoins, _ := coinsFromString(b)
 
 			switch {
-			case compareCoins(aCoins, bCoins):
+			case aCoins.Greater(bCoins):
 				return 1
 
-			case compareCoins(bCoins, aCoins):
+			case bCoins.Greater(aCoins):
 				return -1
 
 			default:
@@ -101,23 +101,23 @@ func intFromString(str string) (math.Int, bool) {
 	return math.NewIntFromString(str)
 }
 
-// compareCoins compares two coins, a and b. It returns true if a is strictly greater
-// than b, and false otherwise.
-func compareCoins(a, b Coins) bool {
+// Greater returns true if lhs is strictly greater than rhs, and false otherwise. Notice, lhs / rhs must be comparable,
+// specifically, they must have the exact same denoms, otherwise, they aren't comparable.
+func (lhs Coins) Greater(rhs Coins) bool {
 	// if a or b is nil, then return whether a is non-nil
-	if a == nil || b == nil {
-		return a != nil
+	if lhs == nil || rhs == nil {
+		return lhs != nil
 	}
 
 	// for each of a's denoms, check if b has the same denom
-	if len(a) != len(b) {
+	if len(lhs) != len(rhs) {
 		return false
 	}
 
 	// for each of a's denoms, check if a is greater
-	for denom, aAmount := range a {
+	for denom, aAmount := range lhs {
 		// b does not have the corresponding denom, a is not greater
-		bAmount, ok := b[denom]
+		bAmount, ok := rhs[denom]
 		if !ok {
 			return false
 		}
