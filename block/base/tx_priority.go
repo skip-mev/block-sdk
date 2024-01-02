@@ -71,10 +71,10 @@ func coinsFromString(coinsString string) (Coins, error) {
 		return nil, fmt.Errorf("invalid coins string: %s", coinsString)
 	}
 
-	coins := make(Coins)
+	coins := make(Coins, len(coinsString)/2)
 	for i := 0; i < len(coinStrings); i += 2 {
 		// split the string by pipe
-		amount, ok := IntFromString(coinStrings[i])
+		amount, ok := intFromString(coinStrings[i])
 		if !ok {
 			return nil, fmt.Errorf("invalid amount: %s, denom: %s", coinStrings[i], coinStrings[i+1])
 		}
@@ -85,7 +85,7 @@ func coinsFromString(coinsString string) (Coins, error) {
 	return coins, nil
 }
 
-func IntFromString(str string) (math.Int, bool) {
+func intFromString(str string) (math.Int, bool) {
 	// first attempt to get int64 from the string
 	int64Val, err := strconv.ParseInt(str, 10, 64)
 	if err == nil {
@@ -126,6 +126,8 @@ func compareCoins(a, b Coins) bool {
 	return true
 }
 
+// DeprecatedTxPriority serves the same purpose as DefaultTxPriority, however, it is significantly slower- on the order of
+// 6-10x slower.
 func DeprecatedTxPriority() TxPriority[string] {
 	return TxPriority[string]{
 		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
