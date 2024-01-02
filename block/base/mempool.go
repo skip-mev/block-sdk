@@ -42,49 +42,6 @@ type (
 	}
 )
 
-// DefaultTxPriority returns a default implementation of the TxPriority. It prioritizes
-// transactions by their fee.
-func DefaultTxPriority() TxPriority[string] {
-	return TxPriority[string]{
-		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
-			feeTx, ok := tx.(sdk.FeeTx)
-			if !ok {
-				return ""
-			}
-
-			return feeTx.GetFee().String()
-		},
-		Compare: func(a, b string) int {
-			aCoins, _ := sdk.ParseCoinsNormalized(a)
-			bCoins, _ := sdk.ParseCoinsNormalized(b)
-
-			switch {
-			case aCoins == nil && bCoins == nil:
-				return 0
-
-			case aCoins == nil:
-				return -1
-
-			case bCoins == nil:
-				return 1
-
-			default:
-				switch {
-				case aCoins.IsAllGT(bCoins):
-					return 1
-
-				case aCoins.IsAllLT(bCoins):
-					return -1
-
-				default:
-					return 0
-				}
-			}
-		},
-		MinValue: "",
-	}
-}
-
 // NewMempool returns a new Mempool.
 func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
 	return &Mempool[C]{

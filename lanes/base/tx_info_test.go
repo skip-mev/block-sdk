@@ -39,11 +39,6 @@ func (s *BaseTestSuite) TestGetTxInfo() {
 		s.Require().Equal(signer.Address.String(), txInfo.Signers[0].Signer.String())
 		s.Require().Equal(nonce, txInfo.Signers[0].Sequence)
 
-		// Verify the priority
-		actualfee, err := sdk.ParseCoinsNormalized(txInfo.Priority.(string))
-		s.Require().NoError(err)
-		s.Require().Equal(fee, actualfee)
-
 		// Verify the gas limit
 		s.Require().Equal(gasLimit, txInfo.GasLimit)
 
@@ -81,11 +76,6 @@ func (s *BaseTestSuite) TestGetTxInfo() {
 		s.Require().Len(txInfo.Signers, 1)
 		s.Require().Equal(signer.Address.String(), txInfo.Signers[0].Signer.String())
 		s.Require().Equal(nonce, txInfo.Signers[0].Sequence)
-
-		// Verify the priority
-		actualfee, err := sdk.ParseCoinsNormalized(txInfo.Priority.(string))
-		s.Require().NoError(err)
-		s.Require().Equal(fee, actualfee)
 
 		// Verify the bytes
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
