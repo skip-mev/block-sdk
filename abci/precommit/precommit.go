@@ -54,6 +54,10 @@ func (m *MempoolEvictionPreCommiter) PreCommit() sdk.Precommiter {
 			tx := iterator.Tx()
 			_, err := m.anteHandler(ctx, tx, false)
 			if err != nil {
+				m.logger.Debug("error running antehandler on tx in precommit: removing from mempool",
+					"tx", tx,
+					"error", err,
+				)
 				err := m.mempl.Remove(tx)
 				if err != nil {
 					panic(err)
