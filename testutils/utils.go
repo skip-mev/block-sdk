@@ -61,7 +61,7 @@ func CreateMempool() *block.LanedMempool {
 		TxEncoder:       encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 		MaxTxs:          0, // unlimited
 	}
 	factory := mev.NewDefaultAuctionFactory(encodingConfig.TxConfig.TxDecoder(), signerExtractor)
@@ -73,7 +73,7 @@ func CreateMempool() *block.LanedMempool {
 		TxEncoder:       encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 		MaxTxs:          0, // unlimited
 	}
 	freeLane := free.NewFreeLane[string](freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
