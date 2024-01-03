@@ -174,7 +174,9 @@ func (m *LanedMempool) ValidateBasic() error {
 		}
 
 		maxBlockSpace := lane.GetMaxBlockSpace()
-		if maxBlockSpace.IsZero() {
+		if seenZeroMaxBlockSpace && maxBlockSpace.IsZero() {
+			return fmt.Errorf("only one lane can have unlimited max block space")
+		} else if maxBlockSpace.IsZero() {
 			seenZeroMaxBlockSpace = true
 		}
 
