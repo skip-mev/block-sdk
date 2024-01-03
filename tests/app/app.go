@@ -286,10 +286,11 @@ func New(
 		app.App.CheckTx,
 	)
 	checkTxHandler := checktx.NewMempoolParityCheckTx(
-		app.Logger(), mempool,
-		app.txConfig.TxDecoder(), mevCheckTx.CheckTx(),
+		app.Logger(),
+		mempool,
+		app.txConfig.TxDecoder(),
+		mevCheckTx.CheckTx(),
 	)
-
 	app.SetCheckTx(checkTxHandler.CheckTx())
 
 	mempoolPreCommitter := precommit.NewMempoolEvictionPreCommiter(
@@ -298,7 +299,6 @@ func New(
 		app.ModuleManager,
 		app.AnteHandler(),
 	)
-
 	app.App.SetPrecommiter(mempoolPreCommitter.PreCommit())
 
 	// ---------------------------------------------------------------------------- //
@@ -319,7 +319,7 @@ func New(
 	// By default, when using app wiring enabled module, this is not required.
 	// For instance, the upgrade module will set automatically the module version map in its init genesis thanks to app wiring.
 	// However, when registering a module manually (i.e. that does not support app wiring), the module version map
-	// must be set manually as follow. The upgrade module will de-duplicate the module version map.
+	// must be set manually as follows. The upgrade module will de-duplicate the module version map.
 	//
 	// app.SetInitChainer(func(ctx sdk.Context, req abci.RequestInitChain) abci.ResponseInitChain {
 	// 	app.UpgradeKeeper.SetModuleVersionMap(ctx, app.ModuleManager.GetVersionMap())
