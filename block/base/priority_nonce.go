@@ -16,6 +16,7 @@ import (
 	"context"
 	"fmt"
 	"math"
+	"sync"
 
 	"github.com/huandu/skiplist"
 
@@ -63,6 +64,7 @@ type (
 	// priority to other sender txs and must be partially ordered by both sender-nonce
 	// and priority.
 	PriorityNonceMempool[C comparable] struct {
+		mtx             sync.Mutex
 		priorityIndex   *skiplist.SkipList
 		priorityCounts  map[C]int
 		senderIndices   map[string]*skiplist.SkipList
@@ -210,7 +212,9 @@ func (mp *PriorityNonceMempool[C]) NextSenderTx(sender string) sdk.Tx {
 // Inserting a duplicate tx with a different priority overwrites the existing tx,
 // changing the total order of the mempool.
 func (mp *PriorityNonceMempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
-	if mp.cfg.MaxTx > 0 && mp.CountTx() >= mp.cfg.MaxTx {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
+	if mp.cfg.MaxTx > 0 && mp.priorityIndex.Len() >= mp.cfg.MaxTx {
 		return sdkmempool.ErrMempoolTxMaxCapacity
 	} else if mp.cfg.MaxTx < 0 {
 		return nil
@@ -328,16 +332,14 @@ func (i *PriorityNonceIterator[C]) Next() sdkmempool.Iterator {
 
 	// We've reached a transaction with a priority lower than the next highest
 	// priority in the pool.
-	if i.priorityNode.Next() != nil {
-		if i.mempool.cfg.TxPriority.Compare(key.priority, i.nextPriority) < 0 {
+	if i.mempool.cfg.TxPriority.Compare(key.priority, i.nextPriority) < 0 {
+		return i.iteratePriority()
+	} else if i.priorityNode.Next() != nil && i.mempool.cfg.TxPriority.Compare(key.priority, i.nextPriority) == 0 {
+		// Weight is incorporated into the priority index key only (not sender index)
+		// so we must fetch it here from the scores map.
+		weight := i.mempool.scores[txMeta[C]{nonce: key.nonce, sender: key.sender}].weight
+		if i.mempool.cfg.TxPriority.Compare(weight, i.priorityNode.Next().Key().(txMeta[C]).weight) < 0 {
 			return i.iteratePriority()
-		} else if i.mempool.cfg.TxPriority.Compare(key.priority, i.nextPriority) == 0 {
-			// Weight is incorporated into the priority index key only (not sender index)
-			// so we must fetch it here from the scores map.
-			weight := i.mempool.scores[txMeta[C]{nonce: key.nonce, sender: key.sender}].weight
-			if i.mempool.cfg.TxPriority.Compare(weight, i.priorityNode.Next().Key().(txMeta[C]).weight) < 0 {
-				return i.iteratePriority()
-			}
 		}
 	}
 
@@ -356,6 +358,8 @@ func (i *PriorityNonceIterator[C]) Tx() sdk.Tx {
 // The maxBytes parameter defines the maximum number of bytes of transactions to
 // return.
 func (mp *PriorityNonceMempool[C]) Select(_ context.Context, _ [][]byte) sdkmempool.Iterator {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	if mp.priorityIndex.Len() == 0 {
 		return nil
 	}
@@ -424,12 +428,16 @@ func senderWeight[C comparable](txPriority TxPriority[C], senderCursor *skiplist
 
 // CountTx returns the number of transactions in the mempool.
 func (mp *PriorityNonceMempool[C]) CountTx() int {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	return mp.priorityIndex.Len()
 }
 
 // Remove removes a transaction from the mempool in O(log n) time, returning an
 // error if unsuccessful.
 func (mp *PriorityNonceMempool[C]) Remove(tx sdk.Tx) error {
+	mp.mtx.Lock()
+	defer mp.mtx.Unlock()
 	signers, err := mp.signerExtractor.GetSigners(tx)
 	if err != nil {
 		return err
