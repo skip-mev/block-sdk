@@ -5,16 +5,12 @@ import (
 	"fmt"
 	"testing"
 
-	"github.com/skip-mev/chaintestutil/network"
-
-	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
-
 	"cosmossdk.io/math"
-
-	sdk "github.com/cosmos/cosmos-sdk/types"
-	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
-
 	tmcli "github.com/cometbft/cometbft/libs/cli"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
+	"github.com/skip-mev/chaintestutil/network"
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/status"
@@ -34,8 +30,6 @@ func TestNetworkTestSuite(t *testing.T) {
 }
 
 func (s *NetworkTestSuite) TestGetAuctionParams() {
-	s.T().Parallel()
-
 	common := []string{
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}
@@ -97,7 +91,7 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	originalBalance := resp.Balance.Amount
 
 	// Send a free tx (delegation)
-	coin := sdk.NewCoin(s.NetworkSuite.Network.Config.BondDenom, math.NewInt(10))
+	coin := sdk.NewCoin(s.NetworkSuite.Network.Config.BondDenom, math.NewInt(6000))
 	txBz, err := s.NetworkSuite.CreateTxBytes(
 		context.Background(),
 		network.TxGenInfo{
@@ -115,8 +109,8 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	require.NoError(s.T(), err)
 	bcastResp, err := val.RPCClient.BroadcastTxCommit(context.Background(), txBz)
 	require.NoError(s.T(), err)
-	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code)
-	require.Equal(s.T(), uint32(0), bcastResp.TxResult.Code)
+	require.Equal(s.T(), uint32(0), bcastResp.CheckTx.Code, bcastResp.CheckTx)
+	require.Equal(s.T(), uint32(0), bcastResp.TxResult.Code, bcastResp.TxResult)
 
 	// Get updated acc balance
 	resp, err = bankClient.Balance(context.Background(), &banktypes.QueryBalanceRequest{
@@ -125,5 +119,6 @@ func (s *NetworkTestSuite) TestFreeTxNoFees() {
 	})
 	require.NoError(s.T(), err)
 	// Assert update acc balance is equal to original balance less the delegation
+	// subtract delegation from original balance
 	require.Equal(s.T(), originalBalance.Sub(coin.Amount), resp.Balance.Amount)
 }

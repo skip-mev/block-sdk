@@ -66,7 +66,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 	}
 	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.mevLane = mev.NewMEVLane(
@@ -82,7 +82,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
