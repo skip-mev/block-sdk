@@ -16,7 +16,12 @@ const (
 
 const (
 	prefixLanes = iota
+	prefixParams
 )
 
-// KeyLanes is the store key for the lanes.
-var KeyLanes = []byte{prefixLanes}
+var (
+	// KeyLanes is the store key for the lanes.
+	KeyLanes = []byte{prefixLanes}
+	// KeyParams is the store key for the params.
+	KeyParams = []byte{prefixParams}
+)

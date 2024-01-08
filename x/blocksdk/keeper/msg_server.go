@@ -45,3 +45,18 @@ func (m MsgServer) UpdateLane(goCtx context.Context, msg *types.MsgUpdateLane) (
 
 	return nil, nil
 }
+
+func (m MsgServer) UpdateParams(goCtx context.Context, msg *types.MsgUpdateParams) (*types.MsgUpdateParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(goCtx)
+
+	// ensure that the message signer is the authority
+	if msg.Authority != m.Keeper.GetAuthority() {
+		return nil, fmt.Errorf("this message can only be executed by the authority; expected %s, got %s", m.Keeper.GetAuthority(), msg.Authority)
+	}
+
+	if err := m.Keeper.SetParams(ctx, msg.Params); err != nil {
+		return nil, err
+	}
+
+	return &types.MsgUpdateParamsResponse{}, nil
+}

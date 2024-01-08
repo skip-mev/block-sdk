@@ -7,21 +7,23 @@ import "google/api/annotations.proto";
 
 // Service defines the gRPC querier service for the Block SDK mempool.
 service Service {
-    // GetTxDistribution returns the distribution of transactions in the mempool.
-    rpc GetTxDistribution(GetTxDistributionRequest) returns (GetTxDistributionResponse) {
-        option (google.api.http) = {
-            get: "/block-sdk/mempool/v1/distribution"
-        };
-    }
+  // GetTxDistribution returns the distribution of transactions in the mempool.
+  rpc GetTxDistribution(GetTxDistributionRequest)
+      returns (GetTxDistributionResponse) {
+    option (google.api.http) = {
+      get : "/block-sdk/mempool/v1/distribution"
+    };
+  }
 }
 
-// GetTxDistributionRequest is the request type for the Service.GetTxDistribution
-// RPC method.
+// GetTxDistributionRequest is the request type for the
+// Service.GetTxDistribution RPC method.
 message GetTxDistributionRequest {}
 
-// GetTxDistributionResponse is the response type for the Service.GetTxDistribution
-// RPC method.
+// GetTxDistributionResponse is the response type for the
+// Service.GetTxDistribution RPC method.
 message GetTxDistributionResponse {
-    // Distribution is a map of lane to the number of transactions in the mempool for that lane.
-    map<string, uint64> distribution = 1;
+  // Distribution is a map of lane to the number of transactions in the mempool
+  // for that lane.
+  map<string, uint64> distribution = 1;
 }

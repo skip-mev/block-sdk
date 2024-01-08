@@ -28,8 +28,8 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.GoGoProtoPackageIsVersion3 // please upgrade the proto package
 
-// GetTxDistributionRequest is the request type for the Service.GetTxDistribution
-// RPC method.
+// GetTxDistributionRequest is the request type for the
+// Service.GetTxDistribution RPC method.
 type GetTxDistributionRequest struct {
 }
 
@@ -66,10 +66,11 @@ func (m *GetTxDistributionRequest) XXX_DiscardUnknown() {
 
 var xxx_messageInfo_GetTxDistributionRequest proto.InternalMessageInfo
 
-// GetTxDistributionResponse is the response type for the Service.GetTxDistribution
-// RPC method.
+// GetTxDistributionResponse is the response type for the
+// Service.GetTxDistribution RPC method.
 type GetTxDistributionResponse struct {
-	// Distribution is a map of lane to the number of transactions in the mempool for that lane.
+	// Distribution is a map of lane to the number of transactions in the mempool
+	// for that lane.
 	Distribution map[string]uint64 `protobuf:"bytes,1,rep,name=distribution,proto3" json:"distribution,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 

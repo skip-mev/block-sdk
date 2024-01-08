@@ -8,6 +8,7 @@ import "cosmos/msg/v1/msg.proto";
 import "cosmos_proto/cosmos.proto";
 import "amino/amino.proto";
 import "sdk/blocksdk/v1/blocksdk.proto";
+import "sdk/blocksdk/v1/params.proto";
 
 // Msg defines the x/blocksdk Msg service.
 service Msg {
@@ -15,6 +16,10 @@ service Msg {
 
   // UpdateLane defines a method to update an existing lane in the store.
   rpc UpdateLane(MsgUpdateLane) returns (MsgUpdateLaneResponse);
+
+  // UpdateParams defines a governance operation for updating the x/blocksdk
+  // module parameters. The authority is hard-coded to the x/gov module account.
+  rpc UpdateParams(MsgUpdateParams) returns (MsgUpdateParamsResponse);
 }
 
 // MsgUpdateLane defines a request to update an existing lane in the store.
@@ -31,3 +36,21 @@ message MsgUpdateLane {
 // MsgUpdateLaneResponse defines a response to update an existing lane in the
 // store.
 message MsgUpdateLaneResponse {}
+
+// MsgUpdateParams defines a request type for updating the x/blocksdk module
+// parameters.
+message MsgUpdateParams {
+  option (cosmos.msg.v1.signer) = "authority";
+  option (amino.name) = "block-sdk/x/blocksdk/MsgUpdateParams";
+
+  option (gogoproto.equal) = false;
+
+  // authority is the address of the account that is authorized to update the
+  // x/blocksdk module parameters.
+  string authority = 1 [ (cosmos_proto.scalar) = "cosmos.AddressString" ];
+  // params is the new parameters for the x/blocksdk module.
+  Params params = 2 [ (gogoproto.nullable) = false ];
+}
+
+// MsgUpdateParamsResponse defines the Msg/UpdateParams response type.
+message MsgUpdateParamsResponse {}

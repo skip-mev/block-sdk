@@ -71,8 +71,8 @@ var xxx_messageInfo_QueryParamsRequest proto.InternalMessageInfo
 type QueryParamsResponse struct {
 	// Params defines the parameters of the module.
 	Params Params `protobuf:"bytes,1,opt,name=params,proto3" json:"params"`
-	// EscrowAddressString is the string representation of the escrow address stored
-	// in params.
+	// EscrowAddressString is the string representation of the escrow address
+	// stored in params.
 	EscrowAddressString string `protobuf:"bytes,2,opt,name=escrow_address_string,json=escrowAddressString,proto3" json:"escrow_address_string,omitempty"`
 }
 

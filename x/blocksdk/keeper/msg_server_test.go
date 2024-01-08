@@ -1,10 +1,8 @@
 package keeper_test
 
 import (
-	"math/rand"
-	"time"
-
 	"cosmossdk.io/math"
+	"github.com/skip-mev/chaintestutil/sample"
 
 	testutils "github.com/skip-mev/block-sdk/testutils"
 
@@ -12,7 +10,7 @@ import (
 )
 
 func (s *KeeperTestSuite) TestMsgUpdateLane() {
-	rng := rand.New(rand.NewSource(time.Now().Unix()))
+	rng := sample.Rand()
 	account := testutils.RandomAccounts(rng, 1)[0]
 
 	// pre-register a lane
@@ -136,6 +134,68 @@ func (s *KeeperTestSuite) TestMsgUpdateLane() {
 				s.Require().NoError(err)
 				s.Require().Equal(tc.msg.Lane, lane)
 
+			} else {
+				s.Require().Error(err)
+			}
+		})
+	}
+}
+
+func (s *KeeperTestSuite) TestMsgUpdateParams() {
+	rng := sample.Rand()
+
+	testCases := []struct {
+		name string
+		msg  *types.MsgUpdateParams
+
+		pass      bool
+		passBasic bool
+	}{
+		{
+			name: "valid",
+			msg: &types.MsgUpdateParams{
+				Authority: s.authorityAccount.String(),
+				Params: types.Params{
+					Enabled: true,
+				},
+			},
+			passBasic: true,
+			pass:      true,
+		},
+		{
+			name: "invalid authority address non bech32",
+			msg: &types.MsgUpdateParams{
+				Authority: "invalid",
+				Params: types.Params{
+					Enabled: true,
+				},
+			},
+			passBasic: false,
+			pass:      true,
+		},
+		{
+			name: "invalid authority address",
+			msg: &types.MsgUpdateParams{
+				Authority: sample.Address(rng),
+				Params: types.Params{
+					Enabled: true,
+				},
+			},
+			passBasic: true,
+			pass:      false,
+		},
+	}
+
+	for _, tc := range testCases {
+		s.Run(tc.name, func() {
+			if !tc.passBasic {
+				s.Require().Error(tc.msg.ValidateBasic())
+				return
+			}
+
+			_, err := s.msgServer.UpdateParams(s.ctx, tc.msg)
+			if tc.pass {
+				s.Require().NoError(err)
 			} else {
 				s.Require().Error(err)
 			}
