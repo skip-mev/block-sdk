@@ -36,6 +36,16 @@ jobs:
           go work init
           make test-unit
 
+      - name: Test Coverage
+        run: |
+          go work init ||:
+          make test-cover
+      - name: Upload coverage reports to Codecov
+        uses: codecov/codecov-action@v3
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        with:
+          files: cover.out
   test-integration:
     runs-on: ubuntu-latest
     steps:

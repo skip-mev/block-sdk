@@ -34,8 +34,6 @@ func TestNetworkTestSuite(t *testing.T) {
 }
 
 func (s *NetworkTestSuite) TestGetAuctionParams() {
-	s.T().Parallel()
-
 	common := []string{
 		fmt.Sprintf("--%s=json", tmcli.OutputFlag),
 	}

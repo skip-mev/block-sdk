@@ -22,7 +22,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	authcmd "github.com/cosmos/cosmos-sdk/x/auth/client/cli"
 	"github.com/cosmos/cosmos-sdk/x/auth/types"
-	"github.com/cosmos/cosmos-sdk/x/crisis"
 	genutilcli "github.com/cosmos/cosmos-sdk/x/genutil/client/cli"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
@@ -30,6 +29,8 @@ import (
 	"github.com/skip-mev/block-sdk/tests/app"
 	"github.com/skip-mev/block-sdk/tests/app/params"
 )
+
+var flagCrisisDummy = "x-crisis-skip-assert-invariants" // dummy flag so that the crisis module does not need to be imported for security reasons
 
 func NewRootCmd() *cobra.Command {
 	// we "pre"-instantiate the application for getting the injected/configured encoding configuration
@@ -177,8 +178,8 @@ func initRootCmd(rootCmd *cobra.Command, encodingConfig params.EncodingConfig) {
 	)
 }
 
-func addModuleInitFlags(startCmd *cobra.Command) {
-	crisis.AddModuleInitFlags(startCmd)
+func addModuleInitFlags(cmd *cobra.Command) {
+	cmd.Flags().Bool(flagCrisisDummy, true, "dummy flag for crisis module")
 }
 
 func genesisCommand(encodingConfig params.EncodingConfig, cmds ...*cobra.Command) *cobra.Command {
