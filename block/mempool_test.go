@@ -77,7 +77,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 	}
 	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	suite.mevLane = mev.NewMEVLane(
@@ -99,7 +99,7 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
 		SignerExtractor: signer_extraction.NewDefaultAdapter(),
 		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 	}
 	suite.freeLane = free.NewFreeLane(
 		freeConfig,
@@ -173,7 +173,7 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			return suite.params, nil
 		})
 
-	baseConfig := base.LaneConfig{
+	defaultConfig := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
 		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
@@ -182,7 +182,16 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		MaxBlockSpace:   math.LegacyZeroDec(),
 	}
 
-	defaultLane := defaultlane.NewDefaultLane(baseConfig, base.DefaultMatchHandler())
+	baseConfig := base.LaneConfig{
+		Logger:          log.NewNopLogger(),
+		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
+		TxDecoder:       suite.encodingConfig.TxConfig.TxDecoder(),
+		SignerExtractor: signer_extraction.NewDefaultAdapter(),
+		AnteHandler:     nil,
+		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
+	}
+
+	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 	factory := mev.NewDefaultAuctionFactory(suite.encodingConfig.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	mevLane := mev.NewMEVLane(
 		baseConfig,
@@ -191,6 +200,12 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 	)
 	freeLane := free.NewFreeLane(
 		baseConfig,
+		base.DefaultTxPriority(),
+		free.DefaultMatchHandler(),
+	)
+
+	invalidFreeLane := free.NewFreeLane(
+		defaultConfig,
 		base.DefaultTxPriority(),
 		free.DefaultMatchHandler(),
 	)
@@ -272,7 +287,7 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		suite.Require().NoError(err)
 	})
 
-	suite.Run("default lane not included", func() {
+	suite.Run("default lane not included - invalid total space", func() {
 		lanes := []block.Lane{mevLane, freeLane}
 
 		_, err := block.NewLanedMempool(
@@ -280,7 +295,18 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 			lanes,
 			fetcher,
 		)
-		suite.Require().NoError(err)
+		suite.Require().Error(err)
+	})
+
+	suite.Run("two lanes with unlimited blockspace", func() {
+		lanes := []block.Lane{defaultLane, invalidFreeLane}
+
+		_, err := block.NewLanedMempool(
+			log.NewNopLogger(),
+			lanes,
+			fetcher,
+		)
+		suite.Require().Error(err)
 	})
 
 	suite.Run("duplicate lanes", func() {

@@ -845,11 +845,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 			tx2: true,
 		})
 
-		defaultLane.Insert(sdk.Context{}, tx1)
-		defaultLane.Insert(sdk.Context{}, tx2)
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx1))
+		s.Require().NoError(defaultLane.Insert(sdk.Context{}, tx2))
 
 		var txs [][]sdk.Tx
-
 		for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 			txs = append(txs, []sdk.Tx{iterator.Tx()})
 		}
@@ -1128,7 +1127,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().NoError(err)
 
 		// Mev lane
-		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{})
+		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.3"), map[sdk.Tx]bool{})
 
 		// Set up the default lane
 		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true, tx1: true})
@@ -1400,13 +1399,13 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	}
 
 	// Set up the default lane with the transactions
-	defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), validationMap)
+	defaultLane := s.setUpStandardLane(math.LegacyZeroDec(), validationMap)
 	for _, tx := range txsToInsert {
 		s.Require().NoError(defaultLane.Insert(s.ctx, tx))
 	}
 
 	// Create a bunch of transactions to insert into the free lane
-	freeTxsToInsert := []sdk.Tx{}
+	var freeTxsToInsert []sdk.Tx
 	freeValidationMap := make(map[sdk.Tx]bool)
 	for _, account := range accounts {
 		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
@@ -1428,20 +1427,20 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 		}
 	}
 
-	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.0"), freeValidationMap)
+	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.25"), freeValidationMap)
 	for _, tx := range freeTxsToInsert {
 		s.Require().NoError(freelane.Insert(s.ctx, tx))
 	}
 
 	// Retrieve the transactions from the default lane in the same way the prepare function would.
-	retrievedTxs := []sdk.Tx{}
+	var retrievedTxs []sdk.Tx
 	for iterator := defaultLane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		retrievedTxs = append(retrievedTxs, iterator.Tx())
 	}
 	s.Require().Equal(len(txsToInsert), len(retrievedTxs))
 
 	// Retrieve the transactions from the free lane in the same way the prepare function would.
-	freeRetrievedTxs := []sdk.Tx{}
+	var freeRetrievedTxs []sdk.Tx
 	for iterator := freelane.Select(context.Background(), nil); iterator != nil; iterator = iterator.Next() {
 		freeRetrievedTxs = append(freeRetrievedTxs, iterator.Tx())
 	}
@@ -1518,13 +1517,13 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 	}
 
 	// Set up the default lane with the transactions
-	defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), validationMap)
+	defaultLane := s.setUpStandardLane(math.LegacyZeroDec(), validationMap)
 	for _, tx := range txsToInsert {
 		s.Require().NoError(defaultLane.Insert(s.ctx, tx))
 	}
 
 	// Create a bunch of transactions to insert into the free lane
-	freeTxsToInsert := []sdk.Tx{}
+	var freeTxsToInsert []sdk.Tx
 	freeValidationMap := make(map[sdk.Tx]bool)
 	for _, account := range accounts {
 		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
@@ -1546,7 +1545,7 @@ func (s *ProposalsTestSuite) TestIterateMempoolAndProcessProposalParity() {
 		}
 	}
 
-	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.0"), freeValidationMap)
+	freelane := s.setUpFreeLane(math.LegacyMustNewDecFromStr("0.3"), freeValidationMap)
 	for _, tx := range freeTxsToInsert {
 		s.Require().NoError(freelane.Insert(s.ctx, tx))
 	}
