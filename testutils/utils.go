@@ -1,6 +1,7 @@
 package testutils
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
@@ -76,7 +77,7 @@ func CreateMempool() *block.LanedMempool {
 		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 		MaxTxs:          0, // unlimited
 	}
-	freeLane := free.NewFreeLane[string](freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
+	freeLane := free.NewFreeLane(freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
 
 	defaultConfig := base.LaneConfig{
 		SignerExtractor: signerExtractor,
@@ -252,6 +253,49 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 	}
 
 	txBuilder.SetTimeoutHeight(timeout)
+
+	return txBuilder.GetTx(), nil
+}
+
+func CreateRandomTxMultipleSigners(txCfg client.TxConfig, accounts []Account, nonce, numberMsgs, timeout uint64, gasLimit uint64, fees ...sdk.Coin) (authsigning.Tx, error) {
+	if len(accounts) == 0 {
+		return nil, fmt.Errorf("no accounts provided")
+	}
+
+	msgs := make([]sdk.Msg, numberMsgs)
+	for i := 0; i < int(numberMsgs); i++ {
+		msgs[i] = &banktypes.MsgSend{
+			FromAddress: accounts[0].Address.String(),
+			ToAddress:   accounts[0].Address.String(),
+		}
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+
+	sigs := make([]signing.SignatureV2, len(accounts))
+	for i, acc := range accounts {
+		sigs[i] = signing.SignatureV2{
+			PubKey: acc.PrivKey.PubKey(),
+			Data: &signing.SingleSignatureData{
+				SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+				Signature: nil,
+			},
+			Sequence: nonce,
+		}
+	}
+
+	if err := txBuilder.SetSignatures(sigs...); err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetTimeoutHeight(timeout)
+
+	txBuilder.SetFeeAmount(fees)
+
+	txBuilder.SetGasLimit(gasLimit)
 
 	return txBuilder.GetTx(), nil
 }

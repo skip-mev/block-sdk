@@ -292,8 +292,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 	s.Run("should order transactions correctly in the proposal (with different insertion)", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
-			s.accounts[0],
-			0,
+			s.accounts[1],
+			1,
 			1,
 			0,
 			1,
@@ -961,7 +961,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
-	s.Run("should not accept a proposal with transactions that are not in the correct order fee wise", func() {
+	s.Run("should accept a proposal with transactions that are in any order fee wise", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -998,8 +998,8 @@ func (s *BaseTestSuite) TestProcessLane() {
 		)
 
 		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
-		s.Require().Error(err)
-		s.Require().Len(txsFromLane, 0)
+		s.Require().NoError(err)
+		s.Require().Len(txsFromLane, 2)
 		s.Require().Len(remainingTxs, 0)
 
 		emptyProposal := proposals.NewProposal(
@@ -1009,7 +1009,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		)
 
 		_, err = lane.ProcessLane(s.ctx, emptyProposal, proposal, block.NoOpProcessLanesHandler())
-		s.Require().Error(err)
+		s.Require().NoError(err)
 	})
 
 	s.Run("should not accept proposal where transactions from lane are not contiguous from the start", func() {
