@@ -1346,11 +1346,22 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	numAccounts := 25
 	accounts := testutils.RandomAccounts(s.random, numAccounts)
 
+	feeDenoms := []string{
+		s.gasTokenDenom,
+		"eth",
+		"btc",
+		"usdt",
+		"usdc",
+	}
+
 	// Create a bunch of transactions to insert into the default lane
 	txsToInsert := []sdk.Tx{}
 	validationMap := make(map[sdk.Tx]bool)
 	for _, account := range accounts {
 		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
+			mod := nonce % uint64(len(feeDenoms))
+			feeDenom := feeDenoms[mod]
+
 			// create a random fee amount
 			feeAmount := math.NewInt(int64(rand.Intn(100000)))
 			tx, err := testutils.CreateRandomTx(
@@ -1360,7 +1371,7 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 				1,
 				0,
 				1,
-				sdk.NewCoin(s.gasTokenDenom, feeAmount),
+				sdk.NewCoin(feeDenom, feeAmount),
 			)
 			s.Require().NoError(err)
 
