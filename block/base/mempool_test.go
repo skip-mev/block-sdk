@@ -87,29 +87,3 @@ func TestMempoolComparison(t *testing.T) {
 		require.Equal(t, 0, output)
 	})
 }
-
-func TestMempoolSelect(t *testing.T) {
-	acct := testutils.RandomAccounts(rand.New(rand.NewSource(1)), 2)
-	txc := testutils.CreateTestEncodingConfig().TxConfig
-	ctx := testutils.CreateBaseSDKContext(t)
-	mp := NewMempool(
-		DefaultTxPriority(),
-		txc.TxEncoder(),
-		signerextraction.NewDefaultAdapter(),
-		1000,
-	)
-	tests := []struct {
-		name    string
-		inputs  []sdk.Tx
-		outputs []sdk.Tx
-	}{}
-	for _, tc := range tests {
-		t.Run(tc.name, func(t *testing.T) {
-			for _, tx := range tc.inputs {
-				err := mp.Insert(ctx, tx)
-				require.NoError(t, err)
-			}
-		})
-		
-	}
-}
