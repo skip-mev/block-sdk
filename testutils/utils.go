@@ -4,8 +4,6 @@ import (
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -25,12 +23,15 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
+<<<<<<< HEAD
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
+=======
+>>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -54,6 +55,7 @@ func CreateBaseSDKContext(t *testing.T) sdk.Context {
 	return testCtx.Ctx
 }
 
+<<<<<<< HEAD
 func CreateMempool() *block.LanedMempool {
 	encodingConfig := CreateTestEncodingConfig()
 	signerExtractor := signerextraction.NewDefaultAdapter()
@@ -101,6 +103,8 @@ func CreateMempool() *block.LanedMempool {
 	return mempool
 }
 
+=======
+>>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 func CreateTestEncodingConfig() EncodingConfig {
 	interfaceRegistry, err := types.NewInterfaceRegistryWithOptions(types.InterfaceRegistryOptions{
 		ProtoFiles: proto.HybridResolver,
