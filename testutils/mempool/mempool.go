@@ -3,6 +3,7 @@ package mempool
 import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+
 	"github.com/skip-mev/block-sdk/block/mocks"
 
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
