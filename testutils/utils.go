@@ -4,8 +4,13 @@ import (
 	"math/rand"
 	"testing"
 
+<<<<<<< HEAD
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
+=======
+	storetypes "cosmossdk.io/store/types"
+	txsigning "cosmossdk.io/x/tx/signing"
+>>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -22,12 +27,15 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
+<<<<<<< HEAD
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
+=======
+>>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -51,6 +59,7 @@ func CreateBaseSDKContext(t *testing.T) sdk.Context {
 	return testCtx.Ctx
 }
 
+<<<<<<< HEAD
 func CreateMempool() *block.LanedMempool {
 	encodingConfig := CreateTestEncodingConfig()
 	signerExtractor := signerextraction.NewDefaultAdapter()
@@ -98,6 +107,8 @@ func CreateMempool() *block.LanedMempool {
 	return mempool
 }
 
+=======
+>>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 func CreateTestEncodingConfig() EncodingConfig {
 	cdc := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()
