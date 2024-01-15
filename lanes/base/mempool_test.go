@@ -128,10 +128,10 @@ func (s *BaseTestSuite) TestCompareTxPriorityPriorityNonce() {
 
 func (s *BaseTestSuite) TestInsert() {
 	mempool := base.NewMempool[string](
-		base.DefaultTxPriority(), 
-		s.encodingConfig.TxConfig.TxEncoder(), 
-		signer_extraction.NewDefaultAdapter(), 
-		base.NoopComparator(), 
+		base.DefaultTxPriority(),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		signer_extraction.NewDefaultAdapter(),
+		base.NoopComparator(),
 		3,
 	)
 
@@ -189,9 +189,9 @@ func (s *BaseTestSuite) TestInsert() {
 
 func (s *BaseTestSuite) TestRemove() {
 	mempool := base.NewMempool[string](
-		base.DefaultTxPriority(), 
-		s.encodingConfig.TxConfig.TxEncoder(), 
-		signer_extraction.NewDefaultAdapter(), 
+		base.DefaultTxPriority(),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		signer_extraction.NewDefaultAdapter(),
 		base.NoopComparator(),
 		3,
 	)
@@ -235,10 +235,10 @@ func (s *BaseTestSuite) TestRemove() {
 func (s *BaseTestSuite) TestSelect() {
 	s.Run("should be able to select transactions in the correct order", func() {
 		mempool := base.NewMempool[string](
-			base.DefaultTxPriority(), 
-			s.encodingConfig.TxConfig.TxEncoder(), 
-			signer_extraction.NewDefaultAdapter(), 
-			base.NoopComparator(), 
+			base.DefaultTxPriority(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			signer_extraction.NewDefaultAdapter(),
+			base.NoopComparator(),
 			3,
 		)
 
@@ -282,9 +282,9 @@ func (s *BaseTestSuite) TestSelect() {
 
 	s.Run("should be able to select a single transaction", func() {
 		mempool := base.NewMempool[string](
-			base.DefaultTxPriority(), 
-			s.encodingConfig.TxConfig.TxEncoder(), 
-			signer_extraction.NewDefaultAdapter(), 
+			base.DefaultTxPriority(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			signer_extraction.NewDefaultAdapter(),
 			base.NoopComparator(),
 			3,
 		)

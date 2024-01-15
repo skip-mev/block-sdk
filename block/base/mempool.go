@@ -45,16 +45,16 @@ type (
 	}
 
 	// Comparator is a comparison function that the mempool uses to verify the ordering of txs. That is,
-	// if this > other (return 1, nil), then this will be ordered before other. Conversely, if this < other, 
+	// if this > other (return 1, nil), then this will be ordered before other. Conversely, if this < other,
 	// this will be ordered after other.
 	Comparator func(ctx sdk.Context, this, other sdk.Tx) (int, error)
 )
 
 // NewMempool returns a new Mempool.
 func NewMempool[C comparable](
-	txPriority TxPriority[C], 
-	txEncoder sdk.TxEncoder, 
-	extractor signer_extraction.Adapter, 
+	txPriority TxPriority[C],
+	txEncoder sdk.TxEncoder,
+	extractor signer_extraction.Adapter,
 	comparator Comparator,
 	maxTx int,
 ) *Mempool[C] {
@@ -159,7 +159,7 @@ func PriorityNonceComparator(extractor signer_extraction.Adapter, txPriority TxP
 		}
 		// The priority nonce mempool uses the first tx signer so this is a safe operation.
 		thisSignerInfo := signers[0]
-	
+
 		signers, err = extractor.GetSigners(other)
 		if err != nil {
 			return 0, err
@@ -168,7 +168,7 @@ func PriorityNonceComparator(extractor signer_extraction.Adapter, txPriority TxP
 			return 0, fmt.Errorf("expected one signer for the second transaction")
 		}
 		otherSignerInfo := signers[0]
-	
+
 		// If the signers are the same, we compare the sequence numbers.
 		if thisSignerInfo.Signer.Equals(otherSignerInfo.Signer) {
 			switch {
@@ -181,7 +181,7 @@ func PriorityNonceComparator(extractor signer_extraction.Adapter, txPriority TxP
 				return 0, fmt.Errorf("the two transactions have the same sequence number")
 			}
 		}
-	
+
 		// Determine the priority and compare the priorities.
 		firstPriority := txPriority.GetTxPriority(ctx, this)
 		secondPriority := txPriority.GetTxPriority(ctx, other)

@@ -1362,18 +1362,18 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	// Create a bunch of transactions to insert into the default lane
 	txsToInsert := []sdk.Tx{}
 	validationMap := make(map[sdk.Tx]bool)
-	for nonce := uint64(0); nonce < numTxsPerAccount * uint64(numAccounts); nonce++ {
+	for nonce := uint64(0); nonce < numTxsPerAccount*uint64(numAccounts); nonce++ {
 		fees := []sdk.Coin{}
 		// choose a random set of fee denoms
 		perm := rand.Perm(len(feeDenoms))
-		for i := 0; i < 1 + rand.Intn(len(feeDenoms) - 1); i++ {
+		for i := 0; i < 1+rand.Intn(len(feeDenoms)-1); i++ {
 			fees = append(fees, sdk.NewCoin(feeDenoms[perm[i]], math.NewInt(int64(rand.Intn(100000)))))
 		}
 
 		// choose a random set of accounts
 		perm = rand.Perm(len(accounts))
 		signers := []testutils.Account{}
-		for i := 0; i < 1 + rand.Intn(len(accounts) - 1); i++ {
+		for i := 0; i < 1+rand.Intn(len(accounts)-1); i++ {
 			signers = append(signers, accounts[perm[i]])
 		}
 

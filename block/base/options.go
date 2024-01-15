@@ -80,4 +80,3 @@ func WithMempoolConfigs[C comparable](cfg LaneConfig, txPriority TxPriority[C], 
 		)
 	}
 }
-
