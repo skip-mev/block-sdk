@@ -65,7 +65,7 @@ func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.Lega
 
 	options := []base.LaneOption{
 		base.WithMatchHandler(mh),
-		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority(), base.PriorityNonceComparator(signeradaptors.NewDefaultAdapter(), base.DefaultTxPriority())),
 	}
 
 	lane, err := base.NewBaseLane(
@@ -79,6 +79,10 @@ func (s *ProposalsTestSuite) setUpCustomMatchHandlerLane(maxBlockSpace math.Lega
 }
 
 func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *base.BaseLane {
+	return s.setUpStandardLaneWithComparator(maxBlockSpace, expectedExecution, base.NoopComparator())
+}
+
+func (s *ProposalsTestSuite) setUpStandardLaneWithComparator(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool, comparator base.Comparator) *base.BaseLane {
 	cfg := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       s.encodingConfig.TxConfig.TxEncoder(),
@@ -88,7 +92,14 @@ func (s *ProposalsTestSuite) setUpStandardLane(maxBlockSpace math.LegacyDec, exp
 		SignerExtractor: signeradaptors.NewDefaultAdapter(),
 	}
 
-	return defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
+	lane := defaultlane.NewDefaultLane(cfg, base.DefaultMatchHandler())
+	lane.WithOptions(base.WithMempoolConfigs(
+		cfg,
+		base.DefaultTxPriority(),
+		comparator,
+	))
+
+	return lane
 }
 
 func (s *ProposalsTestSuite) setUpTOBLane(maxBlockSpace math.LegacyDec, expectedExecution map[sdk.Tx]bool) *mev.MEVLane {
@@ -129,7 +140,7 @@ func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.Lega
 
 	options := []base.LaneOption{
 		base.WithMatchHandler(base.DefaultMatchHandler()),
-		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority()),
+		base.WithMempoolConfigs[string](cfg, base.DefaultTxPriority(), base.PriorityNonceComparator(signeradaptors.NewDefaultAdapter(), base.DefaultTxPriority())),
 		base.WithPrepareLaneHandler(base.PanicPrepareLaneHandler()),
 		base.WithProcessLaneHandler(base.PanicProcessLaneHandler()),
 	}

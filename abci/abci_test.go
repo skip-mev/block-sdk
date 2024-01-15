@@ -14,7 +14,9 @@ import (
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/abci"
+	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
@@ -979,7 +981,7 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		s.Require().Equal(cometabci.ResponseProcessProposal{Status: cometabci.ResponseProcessProposal_REJECT}, resp)
 	})
 
-	s.Run("can process a invalid proposal (default lane out of order)", func() {
+	s.Run("can process an invalid proposal with txs out of order", func() {
 		// Create a random transaction that will be inserted into the default lane
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -1008,7 +1010,10 @@ func (s *ProposalsTestSuite) TestProcessProposal() {
 		mevLane := s.setUpTOBLane(math.LegacyMustNewDecFromStr("0.3"), map[sdk.Tx]bool{})
 
 		// Set up the default lane
-		defaultLane := s.setUpStandardLane(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true, tx1: true})
+		defaultLane := s.setUpStandardLaneWithComparator(math.LegacyMustNewDecFromStr("0.0"), map[sdk.Tx]bool{tx2: true, tx1: true}, base.PriorityNonceComparator(
+			signerextraction.NewDefaultAdapter(),
+			base.DefaultTxPriority(),
+		))
 
 		proposal := s.createProposal(tx2, tx1)
 
@@ -1247,27 +1252,46 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	numAccounts := 25
 	accounts := testutils.RandomAccounts(s.random, numAccounts)
 
+	feeDenoms := []string{
+		s.gasTokenDenom,
+		"eth",
+		"btc",
+		"usdt",
+		"usdc",
+	}
+
 	// Create a bunch of transactions to insert into the default lane
 	txsToInsert := []sdk.Tx{}
 	validationMap := make(map[sdk.Tx]bool)
-	for _, account := range accounts {
-		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
-			// create a random fee amount
-			feeAmount := math.NewInt(int64(rand.Intn(100000)))
-			tx, err := testutils.CreateRandomTx(
-				s.encodingConfig.TxConfig,
-				account,
-				nonce,
-				1,
-				0,
-				1,
-				sdk.NewCoin(s.gasTokenDenom, feeAmount),
-			)
-			s.Require().NoError(err)
-
-			txsToInsert = append(txsToInsert, tx)
-			validationMap[tx] = true
+	for nonce := uint64(0); nonce < numTxsPerAccount*uint64(numAccounts); nonce++ {
+		fees := []sdk.Coin{}
+		// choose a random set of fee denoms
+		perm := rand.Perm(len(feeDenoms))
+		for i := 0; i < 1+rand.Intn(len(feeDenoms)-1); i++ {
+			fees = append(fees, sdk.NewCoin(feeDenoms[perm[i]], math.NewInt(int64(rand.Intn(100000)))))
 		}
+
+		// choose a random set of accounts
+		perm = rand.Perm(len(accounts))
+		signers := []testutils.Account{}
+		for i := 0; i < 1+rand.Intn(len(accounts)-1); i++ {
+			signers = append(signers, accounts[perm[i]])
+		}
+
+		// create a random fee amount
+		tx, err := testutils.CreateRandomTxMultipleSigners(
+			s.encodingConfig.TxConfig,
+			signers,
+			nonce,
+			1,
+			0,
+			1,
+			fees...,
+		)
+		s.Require().NoError(err)
+
+		txsToInsert = append(txsToInsert, tx)
+		validationMap[tx] = true
 	}
 
 	// Set up the default lane with the transactions
