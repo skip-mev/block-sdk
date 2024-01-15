@@ -61,6 +61,7 @@ func NewBaseLane(
 		DefaultTxPriority(),
 		lane.cfg.TxEncoder,
 		lane.cfg.SignerExtractor,
+		NoopComparator(), // default comparison function is NoopComparator
 		lane.cfg.MaxTxs,
 	)
 

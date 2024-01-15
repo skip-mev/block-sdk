@@ -34,7 +34,7 @@ func NewMEVLane(
 ) *MEVLane {
 	options := []base.LaneOption{
 		base.WithMatchHandler(matchHandler),
-		base.WithMempoolConfigs[string](cfg, TxPriority(factory)),
+		base.WithMempoolConfigs[string](cfg, TxPriority(factory), base.NoopComparator()),
 	}
 
 	baseLane, err := base.NewBaseLane(

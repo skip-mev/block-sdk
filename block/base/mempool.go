@@ -39,11 +39,25 @@ type (
 		// txCache is a map of all transactions in the mempool. It is used
 		// to quickly check if a transaction is already in the mempool.
 		txCache map[string]struct{}
+
+		// comparator is the comparison function used to verify the ordering of txs in ProcessProposal
+		comparator Comparator
 	}
+
+	// Comparator is a comparison function that the mempool uses to verify the ordering of txs. That is,
+	// if this > other (return 1, nil), then this will be ordered before other. Conversely, if this < other, 
+	// this will be ordered after other.
+	Comparator func(ctx sdk.Context, this, other sdk.Tx) (int, error)
 )
 
 // NewMempool returns a new Mempool.
-func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
+func NewMempool[C comparable](
+	txPriority TxPriority[C], 
+	txEncoder sdk.TxEncoder, 
+	extractor signer_extraction.Adapter, 
+	comparator Comparator,
+	maxTx int,
+) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{
@@ -52,6 +66,7 @@ func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder,
 			},
 			extractor,
 		),
+		comparator: comparator,
 		extractor:  extractor,
 		txPriority: txPriority,
 		txEncoder:  txEncoder,
@@ -121,7 +136,11 @@ func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
 	return ok
 }
 
-// Compare determines the relative priority of two transactions belonging in the same lane.
+func (cm *Mempool[C]) Compare(ctx sdk.Context, this, other sdk.Tx) (int, error) {
+	return cm.comparator(ctx, this, other)
+}
+
+// ComparePriorityNonce determines the relative priority of two transactions belonging in the same lane.
 // There are two cases to consider:
 //  1. The transactions have the same signer. In this case, we compare the sequence numbers.
 //  2. The transactions have different signers. In this case, we compare the priorities of the
@@ -129,41 +148,51 @@ func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
 //
 // Compare will return -1 if this transaction has a lower priority than the other transaction, 0 if
 // they have the same priority, and 1 if this transaction has a higher priority than the other transaction.
-func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, error) {
-	signers, err := cm.extractor.GetSigners(this)
-	if err != nil {
-		return 0, err
-	}
-	if len(signers) == 0 {
-		return 0, fmt.Errorf("expected one signer for the first transaction")
-	}
-	// The priority nonce mempool uses the first tx signer so this is a safe operation.
-	thisSignerInfo := signers[0]
-
-	signers, err = cm.extractor.GetSigners(other)
-	if err != nil {
-		return 0, err
-	}
-	if len(signers) == 0 {
-		return 0, fmt.Errorf("expected one signer for the second transaction")
-	}
-	otherSignerInfo := signers[0]
-
-	// If the signers are the same, we compare the sequence numbers.
-	if thisSignerInfo.Signer.Equals(otherSignerInfo.Signer) {
-		switch {
-		case thisSignerInfo.Sequence < otherSignerInfo.Sequence:
-			return 1, nil
-		case thisSignerInfo.Sequence > otherSignerInfo.Sequence:
-			return -1, nil
-		default:
-			// This case should never happen but we add in the case for completeness.
-			return 0, fmt.Errorf("the two transactions have the same sequence number")
+func PriorityNonceComparator(extractor signer_extraction.Adapter, txPriority TxPriority[string]) Comparator {
+	return func(ctx sdk.Context, this, other sdk.Tx) (int, error) {
+		signers, err := extractor.GetSigners(this)
+		if err != nil {
+			return 0, err
 		}
+		if len(signers) == 0 {
+			return 0, fmt.Errorf("expected one signer for the first transaction")
+		}
+		// The priority nonce mempool uses the first tx signer so this is a safe operation.
+		thisSignerInfo := signers[0]
+	
+		signers, err = extractor.GetSigners(other)
+		if err != nil {
+			return 0, err
+		}
+		if len(signers) == 0 {
+			return 0, fmt.Errorf("expected one signer for the second transaction")
+		}
+		otherSignerInfo := signers[0]
+	
+		// If the signers are the same, we compare the sequence numbers.
+		if thisSignerInfo.Signer.Equals(otherSignerInfo.Signer) {
+			switch {
+			case thisSignerInfo.Sequence < otherSignerInfo.Sequence:
+				return 1, nil
+			case thisSignerInfo.Sequence > otherSignerInfo.Sequence:
+				return -1, nil
+			default:
+				// This case should never happen but we add in the case for completeness.
+				return 0, fmt.Errorf("the two transactions have the same sequence number")
+			}
+		}
+	
+		// Determine the priority and compare the priorities.
+		firstPriority := txPriority.GetTxPriority(ctx, this)
+		secondPriority := txPriority.GetTxPriority(ctx, other)
+		return txPriority.Compare(firstPriority, secondPriority), nil
 	}
+}
 
-	// Determine the priority and compare the priorities.
-	firstPriority := cm.txPriority.GetTxPriority(ctx, this)
-	secondPriority := cm.txPriority.GetTxPriority(ctx, other)
-	return cm.txPriority.Compare(firstPriority, secondPriority), nil
+// NoopComparator is a comparison function that performs no comparison between this and other. In other words,
+// this Comparator returns 1, nil for any set of txs
+func NoopComparator() Comparator {
+	return func(ctx sdk.Context, this, other sdk.Tx) (int, error) {
+		return 1, nil
+	}
 }
