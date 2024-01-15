@@ -21,6 +21,7 @@ func TestMempoolComparison(t *testing.T) {
 		DefaultTxPriority(),
 		txc.TxEncoder(),
 		signerextraction.NewDefaultAdapter(),
+		PriorityNonceComparator(signerextraction.NewDefaultAdapter(), DefaultTxPriority()),
 		1000,
 	)
 	t.Run("test same account, same nonce", func(t *testing.T) {
