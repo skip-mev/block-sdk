@@ -9,8 +9,10 @@ import (
 	testutils "github.com/skip-mev/block-sdk/testutils"
 )
 
-func (s *BaseTestSuite) TestCompareTxPriority() {
-	lane := s.initLane(math.LegacyOneDec(), nil)
+func (s *BaseTestSuite) TestCompareTxPriorityPriorityNonce() {
+	sea := signer_extraction.NewDefaultAdapter()
+	txp := base.DefaultTxPriority()
+	priorityNonceComparator := base.PriorityNonceComparator(sea, txp)
 
 	s.Run("should return -1 when signers are the same but the first tx has a higher sequence", func() {
 		tx1, err := testutils.CreateRandomTx(
@@ -35,7 +37,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		)
 		s.Require().NoError(err)
 
-		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		cmp, err := priorityNonceComparator(sdk.Context{}, tx1, tx2)
 		s.Require().NoError(err)
 		s.Require().Equal(-1, cmp)
 	})
@@ -63,7 +65,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		)
 		s.Require().NoError(err)
 
-		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		cmp, err := priorityNonceComparator(sdk.Context{}, tx1, tx2)
 		s.Require().NoError(err)
 		s.Require().Equal(1, cmp)
 	})
@@ -91,7 +93,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		)
 		s.Require().NoError(err)
 
-		_, err = lane.Compare(sdk.Context{}, tx1, tx2)
+		_, err = priorityNonceComparator(sdk.Context{}, tx1, tx2)
 		s.Require().Error(err)
 	})
 
@@ -118,14 +120,20 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		)
 		s.Require().NoError(err)
 
-		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
+		cmp, err := priorityNonceComparator(sdk.Context{}, tx1, tx2)
 		s.Require().NoError(err)
 		s.Require().Equal(1, cmp)
 	})
 }
 
 func (s *BaseTestSuite) TestInsert() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+	mempool := base.NewMempool[string](
+		base.DefaultTxPriority(),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		signer_extraction.NewDefaultAdapter(),
+		base.NoopComparator(),
+		3,
+	)
 
 	s.Run("should be able to insert a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -180,7 +188,13 @@ func (s *BaseTestSuite) TestInsert() {
 }
 
 func (s *BaseTestSuite) TestRemove() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+	mempool := base.NewMempool[string](
+		base.DefaultTxPriority(),
+		s.encodingConfig.TxConfig.TxEncoder(),
+		signer_extraction.NewDefaultAdapter(),
+		base.NoopComparator(),
+		3,
+	)
 
 	s.Run("should be able to remove a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -220,7 +234,13 @@ func (s *BaseTestSuite) TestRemove() {
 
 func (s *BaseTestSuite) TestSelect() {
 	s.Run("should be able to select transactions in the correct order", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+		mempool := base.NewMempool[string](
+			base.DefaultTxPriority(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			signer_extraction.NewDefaultAdapter(),
+			base.NoopComparator(),
+			3,
+		)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
@@ -261,7 +281,13 @@ func (s *BaseTestSuite) TestSelect() {
 	})
 
 	s.Run("should be able to select a single transaction", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+		mempool := base.NewMempool[string](
+			base.DefaultTxPriority(),
+			s.encodingConfig.TxConfig.TxEncoder(),
+			signer_extraction.NewDefaultAdapter(),
+			base.NoopComparator(),
+			3,
+		)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
