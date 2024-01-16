@@ -140,8 +140,8 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this, other sdk.Tx) (int, error) 
 	return cm.comparator(ctx, this, other)
 }
 
-// ComparePriorityNonce determines the relative priority of two transactions belonging in the same lane.
-// There are two cases to consider:
+// PriorityNonceComparator returns a Comparator that determines the relative priority of two 
+// transactions belonging in the same lane. There are two cases to consider:
 //  1. The transactions have the same signer. In this case, we compare the sequence numbers.
 //  2. The transactions have different signers. In this case, we compare the priorities of the
 //     transactions.
@@ -190,7 +190,7 @@ func PriorityNonceComparator(extractor signer_extraction.Adapter, txPriority TxP
 }
 
 // NoopComparator is a comparison function that performs no comparison between this and other. In other words,
-// this Comparator returns 1, nil for any set of txs
+// this Comparator returns 1, nil for any set of txs. This is the default Comparator used in the Base, MEV, Free lanes.
 func NoopComparator() Comparator {
 	return func(ctx sdk.Context, this, other sdk.Tx) (int, error) {
 		return 1, nil
