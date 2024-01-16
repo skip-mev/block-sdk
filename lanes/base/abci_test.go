@@ -961,7 +961,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().Equal(encodedTxs, finalProposal.Txs)
 	})
 
-	s.Run("should not accept a proposal with transactions that are not in the correct order priority wise (when using PriorityNonceComparator)", func() {
+	s.Run("should not accept a proposal with transactions that are not in the correct order fee wise", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -989,16 +989,12 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx2,
 		}
 
-		lane := s.initLaneWithComparator(
+		lane := s.initLane(
 			math.LegacyOneDec(),
 			map[sdk.Tx]bool{
 				tx1: true,
 				tx2: true,
 			},
-			base.PriorityNonceComparator(
-				signer_extraction.NewDefaultAdapter(),
-				base.DefaultTxPriority(),
-			),
 		)
 
 		txsFromLane, remainingTxs, err := base.NewDefaultProposalHandler(lane).ProcessLaneHandler()(s.ctx, proposal)
@@ -1635,14 +1631,6 @@ func (s *BaseTestSuite) initLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
 ) *base.BaseLane {
-	return s.initLaneWithComparator(maxBlockSpace, expectedExecution, base.NoopComparator())
-}
-
-func (s *BaseTestSuite) initLaneWithComparator(
-	maxBlockSpace math.LegacyDec,
-	expectedExecution map[sdk.Tx]bool,
-	comparator base.Comparator,
-) *base.BaseLane {
 	config := base.NewLaneConfig(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxEncoder(),
@@ -1652,14 +1640,7 @@ func (s *BaseTestSuite) initLaneWithComparator(
 		maxBlockSpace,
 	)
 
-	lane := defaultlane.NewDefaultLane(config, base.DefaultMatchHandler())
-	lane.WithOptions(base.WithMempoolConfigs(
-		config,
-		base.DefaultTxPriority(),
-		comparator,
-	))
-
-	return lane
+	return defaultlane.NewDefaultLane(config, base.DefaultMatchHandler())
 }
 
 func (s *BaseTestSuite) initLaneWithMatchHandlers(

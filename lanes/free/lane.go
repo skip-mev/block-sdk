@@ -20,7 +20,7 @@ func NewFreeLane[C comparable](
 ) *base.BaseLane {
 	options := []base.LaneOption{
 		base.WithMatchHandler(matchFn),
-		base.WithMempoolConfigs[C](cfg, txPriority, base.NoopComparator()),
+		base.WithMempoolConfigs[C](cfg, txPriority),
 	}
 
 	lane, err := base.NewBaseLane(
