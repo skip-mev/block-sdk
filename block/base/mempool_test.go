@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/testutils"
 	"github.com/skip-mev/block-sdk/block/base"
+	"github.com/skip-mev/block-sdk/testutils"
 )
 
 func TestMempoolComparison(t *testing.T) {
