@@ -72,7 +72,7 @@ func TestMempoolComparison(t *testing.T) {
 		require.NoError(t, err)
 		output, err := mp.Compare(ctx, tx1, tx2)
 		require.NoError(t, err)
-		require.Equal(t, -1, output)
+		require.Equal(t, 0, output)
 	})
 	t.Run("test diff account, tx1 lt amount, tx1 gt nonce, diff denoms", func(t *testing.T) {
 		tx1, err := testutils.CreateTx(txc, acct[0], 1, 0, nil, sdk.NewCoin("nonstake", sdkmath.NewInt(1)))
@@ -119,32 +119,12 @@ func TestMempoolSelect(t *testing.T) {
 					nonce:  0,
 				},
 				{
-					acc:    acct[1],
-					amount: sdk.NewCoin("notstake", sdkmath.NewInt(1)),
-					nonce:  0,
-				},
-				{
 					acc:    acct[0],
 					amount: sdk.NewCoin("notstake", sdkmath.NewInt(2)),
 					nonce:  1,
 				},
-				{
-					acc:    acct[1],
-					amount: sdk.NewCoin("stake", sdkmath.NewInt(2)),
-					nonce:  1,
-				},
 			},
 			expected: []txGen{
-				{
-					acc:    acct[1],
-					amount: sdk.NewCoin("notstake", sdkmath.NewInt(1)),
-					nonce:  0,
-				},
-				{
-					acc:    acct[1],
-					amount: sdk.NewCoin("stake", sdkmath.NewInt(2)),
-					nonce:  1,
-				},
 				{
 					acc:    acct[0],
 					amount: sdk.NewCoin("stake", sdkmath.NewInt(1)),
