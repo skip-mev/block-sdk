@@ -140,7 +140,7 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this, other sdk.Tx) (int, error) 
 	return cm.comparator(ctx, this, other)
 }
 
-// PriorityNonceComparator returns a Comparator that determines the relative priority of two 
+// PriorityNonceComparator returns a Comparator that determines the relative priority of two
 // transactions belonging in the same lane. There are two cases to consider:
 //  1. The transactions have the same signer. In this case, we compare the sequence numbers.
 //  2. The transactions have different signers. In this case, we compare the priorities of the
