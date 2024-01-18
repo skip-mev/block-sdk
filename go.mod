@@ -11,10 +11,10 @@ require (
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/math v1.2.0
 	github.com/client9/misspell v0.3.4
-	github.com/cometbft/cometbft v0.37.4
+	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.9.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
-	github.com/cosmos/cosmos-sdk v0.47.7
+	github.com/cosmos/cosmos-sdk v0.47.6
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
@@ -53,7 +53,7 @@ require (
 	github.com/Antonboom/nilnil v0.1.7 // indirect
 	github.com/Antonboom/testifylint v1.0.2 // indirect
 	github.com/BurntSushi/toml v1.3.2 // indirect
-	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
+	github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d // indirect
 	github.com/Djarvur/go-err113 v0.0.0-20210108212216-aea10b59be24 // indirect
 	github.com/GaijinEntertainment/go-exhaustruct/v3 v3.1.0 // indirect
 	github.com/Masterminds/semver v1.5.0 // indirect
