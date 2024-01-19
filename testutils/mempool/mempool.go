@@ -3,6 +3,7 @@ package mempool
 import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+
 	"github.com/skip-mev/block-sdk/block/mocks"
 
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
@@ -39,7 +40,7 @@ func CreateMempool() *block.LanedMempool {
 		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
 		MaxTxs:          0, // unlimited
 	}
-	freeLane := free.NewFreeLane[string](freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
+	freeLane := free.NewFreeLane(freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
 
 	defaultConfig := base.LaneConfig{
 		SignerExtractor: signerExtractor,
