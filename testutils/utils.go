@@ -4,13 +4,6 @@ import (
 	"math/rand"
 	"testing"
 
-<<<<<<< HEAD
-	"cosmossdk.io/math"
-	"github.com/cometbft/cometbft/libs/log"
-=======
-	storetypes "cosmossdk.io/store/types"
-	txsigning "cosmossdk.io/x/tx/signing"
->>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/codec"
 	"github.com/cosmos/cosmos-sdk/codec/types"
@@ -27,15 +20,6 @@ import (
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 
-<<<<<<< HEAD
-	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-=======
->>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
 )
 
@@ -59,56 +43,6 @@ func CreateBaseSDKContext(t *testing.T) sdk.Context {
 	return testCtx.Ctx
 }
 
-<<<<<<< HEAD
-func CreateMempool() *block.LanedMempool {
-	encodingConfig := CreateTestEncodingConfig()
-	signerExtractor := signerextraction.NewDefaultAdapter()
-
-	mevConfig := base.LaneConfig{
-		SignerExtractor: signerExtractor,
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
-		MaxTxs:          0, // unlimited
-	}
-	factory := mev.NewDefaultAuctionFactory(encodingConfig.TxConfig.TxDecoder(), signerExtractor)
-	mevLane := mev.NewMEVLane(mevConfig, factory, factory.MatchHandler())
-
-	freeConfig := base.LaneConfig{
-		SignerExtractor: signerExtractor,
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyMustNewDecFromStr("0.3"),
-		MaxTxs:          0, // unlimited
-	}
-	freeLane := free.NewFreeLane[string](freeConfig, base.DefaultTxPriority(), free.DefaultMatchHandler())
-
-	defaultConfig := base.LaneConfig{
-		SignerExtractor: signerExtractor,
-		Logger:          log.NewNopLogger(),
-		TxEncoder:       encodingConfig.TxConfig.TxEncoder(),
-		TxDecoder:       encodingConfig.TxConfig.TxDecoder(),
-		AnteHandler:     nil,
-		MaxBlockSpace:   math.LegacyZeroDec(),
-		MaxTxs:          0, // unlimited
-	}
-	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
-
-	lanes := []block.Lane{mevLane, freeLane, defaultLane}
-	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
-	if err != nil {
-		panic(err)
-	}
-
-	return mempool
-}
-
-=======
->>>>>>> 39f91b6 (test: Add mempool comparison tests (#357))
 func CreateTestEncodingConfig() EncodingConfig {
 	cdc := codec.NewLegacyAmino()
 	interfaceRegistry := types.NewInterfaceRegistry()

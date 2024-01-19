@@ -1,9 +1,8 @@
 package mempool
 
 import (
-	"cosmossdk.io/log"
 	"cosmossdk.io/math"
-	"github.com/skip-mev/block-sdk/block/mocks"
+	"github.com/cometbft/cometbft/libs/log"
 
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
@@ -53,7 +52,7 @@ func CreateMempool() *block.LanedMempool {
 	defaultLane := defaultlane.NewDefaultLane(defaultConfig, base.DefaultMatchHandler())
 
 	lanes := []block.Lane{mevLane, freeLane, defaultLane}
-	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes, mocks.MockLaneFetcher{})
+	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
 	if err != nil {
 		panic(err)
 	}
