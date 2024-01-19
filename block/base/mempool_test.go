@@ -1,4 +1,4 @@
-package base
+package base_test
 
 import (
 	"fmt"
@@ -10,6 +10,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/testutils"
 )
 
@@ -23,8 +24,8 @@ func TestMempoolComparison(t *testing.T) {
 	acct := testutils.RandomAccounts(rand.New(rand.NewSource(1)), 2)
 	txc := testutils.CreateTestEncodingConfig().TxConfig
 	ctx := testutils.CreateBaseSDKContext(t)
-	mp := NewMempool(
-		DefaultTxPriority(),
+	mp := base.NewMempool(
+		base.DefaultTxPriority(),
 		txc.TxEncoder(),
 		signerextraction.NewDefaultAdapter(),
 		1000,
@@ -99,8 +100,8 @@ func TestMempoolSelect(t *testing.T) {
 	txc := testutils.CreateTestEncodingConfig().TxConfig
 	ctx := testutils.CreateBaseSDKContext(t)
 	se := signerextraction.NewDefaultAdapter()
-	mp := NewMempool(
-		DefaultTxPriority(),
+	mp := base.NewMempool(
+		base.DefaultTxPriority(),
 		txc.TxEncoder(),
 		se,
 		1000,
