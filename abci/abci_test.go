@@ -101,7 +101,7 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
-			0,
+			1,
 			1,
 			0,
 			1,
@@ -112,8 +112,8 @@ func (s *ProposalsTestSuite) TestPrepareProposal() {
 		// Create a second random transaction that will be inserted into the default lane
 		tx2, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
-			s.accounts[1],
-			1,
+			s.accounts[0],
+			0,
 			1,
 			0,
 			1,
@@ -1234,27 +1234,46 @@ func (s *ProposalsTestSuite) TestPrepareProcessParity() {
 	numAccounts := 25
 	accounts := testutils.RandomAccounts(s.random, numAccounts)
 
+	feeDenoms := []string{
+		s.gasTokenDenom,
+		"eth",
+		"btc",
+		"usdt",
+		"usdc",
+	}
+
 	// Create a bunch of transactions to insert into the default lane
 	txsToInsert := []sdk.Tx{}
 	validationMap := make(map[sdk.Tx]bool)
-	for _, account := range accounts {
-		for nonce := uint64(0); nonce < numTxsPerAccount; nonce++ {
-			// create a random fee amount
-			feeAmount := math.NewInt(int64(rand.Intn(100000)))
-			tx, err := testutils.CreateRandomTx(
-				s.encodingConfig.TxConfig,
-				account,
-				nonce,
-				1,
-				0,
-				1,
-				sdk.NewCoin(s.gasTokenDenom, feeAmount),
-			)
-			s.Require().NoError(err)
-
-			txsToInsert = append(txsToInsert, tx)
-			validationMap[tx] = true
+	for nonce := uint64(0); nonce < numTxsPerAccount*uint64(numAccounts); nonce++ {
+		fees := []sdk.Coin{}
+		// choose a random set of fee denoms
+		perm := rand.Perm(len(feeDenoms))
+		for i := 0; i < 1+rand.Intn(len(feeDenoms)-1); i++ {
+			fees = append(fees, sdk.NewCoin(feeDenoms[perm[i]], math.NewInt(int64(rand.Intn(100000)))))
 		}
+
+		// choose a random set of accounts
+		perm = rand.Perm(len(accounts))
+		signers := []testutils.Account{}
+		for i := 0; i < 1+rand.Intn(len(accounts)-1); i++ {
+			signers = append(signers, accounts[perm[i]])
+		}
+
+		// create a random fee amount
+		tx, err := testutils.CreateRandomTxMultipleSigners(
+			s.encodingConfig.TxConfig,
+			signers,
+			nonce,
+			1,
+			0,
+			1,
+			fees...,
+		)
+		s.Require().NoError(err)
+
+		txsToInsert = append(txsToInsert, tx)
+		validationMap[tx] = true
 	}
 
 	// Set up the default lane with the transactions
