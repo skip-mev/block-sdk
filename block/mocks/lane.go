@@ -313,7 +313,8 @@ func (_m *Lane) SetMaxBlockSpace(_a0 math.LegacyDec) {
 func NewLane(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *Lane {
+},
+) *Lane {
 	mock := &Lane{}
 	mock.Mock.Test(t)
 
