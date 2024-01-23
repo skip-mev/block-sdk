@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
-	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
+	signerextraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
 )
 
 // TxWithInfo contains the information required for a transaction to be

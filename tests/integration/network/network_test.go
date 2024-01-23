@@ -19,9 +19,9 @@ import (
 	"github.com/stretchr/testify/suite"
 	"google.golang.org/grpc/status"
 
-	"github.com/skip-mev/block-sdk/testutils/networksuite"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/block-sdk/v2/testutils/networksuite"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 // NetworkTestSuite is a test suite for network integration tests.
