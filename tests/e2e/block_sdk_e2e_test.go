@@ -4,15 +4,15 @@ import (
 	"fmt"
 	"testing"
 
-	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
-	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
+	"github.com/cosmos/cosmos-sdk/types/module/testutil"
+	"github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	ictestutil "github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/tests/e2e"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/v2/tests/e2e"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 var (

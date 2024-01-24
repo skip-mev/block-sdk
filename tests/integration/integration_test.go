@@ -8,8 +8,8 @@ import (
 	"github.com/skip-mev/chaintestutil/encoding"
 	"github.com/stretchr/testify/suite"
 
-	testkeeper "github.com/skip-mev/block-sdk/testutils/keeper"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	testkeeper "github.com/skip-mev/block-sdk/v2/testutils/keeper"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 type IntegrationTestSuite struct {

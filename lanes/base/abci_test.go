@@ -11,14 +11,14 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/mocks"
-	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/utils"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	testutils "github.com/skip-mev/block-sdk/testutils"
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	"github.com/skip-mev/block-sdk/v2/block/mocks"
+	"github.com/skip-mev/block-sdk/v2/block/proposals"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	defaultlane "github.com/skip-mev/block-sdk/v2/lanes/base"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
 )
 
 func (s *BaseTestSuite) TestPrepareLane() {

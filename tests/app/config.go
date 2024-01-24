@@ -65,9 +65,9 @@ import (
 	_ "github.com/cosmos/cosmos-sdk/x/slashing"     // import for side-effects
 	_ "github.com/cosmos/cosmos-sdk/x/staking"      // import for side-effects
 
-	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
-	_ "github.com/skip-mev/block-sdk/x/auction" // import for side-effects
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctionmodulev1 "github.com/skip-mev/block-sdk/v2/api/sdk/auction/module/v1"
+	_ "github.com/skip-mev/block-sdk/v2/x/auction" // import for side-effects
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 var (
