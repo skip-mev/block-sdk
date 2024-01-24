@@ -11,12 +11,20 @@ require (
 	cosmossdk.io/errors v1.0.0
 	cosmossdk.io/math v1.2.0
 	github.com/client9/misspell v0.3.4
+<<<<<<< HEAD
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.9.1
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.6
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/golang/mock v1.6.0
+=======
+	github.com/cometbft/cometbft v0.38.5
+	github.com/cosmos/cosmos-db v1.0.0
+	github.com/cosmos/cosmos-proto v1.0.0-beta.3
+	github.com/cosmos/cosmos-sdk v0.50.2
+	github.com/cosmos/gogoproto v1.4.11
+>>>>>>> 8009b18 (chore(deps): bump github.com/cometbft/cometbft from 0.38.2 to 0.38.5 (#386))
 	github.com/golang/protobuf v1.5.3
 	github.com/golangci/golangci-lint v1.55.3-0.20231203192459-84442f26446b
 	github.com/gorilla/mux v1.8.1
@@ -298,12 +306,20 @@ require (
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/crypto v0.18.0 // indirect
+<<<<<<< HEAD
 	golang.org/x/exp v0.0.0-20230905200255-921286631fa9 // indirect
+=======
+	golang.org/x/exp v0.0.0-20231006140011-7918f672742d // indirect
+>>>>>>> 8009b18 (chore(deps): bump github.com/cometbft/cometbft from 0.38.2 to 0.38.5 (#386))
 	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
+<<<<<<< HEAD
 	golang.org/x/sync v0.6.0 // indirect
+=======
+	golang.org/x/sync v0.5.0 // indirect
+>>>>>>> 8009b18 (chore(deps): bump github.com/cometbft/cometbft from 0.38.2 to 0.38.5 (#386))
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
