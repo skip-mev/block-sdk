@@ -13,12 +13,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/abci"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/mocks"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	testutils "github.com/skip-mev/block-sdk/testutils"
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/mocks"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 type MockLaneFetcher struct {

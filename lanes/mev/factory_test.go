@@ -6,7 +6,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	testutils "github.com/skip-mev/block-sdk/testutils"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
 )
 
 func (s *MEVTestSuite) TestIsAuctionTx() {

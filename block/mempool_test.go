@@ -5,9 +5,9 @@ import (
 	"testing"
 	"time"
 
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 
-	"github.com/skip-mev/block-sdk/block/mocks"
+	"github.com/skip-mev/block-sdk/v2/block/mocks"
 
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
@@ -16,14 +16,14 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-	testutils "github.com/skip-mev/block-sdk/testutils"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	defaultlane "github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 type BlockBusterTestSuite struct {

@@ -15,7 +15,7 @@ import (
 	"cosmossdk.io/log"
 	confixcmd "cosmossdk.io/tools/confix/cmd"
 
-	"github.com/skip-mev/block-sdk/tests/app"
+	"github.com/skip-mev/block-sdk/v2/tests/app"
 
 	"github.com/cosmos/cosmos-sdk/client"
 	"github.com/cosmos/cosmos-sdk/client/config"

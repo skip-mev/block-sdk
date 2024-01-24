@@ -11,9 +11,9 @@ import (
 
 	"github.com/stretchr/testify/suite"
 
-	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/skip-mev/block-sdk/x/blocksdk/keeper"
-	"github.com/skip-mev/block-sdk/x/blocksdk/types"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 type KeeperTestSuite struct {

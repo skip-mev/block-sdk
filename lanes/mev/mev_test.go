@@ -6,8 +6,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/block/utils"
-	"github.com/skip-mev/block-sdk/lanes/mev/testutils"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
 )
 
 type MEVTestSuite struct {
