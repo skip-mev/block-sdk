@@ -314,11 +314,7 @@ require (
 	golang.org/x/mod v0.14.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
-<<<<<<< HEAD
 	golang.org/x/sync v0.6.0 // indirect
-=======
-	golang.org/x/sync v0.5.0 // indirect
->>>>>>> 8009b18 (chore(deps): bump github.com/cometbft/cometbft from 0.38.2 to 0.38.5 (#386))
 	golang.org/x/sys v0.16.0 // indirect
 	golang.org/x/term v0.16.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
