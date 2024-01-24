@@ -58,23 +58,13 @@ import (
 	"github.com/cosmos/cosmos-sdk/x/staking"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-<<<<<<< HEAD
-	"github.com/skip-mev/block-sdk/abci"
-	"github.com/skip-mev/block-sdk/abci/checktx"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	service "github.com/skip-mev/block-sdk/block/service"
-	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
-	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
-=======
 	"github.com/skip-mev/block-sdk/v2/abci"
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/block/base"
-	service "github.com/skip-mev/block-sdk/v2/block/service"
+	"github.com/skip-mev/block-sdk/v2/block/service"
+	auctionmodule "github.com/skip-mev/block-sdk/v2/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
->>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 const (

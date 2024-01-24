@@ -5,13 +5,6 @@ import (
 	"testing"
 	"time"
 
-<<<<<<< HEAD
-=======
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
-
-	"github.com/skip-mev/block-sdk/v2/block/mocks"
-
->>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
