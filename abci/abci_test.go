@@ -13,10 +13,19 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	testutils "github.com/skip-mev/block-sdk/testutils"
+=======
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/mocks"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 type ProposalsTestSuite struct {

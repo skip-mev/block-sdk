@@ -1,7 +1,7 @@
 package base
 
 import (
-	"github.com/skip-mev/block-sdk/block/base"
+	"github.com/skip-mev/block-sdk/v2/block/base"
 )
 
 const (

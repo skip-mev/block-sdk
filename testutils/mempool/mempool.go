@@ -3,6 +3,7 @@ package mempool
 import (
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
+<<<<<<< HEAD
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
@@ -10,6 +11,18 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/free"
 	"github.com/skip-mev/block-sdk/lanes/mev"
 	"github.com/skip-mev/block-sdk/testutils"
+=======
+
+	"github.com/skip-mev/block-sdk/v2/block/mocks"
+
+	signerextraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	defaultlane "github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/testutils"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 func CreateMempool() *block.LanedMempool {

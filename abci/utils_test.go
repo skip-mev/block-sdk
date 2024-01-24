@@ -5,19 +5,24 @@ import (
 	"encoding/hex"
 	"fmt"
 
+<<<<<<< HEAD
+=======
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	tmprototypes "github.com/cometbft/cometbft/proto/tendermint/types"
 
-	"github.com/skip-mev/block-sdk/abci"
-	signeradaptors "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	"github.com/skip-mev/block-sdk/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/abci"
+	signeradaptors "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	defaultlane "github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
 )
 
 func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {

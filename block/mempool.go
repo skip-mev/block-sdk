@@ -8,6 +8,11 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
+<<<<<<< HEAD
+=======
+
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 var _ Mempool = (*LanedMempool)(nil)

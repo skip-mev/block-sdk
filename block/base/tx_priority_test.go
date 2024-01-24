@@ -9,8 +9,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/testutils"
+=======
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	"github.com/skip-mev/block-sdk/v2/testutils"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 func TestNopTxPriority(t *testing.T) {

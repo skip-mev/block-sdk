@@ -23,8 +23,29 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/skip-mev/chaintestutil/account"
+
+	"github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/tests/app"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 var genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))

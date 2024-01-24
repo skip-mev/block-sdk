@@ -5,7 +5,7 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/skip-mev/block-sdk/block/utils"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
 )
 
 // Lane defines the contract interface for a lane.
