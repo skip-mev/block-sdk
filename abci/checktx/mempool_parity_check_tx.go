@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/v2/block"
 )
 
 // MempoolParityCheckTx is a CheckTx function that evicts txs that are not in the app-side mempool

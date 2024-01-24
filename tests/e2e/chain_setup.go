@@ -37,8 +37,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 
-	servicetypes "github.com/skip-mev/block-sdk/block/service/types"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	servicetypes "github.com/skip-mev/block-sdk/v2/block/service/types"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 type KeyringOverride struct {

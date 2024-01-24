@@ -17,8 +17,8 @@ import (
 	testkeeper "github.com/skip-mev/chaintestutil/keeper"
 	"github.com/stretchr/testify/require"
 
-	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 // TestKeepers holds all keepers used during keeper tests for all modules

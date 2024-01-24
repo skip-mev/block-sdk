@@ -5,11 +5,11 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/proposals"
-	"github.com/skip-mev/block-sdk/block/utils"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-	testutils "github.com/skip-mev/block-sdk/testutils"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/proposals"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
 )
 
 func (s *MEVTestSuite) TestPrepareLane() {

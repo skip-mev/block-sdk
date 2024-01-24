@@ -1,4 +1,4 @@
-module github.com/skip-mev/block-sdk/tests/e2e
+module github.com/skip-mev/block-sdk/v2/tests/e2e
 
 go 1.21.5
 
@@ -6,14 +6,14 @@ replace (
 	github.com/ChainSafe/go-schnorrkel => github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d
 	github.com/ChainSafe/go-schnorrkel/1 => github.com/ChainSafe/go-schnorrkel v1.0.0
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
-	github.com/skip-mev/block-sdk => ../../
+	github.com/skip-mev/block-sdk/v2 => ../../
 )
 
 require (
 	cosmossdk.io/math v1.2.0
 	github.com/cometbft/cometbft v0.38.5
 	github.com/cosmos/cosmos-sdk v0.50.2
-	github.com/skip-mev/block-sdk v1.0.0 // reference local
+	github.com/skip-mev/block-sdk/v2 v2.1.0 // reference local
 	github.com/strangelove-ventures/interchaintest/v8 v8.0.0
 	github.com/stretchr/testify v1.8.4
 	go.uber.org/zap v1.26.0

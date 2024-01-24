@@ -5,7 +5,7 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 var _ types.QueryServer = QueryServer{}

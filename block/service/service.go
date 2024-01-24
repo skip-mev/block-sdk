@@ -6,8 +6,8 @@ import (
 	gogogrpc "github.com/cosmos/gogoproto/grpc"
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/service/types"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/service/types"
 )
 
 var _ types.ServiceServer = (*QueryService)(nil)
