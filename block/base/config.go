@@ -7,7 +7,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
 )
 
 // LaneConfig defines the basic configurations needed for a lane.

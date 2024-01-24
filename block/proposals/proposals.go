@@ -5,7 +5,7 @@ import (
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block/proposals/types"
+	"github.com/skip-mev/block-sdk/v2/block/proposals/types"
 )
 
 type (

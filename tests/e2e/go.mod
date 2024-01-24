@@ -1,4 +1,4 @@
-module github.com/skip-mev/block-sdk/tests/e2e
+module github.com/skip-mev/block-sdk/v2/tests/e2e
 
 go 1.21.5
 
@@ -9,6 +9,7 @@ replace (
 	github.com/ChainSafe/go-schnorrkel/1 => github.com/ChainSafe/go-schnorrkel v1.0.0
 	github.com/btcsuite/btcd => github.com/btcsuite/btcd v0.22.2 //indirect
 	github.com/gogo/protobuf => github.com/regen-network/protobuf v1.3.3-alpha.regen.1
+<<<<<<< HEAD
 	github.com/skip-mev/block-sdk => ../../
 	github.com/vedhavyas/go-subkey => github.com/strangelove-ventures/go-subkey v1.0.7
 	golang.org/x/exp => golang.org/x/exp v0.0.0-20230711153332-06a737ee72cb
@@ -17,6 +18,32 @@ replace (
 require (
 	cosmossdk.io/api v0.3.1 // indirect
 	cosmossdk.io/core v0.6.1 // indirect
+=======
+	github.com/skip-mev/block-sdk/v2 => ../../
+)
+
+require (
+	cosmossdk.io/math v1.2.0
+	github.com/cometbft/cometbft v0.38.2
+	github.com/cosmos/cosmos-sdk v0.50.2
+	github.com/skip-mev/block-sdk/v2 v2.1.0 // reference local
+	github.com/strangelove-ventures/interchaintest/v8 v8.0.0
+	github.com/stretchr/testify v1.8.4
+	go.uber.org/zap v1.26.0
+	golang.org/x/sync v0.5.0
+	google.golang.org/grpc v1.60.1
+)
+
+require (
+	cloud.google.com/go v0.110.10 // indirect
+	cloud.google.com/go/compute v1.23.3 // indirect
+	cloud.google.com/go/compute/metadata v0.2.3 // indirect
+	cloud.google.com/go/iam v1.1.5 // indirect
+	cloud.google.com/go/storage v1.35.1 // indirect
+	cosmossdk.io/api v0.7.2 // indirect
+	cosmossdk.io/collections v0.4.0 // indirect
+	cosmossdk.io/core v0.11.0 // indirect
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 	cosmossdk.io/depinject v1.0.0-alpha.4 // indirect
 	cosmossdk.io/errors v1.0.0 // indirect
 	cosmossdk.io/log v1.2.1 // indirect
@@ -227,8 +254,13 @@ require (
 	google.golang.org/appengine v1.6.7 // indirect
 	google.golang.org/genproto v0.0.0-20231030173426-d783a09b4405 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20231106174013-bbf56f31fb17 // indirect
+<<<<<<< HEAD
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20231030173426-d783a09b4405 // indirect
 	google.golang.org/protobuf v1.31.0 // indirect
+=======
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20231120223509-83a465c0220f // indirect
+	google.golang.org/protobuf v1.32.0 // indirect
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/natefinch/npipe.v2 v2.0.0-20160621034901-c1b8fa8bdcce // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect

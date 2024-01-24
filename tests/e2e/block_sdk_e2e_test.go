@@ -11,8 +11,17 @@ import (
 	ictestutil "github.com/strangelove-ventures/interchaintest/v7/testutil"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/tests/e2e"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	"github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/tests/e2e"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 var (

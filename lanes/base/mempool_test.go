@@ -4,9 +4,9 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block/base"
-	testutils "github.com/skip-mev/block-sdk/testutils"
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
 )
 
 func (s *BaseTestSuite) TestCompareTxPriority() {

@@ -3,7 +3,7 @@ package base
 import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/v2/block"
 )
 
 // LaneOption defines a function that can be used to set options on a lane.

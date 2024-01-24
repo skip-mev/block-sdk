@@ -43,8 +43,17 @@ import (
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+<<<<<<< HEAD
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	auctionmodulev1 "github.com/skip-mev/block-sdk/v2/api/sdk/auction/module/v1"
+	blocksdkmodulev1 "github.com/skip-mev/block-sdk/v2/api/sdk/blocksdk/module/v1"
+	_ "github.com/skip-mev/block-sdk/v2/x/auction" // import for side-effects
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+	_ "github.com/skip-mev/block-sdk/v2/x/blocksdk" // import for side-effects
+	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 var (

@@ -11,9 +11,18 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/block"
 	mevlane "github.com/skip-mev/block-sdk/lanes/mev"
 	"github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
+
+	"github.com/skip-mev/block-sdk/v2/block"
+	mevlane "github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/x/auction/types"
+>>>>>>> acff9d0 (chore: Upgrade module path for v2 (#383))
 )
 
 // MevCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to

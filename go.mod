@@ -1,4 +1,4 @@
-module github.com/skip-mev/block-sdk
+module github.com/skip-mev/block-sdk/v2
 
 go 1.21.4
 

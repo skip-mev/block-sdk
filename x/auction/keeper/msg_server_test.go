@@ -6,8 +6,8 @@ import (
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	testutils "github.com/skip-mev/block-sdk/testutils"
-	"github.com/skip-mev/block-sdk/x/auction/types"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+	"github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 func (s *KeeperTestSuite) TestMsgUpdateParams() {
