@@ -1,0 +1,4 @@
+tests/petri_e2e
+tests/e2e
+tests/integration
+go.work*
