@@ -7,7 +7,11 @@ require (
 	cosmossdk.io/client/v2 v2.0.0-20230724130706-5442197d6bcd
 	cosmossdk.io/core v0.11.0
 	cosmossdk.io/depinject v1.0.0-alpha.4
+<<<<<<< HEAD
 	cosmossdk.io/errors v1.0.1
+=======
+	cosmossdk.io/errors v1.0.0
+>>>>>>> 5330256 (chore(deps): bump cosmossdk.io/log from 1.2.1 to 1.3.1 (#404))
 	cosmossdk.io/log v1.3.1
 	cosmossdk.io/math v1.2.0
 	cosmossdk.io/store v1.0.1
