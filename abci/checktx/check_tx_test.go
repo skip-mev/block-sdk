@@ -15,13 +15,13 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/abci/checktx"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
-	"github.com/skip-mev/block-sdk/testutils"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
+	"github.com/skip-mev/block-sdk/v2/testutils"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 type CheckTxTestSuite struct {

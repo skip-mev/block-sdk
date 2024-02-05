@@ -7,9 +7,9 @@ import (
 
 	"cosmossdk.io/math"
 
-	"github.com/skip-mev/block-sdk/testutils"
+	"github.com/skip-mev/block-sdk/v2/testutils"
 
-	"github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 func TestMsgUpdateLane_ValidateBasic(t *testing.T) {

@@ -6,8 +6,8 @@ import (
 	"cosmossdk.io/log"
 	svrcmd "github.com/cosmos/cosmos-sdk/server/cmd"
 
-	"github.com/skip-mev/block-sdk/tests/app"
-	"github.com/skip-mev/block-sdk/tests/app/testappd/cmd"
+	"github.com/skip-mev/block-sdk/v2/tests/app"
+	"github.com/skip-mev/block-sdk/v2/tests/app/testappd/cmd"
 )
 
 func main() {

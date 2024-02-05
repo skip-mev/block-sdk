@@ -20,10 +20,10 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"github.com/spf13/cobra"
 
-	modulev1 "github.com/skip-mev/block-sdk/api/sdk/blocksdk/module/v1"
-	"github.com/skip-mev/block-sdk/x/blocksdk/client/cli"
-	"github.com/skip-mev/block-sdk/x/blocksdk/keeper"
-	"github.com/skip-mev/block-sdk/x/blocksdk/types"
+	modulev1 "github.com/skip-mev/block-sdk/v2/api/sdk/blocksdk/module/v1"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/client/cli"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 var (

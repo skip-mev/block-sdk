@@ -41,13 +41,13 @@ import (
 	slashingkeeper "github.com/cosmos/cosmos-sdk/x/slashing/keeper"
 	stakingkeeper "github.com/cosmos/cosmos-sdk/x/staking/keeper"
 
-	"github.com/skip-mev/block-sdk/abci"
-	"github.com/skip-mev/block-sdk/abci/checktx"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	service "github.com/skip-mev/block-sdk/block/service"
-	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/x/blocksdk/keeper"
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	service "github.com/skip-mev/block-sdk/v2/block/service"
+	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
+	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
 )
 
 const (

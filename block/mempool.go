@@ -9,7 +9,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/x/blocksdk/types"
+	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 var _ Mempool = (*LanedMempool)(nil)

@@ -10,13 +10,14 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/service"
-	"github.com/skip-mev/block-sdk/block/service/types"
-	"github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-	"github.com/skip-mev/block-sdk/testutils"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/service"
+	"github.com/skip-mev/block-sdk/v2/block/service/types"
+	"github.com/skip-mev/block-sdk/v2/lanes/base"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/testutils"
+	"github.com/skip-mev/block-sdk/v2/testutils/mempool"
 )
 
 func TestGetTxDistribution(t *testing.T) {
@@ -31,7 +32,7 @@ func TestGetTxDistribution(t *testing.T) {
 	}{
 		{
 			name:    "returns correct distribution with no transactions",
-			mempool: testutils.CreateMempool,
+			mempool: mempool.CreateMempool,
 			expectedDistribution: map[string]uint64{
 				mev.LaneName:  0,
 				free.LaneName: 0,
@@ -63,7 +64,7 @@ func TestGetTxDistribution(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				mempool := testutils.CreateMempool()
+				mempool := mempool.CreateMempool()
 				err = mempool.Insert(ctx, tx1)
 				require.NoError(t, err)
 				err = mempool.Insert(ctx, tx2)
@@ -90,7 +91,7 @@ func TestGetTxDistribution(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				mempool := testutils.CreateMempool()
+				mempool := mempool.CreateMempool()
 				err = mempool.Insert(ctx, tx1)
 				require.NoError(t, err)
 
@@ -115,7 +116,7 @@ func TestGetTxDistribution(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				mempool := testutils.CreateMempool()
+				mempool := mempool.CreateMempool()
 				err = mempool.Insert(ctx, tx1)
 				require.NoError(t, err)
 
@@ -161,7 +162,7 @@ func TestGetTxDistribution(t *testing.T) {
 				)
 				require.NoError(t, err)
 
-				mempool := testutils.CreateMempool()
+				mempool := mempool.CreateMempool()
 				err = mempool.Insert(ctx, mevTx)
 				require.NoError(t, err)
 				err = mempool.Insert(ctx, freeTx)

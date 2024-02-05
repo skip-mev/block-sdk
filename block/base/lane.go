@@ -7,7 +7,7 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	"github.com/skip-mev/block-sdk/block"
+	"github.com/skip-mev/block-sdk/v2/block"
 )
 
 var _ block.Lane = (*BaseLane)(nil)

@@ -1,11 +1,10 @@
 package testutils
 
 import (
+	"fmt"
 	"math/rand"
 	"testing"
 
-	"cosmossdk.io/log"
-	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
 	txsigning "cosmossdk.io/x/tx/signing"
 	"github.com/cosmos/cosmos-sdk/client"
@@ -25,14 +24,7 @@ import (
 	stakingtypes "github.com/cosmos/cosmos-sdk/x/staking/types"
 	"github.com/cosmos/gogoproto/proto"
 
-	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block"
-	"github.com/skip-mev/block-sdk/block/base"
-	"github.com/skip-mev/block-sdk/block/mocks"
-	defaultlane "github.com/skip-mev/block-sdk/lanes/base"
-	"github.com/skip-mev/block-sdk/lanes/free"
-	"github.com/skip-mev/block-sdk/lanes/mev"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 type EncodingConfig struct {
@@ -264,6 +256,49 @@ func CreateTxWithSigners(txCfg client.TxConfig, nonce, timeout uint64, signers [
 	}
 
 	txBuilder.SetTimeoutHeight(timeout)
+
+	return txBuilder.GetTx(), nil
+}
+
+func CreateRandomTxMultipleSigners(txCfg client.TxConfig, accounts []Account, nonce, numberMsgs, timeout uint64, gasLimit uint64, fees ...sdk.Coin) (authsigning.Tx, error) {
+	if len(accounts) == 0 {
+		return nil, fmt.Errorf("no accounts provided")
+	}
+
+	msgs := make([]sdk.Msg, numberMsgs)
+	for i := 0; i < int(numberMsgs); i++ {
+		msgs[i] = &banktypes.MsgSend{
+			FromAddress: accounts[0].Address.String(),
+			ToAddress:   accounts[0].Address.String(),
+		}
+	}
+
+	txBuilder := txCfg.NewTxBuilder()
+	if err := txBuilder.SetMsgs(msgs...); err != nil {
+		return nil, err
+	}
+
+	sigs := make([]signing.SignatureV2, len(accounts))
+	for i, acc := range accounts {
+		sigs[i] = signing.SignatureV2{
+			PubKey: acc.PrivKey.PubKey(),
+			Data: &signing.SingleSignatureData{
+				SignMode:  signing.SignMode_SIGN_MODE_DIRECT,
+				Signature: nil,
+			},
+			Sequence: nonce,
+		}
+	}
+
+	if err := txBuilder.SetSignatures(sigs...); err != nil {
+		return nil, err
+	}
+
+	txBuilder.SetTimeoutHeight(timeout)
+
+	txBuilder.SetFeeAmount(fees)
+
+	txBuilder.SetGasLimit(gasLimit)
 
 	return txBuilder.GetTx(), nil
 }

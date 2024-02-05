@@ -3,7 +3,7 @@ package keeper_test
 import (
 	"cosmossdk.io/math"
 
-	"github.com/skip-mev/block-sdk/x/blocksdk/types"
+	"github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 func (s *KeeperTestSuite) TestQueryLane() {
