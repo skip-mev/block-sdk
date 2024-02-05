@@ -23,8 +23,8 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/tests/app"
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	"github.com/skip-mev/block-sdk/v2/tests/app"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 var genBalance = sdk.NewCoin(sdk.DefaultBondDenom, math.NewInt(1000000000000000000))
