@@ -240,10 +240,7 @@ require (
 	github.com/oasisprotocol/curve25519-voi v0.0.0-20230904125328-1f23a7beb09a // indirect
 	github.com/oklog/run v1.1.0 // indirect
 	github.com/olekukonko/tablewriter v0.0.5 // indirect
-<<<<<<< HEAD
-=======
 	github.com/opencontainers/runc v1.1.12 // indirect
->>>>>>> 9ab59c2 (chore(deps): bump github.com/opencontainers/runc from 1.1.5 to 1.1.12 (#399))
 	github.com/pelletier/go-toml/v2 v2.1.0 // indirect
 	github.com/petermattis/goid v0.0.0-20230904192822-1876fd5063bc // indirect
 	github.com/pkg/errors v0.9.1 // indirect
