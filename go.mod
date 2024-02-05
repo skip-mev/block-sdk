@@ -8,7 +8,12 @@ require (
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/core v0.5.1
 	cosmossdk.io/depinject v1.0.0-alpha.4
+<<<<<<< HEAD
 	cosmossdk.io/errors v1.0.1
+=======
+	cosmossdk.io/errors v1.0.0
+	cosmossdk.io/log v1.3.1
+>>>>>>> 5330256 (chore(deps): bump cosmossdk.io/log from 1.2.1 to 1.3.1 (#404))
 	cosmossdk.io/math v1.2.0
 	github.com/client9/misspell v0.3.4
 	github.com/cometbft/cometbft v0.37.2
@@ -244,7 +249,11 @@ require (
 	github.com/rcrowley/go-metrics v0.0.0-20201227073835-cf1acfcdf475 // indirect
 	github.com/rogpeppe/go-internal v1.12.0 // indirect
 	github.com/rs/cors v1.8.3 // indirect
+<<<<<<< HEAD
 	github.com/rs/zerolog v1.30.0 // indirect
+=======
+	github.com/rs/zerolog v1.32.0 // indirect
+>>>>>>> 5330256 (chore(deps): bump cosmossdk.io/log from 1.2.1 to 1.3.1 (#404))
 	github.com/ryancurrah/gomodguard v1.3.0 // indirect
 	github.com/ryanrolds/sqlclosecheck v0.5.1 // indirect
 	github.com/sagikazarmark/locafero v0.4.0 // indirect
