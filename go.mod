@@ -9,6 +9,7 @@ require (
 	cosmossdk.io/core v0.5.1
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.1
+<<<<<<< HEAD
 	cosmossdk.io/math v1.2.0
 	github.com/client9/misspell v0.3.4
 	github.com/cometbft/cometbft v0.37.2
@@ -17,6 +18,22 @@ require (
 	github.com/cosmos/cosmos-sdk v0.47.6
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/golang/mock v1.6.0
+=======
+	cosmossdk.io/log v1.3.1
+	cosmossdk.io/math v1.2.0
+	cosmossdk.io/store v1.0.2
+	cosmossdk.io/tools/confix v0.1.1
+	cosmossdk.io/x/circuit v0.1.0
+	cosmossdk.io/x/feegrant v0.1.0
+	cosmossdk.io/x/tx v0.13.0
+	cosmossdk.io/x/upgrade v0.1.1
+	github.com/client9/misspell v0.3.4
+	github.com/cometbft/cometbft v0.38.5
+	github.com/cosmos/cosmos-db v1.0.0
+	github.com/cosmos/cosmos-proto v1.0.0-beta.3
+	github.com/cosmos/cosmos-sdk v0.50.3
+	github.com/cosmos/gogoproto v1.4.11
+>>>>>>> 58b43e2 (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.2 to 0.50.3 (#420))
 	github.com/golang/protobuf v1.5.3
 	github.com/golangci/golangci-lint v1.55.3-0.20231203192459-84442f26446b
 	github.com/gorilla/mux v1.8.1
@@ -27,7 +44,11 @@ require (
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
 	golang.org/x/tools v0.17.0
+<<<<<<< HEAD
 	golang.org/x/vuln v1.0.3
+=======
+	golang.org/x/vuln v1.0.1
+>>>>>>> 58b43e2 (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.2 to 0.50.3 (#420))
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
