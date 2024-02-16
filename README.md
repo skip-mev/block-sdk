@@ -23,7 +23,9 @@
 
 ### 🤔 What is the Block SDK?
 
-> **Note**: The Block SDK is midway through an audit. Please use at your own risk. Timeline for audit completion is early November.
+> **Note**: The BlockSDK is open source software that Skip maintains. We strive to be responsive to questions and issues within 1-2 weeks - please ask in our [#block-sdk-support discord](https://discord.com/invite/hFeHVAE26P) channel, or open a GitHub issue!
+
+Please note, we are not currently providing hands-on support for new integrations.
 
 **🌐 The Block SDK is a toolkit for building customized blocks**. The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
 
