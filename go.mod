@@ -5,18 +5,32 @@ go 1.21.4
 toolchain go1.21.6
 
 require (
+<<<<<<< HEAD
 	cosmossdk.io/api v0.3.1
 	cosmossdk.io/core v0.5.1
+=======
+	cosmossdk.io/api v0.7.3
+	cosmossdk.io/client/v2 v2.0.0-20230724130706-5442197d6bcd
+	cosmossdk.io/core v0.11.0
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.1
 	cosmossdk.io/math v1.2.0
 	github.com/client9/misspell v0.3.4
+<<<<<<< HEAD
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.11.0
 	github.com/cosmos/cosmos-proto v1.0.0-beta.2
 	github.com/cosmos/cosmos-sdk v0.47.6
 	github.com/cosmos/gogoproto v1.4.10
 	github.com/golang/mock v1.6.0
+=======
+	github.com/cometbft/cometbft v0.38.5
+	github.com/cosmos/cosmos-db v1.0.0
+	github.com/cosmos/cosmos-proto v1.0.0-beta.4
+	github.com/cosmos/cosmos-sdk v0.50.4
+	github.com/cosmos/gogoproto v1.4.11
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/golang/protobuf v1.5.3
 	github.com/golangci/golangci-lint v1.56.1
 	github.com/gorilla/mux v1.8.1
@@ -26,8 +40,13 @@ require (
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
+<<<<<<< HEAD
 	golang.org/x/tools v0.17.0
 	golang.org/x/vuln v1.0.3
+=======
+	golang.org/x/tools v0.18.0
+	golang.org/x/vuln v1.0.1
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f
 	google.golang.org/grpc v1.60.1
 	google.golang.org/protobuf v1.32.0
@@ -97,10 +116,18 @@ require (
 	github.com/cosmos/btcutil v1.0.5 // indirect
 	github.com/cosmos/go-bip39 v1.0.0 // indirect
 	github.com/cosmos/gogogateway v1.2.0 // indirect
+<<<<<<< HEAD
 	github.com/cosmos/iavl v0.20.1 // indirect
 	github.com/cosmos/ledger-cosmos-go v0.12.4 // indirect
 	github.com/cosmos/rosetta-sdk-go v0.10.0 // indirect
 	github.com/creachadair/taskgroup v0.3.2 // indirect
+=======
+	github.com/cosmos/iavl v1.0.1 // indirect
+	github.com/cosmos/ics23/go v0.10.0 // indirect
+	github.com/cosmos/ledger-cosmos-go v0.13.3 // indirect
+	github.com/creachadair/atomicfile v0.3.1 // indirect
+	github.com/creachadair/tomledit v0.0.24 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/curioswitch/go-reassign v0.2.0 // indirect
 	github.com/daixiang0/gci v0.12.1 // indirect
 	github.com/danieljoos/wincred v1.1.2 // indirect
@@ -112,7 +139,12 @@ require (
 	github.com/dgraph-io/ristretto v0.1.1 // indirect
 	github.com/dgryski/go-farm v0.0.0-20200201041132-a6ae2369ad13 // indirect
 	github.com/dustin/go-humanize v1.0.1 // indirect
+<<<<<<< HEAD
 	github.com/dvsekhvalnov/jose2go v1.5.1-0.20231206184617-48ba0b76bc88 // indirect
+=======
+	github.com/dvsekhvalnov/jose2go v1.6.0 // indirect
+	github.com/emicklei/dot v1.6.1 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/esimonov/ifshort v1.0.4 // indirect
 	github.com/ettle/strcase v0.2.0 // indirect
 	github.com/fatih/color v1.16.0 // indirect
@@ -121,9 +153,15 @@ require (
 	github.com/firefart/nonamedreturns v1.0.4 // indirect
 	github.com/fsnotify/fsnotify v1.7.0 // indirect
 	github.com/fzipp/gocyclo v0.6.0 // indirect
+<<<<<<< HEAD
 	github.com/getsentry/sentry-go v0.23.0 // indirect
 	github.com/ghostiam/protogetter v0.3.4 // indirect
 	github.com/go-critic/go-critic v0.11.0 // indirect
+=======
+	github.com/getsentry/sentry-go v0.27.0 // indirect
+	github.com/ghostiam/protogetter v0.3.3 // indirect
+	github.com/go-critic/go-critic v0.9.0 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/go-kit/kit v0.12.0 // indirect
 	github.com/go-kit/log v0.2.1 // indirect
 	github.com/go-logfmt/logfmt v0.6.0 // indirect
@@ -192,7 +230,11 @@ require (
 	github.com/kisielk/errcheck v1.7.0 // indirect
 	github.com/kisielk/gotool v1.0.0 // indirect
 	github.com/kkHAIKE/contextcheck v1.1.4 // indirect
+<<<<<<< HEAD
 	github.com/klauspost/compress v1.17.0 // indirect
+=======
+	github.com/klauspost/compress v1.17.6 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/kr/pretty v0.3.1 // indirect
 	github.com/kr/text v0.2.0 // indirect
 	github.com/kulti/thelper v0.6.3 // indirect
@@ -214,7 +256,10 @@ require (
 	github.com/mattn/go-colorable v0.1.13 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mattn/go-runewidth v0.0.9 // indirect
+<<<<<<< HEAD
 	github.com/matttproud/golang_protobuf_extensions v1.0.4 // indirect
+=======
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/mbilski/exhaustivestruct v1.2.0 // indirect
 	github.com/mgechev/revive v1.3.7 // indirect
 	github.com/mimoo/StrobeGo v0.0.0-20210601165009-122bf33a46e0 // indirect
@@ -234,11 +279,19 @@ require (
 	github.com/petermattis/goid v0.0.0-20230317030725-371a4b8eda08 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/pmezard/go-difflib v1.0.1-0.20181226105442-5d4384ee4fb2 // indirect
+<<<<<<< HEAD
 	github.com/polyfloyd/go-errorlint v1.4.8 // indirect
 	github.com/prometheus/client_golang v1.16.0 // indirect
 	github.com/prometheus/client_model v0.4.0 // indirect
 	github.com/prometheus/common v0.44.0 // indirect
 	github.com/prometheus/procfs v0.11.0 // indirect
+=======
+	github.com/polyfloyd/go-errorlint v1.4.6 // indirect
+	github.com/prometheus/client_golang v1.18.0 // indirect
+	github.com/prometheus/client_model v0.6.0 // indirect
+	github.com/prometheus/common v0.47.0 // indirect
+	github.com/prometheus/procfs v0.12.0 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	github.com/quasilyte/go-ruleguard v0.4.0 // indirect
 	github.com/quasilyte/gogrep v0.5.0 // indirect
 	github.com/quasilyte/regex/syntax v0.0.0-20210819130434-b3f0c404a727 // indirect
@@ -300,15 +353,24 @@ require (
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/multierr v1.10.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
+<<<<<<< HEAD
 	golang.org/x/crypto v0.18.0 // indirect
 	golang.org/x/exp v0.0.0-20240103183307-be819d1f06fc // indirect
 	golang.org/x/exp/typeparams v0.0.0-20231219180239-dc181d75b848 // indirect
 	golang.org/x/mod v0.15.0 // indirect
 	golang.org/x/net v0.20.0 // indirect
 	golang.org/x/oauth2 v0.15.0 // indirect
+=======
+	golang.org/x/crypto v0.19.0 // indirect
+	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a // indirect
+	golang.org/x/exp/typeparams v0.0.0-20230307190834-24139beb5833 // indirect
+	golang.org/x/mod v0.15.0 // indirect
+	golang.org/x/net v0.21.0 // indirect
+	golang.org/x/oauth2 v0.16.0 // indirect
+>>>>>>> a13c42a (chore(deps): bump github.com/cosmos/cosmos-sdk from 0.50.3 to 0.50.4 (#438))
 	golang.org/x/sync v0.6.0 // indirect
-	golang.org/x/sys v0.16.0 // indirect
-	golang.org/x/term v0.16.0 // indirect
+	golang.org/x/sys v0.17.0 // indirect
+	golang.org/x/term v0.17.0 // indirect
 	golang.org/x/text v0.14.0 // indirect
 	golang.org/x/time v0.5.0 // indirect
 	golang.org/x/xerrors v0.0.0-20220907171357-04be3eba64a2 // indirect
