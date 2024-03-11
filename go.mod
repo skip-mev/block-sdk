@@ -32,10 +32,17 @@ require (
 	github.com/spf13/pflag v1.0.5
 	github.com/spf13/viper v1.18.2
 	github.com/stretchr/testify v1.8.4
+<<<<<<< HEAD
 	golang.org/x/tools v0.19.0
 	golang.org/x/vuln v1.0.4
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f
 	google.golang.org/grpc v1.60.1
+=======
+	golang.org/x/tools v0.18.0
+	golang.org/x/vuln v1.0.4
+	google.golang.org/genproto/googleapis/api v0.0.0-20240123012728-ef4313101c80
+	google.golang.org/grpc v1.62.1
+>>>>>>> 4dea6f3 (chore(deps): bump golang.org/x/vuln from 1.0.1 to 1.0.4 (#443))
 	google.golang.org/protobuf v1.32.0
 	mvdan.cc/gofumpt v0.6.0
 )
