@@ -42,15 +42,15 @@ Skip has built out a number of plug-and-play `lanes` on the SDK that your protoc
 
 ### 📚 Block SDK Documentation
 
-To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/chains/overview).
+To read more about how the Block SDK works, check out the [How it Works](https://docs.skip.money/blocksdk/how-it-works).
 
 #### 🏪 Lane App Store
 
-To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store](https://docs.skip.money/chains/lanes/existing-lanes/mev).
+To read more about Skip's pre-built `lanes` and how to use them, check out the [Lane App Store](https://docs.skip.money/blocksdk/lanes/existing-lanes/mev).
 
 #### 🎨 Lane Development
 
-To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/chains/lanes/build-your-own-lane).
+To read more about how to build your own custom `lanes`, check out the [Build Your Own Lane](https://docs.skip.money/blocksdk/lanes/build-your-own-lane).
 
 ### Audits 
 
