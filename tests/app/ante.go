@@ -52,7 +52,7 @@ func NewBSDKAnteHandler(options BSDKHandlerOptions) sdk.AnteHandler {
 		ante.NewSetPubKeyDecorator(options.BaseOptions.AccountKeeper), // SetPubKeyDecorator must be called before all signature verification decorators
 		ante.NewValidateSigCountDecorator(options.BaseOptions.AccountKeeper),
 		ante.NewSigGasConsumeDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SigGasConsumer),
-		ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
+		// ante.NewSigVerificationDecorator(options.BaseOptions.AccountKeeper, options.BaseOptions.SignModeHandler),
 		ante.NewIncrementSequenceDecorator(options.BaseOptions.AccountKeeper),
 		auctionante.NewAuctionDecorator(options.auctionkeeper, options.TxEncoder, options.MEVLane),
 	}
