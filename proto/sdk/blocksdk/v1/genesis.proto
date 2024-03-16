@@ -5,9 +5,13 @@ option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
 
 import "gogoproto/gogo.proto";
 import "sdk/blocksdk/v1/blocksdk.proto";
+import "sdk/blocksdk/v1/params.proto";
 
 // GenesisState defines the genesis state of the x/blocksdk module.
 message GenesisState {
-  // lanes is the list of all configured lanes at genesis time.
-  repeated Lane lanes = 1 [ (gogoproto.nullable) = false ];
+  // Params is the list or x/blocksdk params.
+  Params params = 1 [ (gogoproto.nullable) = false ];
+
+  // Lanes is the list of all configured lanes at genesis time.
+  repeated Lane lanes = 2 [ (gogoproto.nullable) = false ];
 }

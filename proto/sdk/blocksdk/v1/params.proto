@@ -1,0 +1,18 @@
+syntax = "proto3";
+package sdk.blocksdk.v1;
+
+import "gogoproto/gogo.proto";
+import "cosmos/base/v1beta1/coin.proto";
+import "amino/amino.proto";
+import "cosmos_proto/cosmos.proto";
+
+option go_package = "github.com/skip-mev/block-sdk/x/blocksdk/types";
+
+// Params defines the parameters of the x/blocksdk module.
+message Params {
+  option (amino.name) = "block-sdk/x/auction/Params";
+
+  // Enabled is a switch to enable or disable the module.  When disabled,
+  // the lanes are solely configured in the binary in app.go.
+  bool Enabled = 1;
+}

@@ -40,3 +40,15 @@ func (q QueryServer) Lanes(goCtx context.Context, _ *types.QueryLanesRequest) (*
 
 	return &types.QueryLanesResponse{Lanes: lanes}, nil
 }
+
+// Params queries all parameters of the blocksdk module.
+func (q QueryServer) Params(c context.Context, _ *types.QueryParamsRequest) (*types.QueryParamsResponse, error) {
+	ctx := sdk.UnwrapSDKContext(c)
+
+	params, err := q.keeper.GetParams(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return &types.QueryParamsResponse{Params: params}, nil
+}

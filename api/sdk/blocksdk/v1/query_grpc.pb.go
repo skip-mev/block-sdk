@@ -19,8 +19,9 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	Query_Lane_FullMethodName  = "/sdk.blocksdk.v1.Query/Lane"
-	Query_Lanes_FullMethodName = "/sdk.blocksdk.v1.Query/Lanes"
+	Query_Lane_FullMethodName   = "/sdk.blocksdk.v1.Query/Lane"
+	Query_Lanes_FullMethodName  = "/sdk.blocksdk.v1.Query/Lanes"
+	Query_Params_FullMethodName = "/sdk.blocksdk.v1.Query/Params"
 )
 
 // QueryClient is the client API for Query service.
@@ -31,6 +32,8 @@ type QueryClient interface {
 	Lane(ctx context.Context, in *QueryLaneRequest, opts ...grpc.CallOption) (*QueryLaneResponse, error)
 	// Lane queries all lanes in the x/blocksdk module
 	Lanes(ctx context.Context, in *QueryLanesRequest, opts ...grpc.CallOption) (*QueryLanesResponse, error)
+	// Params queries the parameters of the x/blocksdk module.
+	Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error)
 }
 
 type queryClient struct {
@@ -59,6 +62,15 @@ func (c *queryClient) Lanes(ctx context.Context, in *QueryLanesRequest, opts ...
 	return out, nil
 }
 
+func (c *queryClient) Params(ctx context.Context, in *QueryParamsRequest, opts ...grpc.CallOption) (*QueryParamsResponse, error) {
+	out := new(QueryParamsResponse)
+	err := c.cc.Invoke(ctx, Query_Params_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // QueryServer is the server API for Query service.
 // All implementations must embed UnimplementedQueryServer
 // for forward compatibility
@@ -67,6 +79,8 @@ type QueryServer interface {
 	Lane(context.Context, *QueryLaneRequest) (*QueryLaneResponse, error)
 	// Lane queries all lanes in the x/blocksdk module
 	Lanes(context.Context, *QueryLanesRequest) (*QueryLanesResponse, error)
+	// Params queries the parameters of the x/blocksdk module.
+	Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error)
 	mustEmbedUnimplementedQueryServer()
 }
 
@@ -79,6 +93,9 @@ func (UnimplementedQueryServer) Lane(context.Context, *QueryLaneRequest) (*Query
 }
 func (UnimplementedQueryServer) Lanes(context.Context, *QueryLanesRequest) (*QueryLanesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method Lanes not implemented")
+}
+func (UnimplementedQueryServer) Params(context.Context, *QueryParamsRequest) (*QueryParamsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Params not implemented")
 }
 func (UnimplementedQueryServer) mustEmbedUnimplementedQueryServer() {}
 
@@ -129,6 +146,24 @@ func _Query_Lanes_Handler(srv interface{}, ctx context.Context, dec func(interfa
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Query_Params_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(QueryParamsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(QueryServer).Params(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: Query_Params_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(QueryServer).Params(ctx, req.(*QueryParamsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Query_ServiceDesc is the grpc.ServiceDesc for Query service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -143,6 +178,10 @@ var Query_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "Lanes",
 			Handler:    _Query_Lanes_Handler,
+		},
+		{
+			MethodName: "Params",
+			Handler:    _Query_Params_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
