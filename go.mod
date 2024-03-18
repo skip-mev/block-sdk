@@ -9,7 +9,7 @@ require (
 	cosmossdk.io/core v0.5.1
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.1
-	cosmossdk.io/math v1.2.0
+	cosmossdk.io/math v1.3.0
 	github.com/client9/misspell v0.3.4
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.11.0
@@ -325,7 +325,7 @@ require (
 	mvdan.cc/unparam v0.0.0-20240104100049-c549a3470d14 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
 	pgregory.net/rapid v0.5.5 // indirect
-	sigs.k8s.io/yaml v1.3.0 // indirect
+	sigs.k8s.io/yaml v1.4.0 // indirect
 )
 
 replace (
