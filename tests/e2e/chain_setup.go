@@ -90,7 +90,7 @@ func BuildInterchain(t *testing.T, ctx context.Context, chain ibc.Chain) *interc
 }
 
 // CreateTx creates a new transaction to be signed by the given user, including a provided set of messages
-func (s *E2ETestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height uint64, GasPrice int64, msgs ...sdk.Msg) []byte {
+func (s *E2ETestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, seqIncrement, height int64, GasPrice int64, msgs ...sdk.Msg) []byte {
 	// create tx factory + Client Context
 	txf, err := s.bc.GetFactory(ctx, user)
 	s.Require().NoError(err)
@@ -105,14 +105,14 @@ func (s *E2ETestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, 
 
 	// set timeout height
 	if height != 0 {
-		txf = txf.WithTimeoutHeight(height)
+		txf = txf.WithTimeoutHeight(uint64(height))
 	}
 
 	// get gas for tx
 	txf.WithGas(25000000)
 
 	// update sequence number
-	txf = txf.WithSequence(txf.Sequence() + seqIncrement)
+	txf = txf.WithSequence(txf.Sequence() + uint64(seqIncrement))
 	txf = txf.WithGasPrices(sdk.NewDecCoins(sdk.NewDecCoin(chain.Config().Denom, math.NewInt(GasPrice))).String())
 
 	// sign the tx
@@ -128,7 +128,7 @@ func (s *E2ETestSuite) CreateTx(ctx context.Context, chain *cosmos.CosmosChain, 
 }
 
 func (s *E2ETestSuite) CreateDummyAuctionBidTx(
-	height uint64,
+	height int64,
 	searcher ibc.Wallet,
 	bid sdk.Coin,
 ) Tx {
@@ -151,7 +151,7 @@ func (s *E2ETestSuite) CreateDummyAuctionBidTx(
 func (s *E2ETestSuite) CreateDummyNormalTx(
 	from, to ibc.Wallet,
 	coins sdk.Coins,
-	sequenceOffset uint64,
+	sequenceOffset int64,
 	gasPrice int64,
 ) Tx {
 	msgSend := banktypes.NewMsgSend(
@@ -174,7 +174,7 @@ func (s *E2ETestSuite) CreateDummyFreeTx(
 	user ibc.Wallet,
 	validator sdk.ValAddress,
 	delegation sdk.Coin,
-	sequenceOffset uint64,
+	sequenceOffset int64,
 ) Tx {
 	delegateMsg := stakingtypes.NewMsgDelegate(
 		sdk.AccAddress(user.Address()),
@@ -218,8 +218,8 @@ type Tx struct {
 	User               cosmos.User
 	Msgs               []sdk.Msg
 	GasPrice           int64
-	SequenceIncrement  uint64
-	Height             uint64
+	SequenceIncrement  int64
+	Height             int64
 	SkipInclusionCheck bool
 	ExpectFail         bool
 	IgnoreChecks       bool
@@ -425,7 +425,7 @@ func Block(t *testing.T, chain *cosmos.CosmosChain, height int64) *rpctypes.Resu
 }
 
 // WaitForHeight waits for the chain to reach the given height
-func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
+func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height int64) {
 	// wait for next height
 	err := testutil.WaitForCondition(30*time.Second, 100*time.Millisecond, func() (bool, error) {
 		pollHeight, err := chain.Height(context.Background())
@@ -439,8 +439,8 @@ func WaitForHeight(t *testing.T, chain *cosmos.CosmosChain, height uint64) {
 
 // VerifyBlockWithExpectedBlock takes in a list of raw tx bytes and compares each tx hash to the tx hashes in the block.
 // The expected block is the block that should be returned by the chain at the given height.
-func VerifyBlockWithExpectedBlock(t *testing.T, chain *cosmos.CosmosChain, height uint64, txs [][]byte) {
-	block := Block(t, chain, int64(height))
+func VerifyBlockWithExpectedBlock(t *testing.T, chain *cosmos.CosmosChain, height int64, txs [][]byte) {
+	block := Block(t, chain, height)
 	blockTxs := block.Block.Data.Txs
 
 	t.Logf("verifying block %d", height)
