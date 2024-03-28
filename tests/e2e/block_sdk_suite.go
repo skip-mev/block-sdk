@@ -22,8 +22,8 @@ import (
 	"github.com/skip-mev/block-sdk/lanes/free"
 )
 
-const (
-	initBalance = 1000000000000
+var (
+	initBalance = sdk.NewInt(1000000000000)
 )
 
 type committedTx struct {
@@ -694,7 +694,7 @@ func (s *E2ETestSuite) TestInvalidBids() {
 			msgs[i] = Tx{
 				User:              s.user1,
 				Msgs:              []sdk.Msg{banktypes.NewMsgSend(s.user1.Address(), s.user2.Address(), sdk.NewCoins(sdk.NewCoin(s.denom, sdk.NewInt(100))))},
-				SequenceIncrement: uint64(i + 1),
+				SequenceIncrement: int64(i + 1),
 				Height:            height + 1,
 			}
 		}
@@ -1301,7 +1301,7 @@ func (s *E2ETestSuite) TestNetwork() {
 				for i := 0; i < numTxs; i++ {
 					for _, user := range s.fuzzusers {
 						fee := rand.Int63n(100000)
-						sequenceOffset := uint64(i)
+						sequenceOffset := int64(i)
 
 						normalTx := s.CreateDummyNormalTx(user, s.user1, sendAmount, sequenceOffset, fee)
 						s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{normalTx})
@@ -1329,7 +1329,7 @@ func (s *E2ETestSuite) TestNetwork() {
 
 				for i := 0; i < numTxs; i++ {
 					for _, user := range s.fuzzusers {
-						sequenceOffset := uint64(i)
+						sequenceOffset := int64(i)
 
 						freeTx := s.CreateDummyFreeTx(user, validators[0], delegation, sequenceOffset)
 						s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), []Tx{freeTx})
@@ -1403,7 +1403,7 @@ func (s *E2ETestSuite) TestNetwork() {
 
 				for i := 0; i < numTxs; i++ {
 					for _, user := range s.fuzzusers[3:6] {
-						sequenceOffset := uint64(i)
+						sequenceOffset := int64(i)
 
 						freeTx := s.CreateDummyFreeTx(user, validators[0], delegation, sequenceOffset)
 						txs = append(txs, freeTx)
@@ -1414,7 +1414,7 @@ func (s *E2ETestSuite) TestNetwork() {
 				for i := 0; i < numTxs; i++ {
 					for _, user := range s.fuzzusers[6:10] {
 						fee := rand.Int63n(100000)
-						sequenceOffset := uint64(i)
+						sequenceOffset := int64(i)
 						normalTx := s.CreateDummyNormalTx(user, s.user1, sendAmount, sequenceOffset, fee)
 						txs = append(txs, normalTx)
 					}
