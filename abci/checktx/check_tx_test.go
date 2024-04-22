@@ -138,7 +138,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 		s.Ctx.Logger(),
 		mempool,
 		s.EncCfg.TxConfig.TxDecoder(),
-		func(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
+		func(*cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
 			// always fail
 			return &cometabci.ResponseCheckTx{Code: 1}, nil
 		},
