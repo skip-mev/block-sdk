@@ -125,9 +125,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	s.Require().NoError(err)
 
 	mevLane := s.InitLane(math.LegacyOneDec(), nil)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	handler := checktx.NewMempoolParityCheckTx(
