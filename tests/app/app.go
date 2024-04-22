@@ -5,8 +5,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/skip-mev/block-sdk/abci/precommit"
-
 	"cosmossdk.io/log"
 	dbm "github.com/cosmos/cosmos-db"
 
@@ -45,6 +43,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci"
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/abci/precommit"
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/block/base"
 	service "github.com/skip-mev/block-sdk/v2/block/service"
