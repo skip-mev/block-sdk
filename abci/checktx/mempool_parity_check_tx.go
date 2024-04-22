@@ -74,11 +74,11 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 		}
 
 		// run the checkTxHandler
-		res, checkTxError := m.checkTxHandler(req)
+		res := m.checkTxHandler(req)
 
 		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
 		// the app-side mempool
-		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck {
+		if isInvalidCheckTxExecution(res) && isReCheck {
 			// check if the tx exists first
 			if m.mempl.Contains(tx) {
 				// remove the tx
@@ -86,16 +86,15 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 					m.logger.Debug(
 						"failed to remove tx from app-side mempool when purging for re-check failure",
 						"removal-err", err,
-						"check-tx-err", checkTxError,
 					)
 				}
 			}
 		}
 
-		return res, checkTxError
+		return res
 	}
 }
 
-func isInvalidCheckTxExecution(resp *cmtabci.ResponseCheckTx, checkTxErr error) bool {
-	return resp == nil || resp.Code != 0 || checkTxErr != nil
+func isInvalidCheckTxExecution(resp cmtabci.ResponseCheckTx) bool {
+	return resp.Code != 0
 }

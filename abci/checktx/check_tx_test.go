@@ -125,18 +125,16 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	s.Require().NoError(err)
 
 	mevLane := s.InitLane(math.LegacyOneDec(), nil)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
 		s.EncCfg.TxConfig.TxDecoder(),
-		func(*cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
+		func(cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
 			// always fail
-			return &cometabci.ResponseCheckTx{Code: 1}, nil
+			return cometabci.ResponseCheckTx{Code: 1}
 		},
 	).CheckTx()
 
@@ -149,7 +147,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 		s.Require().True(mempool.Contains(tx))
 
 		// check tx
-		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_Recheck})
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_Recheck})
 		s.Require().NoError(err)
 
 		s.Require().Equal(uint32(1), res.Code)
