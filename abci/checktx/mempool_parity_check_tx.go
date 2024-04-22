@@ -54,9 +54,11 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			), nil
 		}
 
+		isReCheck := req.Type == cmtabci.CheckTxType_Recheck
+
 		// if the mode is ReCheck and the app's mempool does not contain the given tx, we fail
 		// immediately, to purge the tx from the comet mempool.
-		if req.Type == cmtabci.CheckTxType_Recheck && !m.mempl.Contains(tx) {
+		if isReCheck && !m.mempl.Contains(tx) {
 			m.logger.Debug(
 				"tx from comet mempool not found in app-side mempool",
 				"tx", tx,
@@ -72,6 +74,28 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 		}
 
 		// run the checkTxHandler
-		return m.checkTxHandler(req)
+		res, checkTxError := m.checkTxHandler(req)
+
+		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
+		// the app-side mempool
+		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck {
+			// check if the tx exists first
+			if m.mempl.Contains(tx) {
+				// remove the tx
+				if err := m.mempl.Remove(tx); err != nil {
+					m.logger.Debug(
+						"failed to remove tx from app-side mempool when purging for re-check failure",
+						"removal-err", err,
+						"check-tx-err", checkTxError,
+					)
+				}
+			}
+		}
+
+		return res, checkTxError
 	}
+}
+
+func isInvalidCheckTxExecution(resp *cmtabci.ResponseCheckTx, checkTxErr error) bool {
+	return resp == nil || resp.Code != 0 || checkTxErr != nil
 }
