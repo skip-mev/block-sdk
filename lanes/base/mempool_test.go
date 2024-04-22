@@ -4,9 +4,9 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
-	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/block/base"
-	testutils "github.com/skip-mev/block-sdk/testutils"
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
 )
 
 func (s *BaseTestSuite) TestCompareTxPriority() {
@@ -95,7 +95,7 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 		s.Require().Error(err)
 	})
 
-	s.Run("should return 1 when the first tx has a higher priority", func() {
+	s.Run("should return 0 when the first tx has a higher fee", func() {
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[0],
@@ -120,12 +120,12 @@ func (s *BaseTestSuite) TestCompareTxPriority() {
 
 		cmp, err := lane.Compare(sdk.Context{}, tx1, tx2)
 		s.Require().NoError(err)
-		s.Require().Equal(1, cmp)
+		s.Require().Equal(0, cmp)
 	})
 }
 
 func (s *BaseTestSuite) TestInsert() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+	mempool := base.NewMempool(base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 	s.Run("should be able to insert a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -180,7 +180,7 @@ func (s *BaseTestSuite) TestInsert() {
 }
 
 func (s *BaseTestSuite) TestRemove() {
-	mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+	mempool := base.NewMempool(base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 	s.Run("should be able to remove a transaction", func() {
 		tx, err := testutils.CreateRandomTx(
@@ -220,11 +220,11 @@ func (s *BaseTestSuite) TestRemove() {
 
 func (s *BaseTestSuite) TestSelect() {
 	s.Run("should be able to select transactions in the correct order", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+		mempool := base.NewMempool(base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
-			s.accounts[0],
+			s.accounts[1],
 			0,
 			0,
 			0,
@@ -236,7 +236,7 @@ func (s *BaseTestSuite) TestSelect() {
 		tx2, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,
 			s.accounts[1],
-			0,
+			1,
 			0,
 			0,
 			0,
@@ -252,16 +252,16 @@ func (s *BaseTestSuite) TestSelect() {
 		// Check that the transactions are in the correct order
 		iterator := mempool.Select(sdk.Context{}, nil)
 		s.Require().NotNil(iterator)
-		s.Require().Equal(tx2, iterator.Tx())
+		s.Require().Equal(tx1, iterator.Tx())
 
 		// Check the second transaction
 		iterator = iterator.Next()
 		s.Require().NotNil(iterator)
-		s.Require().Equal(tx1, iterator.Tx())
+		s.Require().Equal(tx2, iterator.Tx())
 	})
 
 	s.Run("should be able to select a single transaction", func() {
-		mempool := base.NewMempool[string](base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
+		mempool := base.NewMempool(base.DefaultTxPriority(), s.encodingConfig.TxConfig.TxEncoder(), signer_extraction.NewDefaultAdapter(), 3)
 
 		tx1, err := testutils.CreateRandomTx(
 			s.encodingConfig.TxConfig,

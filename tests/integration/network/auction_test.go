@@ -12,7 +12,7 @@ import (
 	"github.com/skip-mev/chaintestutil/network"
 	"github.com/stretchr/testify/require"
 
-	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
 func (s *NetworkTestSuite) TestAuctionWithValidBids() {
