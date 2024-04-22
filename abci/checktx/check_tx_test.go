@@ -111,6 +111,52 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	})
 }
 
+func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
+	// create a tx that should not be inserted in the mev-lane
+	tx, _, err := testutils.CreateAuctionTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
+		1,
+		0,
+		nil,
+		100,
+	)
+	s.Require().NoError(err)
+
+	mevLane := s.InitLane(math.LegacyOneDec(), nil)
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
+	s.Require().NoError(err)
+
+	handler := checktx.NewMempoolParityCheckTx(
+		s.Ctx.Logger(),
+		mempool,
+		s.EncCfg.TxConfig.TxDecoder(),
+		func(cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
+			// always fail
+			return cometabci.ResponseCheckTx{Code: 1}
+		},
+	).CheckTx()
+
+	s.Run("tx is removed on check-tx failure when re-check", func() {
+		// check that tx exists in mempool
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(tx)
+		s.Require().NoError(err)
+
+		s.Require().NoError(mempool.Insert(s.Ctx, tx))
+		s.Require().True(mempool.Contains(tx))
+
+		// check tx
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_Recheck})
+		s.Require().NoError(err)
+
+		s.Require().Equal(uint32(1), res.Code)
+
+		// check that tx is removed from mempool
+		s.Require().False(mempool.Contains(tx))
+	})
+}
+
 func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 	s.Run("tx fails tx-decoding", func() {
 		handler := checktx.NewMempoolParityCheckTx(
