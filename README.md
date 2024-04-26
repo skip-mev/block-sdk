@@ -29,7 +29,7 @@
 
 1. We are not currently providing hands-on support for new integrations.
 2. We have not yet completed our entire testing process for the FreeLane. We recommend integrators who want to have the best experience utilize the MEV Lane and the Default Lane only at this time.
-3. Integrators are responsible for the design, testing, and correctness of custom lanes they build.**
+3. Integrators are responsible for the design, testing, and correctness of custom lanes they build.
 
 **🌐 The Block SDK is a toolkit for building customized blocks**. The Block SDK is a set of Cosmos SDK and ABCI++ primitives that allow chains to fully customize blocks to specific use cases. It turns your chain's blocks into a **`highway`** consisting of individual **`lanes`** with their own special functionality.
 
