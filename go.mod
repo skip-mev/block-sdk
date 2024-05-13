@@ -5,7 +5,7 @@ go 1.21.4
 toolchain go1.21.6
 
 require (
-	cosmossdk.io/api v0.3.1
+	cosmossdk.io/api v0.7.5
 	cosmossdk.io/core v0.5.1
 	cosmossdk.io/depinject v1.0.0-alpha.4
 	cosmossdk.io/errors v1.0.1
@@ -13,9 +13,9 @@ require (
 	github.com/client9/misspell v0.3.4
 	github.com/cometbft/cometbft v0.37.2
 	github.com/cometbft/cometbft-db v0.11.0
-	github.com/cosmos/cosmos-proto v1.0.0-beta.2
+	github.com/cosmos/cosmos-proto v1.0.0-beta.5
 	github.com/cosmos/cosmos-sdk v0.47.6
-	github.com/cosmos/gogoproto v1.4.10
+	github.com/cosmos/gogoproto v1.4.11
 	github.com/golang/mock v1.6.0
 	github.com/golang/protobuf v1.5.3
 	github.com/golangci/golangci-lint v1.56.2
@@ -25,12 +25,12 @@ require (
 	github.com/skip-mev/chaintestutil v0.0.0-20231221140417-3ef0d790573c
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.18.2
-	github.com/stretchr/testify v1.8.4
+	github.com/stretchr/testify v1.9.0
 	golang.org/x/tools v0.18.0
 	golang.org/x/vuln v1.0.4
 	google.golang.org/genproto/googleapis/api v0.0.0-20231120223509-83a465c0220f
 	google.golang.org/grpc v1.60.1
-	google.golang.org/protobuf v1.32.0
+	google.golang.org/protobuf v1.33.0
 	mvdan.cc/gofumpt v0.6.0
 )
 
@@ -270,7 +270,7 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/ssgreg/nlreturn/v2 v2.2.1 // indirect
 	github.com/stbenjam/no-sprintf-host-port v0.1.1 // indirect
-	github.com/stretchr/objx v0.5.0 // indirect
+	github.com/stretchr/objx v0.5.2 // indirect
 	github.com/subosito/gotenv v1.6.0 // indirect
 	github.com/syndtr/goleveldb v1.0.1-0.20220721030215-126854af5e6d // indirect
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
@@ -324,7 +324,7 @@ require (
 	mvdan.cc/lint v0.0.0-20170908181259-adc824a0674b // indirect
 	mvdan.cc/unparam v0.0.0-20240104100049-c549a3470d14 // indirect
 	nhooyr.io/websocket v1.8.6 // indirect
-	pgregory.net/rapid v0.5.5 // indirect
+	pgregory.net/rapid v1.1.0 // indirect
 	sigs.k8s.io/yaml v1.3.0 // indirect
 )
 
