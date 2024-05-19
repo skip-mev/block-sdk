@@ -172,7 +172,7 @@ func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 			nil,
 		)
 
-		res, err := handler.CheckTx()(&cometabci.RequestCheckTx{Tx: []byte("invalid-tx")})
+		res, err := handler.CheckTx()(&cometabci.RequestCheckTx{Type: cometabci.CheckTxType_Recheck, Tx: []byte("invalid-tx")})
 		s.Require().NoError(err)
 
 		s.Require().Equal(uint32(1), res.Code)
