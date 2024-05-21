@@ -18,6 +18,7 @@ type Keeper struct {
 	cdc      codec.BinaryCodec
 	storeKey storetypes.StoreKey
 
+	accountKeeper          types.AccountKeeper
 	bankKeeper             types.BankKeeper
 	rewardsAddressProvider types.RewardsAddressProvider
 
@@ -73,6 +74,7 @@ func NewKeeperWithRewardsAddressProvider(
 	return Keeper{
 		cdc:                    cdc,
 		storeKey:               storeKey,
+		accountKeeper:          accountKeeper,
 		bankKeeper:             bankKeeper,
 		rewardsAddressProvider: rewardsAddressProvider,
 		authority:              authority,
