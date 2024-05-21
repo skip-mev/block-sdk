@@ -33,8 +33,7 @@ func (_m *DistributionKeeper) GetPreviousProposerConsAddr(ctx types.Context) typ
 func NewDistributionKeeper(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *DistributionKeeper {
+}) *DistributionKeeper {
 	mock := &DistributionKeeper{}
 	mock.Mock.Test(t)
 
