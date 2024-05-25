@@ -7,8 +7,6 @@ import (
 
 	cmtabci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
-	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
-
 	"github.com/skip-mev/block-sdk/v2/block"
 )
 
@@ -42,53 +40,38 @@ func NewMempoolParityCheckTx(logger log.Logger, mempl block.Mempool, txDecoder s
 // in the app-side mempool on ReCheckTx.
 func (m MempoolParityCheckTx) CheckTx() CheckTx {
 	return func(req *cmtabci.RequestCheckTx) (*cmtabci.ResponseCheckTx, error) {
-		// decode tx
-		tx, err := m.txDecoder(req.Tx)
-		if err != nil {
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("failed to decode tx: %w", err),
-				0,
-				0,
-				nil,
-				false,
-			), nil
+		// This method check the tx only if the CheckTxType mode is ReCheck. Otherwise, we continue to the next checkHandler.
+		if req.Type != cmtabci.CheckTxType_Recheck {
+			return m.checkTxHandler(req)
 		}
 
-		isReCheck := req.Type == cmtabci.CheckTxType_Recheck
+		tx, err := m.txDecoder(req.Tx)
+		if err != nil {
+			return errorResponse(fmt.Errorf("failed to decode tx: %w", err)), nil
+		}
 
-		// if the mode is ReCheck and the app's mempool does not contain the given tx, we fail
-		// immediately, to purge the tx from the comet mempool.
-		if isReCheck && !m.mempl.Contains(tx) {
+		// In the ReCheck mode the app's mempool should contain the given tx.
+		// If not, we fail immediately, to purge the tx from the comet mempool.
+		if !m.mempl.Contains(tx) {
 			m.logger.Debug(
 				"tx from comet mempool not found in app-side mempool",
 				"tx", tx,
 			)
-
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("tx from comet mempool not found in app-side mempool"),
-				0,
-				0,
-				nil,
-				false,
-			), nil
+			return errorResponse(fmt.Errorf("tx from comet mempool not found in app-side mempool")), nil
 		}
 
 		// run the checkTxHandler
 		res, checkTxError := m.checkTxHandler(req)
 
-		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
-		// the app-side mempool
-		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck {
-			// check if the tx exists first
-			if m.mempl.Contains(tx) {
-				// remove the tx
-				if err := m.mempl.Remove(tx); err != nil {
-					m.logger.Debug(
-						"failed to remove tx from app-side mempool when purging for re-check failure",
-						"removal-err", err,
-						"check-tx-err", checkTxError,
-					)
-				}
+		// if re-check fails for a transaction, we'll need to explicitly purge the tx from the app-side mempool
+		if isInvalidCheckTxExecution(res, checkTxError) {
+			// remove the tx
+			if err = m.mempl.Remove(tx); err != nil {
+				m.logger.Debug(
+					"failed to remove tx from app-side mempool when purging for re-check failure",
+					"removal-err", err,
+					"check-tx-err", checkTxError,
+				)
 			}
 		}
 

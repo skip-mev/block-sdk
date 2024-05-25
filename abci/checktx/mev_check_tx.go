@@ -17,7 +17,7 @@ import (
 	"github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
 
-// MevCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
+// MEVCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
 // verify bid transactions against the latest committed state. All other transactions
 // are executed normally using base app's CheckTx. This defines all of the
 // dependencies that are required to verify a bid transaction.
@@ -69,7 +69,7 @@ type BaseApp interface {
 	ChainID() string
 }
 
-// NewCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
+// NewMEVCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
 // adhering to the MevLaneI interface
 func NewMEVCheckTxHandler(
 	baseApp BaseApp,
@@ -87,7 +87,7 @@ func NewMEVCheckTxHandler(
 	}
 }
 
-// CheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
+// CheckTx is a wrapper around baseapp's CheckTx method that allows us to
 // verify bid transactions against the latest committed state. All other transactions
 // are executed normally. We must verify each bid tx and all of its bundled transactions
 // before we can insert it into the mempool against the latest commit state because
@@ -95,67 +95,34 @@ func NewMEVCheckTxHandler(
 // during this process.
 func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 	return func(req *cometabci.RequestCheckTx) (resp *cometabci.ResponseCheckTx, err error) {
+		l := handler.baseApp.Logger()
 		defer func() {
 			if rec := recover(); rec != nil {
-				handler.baseApp.Logger().Error(
-					"panic in check tx handler",
-					"err", rec,
-				)
-
+				l.Error("panic in check tx handler", "err", rec)
 				err = fmt.Errorf("panic in check tx handler: %s", rec)
-				resp = sdkerrors.ResponseCheckTxWithEvents(
-					err,
-					0,
-					0,
-					nil,
-					false,
-				)
+				resp = errorResponse(err)
 			}
 		}()
 
 		tx, err := handler.txDecoder(req.Tx)
 		if err != nil {
-			handler.baseApp.Logger().Info(
-				"failed to decode tx",
-				"err", err,
-			)
-
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("failed to decode tx: %w", err),
-				0,
-				0,
-				nil,
-				false,
-			), nil
+			l.Info("failed to decode tx", "err", err)
+			return errorResponse(fmt.Errorf("failed to decode tx: %w", err)), nil
 		}
 
 		// Attempt to get the bid info of the transaction.
 		bidInfo, err := handler.mevLane.GetAuctionBidInfo(tx)
 		if err != nil {
-			handler.baseApp.Logger().Info(
-				"failed to get auction bid info",
-				"err", err,
-			)
-
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("failed to get auction bid info: %w", err),
-				0,
-				0,
-				nil,
-				false,
-			), nil
+			l.Info("failed to get auction bid info", "err", err)
+			return errorResponse(fmt.Errorf("failed to get auction bid info: %w", err)), nil
 		}
 
 		// If this is not a bid transaction, we just execute it normally.
 		if bidInfo == nil {
-			resp, err := handler.checkTxHandler(req)
+			resp, err = handler.checkTxHandler(req)
 			if err != nil {
-				handler.baseApp.Logger().Info(
-					"failed to execute check tx",
-					"err", err,
-				)
+				l.Info("failed to execute check tx", "err", err)
 			}
-
 			return resp, err
 		}
 
@@ -167,7 +134,7 @@ func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 		// Verify the bid transaction.
 		gasInfo, err := handler.ValidateBidTx(ctx, tx, bidInfo)
 		if err != nil {
-			handler.baseApp.Logger().Info(
+			l.Info(
 				"invalid bid tx",
 				"err", err,
 				"height", ctx.BlockHeight(),
@@ -179,24 +146,18 @@ func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 
 			// attempt to remove the bid from the MEVLane (if it exists)
 			if handler.mevLane.Contains(tx) {
-				if err := handler.mevLane.Remove(tx); err != nil {
-					handler.baseApp.Logger().Error(
-						"failed to remove bid transaction from mev-lane",
-						"err", err,
-					)
+				if err = handler.mevLane.Remove(tx); err != nil {
+					l.Error("failed to remove bid transaction from mev-lane", "err", err)
 				}
 			}
 
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("invalid bid tx: %w", err),
-				gasInfo.GasWanted,
-				gasInfo.GasUsed,
-				nil,
-				false,
-			), nil
+			resp = errorResponse(fmt.Errorf("invalid bid tx: %w", err))
+			resp.GasWanted = int64(gasInfo.GasWanted)
+			resp.GasUsed = int64(gasInfo.GasUsed)
+			return resp, nil
 		}
 
-		handler.baseApp.Logger().Info(
+		l.Info(
 			"valid bid tx",
 			"height", ctx.BlockHeight(),
 			"bid_height", bidInfo.Timeout,
@@ -206,19 +167,12 @@ func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 		)
 
 		// If the bid transaction is valid, we know we can insert it into the mempool for consideration in the next block.
-		if err := handler.mevLane.Insert(ctx, tx); err != nil {
-			handler.baseApp.Logger().Info(
-				"invalid bid tx; failed to insert bid transaction into mempool",
-				"err", err,
-			)
-
-			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("invalid bid tx; failed to insert bid transaction into mempool: %w", err),
-				gasInfo.GasWanted,
-				gasInfo.GasUsed,
-				nil,
-				false,
-			), nil
+		if err = handler.mevLane.Insert(ctx, tx); err != nil {
+			l.Info("invalid bid tx; failed to insert bid transaction into mempool", "err", err)
+			resp = errorResponse(fmt.Errorf("invalid bid tx; failed to insert bid transaction into mempool: %w", err))
+			resp.GasWanted = int64(gasInfo.GasWanted)
+			resp.GasUsed = int64(gasInfo.GasUsed)
+			return resp, nil
 		}
 
 		return &cometabci.ResponseCheckTx{
@@ -298,4 +252,8 @@ func (handler *MEVCheckTxHandler) GetContextForBidTx(req *cometabci.RequestCheck
 		WithConsensusParams(handler.baseApp.GetConsensusParams(ctx))
 
 	return ctx
+}
+
+func errorResponse(err error) *cometabci.ResponseCheckTx {
+	return sdkerrors.ResponseCheckTxWithEvents(err, 0, 0, nil, false)
 }
