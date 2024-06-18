@@ -102,7 +102,10 @@ func (k Keeper) ExtractBid(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coin)
 
 	var proposerReward sdk.Coins
 	if params.ProposerFee.IsZero() {
-		return k.SendBid(ctx, bidder, escrowAddress, sdk.NewCoins(bid))
+		// send the entire bid to the escrow account when no proposer fee is set
+		if err := k.bankKeeper.SendCoins(ctx, bidder, escrowAddress, sdk.NewCoins(bid)); err != nil {
+			return err
+		}
 	} else {
 		rewardsAddress, err := k.rewardsAddressProvider.GetRewardsAddress(ctx)
 		if err != nil {
@@ -115,7 +118,7 @@ func (k Keeper) ExtractBid(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coin)
 		bid := sdk.NewDecCoinsFromCoins(bid)
 		proposerReward, _ = bid.MulDecTruncate(params.ProposerFee).TruncateDecimal()
 
-		if err := k.SendBid(ctx, bidder, rewardsAddress, proposerReward); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, bidder, rewardsAddress, proposerReward); err != nil {
 			return err
 		}
 
@@ -124,7 +127,7 @@ func (k Keeper) ExtractBid(ctx sdk.Context, bidder sdk.AccAddress, bid sdk.Coin)
 		escrowTotal := bid.Sub(sdk.NewDecCoinsFromCoins(proposerReward...))
 		escrowReward, _ := escrowTotal.TruncateDecimal()
 
-		if err := k.SendBid(ctx, bidder, escrowAddress, escrowReward); err != nil {
+		if err := k.bankKeeper.SendCoins(ctx, bidder, escrowAddress, escrowReward); err != nil {
 			return err
 		}
 	}
@@ -201,16 +204,6 @@ func (k Keeper) ValidateBundleTimeouts(bidInfo *types.BidInfo) error {
 	}
 
 	return nil
-}
-
-// SendBid sends the bid from the bidder to the relevant address.
-func (k Keeper) SendBid(ctx sdk.Context, from, to sdk.AccAddress, bid sdk.Coins) error {
-	moduleAddress := k.accountKeeper.GetModuleAddress(types.ModuleName)
-	if moduleAddress.Equals(to) {
-		return k.bankKeeper.SendCoinsFromAccountToModule(ctx, from, types.ModuleName, bid)
-	}
-
-	return k.bankKeeper.SendCoins(ctx, from, to, bid)
 }
 
 // filterSigners removes any signers from the currentSigners map that are not in the txSigners map.
