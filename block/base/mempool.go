@@ -12,13 +12,6 @@ import (
 )
 
 type (
-	// MempoolInterface defines the interface a mempool should implement.
-	MempoolInterface interface {
-		sdkmempool.Mempool
-
-		Contains(tx sdk.Tx) bool
-	}
-
 	// Mempool defines a mempool that orders transactions based on the
 	// txPriority. The mempool is a wrapper on top of the SDK's Priority Nonce mempool.
 	// It include's additional helper functions that allow users to determine if a
@@ -63,7 +56,7 @@ func (cm *Mempool[C]) Priority(ctx sdk.Context, tx sdk.Tx) any {
 // Insert inserts a transaction into the mempool.
 func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 	if err := cm.index.Insert(ctx, tx); err != nil {
-		return fmt.Errorf("failed to insert tx into auction index: %w", err)
+		return fmt.Errorf("failed to insert tx into mempool: %w", err)
 	}
 
 	return nil

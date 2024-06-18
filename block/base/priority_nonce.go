@@ -26,11 +26,19 @@ import (
 )
 
 var (
-	_ sdkmempool.Mempool  = (*PriorityNonceMempool[int64])(nil)
+	_ MempoolInterface    = (*PriorityNonceMempool[int64])(nil)
 	_ sdkmempool.Iterator = (*PriorityNonceIterator[int64])(nil)
 )
 
 type (
+	// MempoolInterface defines the interface a mempool should implement.
+	MempoolInterface interface {
+		sdkmempool.Mempool
+
+		// Contains returns true if the transaction is in the mempool.
+		Contains(tx sdk.Tx) bool
+	}
+
 	// PriorityNonceMempoolConfig defines the configuration used to configure the
 	// PriorityNonceMempool.
 	PriorityNonceMempoolConfig[C comparable] struct {

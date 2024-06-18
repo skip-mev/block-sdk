@@ -22,7 +22,7 @@ type txGen struct {
 
 var (
 	numAccounts   = 10
-	numTxsPerAcct = 100
+	numTxsPerAcct = 10
 )
 
 func BenchmarkContains(b *testing.B) {
