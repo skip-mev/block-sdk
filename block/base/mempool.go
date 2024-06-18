@@ -12,6 +12,13 @@ import (
 )
 
 type (
+	// MempoolInterface defines the interface a mempool should implement.
+	MempoolInterface interface {
+		sdkmempool.Mempool
+
+		Contains(tx sdk.Tx) bool
+	}
+
 	// Mempool defines a mempool that orders transactions based on the
 	// txPriority. The mempool is a wrapper on top of the SDK's Priority Nonce mempool.
 	// It include's additional helper functions that allow users to determine if a
@@ -19,7 +26,7 @@ type (
 	// transactions.
 	Mempool[C comparable] struct {
 		// index defines an index of transactions.
-		index sdkmempool.Mempool
+		index MempoolInterface
 
 		// signerExtractor defines the signer extraction adapter that allows us to
 		// extract the signer from a transaction.
@@ -30,28 +37,11 @@ type (
 		// of two transactions. The index utilizes this struct to order transactions
 		// in the mempool.
 		txPriority TxPriority[C]
-
-		// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
-		// to bytes.
-		txEncoder sdk.TxEncoder
-
-		// txCache is a map of all transactions in the mempool. It is used
-		// to quickly check if a transaction is already in the mempool.
-		txCache map[CacheIndex]struct{}
-	}
-
-	// CacheIndex defines the index utilized to cache transactions that have been inserted.
-	CacheIndex struct {
-		// Sender is the sender of the transaction.
-		Sender string
-
-		// Sequence is the sequence number of the transaction.
-		Sequence uint64
 	}
 )
 
 // NewMempool returns a new Mempool.
-func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
+func NewMempool[C comparable](txPriority TxPriority[C], extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{
@@ -62,8 +52,6 @@ func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder,
 		),
 		extractor:  extractor,
 		txPriority: txPriority,
-		txEncoder:  txEncoder,
-		txCache:    make(map[CacheIndex]struct{}),
 	}
 }
 
@@ -78,12 +66,6 @@ func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 		return fmt.Errorf("failed to insert tx into auction index: %w", err)
 	}
 
-	index, err := cm.getCacheIndex(tx)
-	if err != nil {
-		return fmt.Errorf("failed to get cache index while inserting: %w", err)
-	}
-	cm.txCache[index] = struct{}{}
-
 	return nil
 }
 
@@ -92,12 +74,6 @@ func (cm *Mempool[C]) Remove(tx sdk.Tx) error {
 	if err := cm.index.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
 	}
-
-	index, err := cm.getCacheIndex(tx)
-	if err != nil {
-		return fmt.Errorf("failed to get cache index while removing: %w", err)
-	}
-	delete(cm.txCache, index)
 
 	return nil
 }
@@ -117,13 +93,7 @@ func (cm *Mempool[C]) CountTx() int {
 
 // Contains returns true if the transaction is contained in the mempool.
 func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
-	index, err := cm.getCacheIndex(tx)
-	if err != nil {
-		return false
-	}
-
-	_, ok := cm.txCache[index]
-	return ok
+	return cm.index.Contains(tx)
 }
 
 // Compare determines the relative priority of two transactions belonging in the same lane.
@@ -171,21 +141,4 @@ func (cm *Mempool[C]) Compare(ctx sdk.Context, this sdk.Tx, other sdk.Tx) (int, 
 	firstPriority := cm.txPriority.GetTxPriority(ctx, this)
 	secondPriority := cm.txPriority.GetTxPriority(ctx, other)
 	return cm.txPriority.Compare(firstPriority, secondPriority), nil
-}
-
-// getCacheIndex returns the cache index for the transaction.
-func (cm *Mempool[C]) getCacheIndex(tx sdk.Tx) (CacheIndex, error) {
-	signers, err := cm.extractor.GetSigners(tx)
-	if err != nil {
-		return CacheIndex{}, err
-	}
-	if len(signers) == 0 {
-		return CacheIndex{}, fmt.Errorf("expected one signer for the transaction")
-	}
-
-	signerInfo := signers[0]
-	return CacheIndex{
-		Sender:   signerInfo.Signer.String(),
-		Sequence: signerInfo.Sequence,
-	}, nil
 }

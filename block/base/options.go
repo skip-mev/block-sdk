@@ -73,7 +73,6 @@ func WithMempoolConfigs[C comparable](cfg LaneConfig, txPriority TxPriority[C]) 
 	return func(l *BaseLane) {
 		l.LaneMempool = NewMempool(
 			txPriority,
-			cfg.TxEncoder,
 			cfg.SignerExtractor,
 			cfg.MaxTxs,
 		)

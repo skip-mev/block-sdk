@@ -462,6 +462,24 @@ func (mp *PriorityNonceMempool[C]) Remove(tx sdk.Tx) error {
 	return nil
 }
 
+// Contains returns true if the transaction is in the mempool.
+func (mp *PriorityNonceMempool[C]) Contains(tx sdk.Tx) bool {
+	signers, err := mp.signerExtractor.GetSigners(tx)
+	if err != nil {
+		return false
+	}
+	if len(signers) == 0 {
+		return false
+	}
+
+	sig := signers[0]
+	nonce := sig.Sequence
+	sender := sig.Signer.String()
+
+	_, ok := mp.scores[txMeta[C]{nonce: nonce, sender: sender}]
+	return ok
+}
+
 func IsEmpty[C comparable](mempool sdkmempool.Mempool) error {
 	mp := mempool.(*PriorityNonceMempool[C])
 	if mp.priorityIndex.Len() != 0 {

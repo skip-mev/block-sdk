@@ -31,7 +31,6 @@ func BenchmarkContains(b *testing.B) {
 
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-		txc.TxEncoder(),
 		signerextraction.NewDefaultAdapter(),
 		1000,
 	)
@@ -64,7 +63,6 @@ func TestMempoolComparison(t *testing.T) {
 	ctx := testutils.CreateBaseSDKContext(t)
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-		txc.TxEncoder(),
 		signerextraction.NewDefaultAdapter(),
 		1000,
 	)
@@ -140,7 +138,6 @@ func TestMempoolSelect(t *testing.T) {
 	se := signerextraction.NewDefaultAdapter()
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-		txc.TxEncoder(),
 		se,
 		1000,
 	)
