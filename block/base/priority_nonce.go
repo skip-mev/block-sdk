@@ -26,11 +26,19 @@ import (
 )
 
 var (
-	_ sdkmempool.Mempool  = (*PriorityNonceMempool[int64])(nil)
+	_ MempoolInterface    = (*PriorityNonceMempool[int64])(nil)
 	_ sdkmempool.Iterator = (*PriorityNonceIterator[int64])(nil)
 )
 
 type (
+	// MempoolInterface defines the interface a mempool should implement.
+	MempoolInterface interface {
+		sdkmempool.Mempool
+
+		// Contains returns true if the transaction is in the mempool.
+		Contains(tx sdk.Tx) bool
+	}
+
 	// PriorityNonceMempoolConfig defines the configuration used to configure the
 	// PriorityNonceMempool.
 	PriorityNonceMempoolConfig[C comparable] struct {
@@ -460,6 +468,24 @@ func (mp *PriorityNonceMempool[C]) Remove(tx sdk.Tx) error {
 	mp.priorityCounts[score.priority]--
 
 	return nil
+}
+
+// Contains returns true if the transaction is in the mempool.
+func (mp *PriorityNonceMempool[C]) Contains(tx sdk.Tx) bool {
+	signers, err := mp.signerExtractor.GetSigners(tx)
+	if err != nil {
+		return false
+	}
+	if len(signers) == 0 {
+		return false
+	}
+
+	sig := signers[0]
+	nonce := sig.Sequence
+	sender := sig.Signer.String()
+
+	_, ok := mp.scores[txMeta[C]{nonce: nonce, sender: sender}]
+	return ok
 }
 
 func IsEmpty[C comparable](mempool sdkmempool.Mempool) error {
