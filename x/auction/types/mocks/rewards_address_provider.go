@@ -43,7 +43,8 @@ func (_m *RewardsAddressProvider) GetRewardsAddress(context types.Context) (type
 func NewRewardsAddressProvider(t interface {
 	mock.TestingT
 	Cleanup(func())
-}) *RewardsAddressProvider {
+},
+) *RewardsAddressProvider {
 	mock := &RewardsAddressProvider{}
 	mock.Mock.Test(t)
 
