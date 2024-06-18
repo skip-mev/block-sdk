@@ -8,8 +8,12 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
 
+<<<<<<< HEAD
 	signer_extraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/utils"
+=======
+	signer_extraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
+>>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 )
 
 type (
@@ -20,7 +24,7 @@ type (
 	// transactions.
 	Mempool[C comparable] struct {
 		// index defines an index of transactions.
-		index sdkmempool.Mempool
+		index MempoolInterface
 
 		// signerExtractor defines the signer extraction adapter that allows us to
 		// extract the signer from a transaction.
@@ -31,19 +35,11 @@ type (
 		// of two transactions. The index utilizes this struct to order transactions
 		// in the mempool.
 		txPriority TxPriority[C]
-
-		// txEncoder defines the sdk.Tx encoder that allows us to encode transactions
-		// to bytes.
-		txEncoder sdk.TxEncoder
-
-		// txCache is a map of all transactions in the mempool. It is used
-		// to quickly check if a transaction is already in the mempool.
-		txCache map[string]struct{}
 	}
 )
 
 // NewMempool returns a new Mempool.
-func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder, extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
+func NewMempool[C comparable](txPriority TxPriority[C], extractor signer_extraction.Adapter, maxTx int) *Mempool[C] {
 	return &Mempool[C]{
 		index: NewPriorityMempool(
 			PriorityNonceMempoolConfig[C]{
@@ -54,8 +50,6 @@ func NewMempool[C comparable](txPriority TxPriority[C], txEncoder sdk.TxEncoder,
 		),
 		extractor:  extractor,
 		txPriority: txPriority,
-		txEncoder:  txEncoder,
-		txCache:    make(map[string]struct{}),
 	}
 }
 
@@ -67,16 +61,8 @@ func (cm *Mempool[C]) Priority(ctx sdk.Context, tx sdk.Tx) any {
 // Insert inserts a transaction into the mempool.
 func (cm *Mempool[C]) Insert(ctx context.Context, tx sdk.Tx) error {
 	if err := cm.index.Insert(ctx, tx); err != nil {
-		return fmt.Errorf("failed to insert tx into auction index: %w", err)
+		return fmt.Errorf("failed to insert tx into mempool: %w", err)
 	}
-
-	hash, err := utils.GetTxHash(cm.txEncoder, tx)
-	if err != nil {
-		cm.Remove(tx)
-		return err
-	}
-
-	cm.txCache[hash] = struct{}{}
 
 	return nil
 }
@@ -86,13 +72,6 @@ func (cm *Mempool[C]) Remove(tx sdk.Tx) error {
 	if err := cm.index.Remove(tx); err != nil && !errors.Is(err, sdkmempool.ErrTxNotFound) {
 		return fmt.Errorf("failed to remove transaction from the mempool: %w", err)
 	}
-
-	hash, err := utils.GetTxHash(cm.txEncoder, tx)
-	if err != nil {
-		return fmt.Errorf("failed to get tx hash string: %w", err)
-	}
-
-	delete(cm.txCache, hash)
 
 	return nil
 }
@@ -112,13 +91,7 @@ func (cm *Mempool[C]) CountTx() int {
 
 // Contains returns true if the transaction is contained in the mempool.
 func (cm *Mempool[C]) Contains(tx sdk.Tx) bool {
-	hash, err := utils.GetTxHash(cm.txEncoder, tx)
-	if err != nil {
-		return false
-	}
-
-	_, ok := cm.txCache[hash]
-	return ok
+	return cm.index.Contains(tx)
 }
 
 // Compare determines the relative priority of two transactions belonging in the same lane.
