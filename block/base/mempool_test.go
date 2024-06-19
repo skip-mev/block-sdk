@@ -9,15 +9,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/require"
 
-<<<<<<< HEAD
 	signerextraction "github.com/skip-mev/block-sdk/adapters/signer_extraction_adapter"
 	"github.com/skip-mev/block-sdk/block/base"
 	"github.com/skip-mev/block-sdk/testutils"
-=======
-	signerextraction "github.com/skip-mev/block-sdk/v2/adapters/signer_extraction_adapter"
-	"github.com/skip-mev/block-sdk/v2/block/base"
-	"github.com/skip-mev/block-sdk/v2/testutils"
->>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 )
 
 type txGen struct {
@@ -69,10 +63,6 @@ func TestMempoolComparison(t *testing.T) {
 	ctx := testutils.CreateBaseSDKContext(t)
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-<<<<<<< HEAD
-		txc.TxEncoder(),
-=======
->>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 		signerextraction.NewDefaultAdapter(),
 		1000,
 	)
@@ -148,10 +138,6 @@ func TestMempoolSelect(t *testing.T) {
 	se := signerextraction.NewDefaultAdapter()
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-<<<<<<< HEAD
-		txc.TxEncoder(),
-=======
->>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 		se,
 		1000,
 	)
