@@ -59,7 +59,6 @@ func NewBaseLane(
 
 	lane.LaneMempool = NewMempool(
 		DefaultTxPriority(),
-		lane.cfg.TxEncoder,
 		lane.cfg.SignerExtractor,
 		lane.cfg.MaxTxs,
 	)
