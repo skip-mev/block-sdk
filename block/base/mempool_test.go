@@ -20,13 +20,49 @@ type txGen struct {
 	amount sdk.Coin
 }
 
+var (
+	numAccounts   = 10
+	numTxsPerAcct = 100
+)
+
+func BenchmarkContains(b *testing.B) {
+	acct := testutils.RandomAccounts(rand.New(rand.NewSource(1)), numAccounts)
+	txc := testutils.CreateTestEncodingConfig().TxConfig
+
+	mp := base.NewMempool(
+		base.DefaultTxPriority(),
+		signerextraction.NewDefaultAdapter(),
+		1000,
+	)
+
+	txs := make([]sdk.Tx, numAccounts*numTxsPerAcct)
+	for i := 0; i < numAccounts; i++ {
+		for j := 0; j < numTxsPerAcct; j++ {
+			tx, err := testutils.CreateTx(txc, acct[i], uint64(j), 0, nil, sdk.NewCoin("stake", sdkmath.NewInt(1)))
+			require.NoError(b, err)
+			err = mp.Insert(sdk.Context{}, tx)
+			require.NoError(b, err)
+			txs[i*numTxsPerAcct+j] = tx
+		}
+	}
+
+	b.ResetTimer()
+	for i := 0; i < b.N; i++ {
+		for _, tx := range txs {
+			found := mp.Contains(tx)
+			if !found {
+				b.Fatalf("tx not found in mempool")
+			}
+		}
+	}
+}
+
 func TestMempoolComparison(t *testing.T) {
 	acct := testutils.RandomAccounts(rand.New(rand.NewSource(1)), 2)
 	txc := testutils.CreateTestEncodingConfig().TxConfig
 	ctx := testutils.CreateBaseSDKContext(t)
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-		txc.TxEncoder(),
 		signerextraction.NewDefaultAdapter(),
 		1000,
 	)
@@ -102,7 +138,6 @@ func TestMempoolSelect(t *testing.T) {
 	se := signerextraction.NewDefaultAdapter()
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-		txc.TxEncoder(),
 		se,
 		1000,
 	)
