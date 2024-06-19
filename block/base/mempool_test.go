@@ -63,10 +63,6 @@ func TestMempoolComparison(t *testing.T) {
 	ctx := testutils.CreateBaseSDKContext(t)
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-<<<<<<< HEAD
-		txc.TxEncoder(),
-=======
->>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 		signerextraction.NewDefaultAdapter(),
 		1000,
 	)
@@ -142,10 +138,6 @@ func TestMempoolSelect(t *testing.T) {
 	se := signerextraction.NewDefaultAdapter()
 	mp := base.NewMempool(
 		base.DefaultTxPriority(),
-<<<<<<< HEAD
-		txc.TxEncoder(),
-=======
->>>>>>> 3376dd3 (perf: Use Caching in Priority Nonce Mempool for Tx Look ups (#520))
 		se,
 		1000,
 	)
