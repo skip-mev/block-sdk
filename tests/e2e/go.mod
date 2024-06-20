@@ -1,6 +1,6 @@
 module github.com/skip-mev/block-sdk/tests/e2e
 
-go 1.22.4
+go 1.21.8
 
 replace (
 	// interchaintest supports ICS features so we need this for now
