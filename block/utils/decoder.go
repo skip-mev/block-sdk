@@ -2,7 +2,7 @@ package utils
 
 import (
 	"fmt"
-	"time"
+	"sync"
 
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
@@ -17,20 +17,14 @@ var (
 // as the key. The cache is purged when the number of transactions in the cache
 // exceeds the maximum size. The oldest transactions are removed first.
 type CacheTxDecoder struct {
+	mut sync.Mutex
+
 	decoder     sdk.TxDecoder
 	cache       map[string]sdk.Tx
-	timestamps  []CacheValue
+	window      []string
 	insertIndex int
 	oldestIndex int
 	maxSize     uint64
-}
-
-// CacheValue is a wrapper struct for the cached transaction along with the
-// timestamp of when it was added to the cache. This is used to determine the
-// oldest transaction in the cache.
-type CacheValue struct {
-	hash      string
-	timestamp time.Time
 }
 
 // NewDefaultCacheTxDecoder returns a new CacheTxDecoder.
@@ -44,7 +38,7 @@ func NewDefaultCacheTxDecoder(
 	return &CacheTxDecoder{
 		decoder:     decoder,
 		cache:       make(map[string]sdk.Tx),
-		timestamps:  make([]CacheValue, DefaultMaxSize),
+		window:      make([]string, DefaultMaxSize),
 		insertIndex: 0,
 		oldestIndex: 0,
 		maxSize:     DefaultMaxSize,
@@ -63,7 +57,7 @@ func NewCacheTxDecoder(
 	return &CacheTxDecoder{
 		decoder:     decoder,
 		cache:       make(map[string]sdk.Tx),
-		timestamps:  make([]CacheValue, maxSize),
+		window:      make([]string, maxSize),
 		insertIndex: 0,
 		oldestIndex: 0,
 		maxSize:     maxSize,
@@ -74,6 +68,9 @@ func NewCacheTxDecoder(
 // transaction using the transaction's hash as the key.
 func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, error) {
+		ctd.mut.Lock()
+		defer ctd.mut.Unlock()
+
 		hash := TxHash(txBytes)
 		if tx, ok := ctd.cache[hash]; ok {
 			return tx, nil
@@ -82,8 +79,8 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 		// Purge the cache if necessary
 		if uint64(len(ctd.cache)) >= ctd.maxSize {
 			// Purge the oldest transaction
-			entry := ctd.timestamps[ctd.oldestIndex]
-			delete(ctd.cache, entry.hash)
+			entry := ctd.window[ctd.oldestIndex]
+			delete(ctd.cache, entry)
 
 			// Increment the oldest index
 			ctd.oldestIndex++
@@ -95,14 +92,9 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 			return nil, err
 		}
 
-		// Update the cache
+		// Update the cache and window
 		ctd.cache[hash] = tx
-
-		// Add the hash to the timestamps slice
-		ctd.timestamps[ctd.insertIndex] = CacheValue{
-			hash:      hash,
-			timestamp: time.Now(),
-		}
+		ctd.window[ctd.insertIndex] = hash
 
 		// Increment the insert index
 		ctd.insertIndex++
@@ -114,5 +106,18 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 
 // Len returns the number of transactions in the cache.
 func (ctd *CacheTxDecoder) Len() int {
+	ctd.mut.Lock()
+	defer ctd.mut.Unlock()
+
 	return len(ctd.cache)
+}
+
+// Contains returns true if the cache contains the transaction with the given hash.
+func (ctd *CacheTxDecoder) Contains(txBytes []byte) bool {
+	ctd.mut.Lock()
+	defer ctd.mut.Unlock()
+
+	hash := TxHash(txBytes)
+	_, ok := ctd.cache[hash]
+	return ok
 }

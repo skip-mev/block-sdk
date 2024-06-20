@@ -138,12 +138,14 @@ func TestDecode(t *testing.T) {
 		require.NoError(t, err)
 		require.NotNil(t, tx)
 		require.Equal(t, 1, cacheTxDecoder.Len())
+		require.True(t, cacheTxDecoder.Contains(txBytes))
 
 		// decode the same tx again
 		tx, err = decoder(txBytes)
 		require.NoError(t, err)
 		require.NotNil(t, tx)
 		require.Equal(t, 1, cacheTxDecoder.Len())
+		require.True(t, cacheTxDecoder.Contains(txBytes))
 	})
 
 	t.Run("decode invalid tx", func(t *testing.T) {
@@ -177,6 +179,7 @@ func TestDecode(t *testing.T) {
 			require.NoError(t, err)
 			require.NotNil(t, tx)
 			require.Equal(t, i+1, cacheTxDecoder.Len())
+			require.True(t, cacheTxDecoder.Contains(txBytes))
 		}
 		require.Equal(t, 100, cacheTxDecoder.Len())
 	})
@@ -201,6 +204,7 @@ func TestDecode(t *testing.T) {
 			tx, err := decoder(txBytes)
 			require.NoError(t, err)
 			require.NotNil(t, tx)
+			require.True(t, cacheTxDecoder.Contains(txBytes))
 
 			if i < int(maxSize) {
 				require.Equal(t, i+1, cacheTxDecoder.Len())
