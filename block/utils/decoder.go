@@ -7,10 +7,8 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 )
 
-var (
-	// DefaultMaxSize is the default maximum size of the cache.
-	DefaultMaxSize uint64 = 500
-)
+// DefaultMaxSize is the default maximum size of the cache.
+var DefaultMaxSize uint64 = 500
 
 // CacheTxDecoder wraps the sdk.TxDecoder and caches the decoded transactions with
 // an LRU'esque cache. Each transaction is cached using the transaction's hash
@@ -84,7 +82,7 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 
 			// Increment the oldest index
 			ctd.oldestIndex++
-			ctd.oldestIndex = ctd.oldestIndex % int(ctd.maxSize)
+			ctd.oldestIndex %= int(ctd.maxSize)
 		}
 
 		tx, err := ctd.decoder(txBytes)
@@ -98,7 +96,7 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 
 		// Increment the insert index
 		ctd.insertIndex++
-		ctd.insertIndex = ctd.insertIndex % int(ctd.maxSize)
+		ctd.insertIndex %= int(ctd.maxSize)
 
 		return tx, nil
 	}
