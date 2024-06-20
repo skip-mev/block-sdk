@@ -63,6 +63,7 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
@@ -70,6 +71,16 @@ import (
 	service "github.com/skip-mev/block-sdk/block/service"
 	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+=======
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	service "github.com/skip-mev/block-sdk/v2/block/service"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
+	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
+>>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 )
 
 const (
@@ -321,15 +332,29 @@ func New(
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
 
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(app.txConfig.TxDecoder())
+	if err != nil {
+		panic(err)
+	}
+
 	// Step 7: Set the custom CheckTx handler on BaseApp. This is only required if you
 	// use the MEV lane.
 	mevCheckTxHandler := checktx.NewMEVCheckTxHandler(
 		app.App,
-		app.txConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLane,
 		anteHandler,
 		app.App.CheckTx,
+<<<<<<< HEAD
 		app.ChainID(),
+=======
+	)
+	checkTxHandler := checktx.NewMempoolParityCheckTx(
+		app.Logger(),
+		mempool,
+		cacheDecoder.TxDecoder(),
+		mevCheckTx.CheckTx(),
+>>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 	)
 
 	parityCheckTxHandler := checktx.NewMempoolParityCheckTx(

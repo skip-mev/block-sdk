@@ -1,8 +1,12 @@
 module github.com/skip-mev/block-sdk
 
+<<<<<<< HEAD
 go 1.21.4
 
 toolchain go1.21.6
+=======
+go 1.22.4
+>>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 
 require (
 	cosmossdk.io/api v0.3.1
