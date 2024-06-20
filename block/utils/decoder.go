@@ -74,6 +74,11 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 			return tx, nil
 		}
 
+		tx, err := ctd.decoder(txBytes)
+		if err != nil {
+			return nil, err
+		}
+
 		// Purge the cache if necessary
 		if uint64(len(ctd.cache)) >= ctd.maxSize {
 			// Purge the oldest transaction
@@ -83,11 +88,6 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 			// Increment the oldest index
 			ctd.oldestIndex++
 			ctd.oldestIndex %= int(ctd.maxSize)
-		}
-
-		tx, err := ctd.decoder(txBytes)
-		if err != nil {
-			return nil, err
 		}
 
 		// Update the cache and window
