@@ -61,8 +61,12 @@ func GetTxHash(encoder sdk.TxEncoder, tx sdk.Tx) (string, error) {
 		return "", fmt.Errorf("failed to encode transaction: %w", err)
 	}
 
-	txHashStr := strings.ToUpper(hex.EncodeToString(comettypes.Tx(txBz).Hash()))
-	return txHashStr, nil
+	return TxHash(txBz), nil
+}
+
+// TxHash returns the string hash representation of the given transactions.
+func TxHash(txBytes []byte) string {
+	return strings.ToUpper(hex.EncodeToString(comettypes.Tx(txBytes).Hash()))
 }
 
 // GetDecodedTxs returns the decoded transactions from the given bytes.
