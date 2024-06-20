@@ -5,9 +5,10 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	"github.com/skip-mev/block-sdk/v2/block/utils"
 	"github.com/skip-mev/block-sdk/v2/testutils"
-	"github.com/stretchr/testify/require"
 )
 
 var (
