@@ -10,6 +10,93 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+var (
+	numAccounts   = 5
+	numTxsPerAcct = 100
+	cacheSize     = 500
+)
+
+func BenchmarkCacheDecoding(b *testing.B) {
+	encodingCfg := testutils.CreateTestEncodingConfig()
+	decoder := encodingCfg.TxConfig.TxDecoder()
+
+	random := rand.New(rand.NewSource(time.Now().Unix()))
+	account := testutils.RandomAccounts(random, numAccounts)
+
+	txs := make([][]byte, numAccounts*numTxsPerAcct)
+	for i := 0; i < numAccounts; i++ {
+		for j := 0; j < numTxsPerAcct; j++ {
+			txBytes, err := testutils.CreateRandomTxBz(
+				encodingCfg.TxConfig,
+				account[i],
+				uint64(j),
+				1,
+				2,
+				0,
+			)
+			require.NoError(b, err)
+
+			txs[i*numTxsPerAcct+j] = txBytes
+		}
+	}
+
+	cacheTxDecoder, err := utils.NewCacheTxDecoder(decoder, uint64(cacheSize))
+	require.NoError(b, err)
+	decoder = cacheTxDecoder.TxDecoder()
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for _, txBytes := range txs {
+			_, err := decoder(txBytes)
+			require.NoError(b, err)
+		}
+
+		for _, txBytes := range txs {
+			_, err := decoder(txBytes)
+			require.NoError(b, err)
+		}
+	}
+}
+
+func BenchmarkStandardDecoding(b *testing.B) {
+	encodingCfg := testutils.CreateTestEncodingConfig()
+	decoder := encodingCfg.TxConfig.TxDecoder()
+
+	random := rand.New(rand.NewSource(time.Now().Unix()))
+	account := testutils.RandomAccounts(random, numAccounts)
+
+	txs := make([][]byte, numAccounts*numTxsPerAcct)
+	for i := 0; i < numAccounts; i++ {
+		for j := 0; j < numTxsPerAcct; j++ {
+			txBytes, err := testutils.CreateRandomTxBz(
+				encodingCfg.TxConfig,
+				account[i],
+				uint64(j),
+				1,
+				2,
+				0,
+			)
+			require.NoError(b, err)
+
+			txs[i*numTxsPerAcct+j] = txBytes
+		}
+	}
+
+	b.ResetTimer()
+
+	for i := 0; i < b.N; i++ {
+		for _, txBytes := range txs {
+			_, err := decoder(txBytes)
+			require.NoError(b, err)
+		}
+
+		for _, txBytes := range txs {
+			_, err := decoder(txBytes)
+			require.NoError(b, err)
+		}
+	}
+}
+
 func TestNewCacheTxDecoder(t *testing.T) {
 	encodingCfg := testutils.CreateTestEncodingConfig()
 	decoder := encodingCfg.TxConfig.TxDecoder()

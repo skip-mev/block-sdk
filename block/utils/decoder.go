@@ -34,7 +34,9 @@ type CacheValue struct {
 }
 
 // NewDefaultCacheTxDecoder returns a new CacheTxDecoder.
-func NewDefaultCacheTxDecoder(decoder sdk.TxDecoder) (*CacheTxDecoder, error) {
+func NewDefaultCacheTxDecoder(
+	decoder sdk.TxDecoder,
+) (*CacheTxDecoder, error) {
 	if decoder == nil {
 		return nil, fmt.Errorf("decoder cannot be nil")
 	}
@@ -50,7 +52,10 @@ func NewDefaultCacheTxDecoder(decoder sdk.TxDecoder) (*CacheTxDecoder, error) {
 }
 
 // NewCacheTxDecoder returns a new CacheTxDecoder with the given cache interval.
-func NewCacheTxDecoder(decoder sdk.TxDecoder, maxSize uint64) (*CacheTxDecoder, error) {
+func NewCacheTxDecoder(
+	decoder sdk.TxDecoder,
+	maxSize uint64,
+) (*CacheTxDecoder, error) {
 	if decoder == nil {
 		return nil, fmt.Errorf("decoder cannot be nil")
 	}
@@ -69,6 +74,11 @@ func NewCacheTxDecoder(decoder sdk.TxDecoder, maxSize uint64) (*CacheTxDecoder, 
 // transaction using the transaction's hash as the key.
 func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 	return func(txBytes []byte) (sdk.Tx, error) {
+		hash := TxHash(txBytes)
+		if tx, ok := ctd.cache[hash]; ok {
+			return tx, nil
+		}
+
 		// Purge the cache if necessary
 		if uint64(len(ctd.cache)) >= ctd.maxSize {
 			// Purge the oldest transaction
@@ -78,11 +88,6 @@ func (ctd *CacheTxDecoder) TxDecoder() sdk.TxDecoder {
 			// Increment the oldest index
 			ctd.oldestIndex++
 			ctd.oldestIndex = ctd.oldestIndex % int(ctd.maxSize)
-		}
-
-		hash := TxHash(txBytes)
-		if tx, ok := ctd.cache[hash]; ok {
-			return tx, nil
 		}
 
 		tx, err := ctd.decoder(txBytes)
