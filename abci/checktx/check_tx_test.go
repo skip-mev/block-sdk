@@ -11,7 +11,6 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
-<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
 
@@ -19,19 +18,10 @@ import (
 	"github.com/cosmos/cosmos-sdk/store"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 
+	"github.com/skip-mev/block-sdk/block/utils"
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
-=======
-	"github.com/skip-mev/block-sdk/v2/abci/checktx"
-	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/block/utils"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
-	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
-	"github.com/skip-mev/block-sdk/v2/testutils"
-	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 )
 
 type CheckTxTestSuite struct {
@@ -148,13 +138,8 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
-<<<<<<< HEAD
-		s.EncCfg.TxConfig.TxDecoder(),
-		func(cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
-=======
 		cacheDecoder.TxDecoder(),
-		func(*cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
+		func(cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
 			// always fail
 			return cometabci.ResponseCheckTx{Code: 1}
 		},

@@ -63,24 +63,14 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
-<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/base"
 	service "github.com/skip-mev/block-sdk/block/service"
+	"github.com/skip-mev/block-sdk/block/utils"
 	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
-=======
-	"github.com/skip-mev/block-sdk/v2/abci"
-	"github.com/skip-mev/block-sdk/v2/abci/checktx"
-	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/block/base"
-	service "github.com/skip-mev/block-sdk/v2/block/service"
-	"github.com/skip-mev/block-sdk/v2/block/utils"
-	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 )
 
 const (
@@ -345,22 +335,13 @@ func New(
 		mevLane,
 		anteHandler,
 		app.App.CheckTx,
-<<<<<<< HEAD
 		app.ChainID(),
-=======
-	)
-	checkTxHandler := checktx.NewMempoolParityCheckTx(
-		app.Logger(),
-		mempool,
-		cacheDecoder.TxDecoder(),
-		mevCheckTx.CheckTx(),
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 	)
 
 	parityCheckTxHandler := checktx.NewMempoolParityCheckTx(
 		app.App.Logger(),
 		mempool,
-		app.txConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevCheckTxHandler.CheckTx(),
 	)
 

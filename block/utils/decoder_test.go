@@ -7,8 +7,8 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/skip-mev/block-sdk/v2/block/utils"
-	"github.com/skip-mev/block-sdk/v2/testutils"
+	"github.com/skip-mev/block-sdk/block/utils"
+	"github.com/skip-mev/block-sdk/testutils"
 )
 
 var (
