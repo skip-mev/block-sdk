@@ -1,6 +1,6 @@
 module github.com/skip-mev/block-sdk/v2/tests/e2e
 
-go 1.21.5
+go 1.22.4
 
 replace (
 	github.com/ChainSafe/go-schnorrkel => github.com/ChainSafe/go-schnorrkel v0.0.0-20200405005733-88cbf1b4c40d
