@@ -17,11 +17,9 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
 	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/v2/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 type CheckTxTestSuite struct {
@@ -61,9 +59,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	}
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	ba := &baseApp{
@@ -129,9 +125,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	s.Require().NoError(err)
 
 	mevLane := s.InitLane(math.LegacyOneDec(), nil)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	handler := checktx.NewMempoolParityCheckTx(
@@ -183,9 +177,7 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	txs := map[sdk.Tx]bool{}
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	ba := &baseApp{
@@ -361,16 +353,4 @@ func (baseApp) GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams {
 // ChainID is utilized to retrieve the chain ID.
 func (ba *baseApp) ChainID() string {
 	return ba.ctx.ChainID()
-}
-
-type moduleLaneFetcher struct {
-	lane *mev.MEVLane
-}
-
-func (mlf moduleLaneFetcher) GetLane(sdk.Context, string) (lane blocksdktypes.Lane, err error) {
-	return blocksdktypes.Lane{}, nil
-}
-
-func (mlf moduleLaneFetcher) GetLanes(sdk.Context) []blocksdktypes.Lane {
-	return nil
 }

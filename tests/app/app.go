@@ -47,7 +47,6 @@ import (
 	"github.com/skip-mev/block-sdk/v2/block/base"
 	service "github.com/skip-mev/block-sdk/v2/block/service"
 	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
 )
 
 const (
@@ -89,7 +88,6 @@ type TestApp struct {
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitBreakerKeeper  circuitkeeper.Keeper
 	auctionkeeper         auctionkeeper.Keeper
-	blocksdkKeeper        blocksdkkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -171,7 +169,6 @@ func New(
 		&app.AuthzKeeper,
 		&app.GroupKeeper,
 		&app.auctionkeeper,
-		&app.blocksdkKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.FeeGrantKeeper,
 		&app.CircuitBreakerKeeper,
@@ -219,7 +216,6 @@ func New(
 	mempool, err := block.NewLanedMempool(
 		app.Logger(),
 		[]block.Lane{mevLane, freeLane, defaultLane},
-		&app.blocksdkKeeper,
 	)
 	if err != nil {
 		panic(err)

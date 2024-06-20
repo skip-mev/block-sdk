@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"testing"
 
-	"cosmossdk.io/math"
-
 	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
 	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
@@ -13,12 +11,8 @@ import (
 	ictestutil "github.com/strangelove-ventures/interchaintest/v8/testutil"
 	"github.com/stretchr/testify/suite"
 
-	"github.com/skip-mev/block-sdk/v2/lanes/base"
-	"github.com/skip-mev/block-sdk/v2/lanes/free"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
 	"github.com/skip-mev/block-sdk/v2/tests/e2e"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 var (
@@ -40,26 +34,6 @@ var (
 		{
 			Key:   "app_state.auction.params.max_bundle_size",
 			Value: 3,
-		},
-		{
-			Key: "app_state.blocksdk.lanes",
-			Value: []blocksdkmoduletypes.Lane{
-				{
-					Id:            mev.LaneName,
-					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-					Order:         0,
-				},
-				{
-					Id:            free.LaneName,
-					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-					Order:         1,
-				},
-				{
-					Id:            base.LaneName,
-					MaxBlockSpace: math.LegacyMustNewDecFromStr("0.6"),
-					Order:         2,
-				},
-			},
 		},
 	}
 
@@ -102,7 +76,6 @@ func MakeEncodingConfig() *testutil.TestEncodingConfig {
 
 	// register auction types
 	auctiontypes.RegisterInterfaces(cfg.InterfaceRegistry)
-	blocksdkmoduletypes.RegisterInterfaces(cfg.InterfaceRegistry)
 
 	return &cfg
 }
