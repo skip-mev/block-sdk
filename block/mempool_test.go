@@ -5,10 +5,6 @@ import (
 	"testing"
 	"time"
 
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
-
-	"github.com/skip-mev/block-sdk/v2/block/mocks"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	storetypes "cosmossdk.io/store/types"
@@ -39,14 +35,8 @@ type BlockBusterTestSuite struct {
 	freeLane      *base.BaseLane
 	gasTokenDenom string
 
-	// sdk module lanes
-	mevSDKLane  blocksdkmoduletypes.Lane
-	baseSDKLane blocksdkmoduletypes.Lane
-	freeSDKLane blocksdkmoduletypes.Lane
-
-	chainLanes []blocksdkmoduletypes.Lane
-	lanes      []block.Lane
-	mempool    *block.LanedMempool
+	lanes   []block.Lane
+	mempool *block.LanedMempool
 
 	// account set up
 	accounts []testutils.Account
@@ -85,12 +75,6 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		factory.MatchHandler(),
 	)
 
-	suite.mevSDKLane = blocksdkmoduletypes.Lane{
-		Id:            suite.mevLane.Name(),
-		MaxBlockSpace: suite.mevLane.GetMaxBlockSpace(),
-		Order:         0,
-	}
-
 	// Free lane set up
 	freeConfig := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
@@ -106,12 +90,6 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		free.DefaultMatchHandler(),
 	)
 
-	suite.freeSDKLane = blocksdkmoduletypes.Lane{
-		Id:            suite.freeLane.Name(),
-		MaxBlockSpace: suite.freeLane.GetMaxBlockSpace(),
-		Order:         1,
-	}
-
 	// Base lane set up
 	baseConfig := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
@@ -126,25 +104,13 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 		base.DefaultMatchHandler(),
 	)
 
-	suite.baseSDKLane = blocksdkmoduletypes.Lane{
-		Id:            suite.baseLane.Name(),
-		MaxBlockSpace: suite.baseLane.GetMaxBlockSpace(),
-		Order:         2,
-	}
-
 	// Mempool set up
 	suite.lanes = []block.Lane{suite.mevLane, suite.freeLane, suite.baseLane}
-	suite.chainLanes = []blocksdkmoduletypes.Lane{suite.mevSDKLane, suite.freeSDKLane, suite.baseSDKLane}
 
 	var err error
 	suite.mempool, err = block.NewLanedMempool(
 		log.NewNopLogger(),
 		suite.lanes,
-		mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-			return suite.baseSDKLane, nil
-		}, func() []blocksdkmoduletypes.Lane {
-			return suite.chainLanes
-		}),
 	)
 	suite.Require().NoError(err)
 
@@ -157,12 +123,6 @@ func (suite *BlockBusterTestSuite) SetupTest() {
 }
 
 func (suite *BlockBusterTestSuite) TestNewMempool() {
-	fetcher := mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-		return blocksdkmoduletypes.Lane{}, nil
-	}, func() []blocksdkmoduletypes.Lane {
-		return nil
-	})
-
 	defaultConfig := base.LaneConfig{
 		Logger:          log.NewNopLogger(),
 		TxEncoder:       suite.encodingConfig.TxConfig.TxEncoder(),
@@ -206,7 +166,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -217,7 +176,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -228,7 +186,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -239,7 +196,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -250,7 +206,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -261,7 +216,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -272,7 +226,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().NoError(err)
 	})
@@ -283,7 +236,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().Error(err)
 	})
@@ -294,7 +246,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().Error(err)
 	})
@@ -305,7 +256,6 @@ func (suite *BlockBusterTestSuite) TestNewMempool() {
 		_, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			fetcher,
 		)
 		suite.Require().Error(err)
 	})
@@ -572,231 +522,5 @@ func (suite *BlockBusterTestSuite) fillFreeLane(numTxs uint64) {
 		// insert the tx into the lane and update the account
 		suite.nonces[acc.Address.String()]++
 		suite.Require().NoError(suite.mempool.Insert(suite.ctx, tx))
-	}
-}
-
-func (suite *BlockBusterTestSuite) TestLanedMempool_Registry() {
-	tests := []struct {
-		name                string
-		chainLanes          []blocksdkmoduletypes.Lane
-		registryLanes       []block.Lane
-		expectedNewRegistry []block.Lane
-		wantErr             bool
-	}{
-		{
-			name: "invalid lanes in chain",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid duplicate lanes in chain",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.baseSDKLane, // order = 2
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid lanes in registry",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "valid reorder",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			expectedNewRegistry: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: false,
-		},
-		{
-			name: "valid no reorder",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			expectedNewRegistry: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tc := range tests {
-		suite.Run(tc.name, func() {
-			// setup mock mempool
-			mempool, err := block.NewLanedMempool(
-				log.NewNopLogger(),
-				tc.registryLanes,
-				mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-					return blocksdkmoduletypes.Lane{}, nil
-				}, func() []blocksdkmoduletypes.Lane {
-					return tc.chainLanes
-				}),
-			)
-			suite.Require().NoError(err)
-
-			gotOrderedLanes, err := mempool.Registry(suite.ctx)
-			if tc.wantErr {
-				suite.Require().Error(err)
-				return
-			}
-
-			suite.Require().NoError(err)
-			suite.Require().Equal(tc.expectedNewRegistry, gotOrderedLanes)
-		})
-	}
-}
-
-func (suite *BlockBusterTestSuite) TestLanedMempool_OrderLanes() {
-	tests := []struct {
-		name                string
-		chainLanes          []blocksdkmoduletypes.Lane
-		registryLanes       []block.Lane
-		expectedOrderedLane []block.Lane
-		wantErr             bool
-	}{
-		{
-			name: "invalid lanes in chain",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid duplicate lanes in chain",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.baseSDKLane, // order = 2
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "invalid lanes in registry",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: true,
-		},
-		{
-			name: "valid reorder",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.freeLane,
-				suite.mevLane,
-				suite.baseLane,
-			},
-			expectedOrderedLane: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: false,
-		},
-		{
-			name: "valid no reorder",
-			chainLanes: []blocksdkmoduletypes.Lane{
-				suite.mevSDKLane,  // order = 0
-				suite.freeSDKLane, // order = 1
-				suite.baseSDKLane, // order = 2
-			},
-			registryLanes: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			expectedOrderedLane: []block.Lane{
-				suite.mevLane,
-				suite.freeLane,
-				suite.baseLane,
-			},
-			wantErr: false,
-		},
-	}
-	for _, tc := range tests {
-		suite.Run(tc.name, func() {
-			// setup mock mempool
-			mempool, err := block.NewLanedMempool(
-				log.NewNopLogger(),
-				tc.registryLanes,
-				mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-					return blocksdkmoduletypes.Lane{}, nil
-				}, func() []blocksdkmoduletypes.Lane {
-					return []blocksdkmoduletypes.Lane{}
-				}),
-			)
-			suite.Require().NoError(err)
-
-			gotOrderedLanes, err := mempool.OrderLanes(tc.chainLanes)
-			if tc.wantErr {
-				suite.Require().Error(err)
-				return
-			}
-
-			suite.Require().NoError(err)
-			suite.Require().Equal(tc.expectedOrderedLane, gotOrderedLanes)
-		})
 	}
 }

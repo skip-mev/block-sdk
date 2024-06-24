@@ -8,29 +8,19 @@ import (
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkmempool "github.com/cosmos/cosmos-sdk/types/mempool"
-
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 var _ Mempool = (*LanedMempool)(nil)
-
-// LaneFetcher defines the interface to get a lane stored in the x/blocksdk module.
-type LaneFetcher interface {
-	GetLane(ctx sdk.Context, id string) (lane blocksdkmoduletypes.Lane, err error)
-	GetLanes(ctx sdk.Context) []blocksdkmoduletypes.Lane
-}
 
 type (
 	// Mempool defines the Block SDK mempool interface.
 	Mempool interface {
 		sdkmempool.Mempool
 
-		// Registry returns the mempool's lane registry.
-		Registry(ctx sdk.Context) ([]Lane, error)
-
+		// Registry returns the lanes in the mempool.
+		Registry() []Lane
 		// Contains returns true if any of the lanes currently contain the transaction.
 		Contains(tx sdk.Tx) bool
-
 		// GetTxDistribution returns the number of transactions in each lane.
 		GetTxDistribution() map[string]uint64
 	}
@@ -44,10 +34,6 @@ type (
 		// according to their priority. The first lane in the registry has the
 		// highest priority and the last lane has the lowest priority.
 		registry []Lane
-
-		// moduleLaneFetcher is the mempool's interface to read on-chain lane
-		// information in the x/blocksdk module.
-		moduleLaneFetcher LaneFetcher
 	}
 )
 
@@ -59,12 +45,10 @@ type (
 func NewLanedMempool(
 	logger log.Logger,
 	lanes []Lane,
-	laneFetcher LaneFetcher,
 ) (*LanedMempool, error) {
 	mempool := &LanedMempool{
-		logger:            logger,
-		registry:          lanes,
-		moduleLaneFetcher: laneFetcher,
+		logger:   logger,
+		registry: lanes,
 	}
 
 	if err := mempool.ValidateBasic(); err != nil {
@@ -163,45 +147,9 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 	return false
 }
 
-// Registry returns the mempool's lane registry.
-func (m *LanedMempool) Registry(ctx sdk.Context) (newRegistry []Lane, err error) {
-	if m.moduleLaneFetcher == nil {
-		return m.registry, fmt.Errorf("module lane fetcher not set")
-	}
-
-	// TODO add a last block updated check ?
-	// potential future optimization
-	chainLanes := m.moduleLaneFetcher.GetLanes(ctx)
-
-	// order lanes and populate the necessary fields (maxBlockSize, etc)
-	m.registry, err = m.OrderLanes(chainLanes)
-	return m.registry, err
-}
-
-func (m *LanedMempool) OrderLanes(chainLanes []blocksdkmoduletypes.Lane) (orderedLanes []Lane, err error) {
-	orderedLanes = make([]Lane, len(chainLanes))
-	for _, chainLane := range chainLanes {
-		// panic protect
-		if chainLane.GetOrder() >= uint64(len(orderedLanes)) {
-			return orderedLanes, fmt.Errorf("lane order %d out  of bounds, invalid configuration", chainLane.GetOrder())
-		}
-
-		_, index, found := FindLane(m.registry, chainLane.Id)
-		if !found {
-			return orderedLanes, fmt.Errorf("lane %s not found in registry, invalid configuration", chainLane.Id)
-		}
-
-		lane := m.registry[index]
-		lane.SetMaxBlockSpace(chainLane.MaxBlockSpace)
-		orderedLanes[chainLane.GetOrder()] = lane
-
-		// remove found lane from registry lanes for quicker find()
-		m.registry[index] = m.registry[len(m.registry)-1] // Copy last element to index i.
-		m.registry[len(m.registry)-1] = nil               // Erase last element (write zero value).
-		m.registry = m.registry[:len(m.registry)-1]       // Truncate slice.
-	}
-
-	return orderedLanes, nil
+// Registry returns the lanes in the mempool.
+func (m *LanedMempool) Registry() []Lane {
+	return m.registry
 }
 
 // ValidateBasic validates the mempools configuration. ValidateBasic ensures
@@ -242,10 +190,6 @@ func (m *LanedMempool) ValidateBasic() error {
 	// Ensure that there is no unused block space.
 	case sum.LT(math.LegacyOneDec()) && !seenZeroMaxBlockSpace:
 		return fmt.Errorf("sum of total block space percentages will be less than 1")
-	}
-
-	if m.moduleLaneFetcher == nil {
-		return fmt.Errorf("moduleLaneFetcher muset be set on mempool")
 	}
 
 	return nil
