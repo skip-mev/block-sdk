@@ -17,11 +17,7 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
-<<<<<<< HEAD
-=======
 	"github.com/skip-mev/block-sdk/v2/block/utils"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
 	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/v2/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"

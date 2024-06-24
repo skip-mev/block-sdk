@@ -62,13 +62,9 @@ import (
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/block/base"
-<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/v2/block/service"
-	auctionmodule "github.com/skip-mev/block-sdk/v2/x/auction"
-=======
-	service "github.com/skip-mev/block-sdk/v2/block/service"
 	"github.com/skip-mev/block-sdk/v2/block/utils"
->>>>>>> bfdd584 (feat: Cache Tx Decoder (#528))
+	auctionmodule "github.com/skip-mev/block-sdk/v2/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
 )
 
