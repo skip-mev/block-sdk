@@ -266,11 +266,20 @@ func New(
 
 	// Step 6: Create the proposal handler and set it on the app. Now the application
 	// will build and verify proposals using the Block SDK!
-	proposalHandler := abci.NewProposalHandler(
+	//
+	// NOTE: It is generally recommended to use the default proposal handler by constructing
+	// using the NewDefaultProposalHandler function. This will use the correct prepare logic
+	// for the lanes, but the process logic will be a no-op. To read more about the default
+	// proposal handler, see the documentation in readme.md in this directory.
+	//
+	// If you want to customize the prepare and process logic, you can construct the proposal
+	// handler using the New function and setting the useProcess flag to true.
+	proposalHandler := abci.New( // use NewDefaultProposalHandler instead for default behavior (RECOMMENDED)
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
 		app.TxConfig().TxEncoder(),
 		mempool,
+		true,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())

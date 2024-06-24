@@ -19,6 +19,8 @@ There are fix critical steps to building a test app that uses the Block SDK:
 5. Setting the antehandlers - used for transaction validation - for each lane.
 6. Setting the proposal handlers - used for block creation and verification - for the application to utilize the Block SDK's Prepare and Process Proposal handlers.
 
+**IMPORTANT NOTE:** It is recommended that applications use the **`NewDefaultProposalHandler`** when constructing their Prepare and Process Proposal handlers. This is because the priority nonce mempool - the underlying storage device of transactions - has non-deterministic ordering of transactions on chains with multiple fees. The use of the `NewDefaultProposalHandler` ensures that the ordering of transactions on proposal construction follows the ordering logic of the lanes, which is deterministic, and that process proposal optimistically assumes that the ordering of transactions is correct.
+
 ### 1. Signer Extractor
 
 The signer extractor is responsible for extracting signers and relevant information about who is signing the transaction. We recommend using the default implementation provided by the Block SDK. 
@@ -29,7 +31,7 @@ signerAdapter := signerextraction.NewDefaultAdapter()
 
 ### 2. Lane Configurations
 
-This controls how many transactions can be stored by each lane, how much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.
+This controls how many transactions can be stored by each lane, how much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.`
 
 For example, in [`lanes.go`](./lanes.go) we see the following:
 
