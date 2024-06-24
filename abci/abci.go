@@ -72,7 +72,12 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		proposal := proposals.NewProposal(h.logger, req.MaxTxBytes, maxGasLimit)
 
 		// Fill the proposal with transactions from each lane.
+<<<<<<< HEAD
 		finalProposal, err := h.prepareLanesHandler(ctx, proposal)
+=======
+		prepareLanesHandler := ChainPrepareLanes(h.mempool.Registry())
+		finalProposal, err := prepareLanesHandler(ctx, proposal)
+>>>>>>> 97e5731 (rm (#530))
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}
@@ -130,7 +135,17 @@ func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
 
 		// Build handler that will verify the partial proposals according to each lane's verification logic.
 		processLanesHandler := ChainProcessLanes(h.mempool.Registry())
+<<<<<<< HEAD
 		finalProposal, err := processLanesHandler(ctx, proposals.NewProposalWithContext(ctx, h.logger), decodedTxs)
+=======
+
+		// Verify the proposal.
+		finalProposal, err := processLanesHandler(
+			ctx,
+			proposals.NewProposalWithContext(ctx, h.logger),
+			decodedTxs,
+		)
+>>>>>>> 97e5731 (rm (#530))
 		if err != nil {
 			h.logger.Error("failed to validate the proposal", "err", err)
 			return abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_REJECT}

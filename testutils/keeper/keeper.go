@@ -4,7 +4,12 @@ package keeper
 import (
 	"testing"
 
+<<<<<<< HEAD
 	"github.com/cometbft/cometbft/libs/log"
+=======
+	"cosmossdk.io/log"
+	storetypes "cosmossdk.io/store/types"
+>>>>>>> 97e5731 (rm (#530))
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -17,8 +22,13 @@ import (
 	testkeeper "github.com/skip-mev/chaintestutil/keeper"
 	"github.com/stretchr/testify/require"
 
+<<<<<<< HEAD
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 // TestKeepers holds all keepers used during keeper tests for all modules

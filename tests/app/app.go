@@ -63,6 +63,7 @@ import (
 	upgradeclient "github.com/cosmos/cosmos-sdk/x/upgrade/client"
 	upgradekeeper "github.com/cosmos/cosmos-sdk/x/upgrade/keeper"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
@@ -71,6 +72,15 @@ import (
 	"github.com/skip-mev/block-sdk/block/utils"
 	auctionmodule "github.com/skip-mev/block-sdk/x/auction"
 	auctionkeeper "github.com/skip-mev/block-sdk/x/auction/keeper"
+=======
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/base"
+	service "github.com/skip-mev/block-sdk/v2/block/service"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 const (
@@ -142,7 +152,12 @@ type TestApp struct {
 	EvidenceKeeper        evidencekeeper.Keeper
 	GroupKeeper           groupkeeper.Keeper
 	ConsensusParamsKeeper consensuskeeper.Keeper
+<<<<<<< HEAD
 	Auctionkeeper         auctionkeeper.Keeper
+=======
+	CircuitBreakerKeeper  circuitkeeper.Keeper
+	auctionkeeper         auctionkeeper.Keeper
+>>>>>>> 97e5731 (rm (#530))
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -219,7 +234,13 @@ func New(
 		&app.UpgradeKeeper,
 		&app.ParamsKeeper,
 		&app.AuthzKeeper,
+<<<<<<< HEAD
 		&app.EvidenceKeeper,
+=======
+		&app.GroupKeeper,
+		&app.auctionkeeper,
+		&app.ConsensusParamsKeeper,
+>>>>>>> 97e5731 (rm (#530))
 		&app.FeeGrantKeeper,
 		&app.GroupKeeper,
 		&app.Auctionkeeper,

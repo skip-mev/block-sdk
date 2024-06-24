@@ -13,10 +13,17 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci"
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/lanes/free"
 	testutils "github.com/skip-mev/block-sdk/testutils"
+=======
+	"github.com/skip-mev/block-sdk/v2/abci"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/lanes/free"
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 type ProposalsTestSuite struct {

@@ -43,8 +43,14 @@ import (
 
 	upgradetypes "github.com/cosmos/cosmos-sdk/x/upgrade/types"
 
+<<<<<<< HEAD
 	auctionmodulev1 "github.com/skip-mev/block-sdk/api/sdk/auction/module/v1"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	auctionmodulev1 "github.com/skip-mev/block-sdk/v2/api/sdk/auction/module/v1"
+	_ "github.com/skip-mev/block-sdk/v2/x/auction" // import for side-effects
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 var (
@@ -143,7 +149,33 @@ var (
 							KvStoreKey: "acc",
 						},
 					},
+<<<<<<< HEAD
 					InitGenesis: genesisModuleOrder,
+=======
+					// NOTE: The genutils module must occur after staking so that pools are
+					// properly initialized with tokens from genesis accounts.
+					// NOTE: The genutils module must also occur after auth so that it can access the params from auth.
+					InitGenesis: []string{
+						authtypes.ModuleName,
+						banktypes.ModuleName,
+						distrtypes.ModuleName,
+						stakingtypes.ModuleName,
+						slashingtypes.ModuleName,
+						govtypes.ModuleName,
+						minttypes.ModuleName,
+						crisistypes.ModuleName,
+						genutiltypes.ModuleName,
+						authz.ModuleName,
+						group.ModuleName,
+						paramstypes.ModuleName,
+						upgradetypes.ModuleName,
+						vestingtypes.ModuleName,
+						consensustypes.ModuleName,
+						circuittypes.ModuleName,
+						auctiontypes.ModuleName,
+						feegrant.ModuleName,
+					},
+>>>>>>> 97e5731 (rm (#530))
 					// When ExportGenesis is not specified, the export genesis module order
 					// is equal to the init genesis order
 					// ExportGenesis: genesisModuleOrder,

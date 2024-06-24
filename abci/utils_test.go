@@ -5,6 +5,10 @@ import (
 	"encoding/hex"
 	"fmt"
 
+<<<<<<< HEAD
+=======
+	"cosmossdk.io/log"
+>>>>>>> 97e5731 (rm (#530))
 	"cosmossdk.io/math"
 	"github.com/cometbft/cometbft/libs/log"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -145,7 +149,14 @@ func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.Lega
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
+<<<<<<< HEAD
 	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
+=======
+	mempool, err := block.NewLanedMempool(
+		log.NewNopLogger(),
+		lanes,
+	)
+>>>>>>> 97e5731 (rm (#530))
 	s.Require().NoError(err)
 
 	return abci.NewProposalHandler(

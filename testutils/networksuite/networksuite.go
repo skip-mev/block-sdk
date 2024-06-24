@@ -23,8 +23,15 @@ import (
 	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
 	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	"github.com/skip-mev/chaintestutil/account"
+
+	"github.com/skip-mev/block-sdk/v2/tests/app"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 var (

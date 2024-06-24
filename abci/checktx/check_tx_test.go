@@ -11,6 +11,7 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
 
@@ -22,6 +23,14 @@ import (
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/x/auction/types"
+=======
+	"github.com/skip-mev/block-sdk/v2/abci/checktx"
+	"github.com/skip-mev/block-sdk/v2/block"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
+	"github.com/skip-mev/block-sdk/v2/testutils"
+	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 type CheckTxTestSuite struct {
@@ -365,3 +374,11 @@ func (ba *baseApp) LastBlockHeight() int64 {
 func (baseApp) GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams {
 	return ctx.ConsensusParams()
 }
+<<<<<<< HEAD
+=======
+
+// ChainID is utilized to retrieve the chain ID.
+func (ba *baseApp) ChainID() string {
+	return ba.ctx.ChainID()
+}
+>>>>>>> 97e5731 (rm (#530))
