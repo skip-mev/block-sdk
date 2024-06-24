@@ -29,7 +29,12 @@ type MempoolParityCheckTx struct {
 }
 
 // NewMempoolParityCheckTx returns a new MempoolParityCheckTx handler.
-func NewMempoolParityCheckTx(logger log.Logger, mempl block.Mempool, txDecoder sdk.TxDecoder, checkTxHandler CheckTx) MempoolParityCheckTx {
+func NewMempoolParityCheckTx(
+	logger log.Logger,
+	mempl block.Mempool,
+	txDecoder sdk.TxDecoder,
+	checkTxHandler CheckTx,
+) MempoolParityCheckTx {
 	return MempoolParityCheckTx{
 		logger:         logger,
 		mempl:          mempl,
