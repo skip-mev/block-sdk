@@ -15,39 +15,9 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci"
 	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/block/mocks"
 	"github.com/skip-mev/block-sdk/v2/lanes/free"
 	testutils "github.com/skip-mev/block-sdk/v2/testutils"
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
-
-type MockLaneFetcher struct {
-	getLaneHandler  func() (blocksdkmoduletypes.Lane, error)
-	getLanesHandler func() []blocksdkmoduletypes.Lane
-}
-
-func NewMockLaneFetcher(getLane func() (blocksdkmoduletypes.Lane, error), getLanes func() []blocksdkmoduletypes.Lane) MockLaneFetcher {
-	return MockLaneFetcher{
-		getLaneHandler:  getLane,
-		getLanesHandler: getLanes,
-	}
-}
-
-func (m *MockLaneFetcher) SetGetLaneHandler(h func() (blocksdkmoduletypes.Lane, error)) {
-	m.getLaneHandler = h
-}
-
-func (m MockLaneFetcher) GetLane(_ sdk.Context, _ string) (blocksdkmoduletypes.Lane, error) {
-	return m.getLaneHandler()
-}
-
-func (m *MockLaneFetcher) SetGetLanesHandler(h func() []blocksdkmoduletypes.Lane) {
-	m.getLanesHandler = h
-}
-
-func (m MockLaneFetcher) GetLanes(_ sdk.Context) []blocksdkmoduletypes.Lane {
-	return m.getLanesHandler()
-}
 
 type ProposalsTestSuite struct {
 	suite.Suite
@@ -522,27 +492,9 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			defaultLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
 
@@ -588,27 +540,9 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			panicLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
 
@@ -656,32 +590,9 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			defaultLane,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-			{
-				Id:            panicLane2.Name(),
-				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         2,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
 
@@ -729,32 +640,9 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 			panicLane2,
 		}
 
-		chainLanes := []blocksdkmoduletypes.Lane{
-			{
-				Id:            panicLane.Name(),
-				MaxBlockSpace: panicLane.GetMaxBlockSpace(),
-				Order:         1,
-			},
-			{
-				Id:            panicLane2.Name(),
-				MaxBlockSpace: panicLane2.GetMaxBlockSpace(),
-				Order:         2,
-			},
-			{
-				Id:            defaultLane.Name(),
-				MaxBlockSpace: defaultLane.GetMaxBlockSpace(),
-				Order:         0,
-			},
-		}
-
 		mempool, err := block.NewLanedMempool(
 			log.NewNopLogger(),
 			lanes,
-			mocks.NewMockLaneFetcher(func() (blocksdkmoduletypes.Lane, error) {
-				return blocksdkmoduletypes.Lane{}, nil
-			}, func() []blocksdkmoduletypes.Lane {
-				return chainLanes
-			}),
 		)
 		s.Require().NoError(err)
 
