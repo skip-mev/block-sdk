@@ -25,12 +25,8 @@ import (
 
 	"github.com/skip-mev/chaintestutil/account"
 
-	"github.com/skip-mev/block-sdk/v2/lanes/base"
-	"github.com/skip-mev/block-sdk/v2/lanes/free"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
 	"github.com/skip-mev/block-sdk/v2/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 var (
@@ -43,12 +39,11 @@ var (
 type NetworkTestSuite struct {
 	suite.Suite
 
-	NetworkSuite  *network.TestSuite
-	AuctionState  auctiontypes.GenesisState
-	BlockSDKState blocksdktypes.GenesisState
-	AuthState     authtypes.GenesisState
-	BankState     banktypes.GenesisState
-	Accounts      []*account.Account
+	NetworkSuite *network.TestSuite
+	AuctionState auctiontypes.GenesisState
+	AuthState    authtypes.GenesisState
+	BankState    banktypes.GenesisState
+	Accounts     []*account.Account
 }
 
 // SetupSuite setups the local network with a genesis state.
@@ -82,9 +77,6 @@ func (nts *NetworkTestSuite) SetupSuite() {
 	require.NoError(nts.T(), cfg.Codec.UnmarshalJSON(cfg.GenesisState[auctiontypes.ModuleName], &nts.AuctionState))
 	nts.AuctionState = populateAuction(r, nts.AuctionState)
 	updateGenesisConfigState(auctiontypes.ModuleName, &nts.AuctionState)
-
-	nts.BlockSDKState = populateBlockSDK(r, nts.BlockSDKState)
-	updateGenesisConfigState(blocksdktypes.ModuleName, &nts.BlockSDKState)
 
 	// add genesis accounts
 	nts.Accounts = []*account.Account{
@@ -134,26 +126,4 @@ func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *bank
 func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {
 	// TODO intercept and populate state randomly if desired
 	return auctionState
-}
-
-func populateBlockSDK(_ *rand.Rand, bsdkState blocksdktypes.GenesisState) blocksdktypes.GenesisState {
-	bsdkState.Lanes = blocksdktypes.Lanes{
-		{
-			Id:            mev.LaneName,
-			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-			Order:         0,
-		},
-		{
-			Id:            free.LaneName,
-			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-			Order:         1,
-		},
-		{
-			Id:            base.LaneName,
-			MaxBlockSpace: math.LegacyMustNewDecFromStr("0.6"),
-			Order:         2,
-		},
-	}
-
-	return bsdkState
 }
