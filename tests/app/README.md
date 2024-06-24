@@ -92,7 +92,6 @@ mevLane, freeLane, defaultLane := CreateLanes(app)
 mempool, err := block.NewLanedMempool(
 	app.Logger(),
 	[]block.Lane{mevLane, freeLane, defaultLane},
-	&app.blocksdkKeeper,
 )
 if err != nil {
 	panic(err)
