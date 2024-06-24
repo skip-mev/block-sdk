@@ -17,12 +17,17 @@ type (
 	Mempool interface {
 		sdkmempool.Mempool
 
+<<<<<<< HEAD
 		// Registry returns the mempool's lane registry.
 		Registry() []Lane
 
 		// Contains returns the any of the lanes currently contain the transaction.
+=======
+		// Registry returns the lanes in the mempool.
+		Registry() []Lane
+		// Contains returns true if any of the lanes currently contain the transaction.
+>>>>>>> 97e5731 (rm (#530))
 		Contains(tx sdk.Tx) bool
-
 		// GetTxDistribution returns the number of transactions in each lane.
 		GetTxDistribution() map[string]uint64
 	}
@@ -149,7 +154,11 @@ func (m *LanedMempool) Contains(tx sdk.Tx) (contains bool) {
 	return false
 }
 
+<<<<<<< HEAD
 // Registry returns the mempool's lane registry.
+=======
+// Registry returns the lanes in the mempool.
+>>>>>>> 97e5731 (rm (#530))
 func (m *LanedMempool) Registry() []Lane {
 	return m.registry
 }

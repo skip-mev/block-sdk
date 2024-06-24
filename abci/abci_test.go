@@ -16,7 +16,11 @@ import (
 	"github.com/skip-mev/block-sdk/v2/abci"
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/lanes/free"
+<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/v2/testutils"
+=======
+	testutils "github.com/skip-mev/block-sdk/v2/testutils"
+>>>>>>> 97e5731 (rm (#530))
 )
 
 type ProposalsTestSuite struct {

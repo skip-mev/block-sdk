@@ -23,6 +23,21 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stretchr/testify/suite"
 
+<<<<<<< HEAD
+=======
+	pruningtypes "cosmossdk.io/store/pruning/types"
+	cmtrand "github.com/cometbft/cometbft/libs/rand"
+	dbm "github.com/cosmos/cosmos-db"
+	"github.com/cosmos/cosmos-sdk/baseapp"
+	servertypes "github.com/cosmos/cosmos-sdk/server/types"
+	simtestutil "github.com/cosmos/cosmos-sdk/testutil/sims"
+	sdk "github.com/cosmos/cosmos-sdk/types"
+	authtypes "github.com/cosmos/cosmos-sdk/x/auth/types"
+	banktypes "github.com/cosmos/cosmos-sdk/x/bank/types"
+
+	"github.com/skip-mev/chaintestutil/account"
+
+>>>>>>> 97e5731 (rm (#530))
 	"github.com/skip-mev/block-sdk/v2/tests/app"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
 )
@@ -120,3 +135,11 @@ func addGenesisAccounts(authGenState *authtypes.GenesisState, bankGenState *bank
 	// update bank state w/ balances
 	bankGenState.Balances = balances
 }
+<<<<<<< HEAD
+=======
+
+func populateAuction(_ *rand.Rand, auctionState auctiontypes.GenesisState) auctiontypes.GenesisState {
+	// TODO intercept and populate state randomly if desired
+	return auctionState
+}
+>>>>>>> 97e5731 (rm (#530))

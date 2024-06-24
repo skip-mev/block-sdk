@@ -17,6 +17,10 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
+<<<<<<< HEAD
+=======
+	"github.com/skip-mev/block-sdk/v2/block/utils"
+>>>>>>> 97e5731 (rm (#530))
 	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/v2/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
@@ -60,6 +64,12 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
+<<<<<<< HEAD
+=======
+	s.Require().NoError(err)
+
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
+>>>>>>> 97e5731 (rm (#530))
 	s.Require().NoError(err)
 
 	ba := &baseApp{
@@ -126,6 +136,12 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 
 	mevLane := s.InitLane(math.LegacyOneDec(), nil)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
+<<<<<<< HEAD
+=======
+	s.Require().NoError(err)
+
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
+>>>>>>> 97e5731 (rm (#530))
 	s.Require().NoError(err)
 
 	handler := checktx.NewMempoolParityCheckTx(

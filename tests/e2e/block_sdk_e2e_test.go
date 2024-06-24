@@ -4,8 +4,13 @@ import (
 	"fmt"
 	"testing"
 
+<<<<<<< HEAD
 	"github.com/cosmos/cosmos-sdk/types/module/testutil"
 	"github.com/strangelove-ventures/interchaintest/v8"
+=======
+	testutil "github.com/cosmos/cosmos-sdk/types/module/testutil"
+	interchaintest "github.com/strangelove-ventures/interchaintest/v8"
+>>>>>>> 97e5731 (rm (#530))
 	"github.com/strangelove-ventures/interchaintest/v8/chain/cosmos"
 	"github.com/strangelove-ventures/interchaintest/v8/ibc"
 	ictestutil "github.com/strangelove-ventures/interchaintest/v8/testutil"
