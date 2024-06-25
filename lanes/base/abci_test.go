@@ -40,6 +40,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		}
 		lane := s.initLane(math.LegacyMustNewDecFromStr("0.5"), expectedExecution)
 		s.Require().NoError(lane.Insert(s.ctx, tx))
+		s.Require().Equal(1, lane.CountTx())
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -57,6 +58,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
+		s.Require().False(lane.Contains(tx))
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small", func() {
@@ -79,6 +82,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 
 		// Insert the transaction into the lane
 		s.Require().NoError(lane.Insert(s.ctx, tx))
+		s.Require().Equal(1, lane.CountTx())
 
 		txBz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
@@ -100,6 +104,8 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
+		s.Require().False(lane.Contains(tx))
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small p2", func() {
@@ -144,6 +150,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {

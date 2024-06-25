@@ -47,6 +47,32 @@ func (h *DefaultProposalHandler) PrepareLaneHandler() PrepareLaneHandler {
 				continue
 			}
 
+			if txInfo.GasLimit > limit.MaxGasLimit {
+				h.lane.Logger().Info(
+					"failed to select tx for lane; gas limit above the maximum allowed",
+					"lane", h.lane.Name(),
+					"tx_gas", txInfo.GasLimit,
+					"max_gas", limit.MaxGasLimit,
+					"tx_hash", txInfo.Hash,
+				)
+
+				txsToRemove = append(txsToRemove, tx)
+				continue
+			}
+
+			if txInfo.Size > limit.MaxTxBytes {
+				h.lane.Logger().Info(
+					"failed to select tx for lane; tx bytes above the maximum allowed",
+					"lane", h.lane.Name(),
+					"tx_size", txInfo.Size,
+					"max_tx_bytes", limit.MaxTxBytes,
+					"tx_hash", txInfo.Hash,
+				)
+
+				txsToRemove = append(txsToRemove, tx)
+				continue
+			}
+
 			// Double check that the transaction belongs to this lane.
 			if !h.lane.Match(ctx, tx) {
 				h.lane.Logger().Info(
