@@ -31,7 +31,7 @@ signerAdapter := signerextraction.NewDefaultAdapter()
 
 ### 2. Lane Configurations
 
-This controls how many transactions can be stored by each lane, how much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.`
+This controls how many transactions can be stored by each lane, how much block space is allocated to each lane, how to extract transacation information such as signers, fees, and more. Each lane should have a separate `LaneConfig` object.
 
 For example, in [`lanes.go`](./lanes.go) we see the following:
 

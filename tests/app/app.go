@@ -263,7 +263,7 @@ func New(
 	// Step 6: Create the proposal handler and set it on the app. Now the application
 	// will build and verify proposals using the Block SDK!
 	//
-	// NOTE: It is generally recommended to use the default proposal handler by constructing
+	// NOTE: It is recommended to use the default proposal handler by constructing
 	// using the NewDefaultProposalHandler function. This will use the correct prepare logic
 	// for the lanes, but the process logic will be a no-op. To read more about the default
 	// proposal handler, see the documentation in readme.md in this directory.
