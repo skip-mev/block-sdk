@@ -194,6 +194,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(proposal.Info.TxsByLane))
 		s.Require().Equal(int64(0), proposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), proposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("can reject a bid that is too gas intensive", func() {
@@ -219,6 +220,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(proposal.Info.TxsByLane))
 		s.Require().Equal(int64(0), proposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), proposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 }
 
