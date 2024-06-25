@@ -7,6 +7,7 @@ import (
 	abci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
+	"github.com/cosmos/cosmos-sdk/baseapp"
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/block/proposals"
 	"github.com/skip-mev/block-sdk/v2/block/utils"
@@ -16,28 +17,49 @@ type (
 	// ProposalHandler is a wrapper around the ABCI++ PrepareProposal and ProcessProposal
 	// handlers.
 	ProposalHandler struct {
-		logger              log.Logger
-		txDecoder           sdk.TxDecoder
-		txEncoder           sdk.TxEncoder
-		prepareLanesHandler block.PrepareLanesHandler
-		mempool             block.Mempool
+		logger                   log.Logger
+		txDecoder                sdk.TxDecoder
+		txEncoder                sdk.TxEncoder
+		mempool                  block.Mempool
+		useCustomProcessProposal bool
 	}
 )
 
-// NewProposalHandler returns a new ABCI++ proposal handler. This proposal handler will
-// iteratively call each of the lanes in the chain to prepare and process the proposal.
-func NewProposalHandler(
+// NewDefaultProposalHandler returns a new ABCI++ proposal handler. This proposal handler will
+// iteratively call each of the lanes in the chain to prepare and process the proposal. This
+// will not use custom process proposal logic.
+func NewDefaultProposalHandler(
 	logger log.Logger,
 	txDecoder sdk.TxDecoder,
 	txEncoder sdk.TxEncoder,
 	mempool block.Mempool,
 ) *ProposalHandler {
 	return &ProposalHandler{
-		logger:              logger,
-		txDecoder:           txDecoder,
-		txEncoder:           txEncoder,
-		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()),
-		mempool:             mempool,
+		logger:                   logger,
+		txDecoder:                txDecoder,
+		txEncoder:                txEncoder,
+		mempool:                  mempool,
+		useCustomProcessProposal: false,
+	}
+}
+
+// New returns a new ABCI++ proposal handler with the ability to use custom process proposal logic.
+//
+// NOTE: It is highly recommended to use the default proposal handler unless you have a specific
+// use case that requires custom process proposal logic.
+func New(
+	logger log.Logger,
+	txDecoder sdk.TxDecoder,
+	txEncoder sdk.TxEncoder,
+	mempool block.Mempool,
+	useCustomProcessProposal bool,
+) *ProposalHandler {
+	return &ProposalHandler{
+		logger:                   logger,
+		txDecoder:                txDecoder,
+		txEncoder:                txEncoder,
+		mempool:                  mempool,
+		useCustomProcessProposal: useCustomProcessProposal,
 	}
 }
 
@@ -75,7 +97,8 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		proposal := proposals.NewProposal(h.logger, req.MaxTxBytes, maxGasLimit)
 
 		// Fill the proposal with transactions from each lane.
-		finalProposal, err := h.prepareLanesHandler(ctx, proposal)
+		prepareLanesHandler := ChainPrepareLanes(h.mempool.Registry())
+		finalProposal, err := prepareLanesHandler(ctx, proposal)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
@@ -110,6 +133,10 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 // verify all transactions in the proposal that belong to the lane and pass any remaining transactions
 // to the next lane in the chain.
 func (h *ProposalHandler) ProcessProposalHandler() sdk.ProcessProposalHandler {
+	if !h.useCustomProcessProposal {
+		return baseapp.NoOpProcessProposal()
+	}
+
 	return func(ctx sdk.Context, req *abci.RequestProcessProposal) (resp *abci.ResponseProcessProposal, err error) {
 		if req.Height <= 1 {
 			return &abci.ResponseProcessProposal{Status: abci.ResponseProcessProposal_ACCEPT}, nil
