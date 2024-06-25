@@ -529,11 +529,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		proposalHandler := abci.NewProposalHandler(
+		proposalHandler := abci.New(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
+			true,
 		).PrepareProposalHandler()
 
 		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
@@ -575,11 +576,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		proposalHandler := abci.NewProposalHandler(
+		proposalHandler := abci.New(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
+			true,
 		).PrepareProposalHandler()
 
 		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
@@ -623,11 +625,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		proposalHandler := abci.NewProposalHandler(
+		proposalHandler := abci.New(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
+			true,
 		).PrepareProposalHandler()
 
 		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
@@ -671,11 +674,12 @@ func (s *ProposalsTestSuite) TestPrepareProposalEdgeCases() {
 		)
 		s.Require().NoError(err)
 
-		proposalHandler := abci.NewProposalHandler(
+		proposalHandler := abci.New(
 			log.NewNopLogger(),
 			s.encodingConfig.TxConfig.TxDecoder(),
 			s.encodingConfig.TxConfig.TxEncoder(),
 			mempool,
+			true,
 		).PrepareProposalHandler()
 
 		maxTxBytes := s.ctx.ConsensusParams().Block.MaxBytes
