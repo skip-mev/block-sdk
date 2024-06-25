@@ -148,11 +148,12 @@ func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.Pro
 	mempool, err := block.NewLanedMempool(log.NewNopLogger(), lanes)
 	s.Require().NoError(err)
 
-	return abci.NewProposalHandler(
+	return abci.New(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		mempool,
+		true,
 	)
 }
 
