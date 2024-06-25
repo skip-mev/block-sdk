@@ -57,6 +57,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small", func() {
@@ -100,6 +101,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("should not build a proposal when gas configured to lane is too small p2", func() {
@@ -144,6 +146,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		s.Require().Equal(0, len(finalProposal.Txs))
 		s.Require().Equal(int64(0), finalProposal.Info.BlockSize)
 		s.Require().Equal(uint64(0), finalProposal.Info.GasLimit)
+		s.Require().Equal(0, lane.CountTx())
 	})
 
 	s.Run("should be able to build a proposal with a tx that just fits in", func() {
