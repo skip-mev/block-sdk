@@ -17,19 +17,11 @@ type (
 	// ProposalHandler is a wrapper around the ABCI++ PrepareProposal and ProcessProposal
 	// handlers.
 	ProposalHandler struct {
-<<<<<<< HEAD
-		logger              log.Logger
-		txDecoder           sdk.TxDecoder
-		txEncoder           sdk.TxEncoder
-		prepareLanesHandler block.PrepareLanesHandler
-		mempool             block.Mempool
-=======
 		logger                   log.Logger
 		txDecoder                sdk.TxDecoder
 		txEncoder                sdk.TxEncoder
 		mempool                  block.Mempool
 		useCustomProcessProposal bool
->>>>>>> 79d7ef7 (chore: Default Process Proposal (#543))
 	}
 )
 
@@ -43,13 +35,6 @@ func NewDefaultProposalHandler(
 	mempool block.Mempool,
 ) *ProposalHandler {
 	return &ProposalHandler{
-<<<<<<< HEAD
-		logger:              logger,
-		txDecoder:           txDecoder,
-		txEncoder:           txEncoder,
-		prepareLanesHandler: ChainPrepareLanes(mempool.Registry()),
-		mempool:             mempool,
-=======
 		logger:                   logger,
 		txDecoder:                txDecoder,
 		txEncoder:                txEncoder,
@@ -75,7 +60,6 @@ func New(
 		txEncoder:                txEncoder,
 		mempool:                  mempool,
 		useCustomProcessProposal: useCustomProcessProposal,
->>>>>>> 79d7ef7 (chore: Default Process Proposal (#543))
 	}
 }
 
@@ -113,7 +97,8 @@ func (h *ProposalHandler) PrepareProposalHandler() sdk.PrepareProposalHandler {
 		proposal := proposals.NewProposal(h.logger, req.MaxTxBytes, maxGasLimit)
 
 		// Fill the proposal with transactions from each lane.
-		finalProposal, err := h.prepareLanesHandler(ctx, proposal)
+		prepareLanesHandler := ChainPrepareLanes(h.mempool.Registry())
+		finalProposal, err := prepareLanesHandler(ctx, proposal)
 		if err != nil {
 			h.logger.Error("failed to prepare proposal", "err", err)
 			return &abci.ResponsePrepareProposal{Txs: make([][]byte, 0)}, err
