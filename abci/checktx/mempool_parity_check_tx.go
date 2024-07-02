@@ -132,7 +132,7 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			)
 
 			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("tx size exceeds max bytes for lane %s", lane.Name),
+				fmt.Errorf("tx size exceeds max bytes for lane %s", lane.Name()),
 				0,
 				0,
 				nil,
@@ -183,16 +183,6 @@ func (m MempoolParityCheckTx) GetContextForTx(req *cmtabci.RequestCheckTx) sdk.C
 		ChainID: m.baseApp.ChainID(),
 	}
 	ctx, _ := sdk.NewContext(ms, header, true, m.baseApp.Logger()).CacheContext()
-
-	// Set the context to the correct checking mode.
-	switch req.Type {
-	case cmtabci.CheckTxType_New:
-		ctx = ctx.WithIsCheckTx(true)
-	case cmtabci.CheckTxType_Recheck:
-		ctx = ctx.WithIsReCheckTx(true)
-	default:
-		panic("unknown check tx type")
-	}
 
 	// Set the remaining important context values.
 	ctx = ctx.

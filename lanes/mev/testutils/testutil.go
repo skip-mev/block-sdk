@@ -61,7 +61,7 @@ func (s *MEVLaneTestSuiteBase) InitLane(
 	factory := mev.NewDefaultAuctionFactory(s.EncCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	matchHandler := factory.MatchHandler()
 	if matchAll {
-		matchHandler = func(ctx sdk.Context, tx sdk.Tx) bool {
+		matchHandler = func(_ sdk.Context, _ sdk.Tx) bool {
 			return true
 		}
 	}
@@ -80,7 +80,7 @@ func (s *MEVLaneTestSuiteBase) SetUpAnteHandler(expectedExecution map[sdk.Tx]boo
 		txCache[hashStr] = pass
 	}
 
-	anteHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+	anteHandler := func(ctx sdk.Context, tx sdk.Tx, _ bool) (newCtx sdk.Context, err error) {
 		bz, err := s.EncCfg.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 

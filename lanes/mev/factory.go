@@ -111,7 +111,7 @@ func (config *DefaultAuctionFactory) GetTimeoutHeight(tx sdk.Tx) (uint64, error)
 
 // MatchHandler defines a default function that checks if a transaction matches the mev lane.
 func (config *DefaultAuctionFactory) MatchHandler() base.MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(_ sdk.Context, tx sdk.Tx) bool {
 		bidInfo, err := config.GetAuctionBidInfo(tx)
 		return bidInfo != nil && err == nil
 	}
