@@ -2,6 +2,7 @@ package checktx
 
 import (
 	"fmt"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 
 	"cosmossdk.io/log"
 
@@ -26,6 +27,10 @@ type MempoolParityCheckTx struct {
 
 	// checkTxHandler to wrap
 	checkTxHandler CheckTx
+
+	// baseApp is utilized to retrieve the latest committed state and to call
+	// baseapp's CheckTx method.
+	baseApp BaseApp
 }
 
 // NewMempoolParityCheckTx returns a new MempoolParityCheckTx handler.
@@ -34,12 +39,14 @@ func NewMempoolParityCheckTx(
 	mempl block.Mempool,
 	txDecoder sdk.TxDecoder,
 	checkTxHandler CheckTx,
+	baseApp BaseApp,
 ) MempoolParityCheckTx {
 	return MempoolParityCheckTx{
 		logger:         logger,
 		mempl:          mempl,
 		txDecoder:      txDecoder,
 		checkTxHandler: checkTxHandler,
+		baseApp:        baseApp,
 	}
 }
 
@@ -110,15 +117,22 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			), nil
 		}
 
-		txBytes, err := lane.GetTxEncoder()(tx)
-		if err != nil {
+		sdkCtx := m.GetContextForTx(req)
+		consensusParams := sdkCtx.ConsensusParams()
+
+		laneSize := lane.GetMaxBlockSpace().MulInt64(consensusParams.GetBlock().GetMaxBytes()).TruncateInt64()
+
+		txSize := int64(len(req.Tx))
+		if txSize > laneSize {
 			m.logger.Debug(
-				"failed to encode tx",
+				"tx size exceeds max block bytes",
 				"tx", tx,
+				"tx size", txSize,
+				"max bytes", laneSize,
 			)
 
 			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("failed to encode tx"),
+				fmt.Errorf("tx size exceeds max block bytes"),
 				0,
 				0,
 				nil,
@@ -126,15 +140,11 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			), nil
 		}
 
-		txSize := len(txBytes)
-
-		// if size exceeds lane limit, error
-		_ = txSize
-
 		return res, checkTxError
 	}
 }
 
+// matchLane returns a Lane if the given tx matches the Lane.
 func (m MempoolParityCheckTx) matchLane(tx sdk.Tx) (block.Lane, error) {
 	var lane block.Lane
 	// find corresponding lane for this tx
@@ -159,4 +169,36 @@ func (m MempoolParityCheckTx) matchLane(tx sdk.Tx) (block.Lane, error) {
 
 func isInvalidCheckTxExecution(resp *cmtabci.ResponseCheckTx, checkTxErr error) bool {
 	return resp == nil || resp.Code != 0 || checkTxErr != nil
+}
+
+// GetContextForTx is returns the latest committed state and sets the context given
+// the checkTx request.
+func (m MempoolParityCheckTx) GetContextForTx(req *cmtabci.RequestCheckTx) sdk.Context {
+	// Retrieve the commit multi-store which is used to retrieve the latest committed state.
+	ms := m.baseApp.CommitMultiStore().CacheMultiStore()
+
+	// Create a new context based off of the latest committed state.
+	header := cmtproto.Header{
+		Height:  m.baseApp.LastBlockHeight(),
+		ChainID: m.baseApp.ChainID(),
+	}
+	ctx, _ := sdk.NewContext(ms, header, true, m.baseApp.Logger()).CacheContext()
+
+	// Set the context to the correct checking mode.
+	switch req.Type {
+	case cmtabci.CheckTxType_New:
+		ctx = ctx.WithIsCheckTx(true)
+	case cmtabci.CheckTxType_Recheck:
+		ctx = ctx.WithIsReCheckTx(true)
+	default:
+		panic("unknown check tx type")
+	}
+
+	// Set the remaining important context values.
+	ctx = ctx.
+		WithTxBytes(req.Tx).
+		WithEventManager(sdk.NewEventManager()).
+		WithConsensusParams(m.baseApp.GetConsensusParams(ctx))
+
+	return ctx
 }

@@ -69,6 +69,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	ba := &baseApp{
 		s.Ctx,
 	}
+
 	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
 		cacheDecoder.TxDecoder(),
@@ -82,6 +83,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
+		ba,
 	).CheckTx()
 
 	// test that a bid can be successfully inserted to mev-lane on CheckTx
@@ -135,6 +137,10 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)
 
+	ba := &baseApp{
+		s.Ctx,
+	}
+
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
@@ -143,6 +149,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 			// always fail
 			return &cometabci.ResponseCheckTx{Code: 1}, nil
 		},
+		ba,
 	).CheckTx()
 
 	s.Run("tx is removed on check-tx failure when re-check", func() {
@@ -169,11 +176,16 @@ func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 		cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 		s.Require().NoError(err)
 
+		ba := &baseApp{
+			s.Ctx,
+		}
+
 		handler := checktx.NewMempoolParityCheckTx(
 			s.Ctx.Logger(),
 			nil,
 			cacheDecoder.TxDecoder(),
 			nil,
+			ba,
 		)
 
 		res, err := handler.CheckTx()(&cometabci.RequestCheckTx{Tx: []byte("invalid-tx")})
@@ -222,6 +234,7 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
+		ba,
 	).CheckTx()
 
 	// test that a normal tx can be successfully inserted to the mempool
