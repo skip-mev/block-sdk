@@ -31,7 +31,7 @@ func (s *ProposalsTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool)
 		txCache[hashStr] = pass
 	}
 
-	anteHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+	anteHandler := func(ctx sdk.Context, tx sdk.Tx, _ bool) (newCtx sdk.Context, err error) {
 		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
