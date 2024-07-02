@@ -1277,6 +1277,13 @@ func (s *E2ETestSuite) TestLanes() {
 	})
 }
 
+func (s *E2ETestSuite) TestRejectsTxExceedLaneLimit() {
+	user := s.fuzzusers[0]
+	tx := s.CreateLargeTx(user, 0, 10000000, 100000)
+	txs := []Tx{tx}
+	s.BroadcastTxs(context.Background(), s.chain.(*cosmos.CosmosChain), txs)
+}
+
 func (s *E2ETestSuite) TestNetwork() {
 	amountToTest := time.NewTicker(time.Second * 30)
 	defer amountToTest.Stop()

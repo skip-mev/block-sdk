@@ -12,7 +12,7 @@ import (
 // is to be used in the mev index only.
 func TxPriority(config Factory) base.TxPriority[string] {
 	return base.TxPriority[string]{
-		GetTxPriority: func(goCtx context.Context, tx sdk.Tx) string {
+		GetTxPriority: func(_ context.Context, tx sdk.Tx) string {
 			bidInfo, err := config.GetAuctionBidInfo(tx)
 			if err != nil || bidInfo == nil || bidInfo.Bid.IsNil() {
 				return ""
