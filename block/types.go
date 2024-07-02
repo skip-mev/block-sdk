@@ -21,7 +21,7 @@ type (
 // NoOpPrepareLanesHandler returns a no-op prepare lanes handler.
 // This should only be used for testing.
 func NoOpPrepareLanesHandler() PrepareLanesHandler {
-	return func(ctx sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error) {
+	return func(_ sdk.Context, proposal proposals.Proposal) (proposals.Proposal, error) {
 		return proposal, nil
 	}
 }

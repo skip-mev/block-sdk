@@ -30,12 +30,12 @@ type BaseLane struct { //nolint
 	// that are waiting to be processed.
 	block.LaneMempool
 
-	// matchHandler is the function that determines whether or not a transaction
+	// matchHandler is the function that determines whether a transaction
 	// should be processed by this lane.
 	matchHandler MatchHandler
 
 	// prepareLaneHandler is the function that is called when a new proposal is being
-	// requested and the lane needs to submit transactions it wants included in the block.
+	// requested and the lane needs to submit transactions it wants to be included in the block.
 	prepareLaneHandler PrepareLaneHandler
 
 	// processLaneHandler is the function that is called when a new proposal is being

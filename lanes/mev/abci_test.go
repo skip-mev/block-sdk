@@ -14,7 +14,7 @@ import (
 
 func (s *MEVTestSuite) TestPrepareLane() {
 	s.Run("can prepare a lane with no txs in mempool", func() {
-		lane := s.InitLane(math.LegacyOneDec(), nil)
+		lane := s.InitLane(math.LegacyOneDec(), nil, false)
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		proposal, err := lane.PrepareLane(s.Ctx, proposal, block.NoOpPrepareLanesHandler())
@@ -38,7 +38,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		s.Require().NoError(err)
 		size := s.getTxSize(bidTx)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx))
 
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
@@ -79,7 +79,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx1: true, bidTx2: false})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx1: true, bidTx2: false}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx2))
 
@@ -121,7 +121,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx1: false, bidTx2: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx1: false, bidTx2: true}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx1))
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx2))
 
@@ -152,7 +152,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx))
 
 		proposal := proposals.NewProposal(log.NewNopLogger(), 20000, 100000)
@@ -183,7 +183,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx))
 
 		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 100000)
@@ -209,7 +209,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true}, false)
 		s.Require().NoError(lane.Insert(s.Ctx, bidTx))
 
 		proposal := proposals.NewProposal(log.NewNopLogger(), s.getTxSize(bidTx), 99)
@@ -226,7 +226,7 @@ func (s *MEVTestSuite) TestPrepareLane() {
 
 func (s *MEVTestSuite) TestProcessLane() {
 	s.Run("can process an empty proposal", func() {
-		lane := s.InitLane(math.LegacyOneDec(), nil)
+		lane := s.InitLane(math.LegacyOneDec(), nil, false)
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, nil)
@@ -243,7 +243,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 		tx, err := testutils.CreateRandomTx(s.EncCfg.TxConfig, s.Accounts[0], 0, 1, 0, 100)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), nil)
+		lane := s.InitLane(math.LegacyOneDec(), nil, false)
 		proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, []sdk.Tx{tx})
@@ -270,7 +270,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().Error(err)
@@ -296,7 +296,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().Error(err)
@@ -322,7 +322,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[1], bundle[0]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().Error(err)
@@ -348,7 +348,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().Error(err)
@@ -374,7 +374,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().NoError(err)
@@ -400,7 +400,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().NoError(err)
@@ -426,7 +426,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().NoError(err)
@@ -452,7 +452,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().NoError(err)
@@ -481,7 +481,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{bidTx, bundle[0], bundle[1], otherTx}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().NoError(err)
@@ -516,7 +516,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 
 		partialProposal := []sdk.Tx{otherTx, bidTx, bundle[0], bundle[1]}
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true}, false)
 
 		txsFromLane, remainingTxs, err := mev.NewProposalHandler(lane.BaseLane, lane.Factory).ProcessLaneHandler()(s.Ctx, partialProposal)
 		s.Require().Error(err)
@@ -530,7 +530,7 @@ func (s *MEVTestSuite) TestProcessLane() {
 }
 
 func (s *MEVTestSuite) TestVerifyBidBasic() {
-	lane := s.InitLane(math.LegacyOneDec(), nil)
+	lane := s.InitLane(math.LegacyOneDec(), nil, false)
 	proposal := proposals.NewProposal(log.NewNopLogger(), 200, 100)
 	limits := proposal.GetLaneLimits(lane.GetMaxBlockSpace())
 
@@ -643,7 +643,7 @@ func (s *MEVTestSuite) TestVerifyBidTx() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true}, false)
 
 		handler := mev.NewProposalHandler(lane.BaseLane, lane.Factory)
 		s.Require().NoError(handler.VerifyBidTx(s.Ctx, bidTx, bundle))
@@ -661,7 +661,7 @@ func (s *MEVTestSuite) TestVerifyBidTx() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: false}, false)
 
 		handler := mev.NewProposalHandler(lane.BaseLane, lane.Factory)
 		s.Require().Error(handler.VerifyBidTx(s.Ctx, bidTx, bundle))
@@ -679,7 +679,7 @@ func (s *MEVTestSuite) TestVerifyBidTx() {
 		)
 		s.Require().NoError(err)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: false}, false)
 
 		handler := mev.NewProposalHandler(lane.BaseLane, lane.Factory)
 		s.Require().Error(handler.VerifyBidTx(s.Ctx, bidTx, bundle))
@@ -709,7 +709,7 @@ func (s *MEVTestSuite) TestVerifyBidTx() {
 		s.Require().NoError(err)
 		bundle = append(bundle, otherBidTx)
 
-		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true, otherBidTx: true})
+		lane := s.InitLane(math.LegacyOneDec(), map[sdk.Tx]bool{bidTx: true, bundle[0]: true, bundle[1]: true, otherBidTx: true}, false)
 
 		handler := mev.NewProposalHandler(lane.BaseLane, lane.Factory)
 		s.Require().Error(handler.VerifyBidTx(s.Ctx, bidTx, bundle))

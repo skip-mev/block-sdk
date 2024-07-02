@@ -535,7 +535,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, _ sdk.Tx) bool {
 			return true
 		}
 
@@ -1043,7 +1043,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		// First lane matches this lane the other does not.
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			return tx == tx1
 		}
 
@@ -1301,7 +1301,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx2 {
 				return false
 			}
@@ -1387,7 +1387,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, _ sdk.Tx) bool {
 			return true
 		}
 
@@ -1462,7 +1462,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(_ sdk.Context, tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx3 {
 				return false
 			}
@@ -1680,7 +1680,7 @@ func (s *BaseTestSuite) setUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.
 		txCache[hashStr] = pass
 	}
 
-	anteHandler := func(ctx sdk.Context, tx sdk.Tx, simulate bool) (newCtx sdk.Context, err error) {
+	anteHandler := func(ctx sdk.Context, tx sdk.Tx, _ bool) (newCtx sdk.Context, err error) {
 		bz, err := s.encodingConfig.TxConfig.TxEncoder()(tx)
 		s.Require().NoError(err)
 
