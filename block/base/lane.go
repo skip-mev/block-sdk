@@ -30,12 +30,12 @@ type BaseLane struct { //nolint
 	// that are waiting to be processed.
 	block.LaneMempool
 
-	// matchHandler is the function that determines whether or not a transaction
+	// matchHandler is the function that determines whether a transaction
 	// should be processed by this lane.
 	matchHandler MatchHandler
 
 	// prepareLaneHandler is the function that is called when a new proposal is being
-	// requested and the lane needs to submit transactions it wants included in the block.
+	// requested and the lane needs to submit transactions it wants to be included in the block.
 	prepareLaneHandler PrepareLaneHandler
 
 	// processLaneHandler is the function that is called when a new proposal is being
@@ -114,8 +114,8 @@ func (l *BaseLane) ValidateBasic() error {
 // function first determines if the transaction matches the lane and then checks
 // if the transaction is on the ignore list. If the transaction is on the ignore
 // list, it returns false.
-func (l *BaseLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
-	return l.matchHandler(ctx, tx)
+func (l *BaseLane) Match(tx sdk.Tx) bool {
+	return l.matchHandler(tx)
 }
 
 // Name returns the name of the lane.
@@ -148,6 +148,11 @@ func (l *BaseLane) GetMaxBlockSpace() math.LegacyDec {
 // allowed to consume as a percentage of the total block space.
 func (l *BaseLane) SetMaxBlockSpace(maxBlockSpace math.LegacyDec) {
 	l.cfg.MaxBlockSpace = maxBlockSpace
+}
+
+// GetTxEncoder returns the lanes cfg TxEncoder.
+func (l *BaseLane) GetTxEncoder() sdk.TxEncoder {
+	return l.cfg.TxEncoder
 }
 
 // WithOptions returns a new lane with the given options.

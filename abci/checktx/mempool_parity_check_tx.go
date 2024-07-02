@@ -1,9 +1,8 @@
 package checktx
 
 import (
-	"fmt"
-
 	"cosmossdk.io/log"
+	"fmt"
 
 	cmtabci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -97,6 +96,49 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 				}
 			}
 		}
+
+		var lane block.Lane
+		// find corresponding lane for this tx
+		for _, l := range m.mempl.Registry() {
+			if l.Match(tx) {
+				lane = l
+				break
+			}
+		}
+
+		if lane == nil {
+			m.logger.Debug(
+				"failed match tx to lane",
+				"tx", tx,
+			)
+
+			return sdkerrors.ResponseCheckTxWithEvents(
+				fmt.Errorf("failed match tx to lane"),
+				0,
+				0,
+				nil,
+				false,
+			), nil
+		}
+
+		txBytes, err := lane.GetTxEncoder()(tx)
+		if err != nil {
+			m.logger.Debug(
+				"failed to encode tx",
+				"tx", tx,
+			)
+
+			return sdkerrors.ResponseCheckTxWithEvents(
+				fmt.Errorf("failed to encode tx"),
+				0,
+				0,
+				nil,
+				false,
+			), nil
+		}
+
+		txSize := len(txBytes)
+		_ = txSize
 
 		return res, checkTxError
 	}

@@ -83,7 +83,7 @@ func (t Terminator) GetTxInfo(_ sdk.Context, _ sdk.Tx) (utils.TxWithInfo, error)
 func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 
 // Match is a no-op
-func (t Terminator) Match(sdk.Context, sdk.Tx) bool {
+func (t Terminator) Match(sdk.Tx) bool {
 	return false
 }
 
@@ -120,4 +120,9 @@ func (t Terminator) Compare(sdk.Context, sdk.Tx, sdk.Tx) (int, error) {
 // Priority is a no-op
 func (t Terminator) Priority(sdk.Context, sdk.Tx) any {
 	return 0
+}
+
+// GetTxEncoder is a no-op.
+func (t Terminator) GetTxEncoder() sdk.TxEncoder {
+	return nil
 }

@@ -41,7 +41,7 @@ func (h *ProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 		for iterator := h.lane.Select(ctx, nil); iterator != nil; iterator = iterator.Next() {
 			bidTx := iterator.Tx()
 
-			if !h.lane.Match(ctx, bidTx) {
+			if !h.lane.Match(bidTx) {
 				h.lane.Logger().Info("failed to select auction bid tx for lane; tx does not match lane")
 
 				txsToRemove = append(txsToRemove, bidTx)
@@ -104,7 +104,7 @@ func (h *ProposalHandler) ProcessLaneHandler() base.ProcessLaneHandler {
 		}
 
 		bidTx := partialProposal[0]
-		if !h.lane.Match(ctx, bidTx) {
+		if !h.lane.Match(bidTx) {
 			// If the transaction does not belong to this lane, we return the remaining transactions
 			// iff there are no matches in the remaining transactions after this index.
 			if len(partialProposal) > 1 {
@@ -260,9 +260,9 @@ func (h *ProposalHandler) VerifyBidTx(ctx sdk.Context, bidTx sdk.Tx, bundle []sd
 		return fmt.Errorf("invalid bid tx; failed to execute ante handler: %w", err)
 	}
 
-	// verify all of the bundled transactions
+	// verify all bundled transactions
 	for _, bundledTx := range bundle {
-		if h.lane.Match(ctx, bundledTx) {
+		if h.lane.Match(bundledTx) {
 			return fmt.Errorf("invalid bid tx; bundled tx is another bid transaction")
 		}
 

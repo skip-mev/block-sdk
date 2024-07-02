@@ -535,7 +535,7 @@ func (s *BaseTestSuite) TestPrepareLane() {
 		)
 		s.Require().NoError(err)
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(tx sdk.Tx) bool {
 			return true
 		}
 
@@ -1043,7 +1043,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 		s.Require().NoError(err)
 
 		// First lane matches this lane the other does not.
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(tx sdk.Tx) bool {
 			return tx == tx1
 		}
 
@@ -1301,7 +1301,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx2 {
 				return false
 			}
@@ -1387,7 +1387,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(tx sdk.Tx) bool {
 			return true
 		}
 
@@ -1462,7 +1462,7 @@ func (s *BaseTestSuite) TestProcessLane() {
 			tx4,
 		}
 
-		mh := func(ctx sdk.Context, tx sdk.Tx) bool {
+		mh := func(tx sdk.Tx) bool {
 			if tx == tx1 || tx == tx3 {
 				return false
 			}

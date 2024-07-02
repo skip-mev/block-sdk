@@ -90,9 +90,8 @@ func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 		}
 	}()
 
-	unwrappedCtx := sdk.UnwrapSDKContext(ctx)
 	for _, lane := range m.registry {
-		if lane.Match(unwrappedCtx, tx) {
+		if lane.Match(tx) {
 			return lane.Insert(ctx, tx)
 		}
 	}
@@ -100,7 +99,7 @@ func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 	return nil
 }
 
-// Insert returns a nil iterator.
+// Select returns a nil iterator.
 //
 // TODO:
 // - Determine if it even makes sense to return an iterator. What does that even

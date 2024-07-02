@@ -9,7 +9,7 @@ import (
 // DefaultMatchHandler returns a default implementation of the MatchHandler. It matches all
 // transactions.
 func DefaultMatchHandler() MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(tx sdk.Tx) bool {
 		return true
 	}
 }
@@ -17,7 +17,7 @@ func DefaultMatchHandler() MatchHandler {
 // VerifyNoMatches returns an error if any of the transactions match the lane.
 func (l *BaseLane) VerifyNoMatches(ctx sdk.Context, txs []sdk.Tx) error {
 	for _, tx := range txs {
-		if l.Match(ctx, tx) {
+		if l.Match(tx) {
 			return fmt.Errorf("transaction belongs to lane when it should not")
 		}
 	}
@@ -30,13 +30,13 @@ func (l *BaseLane) VerifyNoMatches(ctx sdk.Context, txs []sdk.Tx) error {
 // In the context of building an application, you would want to use this to
 // ignore the match handlers of other lanes in the application.
 func NewMatchHandler(mh MatchHandler, ignoreMHs ...MatchHandler) MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(tx sdk.Tx) bool {
 		for _, ignoreMH := range ignoreMHs {
-			if ignoreMH(ctx, tx) {
+			if ignoreMH(tx) {
 				return false
 			}
 		}
 
-		return mh(ctx, tx)
+		return mh(tx)
 	}
 }

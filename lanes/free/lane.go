@@ -39,7 +39,7 @@ func NewFreeLane[C comparable](
 // default implementation matches transactions that are staking related. In particular,
 // any transaction that is a MsgDelegate, MsgBeginRedelegate, or MsgCancelUnbondingDelegation.
 func DefaultMatchHandler() base.MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(tx sdk.Tx) bool {
 		for _, msg := range tx.GetMsgs() {
 			switch msg.(type) {
 			case *types.MsgDelegate:

@@ -28,7 +28,7 @@ func (sd IgnoreDecorator) AnteHandle(
 	ctx sdk.Context, tx sdk.Tx, simulate bool, next sdk.AnteHandler,
 ) (sdk.Context, error) {
 	for _, lane := range sd.lanes {
-		if lane.Match(ctx, tx) {
+		if lane.Match(tx) {
 			return next(ctx, tx, simulate)
 		}
 	}

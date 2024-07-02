@@ -12,7 +12,7 @@ import (
 
 type (
 	// Factory defines the interface for processing auction transactions. It is
-	// a wrapper around all of the functionality that each application chain must implement
+	// a wrapper around all the functionality that each application chain must implement
 	// in order for auction processing to work.
 	Factory interface {
 		// WrapBundleTransaction defines a function that wraps a bundle transaction into a sdk.Tx. Since
@@ -111,7 +111,7 @@ func (config *DefaultAuctionFactory) GetTimeoutHeight(tx sdk.Tx) (uint64, error)
 
 // MatchHandler defines a default function that checks if a transaction matches the mev lane.
 func (config *DefaultAuctionFactory) MatchHandler() base.MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(tx sdk.Tx) bool {
 		bidInfo, err := config.GetAuctionBidInfo(tx)
 		return bidInfo != nil && err == nil
 	}
