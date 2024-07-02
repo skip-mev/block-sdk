@@ -153,17 +153,17 @@ func (_m *Lane) Insert(_a0 context.Context, _a1 types.Tx) error {
 	return r0
 }
 
-// Match provides a mock function with given fields: tx
-func (_m *Lane) Match(tx types.Tx) bool {
-	ret := _m.Called(tx)
+// Match provides a mock function with given fields: ctx, tx
+func (_m *Lane) Match(ctx types.Context, tx types.Tx) bool {
+	ret := _m.Called(ctx, tx)
 
 	if len(ret) == 0 {
 		panic("no return value specified for Match")
 	}
 
 	var r0 bool
-	if rf, ok := ret.Get(0).(func(types.Tx) bool); ok {
-		r0 = rf(tx)
+	if rf, ok := ret.Get(0).(func(types.Context, types.Tx) bool); ok {
+		r0 = rf(ctx, tx)
 	} else {
 		r0 = ret.Get(0).(bool)
 	}

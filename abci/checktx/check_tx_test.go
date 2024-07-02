@@ -403,7 +403,7 @@ func (ba *baseApp) CommitMultiStore() storetypes.CommitMultiStore {
 
 // CheckTx is baseapp's CheckTx method that checks the validity of a
 // transaction.
-func (baseApp) CheckTx(_ *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
+func (ba *baseApp) CheckTx(_ *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
 	return nil, fmt.Errorf("not implemented")
 }
 
@@ -418,7 +418,7 @@ func (ba *baseApp) LastBlockHeight() int64 {
 }
 
 // GetConsensusParams is utilized to retrieve the consensus params.
-func (baseApp) GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams {
+func (ba *baseApp) GetConsensusParams(_ sdk.Context) cmtproto.ConsensusParams {
 	return cmtproto.ConsensusParams{
 		Block: &cmtproto.BlockParams{
 			MaxBytes: 10000,

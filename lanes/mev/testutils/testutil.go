@@ -61,7 +61,7 @@ func (s *MEVLaneTestSuiteBase) InitLane(
 	factory := mev.NewDefaultAuctionFactory(s.EncCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
 	matchHandler := factory.MatchHandler()
 	if matchAll {
-		matchHandler = func(tx sdk.Tx) bool {
+		matchHandler = func(ctx sdk.Context, tx sdk.Tx) bool {
 			return true
 		}
 	}
