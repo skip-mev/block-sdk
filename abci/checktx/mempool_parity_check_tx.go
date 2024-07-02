@@ -131,6 +131,16 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 				"max bytes", laneSize,
 			)
 
+			// remove the tx from app side mempool
+			if txInMempool && isReCheck {
+				if err := m.mempl.Remove(tx); err != nil {
+					m.logger.Debug(
+						"failed to remove tx from app-side mempool when purging for re-check failure",
+						"removal-err", err,
+					)
+				}
+			}
+
 			return sdkerrors.ResponseCheckTxWithEvents(
 				fmt.Errorf("tx size exceeds max bytes for lane %s", lane.Name()),
 				0,
