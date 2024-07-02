@@ -68,7 +68,7 @@ type Lane interface {
 	Name() string
 
 	// Match determines if a transaction belongs to this lane.
-	Match(tx sdk.Tx) bool
+	Match(ctx sdk.Context, tx sdk.Tx) bool
 
 	// GetTxInfo returns various information about the transaction that
 	// belongs to the lane including its priority, signer's, sequence number,

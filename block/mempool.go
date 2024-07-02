@@ -90,8 +90,9 @@ func (m *LanedMempool) Insert(ctx context.Context, tx sdk.Tx) (err error) {
 		}
 	}()
 
+	sdkCtx := sdk.UnwrapSDKContext(ctx)
 	for _, lane := range m.registry {
-		if lane.Match(tx) {
+		if lane.Match(sdkCtx, tx) {
 			return lane.Insert(ctx, tx)
 		}
 	}

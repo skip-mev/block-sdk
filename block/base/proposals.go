@@ -74,7 +74,7 @@ func (h *DefaultProposalHandler) PrepareLaneHandler() PrepareLaneHandler {
 			}
 
 			// Double check that the transaction belongs to this lane.
-			if !h.lane.Match(tx) {
+			if !h.lane.Match(ctx, tx) {
 				h.lane.Logger().Info(
 					"failed to select tx for lane; tx does not belong to lane",
 					"tx_hash", txInfo.Hash,
@@ -160,7 +160,7 @@ func (h *DefaultProposalHandler) ProcessLaneHandler() ProcessLaneHandler {
 		}
 
 		for index, tx := range partialProposal {
-			if !h.lane.Match(tx) {
+			if !h.lane.Match(ctx, tx) {
 				// If the transaction does not belong to this lane, we return the remaining transactions
 				// iff there are no matches in the remaining transactions after this index.
 				if index+1 < len(partialProposal) {

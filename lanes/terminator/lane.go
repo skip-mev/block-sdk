@@ -83,7 +83,7 @@ func (t Terminator) GetTxInfo(_ sdk.Context, _ sdk.Tx) (utils.TxWithInfo, error)
 func (t Terminator) SetAnteHandler(sdk.AnteHandler) {}
 
 // Match is a no-op
-func (t Terminator) Match(sdk.Tx) bool {
+func (t Terminator) Match(_ sdk.Context, _ sdk.Tx) bool {
 	return false
 }
 

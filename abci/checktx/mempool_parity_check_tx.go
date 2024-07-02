@@ -106,7 +106,8 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			}
 		}
 
-		lane, err := m.matchLane(tx)
+		sdkCtx := m.GetContextForTx(req)
+		lane, err := m.matchLane(sdkCtx, tx)
 		if err != nil {
 			m.logger.Debug("failed to match lane", "lane", lane, "err", err)
 			return sdkerrors.ResponseCheckTxWithEvents(
@@ -118,9 +119,7 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			), nil
 		}
 
-		sdkCtx := m.GetContextForTx(req)
 		consensusParams := sdkCtx.ConsensusParams()
-
 		laneSize := lane.GetMaxBlockSpace().MulInt64(consensusParams.GetBlock().GetMaxBytes()).TruncateInt64()
 
 		txSize := int64(len(req.Tx))
@@ -146,11 +145,11 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 }
 
 // matchLane returns a Lane if the given tx matches the Lane.
-func (m MempoolParityCheckTx) matchLane(tx sdk.Tx) (block.Lane, error) {
+func (m MempoolParityCheckTx) matchLane(ctx sdk.Context, tx sdk.Tx) (block.Lane, error) {
 	var lane block.Lane
 	// find corresponding lane for this tx
 	for _, l := range m.mempl.Registry() {
-		if l.Match(tx) {
+		if l.Match(ctx, tx) {
 			lane = l
 			break
 		}

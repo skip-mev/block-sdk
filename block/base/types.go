@@ -9,7 +9,7 @@ import (
 type (
 	// MatchHandler is utilized to determine if a transaction should be included in the lane. This
 	// function can be a stateless or stateful check on the transaction.
-	MatchHandler func(tx sdk.Tx) bool
+	MatchHandler func(ctx sdk.Context, tx sdk.Tx) bool
 
 	// PrepareLaneHandler is responsible for preparing transactions to be included in the block from a
 	// given lane. Given a lane, this function should return the transactions to include in the block,

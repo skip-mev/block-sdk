@@ -114,8 +114,8 @@ func (l *BaseLane) ValidateBasic() error {
 // function first determines if the transaction matches the lane and then checks
 // if the transaction is on the ignore list. If the transaction is on the ignore
 // list, it returns false.
-func (l *BaseLane) Match(tx sdk.Tx) bool {
-	return l.matchHandler(tx)
+func (l *BaseLane) Match(ctx sdk.Context, tx sdk.Tx) bool {
+	return l.matchHandler(ctx, tx)
 }
 
 // Name returns the name of the lane.
