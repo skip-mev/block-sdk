@@ -87,28 +87,35 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			), nil
 		}
 
-		// run the checkTxHandler
-		res, checkTxError := m.checkTxHandler(req)
-
-		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
-		// the app-side mempool
-		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck {
-			// check if the tx exists first
-			if txInMempool {
+		// prepare cleanup closure to remove tx if marked
+		removeTx := false
+		defer func() {
+			if removeTx {
 				// remove the tx
 				if err := m.mempl.Remove(tx); err != nil {
 					m.logger.Debug(
 						"failed to remove tx from app-side mempool when purging for re-check failure",
 						"removal-err", err,
-						"check-tx-err", checkTxError,
 					)
 				}
 			}
+		}()
+
+		// run the checkTxHandler
+		res, checkTxError := m.checkTxHandler(req)
+		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
+		// the app-side mempool
+		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck && txInMempool {
+			removeTx = true
 		}
 
 		sdkCtx := m.GetContextForTx(req)
 		lane, err := m.matchLane(sdkCtx, tx)
 		if err != nil {
+			if isReCheck && txInMempool {
+				removeTx = true
+			}
+
 			m.logger.Debug("failed to match lane", "lane", lane, "err", err)
 			return sdkerrors.ResponseCheckTxWithEvents(
 				err,
@@ -124,22 +131,16 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 
 		txSize := int64(len(req.Tx))
 		if txSize > laneSize {
+			if isReCheck && txInMempool {
+				removeTx = true
+			}
+
 			m.logger.Debug(
 				"tx size exceeds max block bytes",
 				"tx", tx,
 				"tx size", txSize,
 				"max bytes", laneSize,
 			)
-
-			// remove the tx from app side mempool
-			if txInMempool && isReCheck {
-				if err := m.mempl.Remove(tx); err != nil {
-					m.logger.Debug(
-						"failed to remove tx from app-side mempool when purging for re-check failure",
-						"removal-err", err,
-					)
-				}
-			}
 
 			return sdkerrors.ResponseCheckTxWithEvents(
 				fmt.Errorf("tx size exceeds max bytes for lane %s", lane.Name()),
