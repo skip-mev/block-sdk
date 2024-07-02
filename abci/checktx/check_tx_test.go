@@ -59,7 +59,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		bidTx: true,
 	}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
@@ -128,7 +128,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	)
 	s.Require().NoError(err)
 
-	mevLane := s.InitLane(math.LegacyOneDec(), nil)
+	mevLane := s.InitLane(math.LegacyOneDec(), nil, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
@@ -186,7 +186,7 @@ func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	txs := map[sdk.Tx]bool{}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
@@ -287,7 +287,7 @@ func (s *CheckTxTestSuite) TestValidateBidTx() {
 		invalidBidTx: true,
 	}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 
 	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)

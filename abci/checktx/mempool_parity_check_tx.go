@@ -98,23 +98,11 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			}
 		}
 
-		var lane block.Lane
-		// find corresponding lane for this tx
-		for _, l := range m.mempl.Registry() {
-			if l.Match(tx) {
-				lane = l
-				break
-			}
-		}
-
-		if lane == nil {
-			m.logger.Debug(
-				"failed match tx to lane",
-				"tx", tx,
-			)
-
+		lane, err := m.matchLane(tx)
+		if err != nil {
+			m.logger.Debug("failed to match lane", "lane", lane, "err", err)
 			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("failed match tx to lane"),
+				err,
 				0,
 				0,
 				nil,
@@ -139,10 +127,34 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 		}
 
 		txSize := len(txBytes)
+
+		// if size exceeds lane limit, error
 		_ = txSize
 
 		return res, checkTxError
 	}
+}
+
+func (m MempoolParityCheckTx) matchLane(tx sdk.Tx) (block.Lane, error) {
+	var lane block.Lane
+	// find corresponding lane for this tx
+	for _, l := range m.mempl.Registry() {
+		if l.Match(tx) {
+			lane = l
+			break
+		}
+	}
+
+	if lane == nil {
+		m.logger.Debug(
+			"failed match tx to lane",
+			"tx", tx,
+		)
+
+		return nil, fmt.Errorf("failed match tx to lane")
+	}
+
+	return lane, nil
 }
 
 func isInvalidCheckTxExecution(resp *cmtabci.ResponseCheckTx, checkTxErr error) bool {

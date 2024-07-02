@@ -47,6 +47,7 @@ func (s *MEVLaneTestSuiteBase) SetupTest() {
 func (s *MEVLaneTestSuiteBase) InitLane(
 	maxBlockSpace math.LegacyDec,
 	expectedExecution map[sdk.Tx]bool,
+	matchAll bool,
 ) *mev.MEVLane {
 	config := base.NewLaneConfig(
 		log.NewNopLogger(),
@@ -58,9 +59,14 @@ func (s *MEVLaneTestSuiteBase) InitLane(
 	)
 
 	factory := mev.NewDefaultAuctionFactory(s.EncCfg.TxConfig.TxDecoder(), signer_extraction.NewDefaultAdapter())
-	return mev.NewMEVLane(config, factory, func(tx sdk.Tx) bool {
-		return true
-	})
+	matchHandler := factory.MatchHandler()
+	if matchAll {
+		matchHandler = func(tx sdk.Tx) bool {
+			return true
+		}
+	}
+
+	return mev.NewMEVLane(config, factory, matchHandler)
 }
 
 func (s *MEVLaneTestSuiteBase) SetUpAnteHandler(expectedExecution map[sdk.Tx]bool) sdk.AnteHandler {
