@@ -4,8 +4,6 @@ package keeper
 import (
 	"testing"
 
-	"cosmossdk.io/math"
-
 	"cosmossdk.io/log"
 	storetypes "cosmossdk.io/store/types"
 	tmproto "github.com/cometbft/cometbft/proto/tendermint/types"
@@ -19,20 +17,14 @@ import (
 	testkeeper "github.com/skip-mev/chaintestutil/keeper"
 	"github.com/stretchr/testify/require"
 
-	"github.com/skip-mev/block-sdk/v2/lanes/base"
-	"github.com/skip-mev/block-sdk/v2/lanes/free"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
 	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
-	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 // TestKeepers holds all keepers used during keeper tests for all modules
 type TestKeepers struct {
 	testkeeper.TestKeepers
-	AuctionKeeper  auctionkeeper.Keeper
-	BlockSDKKeeper blocksdkkeeper.Keeper
+	AuctionKeeper auctionkeeper.Keeper
 }
 
 // TestMsgServers holds all message servers used during keeper tests for all modules
@@ -53,7 +45,6 @@ func NewTestSetup(t testing.TB, options ...testkeeper.SetupOption) (sdk.Context,
 
 	// initialize extra keeper
 	auctionKeeper := Auction(tk.Initializer, tk.AccountKeeper, tk.BankKeeper, tk.DistrKeeper, tk.StakingKeeper)
-	blocksdkKeeper := BlockSDK(tk.Initializer)
 	require.NoError(t, tk.Initializer.LoadLatest())
 
 	// initialize msg servers
@@ -67,30 +58,9 @@ func NewTestSetup(t testing.TB, options ...testkeeper.SetupOption) (sdk.Context,
 	err := auctionKeeper.SetParams(ctx, auctiontypes.DefaultParams())
 	require.NoError(t, err)
 
-	err = blocksdkKeeper.AddLane(ctx, blocksdktypes.Lane{
-		Id:            mev.LaneName,
-		MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-		Order:         0,
-	})
-	require.NoError(t, err)
-	err = blocksdkKeeper.AddLane(ctx, blocksdktypes.Lane{
-		Id:            free.LaneName,
-		MaxBlockSpace: math.LegacyMustNewDecFromStr("0.2"),
-		Order:         1,
-	})
-	require.NoError(t, err)
-
-	err = blocksdkKeeper.AddLane(ctx, blocksdktypes.Lane{
-		Id:            base.LaneName,
-		MaxBlockSpace: math.LegacyMustNewDecFromStr("0.6"),
-		Order:         2,
-	})
-	require.NoError(t, err)
-
 	testKeepers := TestKeepers{
-		TestKeepers:    tk,
-		AuctionKeeper:  auctionKeeper,
-		BlockSDKKeeper: blocksdkKeeper,
+		TestKeepers:   tk,
+		AuctionKeeper: auctionKeeper,
 	}
 
 	testMsgServers := TestMsgServers{
@@ -119,20 +89,6 @@ func Auction(
 		bankKeeper,
 		distrKeeper,
 		stakingKeeper,
-		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
-	)
-}
-
-// BlockSDK initializes the blocksdk module using the testkeepers intializer.
-func BlockSDK(
-	initializer *testkeeper.Initializer,
-) blocksdkkeeper.Keeper {
-	storeKey := storetypes.NewKVStoreKey(blocksdktypes.StoreKey)
-	initializer.StateStore.MountStoreWithDB(storeKey, storetypes.StoreTypeIAVL, initializer.DB)
-
-	return blocksdkkeeper.NewKeeper(
-		initializer.Codec,
-		storeKey,
 		authtypes.NewModuleAddress(govtypes.ModuleName).String(),
 	)
 }

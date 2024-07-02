@@ -49,7 +49,6 @@ func (h *ProposalHandler) PrepareLaneHandler() base.PrepareLaneHandler {
 			}
 
 			cacheCtx, write := ctx.CacheContext()
-
 			bundle, err := h.VerifyBidBasic(cacheCtx, bidTx, proposal, limit)
 			if err != nil {
 				h.lane.Logger().Info(

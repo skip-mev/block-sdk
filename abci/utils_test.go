@@ -5,8 +5,6 @@ import (
 	"encoding/hex"
 	"fmt"
 
-	blocksdkmoduletypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
-
 	"cosmossdk.io/log"
 	"cosmossdk.io/math"
 	sdk "github.com/cosmos/cosmos-sdk/types"
@@ -147,35 +145,18 @@ func (s *ProposalsTestSuite) setUpPanicLane(name string, maxBlockSpace math.Lega
 }
 
 func (s *ProposalsTestSuite) setUpProposalHandlers(lanes []block.Lane) *abci.ProposalHandler {
-	blocksdkLanes := make([]blocksdkmoduletypes.Lane, len(lanes))
-	for i, lane := range lanes {
-		blocksdkLanes[i] = blocksdkmoduletypes.Lane{
-			Id:            lane.Name(),
-			MaxBlockSpace: lane.GetMaxBlockSpace(),
-			Order:         uint64(i),
-		}
-	}
-
-	laneFetcher := NewMockLaneFetcher(
-		func() (blocksdkmoduletypes.Lane, error) {
-			return blocksdkmoduletypes.Lane{}, nil
-		},
-		func() []blocksdkmoduletypes.Lane {
-			return blocksdkLanes
-		})
-
 	mempool, err := block.NewLanedMempool(
 		log.NewNopLogger(),
 		lanes,
-		laneFetcher,
 	)
 	s.Require().NoError(err)
 
-	return abci.NewProposalHandler(
+	return abci.New(
 		log.NewNopLogger(),
 		s.encodingConfig.TxConfig.TxDecoder(),
 		s.encodingConfig.TxConfig.TxEncoder(),
 		mempool,
+		true,
 	)
 }
 

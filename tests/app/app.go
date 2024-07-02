@@ -46,8 +46,8 @@ import (
 	"github.com/skip-mev/block-sdk/v2/block"
 	"github.com/skip-mev/block-sdk/v2/block/base"
 	service "github.com/skip-mev/block-sdk/v2/block/service"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
 	auctionkeeper "github.com/skip-mev/block-sdk/v2/x/auction/keeper"
-	blocksdkkeeper "github.com/skip-mev/block-sdk/v2/x/blocksdk/keeper"
 )
 
 const (
@@ -89,7 +89,6 @@ type TestApp struct {
 	ConsensusParamsKeeper consensuskeeper.Keeper
 	CircuitBreakerKeeper  circuitkeeper.Keeper
 	auctionkeeper         auctionkeeper.Keeper
-	blocksdkKeeper        blocksdkkeeper.Keeper
 	FeeGrantKeeper        feegrantkeeper.Keeper
 
 	// custom checkTx handler
@@ -171,7 +170,6 @@ func New(
 		&app.AuthzKeeper,
 		&app.GroupKeeper,
 		&app.auctionkeeper,
-		&app.blocksdkKeeper,
 		&app.ConsensusParamsKeeper,
 		&app.FeeGrantKeeper,
 		&app.CircuitBreakerKeeper,
@@ -219,7 +217,6 @@ func New(
 	mempool, err := block.NewLanedMempool(
 		app.Logger(),
 		[]block.Lane{mevLane, freeLane, defaultLane},
-		&app.blocksdkKeeper,
 	)
 	if err != nil {
 		panic(err)
@@ -265,27 +262,43 @@ func New(
 
 	// Step 6: Create the proposal handler and set it on the app. Now the application
 	// will build and verify proposals using the Block SDK!
-	proposalHandler := abci.NewProposalHandler(
+	//
+	// NOTE: It is recommended to use the default proposal handler by constructing
+	// using the NewDefaultProposalHandler function. This will use the correct prepare logic
+	// for the lanes, but the process logic will be a no-op. To read more about the default
+	// proposal handler, see the documentation in readme.md in this directory.
+	//
+	// If you want to customize the prepare and process logic, you can construct the proposal
+	// handler using the New function and setting the useProcess flag to true.
+	proposalHandler := abci.New( // use NewDefaultProposalHandler instead for default behavior (RECOMMENDED)
 		app.Logger(),
 		app.TxConfig().TxDecoder(),
 		app.TxConfig().TxEncoder(),
 		mempool,
+		true,
 	)
 	app.App.SetPrepareProposal(proposalHandler.PrepareProposalHandler())
 	app.App.SetProcessProposal(proposalHandler.ProcessProposalHandler())
+
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(app.txConfig.TxDecoder())
+	if err != nil {
+		panic(err)
+	}
 
 	// Step 7: Set the custom CheckTx handler on BaseApp. This is only required if you
 	// use the MEV lane.
 	mevCheckTx := checktx.NewMEVCheckTxHandler(
 		app.App,
-		app.txConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLane,
 		anteHandler,
 		app.App.CheckTx,
 	)
 	checkTxHandler := checktx.NewMempoolParityCheckTx(
-		app.Logger(), mempool,
-		app.txConfig.TxDecoder(), mevCheckTx.CheckTx(),
+		app.Logger(),
+		mempool,
+		cacheDecoder.TxDecoder(),
+		mevCheckTx.CheckTx(),
 	)
 
 	app.SetCheckTx(checkTxHandler.CheckTx())

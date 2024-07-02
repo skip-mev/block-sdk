@@ -17,11 +17,10 @@ import (
 
 	"github.com/skip-mev/block-sdk/v2/abci/checktx"
 	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/lanes/mev"
+	"github.com/skip-mev/block-sdk/v2/block/utils"
 	mevlanetestutils "github.com/skip-mev/block-sdk/v2/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/v2/testutils"
 	auctiontypes "github.com/skip-mev/block-sdk/v2/x/auction/types"
-	blocksdktypes "github.com/skip-mev/block-sdk/v2/x/blocksdk/types"
 )
 
 type CheckTxTestSuite struct {
@@ -61,9 +60,10 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	}
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
+	s.Require().NoError(err)
+
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)
 
 	ba := &baseApp{
@@ -71,7 +71,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	}
 	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLane,
 		s.SetUpAnteHandler(txs),
 		ba.CheckTx,
@@ -80,7 +80,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
 	).CheckTx()
 
@@ -129,15 +129,16 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	s.Require().NoError(err)
 
 	mevLane := s.InitLane(math.LegacyOneDec(), nil)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
+	s.Require().NoError(err)
+
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)
 
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		func(*cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
 			// always fail
 			return &cometabci.ResponseCheckTx{Code: 1}, nil
@@ -165,10 +166,13 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 
 func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 	s.Run("tx fails tx-decoding", func() {
+		cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
+		s.Require().NoError(err)
+
 		handler := checktx.NewMempoolParityCheckTx(
 			s.Ctx.Logger(),
 			nil,
-			s.EncCfg.TxConfig.TxDecoder(),
+			cacheDecoder.TxDecoder(),
 			nil,
 		)
 
@@ -183,9 +187,7 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	txs := map[sdk.Tx]bool{}
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
-	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane}, moduleLaneFetcher{
-		mevLane,
-	})
+	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	ba := &baseApp{
@@ -197,10 +199,13 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	normalTx, err := testutils.CreateRandomTxBz(s.EncCfg.TxConfig, acc, 0, 1, 0, 0)
 	s.Require().NoError(err)
 
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
+	s.Require().NoError(err)
+
 	var gotTx []byte
 	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLane,
 		s.SetUpAnteHandler(txs),
 		func(req *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
@@ -215,7 +220,7 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
 		mempool,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
 	).CheckTx()
 
@@ -284,12 +289,15 @@ func (s *CheckTxTestSuite) TestValidateBidTx() {
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs)
 
+	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
+	s.Require().NoError(err)
+
 	ba := &baseApp{
 		s.Ctx,
 	}
 	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
-		s.EncCfg.TxConfig.TxDecoder(),
+		cacheDecoder.TxDecoder(),
 		mevLane,
 		s.SetUpAnteHandler(txs),
 		ba.CheckTx,
@@ -361,16 +369,4 @@ func (baseApp) GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams {
 // ChainID is utilized to retrieve the chain ID.
 func (ba *baseApp) ChainID() string {
 	return ba.ctx.ChainID()
-}
-
-type moduleLaneFetcher struct {
-	lane *mev.MEVLane
-}
-
-func (mlf moduleLaneFetcher) GetLane(sdk.Context, string) (lane blocksdktypes.Lane, err error) {
-	return blocksdktypes.Lane{}, nil
-}
-
-func (mlf moduleLaneFetcher) GetLanes(sdk.Context) []blocksdktypes.Lane {
-	return nil
 }
