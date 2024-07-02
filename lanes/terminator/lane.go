@@ -121,8 +121,3 @@ func (t Terminator) Compare(sdk.Context, sdk.Tx, sdk.Tx) (int, error) {
 func (t Terminator) Priority(sdk.Context, sdk.Tx) any {
 	return 0
 }
-
-// GetTxEncoder is a no-op.
-func (t Terminator) GetTxEncoder() sdk.TxEncoder {
-	return nil
-}

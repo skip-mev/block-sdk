@@ -74,9 +74,6 @@ type Lane interface {
 	// belongs to the lane including its priority, signer's, sequence number,
 	// size and more.
 	GetTxInfo(ctx sdk.Context, tx sdk.Tx) (utils.TxWithInfo, error)
-
-	// GetTxEncoder returns the tx encoder for the given lane.
-	GetTxEncoder() sdk.TxEncoder
 }
 
 // FindLane finds a Lanes from in an array of Lanes and returns it and its index if found.

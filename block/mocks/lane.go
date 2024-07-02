@@ -107,26 +107,6 @@ func (_m *Lane) GetMaxBlockSpace() math.LegacyDec {
 	return r0
 }
 
-// GetTxEncoder provides a mock function with given fields:
-func (_m *Lane) GetTxEncoder() types.TxEncoder {
-	ret := _m.Called()
-
-	if len(ret) == 0 {
-		panic("no return value specified for GetTxEncoder")
-	}
-
-	var r0 types.TxEncoder
-	if rf, ok := ret.Get(0).(func() types.TxEncoder); ok {
-		r0 = rf()
-	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(types.TxEncoder)
-		}
-	}
-
-	return r0
-}
-
 // GetTxInfo provides a mock function with given fields: ctx, tx
 func (_m *Lane) GetTxInfo(ctx types.Context, tx types.Tx) (utils.TxWithInfo, error) {
 	ret := _m.Called(ctx, tx)
