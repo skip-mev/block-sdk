@@ -34,7 +34,7 @@ func CmdQueryParams() *cobra.Command {
 		Use:   "params",
 		Short: "Query the current parameters of the auction module",
 		Args:  cobra.NoArgs,
-		RunE: func(cmd *cobra.Command, args []string) error {
+		RunE: func(cmd *cobra.Command, _ []string) error {
 			clientCtx, err := client.GetClientQueryContext(cmd)
 			if err != nil {
 				return err

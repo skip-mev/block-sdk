@@ -341,6 +341,7 @@ func New(
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevCheckTx.CheckTx(),
+		app.BaseApp,
 	)
 
 	app.SetCheckTx(checkTxHandler.CheckTx())

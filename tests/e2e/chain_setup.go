@@ -192,6 +192,32 @@ func (s *E2ETestSuite) CreateDummyFreeTx(
 	}
 }
 
+func (s *E2ETestSuite) CreateLargeTx(
+	user ibc.Wallet,
+	sequenceOffset uint64,
+	gasPrice int64,
+	numMessages int,
+) Tx {
+	msgs := make([]sdk.Msg, numMessages)
+	for i := 0; i < numMessages; i++ {
+		msgs[i] = banktypes.NewMsgSend(
+			sdk.AccAddress(user.Address()),
+			sdk.AccAddress(user.Address()),
+			sdk.NewCoins(sdk.NewCoin("stake", math.NewInt(1))),
+		)
+	}
+
+	return Tx{
+		User:               user,
+		Msgs:               msgs,
+		GasPrice:           gasPrice,
+		SequenceIncrement:  sequenceOffset,
+		SkipInclusionCheck: true,
+		IgnoreChecks:       false,
+		ExpectFail:         true,
+	}
+}
+
 // SimulateTx simulates the provided messages, and checks whether the provided failure condition is met
 func (s *E2ETestSuite) SimulateTx(ctx context.Context, chain *cosmos.CosmosChain, user cosmos.User, height uint64, expectFail bool, msgs ...sdk.Msg) {
 	// create tx factory + Client Context
