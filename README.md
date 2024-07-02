@@ -25,7 +25,7 @@
 
 > **Note**: The BlockSDK is open source software that Skip maintains. We strive to be responsive to questions and issues within 1-2 weeks - please ask in our [#block-sdk-support discord](https://discord.com/invite/hFeHVAE26P) channel, or open a GitHub issue!
 
-**Please note the status of BlockSDK maintainenace:**
+**Please note the status of BlockSDK maintenance:**
 
 1. We are not currently providing hands-on support for new integrations.
 2. We have not yet completed our entire testing process for the FreeLane. We recommend integrators who want to have the best experience utilize the MEV Lane and the Default Lane only at this time.
