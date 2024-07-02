@@ -1,8 +1,9 @@
 package checktx
 
 import (
-	"cosmossdk.io/log"
 	"fmt"
+
+	"cosmossdk.io/log"
 
 	cmtabci "github.com/cometbft/cometbft/abci/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
