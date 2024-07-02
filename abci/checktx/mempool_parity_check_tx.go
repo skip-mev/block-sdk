@@ -132,7 +132,7 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			)
 
 			return sdkerrors.ResponseCheckTxWithEvents(
-				fmt.Errorf("tx size exceeds max block bytes"),
+				fmt.Errorf("tx size exceeds max bytes for lane %s", lane.Name),
 				0,
 				0,
 				nil,
