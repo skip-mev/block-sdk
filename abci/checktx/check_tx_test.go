@@ -43,6 +43,18 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	)
 	s.Require().NoError(err)
 
+	hugeBidTx, _, err := testutils.CreateNAuctionTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
+		0,
+		0,
+		[]testutils.Account{s.Accounts[0]},
+		100,
+		100000,
+	)
+	s.Require().NoError(err)
+
 	// create a tx that should not be inserted in the mev-lane
 	bidTx2, _, err := testutils.CreateAuctionTx(
 		s.EncCfg.TxConfig,
@@ -56,7 +68,8 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	s.Require().NoError(err)
 
 	txs := map[sdk.Tx]bool{
-		bidTx: true,
+		bidTx:     true,
+		hugeBidTx: true,
 	}
 
 	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
@@ -85,6 +98,36 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		mevLaneHandler,
 		ba,
 	).CheckTx()
+
+	// test that a bid can be successfully inserted to mev-lane on CheckTx
+	s.Run("test bid insertion on CheckTx", func() {
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(bidTx)
+		s.Require().NoError(err)
+
+		// check tx
+		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+		s.Require().NoError(err)
+
+		s.Require().Equal(uint32(0), res.Code)
+
+		// check that the mev-lane contains the bid
+		s.Require().True(mevLane.Contains(bidTx))
+	})
+
+	// test that a bid will fail to be inserted as it is too large
+	s.Run("test bid insertion failure on CheckTx - too large", func() {
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(hugeBidTx)
+		s.Require().NoError(err)
+
+		// check tx
+		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+		s.Require().NoError(err)
+
+		s.Require().Equal(uint32(1), res.Code)
+
+		// check that the mev-lane does not contain the bid
+		s.Require().False(mevLane.Contains(bidTx))
+	})
 
 	// test that a bid can be successfully inserted to mev-lane on CheckTx
 	s.Run("test bid insertion on CheckTx", func() {
@@ -376,7 +419,16 @@ func (ba *baseApp) LastBlockHeight() int64 {
 
 // GetConsensusParams is utilized to retrieve the consensus params.
 func (baseApp) GetConsensusParams(ctx sdk.Context) cmtproto.ConsensusParams {
-	return ctx.ConsensusParams()
+	return cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{
+			MaxBytes: 10000,
+			MaxGas:   10000,
+		},
+		Evidence:  nil,
+		Validator: nil,
+		Version:   nil,
+		Abci:      nil,
+	}
 }
 
 // ChainID is utilized to retrieve the chain ID.
