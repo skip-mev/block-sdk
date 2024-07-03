@@ -9,7 +9,7 @@ import (
 // DefaultMatchHandler returns a default implementation of the MatchHandler. It matches all
 // transactions.
 func DefaultMatchHandler() MatchHandler {
-	return func(ctx sdk.Context, tx sdk.Tx) bool {
+	return func(_ sdk.Context, _ sdk.Tx) bool {
 		return true
 	}
 }

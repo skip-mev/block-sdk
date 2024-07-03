@@ -16,7 +16,7 @@ import (
 	"github.com/skip-mev/block-sdk/x/auction/types"
 )
 
-// MevCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
+// MEVCheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
 // verify bid transactions against the latest committed state. All other transactions
 // are executed normally using base app's CheckTx. This defines all of the
 // dependencies that are required to verify a bid transaction.
@@ -68,7 +68,7 @@ type BaseApp interface {
 	GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams
 }
 
-// NewCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
+// NewMEVCheckTxHandler constructs a new CheckTxHandler instance. This method fails if the given LanedMempool does not have a lane
 // adhering to the MevLaneI interface
 func NewMEVCheckTxHandler(
 	baseApp BaseApp,
@@ -88,7 +88,7 @@ func NewMEVCheckTxHandler(
 	}
 }
 
-// CheckTxHandler is a wrapper around baseapp's CheckTx method that allows us to
+// CheckTx is a wrapper around baseapp's CheckTx method that allows us to
 // verify bid transactions against the latest committed state. All other transactions
 // are executed normally. We must verify each bid tx and all of its bundled transactions
 // before we can insert it into the mempool against the latest commit state because

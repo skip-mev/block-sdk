@@ -1,23 +1,20 @@
 package checktx_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/store"
 	"testing"
 
 	"cosmossdk.io/math"
-
 	db "github.com/cometbft/cometbft-db"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	"github.com/skip-mev/block-sdk/block/utils"
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
@@ -44,6 +41,18 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	)
 	s.Require().NoError(err)
 
+	hugeBidTx, _, err := testutils.CreateNAuctionTx(
+		s.EncCfg.TxConfig,
+		s.Accounts[0],
+		sdk.NewCoin(s.GasTokenDenom, math.NewInt(100)),
+		0,
+		0,
+		[]testutils.Account{s.Accounts[0]},
+		100,
+		100000,
+	)
+	s.Require().NoError(err)
+
 	// create a tx that should not be inserted in the mev-lane
 	bidTx2, _, err := testutils.CreateAuctionTx(
 		s.EncCfg.TxConfig,
@@ -57,10 +66,11 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	s.Require().NoError(err)
 
 	txs := map[sdk.Tx]bool{
-		bidTx: true,
+		bidTx:     true,
+		hugeBidTx: true,
 	}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
@@ -70,6 +80,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 	ba := &baseApp{
 		s.Ctx,
 	}
+
 	mevLaneHandler := checktx.NewMEVCheckTxHandler(
 		ba,
 		cacheDecoder.TxDecoder(),
@@ -84,6 +95,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
+		ba,
 	).CheckTx()
 
 	// test that a bid can be successfully inserted to mev-lane on CheckTx
@@ -93,6 +105,35 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 
 		// check tx
 		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+
+		s.Require().Equal(uint32(0), res.Code)
+
+		// check that the mev-lane contains the bid
+		s.Require().True(mevLane.Contains(bidTx))
+	})
+
+	// test that a bid will fail to be inserted as it is too large
+	s.Run("test bid insertion failure on CheckTx - too large", func() {
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(hugeBidTx)
+		s.Require().NoError(err)
+
+		// check tx
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+
+		s.Require().Equal(uint32(1), res.Code)
+
+		// check that the mev-lane does not contain the bid
+		s.Require().False(mevLane.Contains(bidTx))
+	})
+
+	// test that a bid can be successfully inserted to mev-lane on CheckTx
+	s.Run("test bid insertion on CheckTx", func() {
+		txBz, err := s.EncCfg.TxConfig.TxEncoder()(bidTx)
+		s.Require().NoError(err)
+
+		// check tx
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+		s.Require().NoError(err)
 
 		s.Require().Equal(uint32(0), res.Code)
 
@@ -128,12 +169,16 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 	)
 	s.Require().NoError(err)
 
-	mevLane := s.InitLane(math.LegacyOneDec(), nil)
+	mevLane := s.InitLane(math.LegacyOneDec(), nil, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
 	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)
+
+	ba := &baseApp{
+		s.Ctx,
+	}
 
 	handler := checktx.NewMempoolParityCheckTx(
 		s.Ctx.Logger(),
@@ -143,6 +188,7 @@ func (s *CheckTxTestSuite) TestRemovalOnRecheckTx() {
 			// always fail
 			return cometabci.ResponseCheckTx{Code: 1}
 		},
+		ba,
 	).CheckTx()
 
 	s.Run("tx is removed on check-tx failure when re-check", func() {
@@ -169,11 +215,16 @@ func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 		cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 		s.Require().NoError(err)
 
+		ba := &baseApp{
+			s.Ctx,
+		}
+
 		handler := checktx.NewMempoolParityCheckTx(
 			s.Ctx.Logger(),
 			nil,
 			cacheDecoder.TxDecoder(),
 			nil,
+			ba,
 		)
 
 		res := handler.CheckTx()(cometabci.RequestCheckTx{Tx: []byte("invalid-tx")})
@@ -185,7 +236,7 @@ func (s *CheckTxTestSuite) TestMempoolParityCheckTx() {
 func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 	txs := map[sdk.Tx]bool{}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 	mempool, err := block.NewLanedMempool(s.Ctx.Logger(), []block.Lane{mevLane})
 	s.Require().NoError(err)
 
@@ -222,6 +273,7 @@ func (s *CheckTxTestSuite) TestMEVCheckTxHandler() {
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevLaneHandler,
+		ba,
 	).CheckTx()
 
 	// test that a normal tx can be successfully inserted to the mempool
@@ -286,7 +338,7 @@ func (s *CheckTxTestSuite) TestValidateBidTx() {
 		invalidBidTx: true,
 	}
 
-	mevLane := s.InitLane(math.LegacyOneDec(), txs)
+	mevLane := s.InitLane(math.LegacyOneDec(), txs, true)
 
 	cacheDecoder, err := utils.NewDefaultCacheTxDecoder(s.EncCfg.TxConfig.TxDecoder())
 	s.Require().NoError(err)
@@ -363,5 +415,13 @@ func (ba *baseApp) LastBlockHeight() int64 {
 
 // GetConsensusParams is utilized to retrieve the consensus params.
 func (baseApp) GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams {
-	return ctx.ConsensusParams()
+	return &cmtproto.ConsensusParams{
+		Block: &cmtproto.BlockParams{
+			MaxBytes: 10000,
+			MaxGas:   10000,
+		},
+		Evidence:  nil,
+		Validator: nil,
+		Version:   nil,
+	}
 }
