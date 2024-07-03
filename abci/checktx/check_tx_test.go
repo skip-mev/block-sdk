@@ -1,23 +1,20 @@
 package checktx_test
 
 import (
+	"github.com/cosmos/cosmos-sdk/store"
 	"testing"
 
 	"cosmossdk.io/math"
-
 	db "github.com/cometbft/cometbft-db"
 	cometabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
 	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
+	storetypes "github.com/cosmos/cosmos-sdk/store/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	"github.com/stretchr/testify/suite"
 
 	"github.com/skip-mev/block-sdk/abci/checktx"
 	"github.com/skip-mev/block-sdk/block"
-
-	"github.com/cometbft/cometbft/libs/log"
-	"github.com/cosmos/cosmos-sdk/store"
-	storetypes "github.com/cosmos/cosmos-sdk/store/types"
-
 	"github.com/skip-mev/block-sdk/block/utils"
 	mevlanetestutils "github.com/skip-mev/block-sdk/lanes/mev/testutils"
 	"github.com/skip-mev/block-sdk/testutils"
@@ -121,8 +118,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		s.Require().NoError(err)
 
 		// check tx
-		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
-		s.Require().NoError(err)
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
 
 		s.Require().Equal(uint32(1), res.Code)
 
@@ -136,7 +132,7 @@ func (s *CheckTxTestSuite) TestCheckTxMempoolParity() {
 		s.Require().NoError(err)
 
 		// check tx
-		res, err := handler(&cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
+		res := handler(cometabci.RequestCheckTx{Tx: txBz, Type: cometabci.CheckTxType_New})
 		s.Require().NoError(err)
 
 		s.Require().Equal(uint32(0), res.Code)
@@ -403,13 +399,8 @@ func (ba *baseApp) CommitMultiStore() storetypes.CommitMultiStore {
 
 // CheckTx is baseapp's CheckTx method that checks the validity of a
 // transaction.
-<<<<<<< HEAD
 func (baseApp) CheckTx(_ cometabci.RequestCheckTx) cometabci.ResponseCheckTx {
 	return cometabci.ResponseCheckTx{}
-=======
-func (ba *baseApp) CheckTx(_ *cometabci.RequestCheckTx) (*cometabci.ResponseCheckTx, error) {
-	return nil, fmt.Errorf("not implemented")
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 }
 
 // Logger is utilized to log errors.
@@ -423,12 +414,8 @@ func (ba *baseApp) LastBlockHeight() int64 {
 }
 
 // GetConsensusParams is utilized to retrieve the consensus params.
-<<<<<<< HEAD
 func (baseApp) GetConsensusParams(ctx sdk.Context) *cmtproto.ConsensusParams {
-	return ctx.ConsensusParams()
-=======
-func (ba *baseApp) GetConsensusParams(_ sdk.Context) cmtproto.ConsensusParams {
-	return cmtproto.ConsensusParams{
+	return &cmtproto.ConsensusParams{
 		Block: &cmtproto.BlockParams{
 			MaxBytes: 10000,
 			MaxGas:   10000,
@@ -436,7 +423,5 @@ func (ba *baseApp) GetConsensusParams(_ sdk.Context) cmtproto.ConsensusParams {
 		Evidence:  nil,
 		Validator: nil,
 		Version:   nil,
-		Abci:      nil,
 	}
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 }

@@ -6,16 +6,9 @@ import (
 	sdk "github.com/cosmos/cosmos-sdk/types"
 
 	"github.com/cosmos/cosmos-sdk/baseapp"
-<<<<<<< HEAD
 	"github.com/skip-mev/block-sdk/block"
 	"github.com/skip-mev/block-sdk/block/proposals"
 	"github.com/skip-mev/block-sdk/block/utils"
-=======
-
-	"github.com/skip-mev/block-sdk/v2/block"
-	"github.com/skip-mev/block-sdk/v2/block/proposals"
-	"github.com/skip-mev/block-sdk/v2/block/utils"
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 )
 
 type (

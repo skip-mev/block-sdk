@@ -344,17 +344,7 @@ func New(
 		mevLane,
 		anteHandler,
 		app.App.CheckTx,
-<<<<<<< HEAD
 		app.ChainID(),
-=======
-	)
-	checkTxHandler := checktx.NewMempoolParityCheckTx(
-		app.Logger(),
-		mempool,
-		cacheDecoder.TxDecoder(),
-		mevCheckTx.CheckTx(),
-		app.BaseApp,
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 	)
 
 	parityCheckTxHandler := checktx.NewMempoolParityCheckTx(
@@ -362,6 +352,7 @@ func New(
 		mempool,
 		cacheDecoder.TxDecoder(),
 		mevCheckTxHandler.CheckTx(),
+		app.BaseApp,
 	)
 
 	app.SetCheckTx(parityCheckTxHandler.CheckTx())

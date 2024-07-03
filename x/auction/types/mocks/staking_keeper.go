@@ -18,21 +18,12 @@ type StakingKeeper struct {
 func (_m *StakingKeeper) ValidatorByConsAddr(_a0 types.Context, _a1 types.ConsAddress) stakingtypes.ValidatorI {
 	ret := _m.Called(_a0, _a1)
 
-<<<<<<< HEAD
-	var r0 stakingtypes.ValidatorI
-	if rf, ok := ret.Get(0).(func(types.Context, types.ConsAddress) stakingtypes.ValidatorI); ok {
-=======
 	if len(ret) == 0 {
-		panic("no return value specified for GetValidatorByConsAddr")
+		panic("no return value specified for ValidatorByConsAddr")
 	}
 
-	var r0 stakingtypes.Validator
-	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.ConsAddress) (stakingtypes.Validator, error)); ok {
-		return rf(_a0, _a1)
-	}
-	if rf, ok := ret.Get(0).(func(context.Context, types.ConsAddress) stakingtypes.Validator); ok {
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
+	var r0 stakingtypes.ValidatorI
+	if rf, ok := ret.Get(0).(func(types.Context, types.ConsAddress) stakingtypes.ValidatorI); ok {
 		r0 = rf(_a0, _a1)
 	} else {
 		if ret.Get(0) != nil {
@@ -48,8 +39,7 @@ func (_m *StakingKeeper) ValidatorByConsAddr(_a0 types.Context, _a1 types.ConsAd
 func NewStakingKeeper(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *StakingKeeper {
+}) *StakingKeeper {
 	mock := &StakingKeeper{}
 	mock.Mock.Test(t)
 

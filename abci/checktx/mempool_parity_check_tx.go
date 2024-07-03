@@ -3,15 +3,9 @@ package checktx
 import (
 	"fmt"
 
-<<<<<<< HEAD
-	"github.com/cometbft/cometbft/libs/log"
-=======
-	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
-
-	"cosmossdk.io/log"
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
-
 	cmtabci "github.com/cometbft/cometbft/abci/types"
+	"github.com/cometbft/cometbft/libs/log"
+	cmtproto "github.com/cometbft/cometbft/proto/tendermint/types"
 	sdk "github.com/cosmos/cosmos-sdk/types"
 	sdkerrors "github.com/cosmos/cosmos-sdk/types/errors"
 
@@ -91,21 +85,10 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 			)
 		}
 
-<<<<<<< HEAD
-		// run the checkTxHandler
-		res := m.checkTxHandler(req)
-
-		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
-		// the app-side mempool
-		if isInvalidCheckTxExecution(res) && isReCheck {
-			// check if the tx exists first
-			if txInMempool {
-=======
 		// prepare cleanup closure to remove tx if marked
 		removeTx := false
 		defer func() {
 			if removeTx {
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 				// remove the tx
 				if err := m.mempl.Remove(tx); err != nil {
 					m.logger.Debug(
@@ -117,10 +100,10 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 		}()
 
 		// run the checkTxHandler
-		res, checkTxError := m.checkTxHandler(req)
+		res := m.checkTxHandler(req)
 		// if re-check fails for a transaction, we'll need to explicitly purge the tx from
 		// the app-side mempool
-		if isInvalidCheckTxExecution(res, checkTxError) && isReCheck && txInMempool {
+		if isInvalidCheckTxExecution(res) && isReCheck && txInMempool {
 			removeTx = true
 		}
 
@@ -138,7 +121,7 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), nil
+			)
 		}
 
 		consensusParams := sdkCtx.ConsensusParams()
@@ -163,17 +146,13 @@ func (m MempoolParityCheckTx) CheckTx() CheckTx {
 				0,
 				nil,
 				false,
-			), nil
+			)
 		}
 
 		return res
 	}
 }
 
-<<<<<<< HEAD
-func isInvalidCheckTxExecution(resp cmtabci.ResponseCheckTx) bool {
-	return resp.Code != 0
-=======
 // matchLane returns a Lane if the given tx matches the Lane.
 func (m MempoolParityCheckTx) matchLane(ctx sdk.Context, tx sdk.Tx) (block.Lane, error) {
 	var lane block.Lane
@@ -197,21 +176,19 @@ func (m MempoolParityCheckTx) matchLane(ctx sdk.Context, tx sdk.Tx) (block.Lane,
 	return lane, nil
 }
 
-func isInvalidCheckTxExecution(resp *cmtabci.ResponseCheckTx, checkTxErr error) bool {
-	return resp == nil || resp.Code != 0 || checkTxErr != nil
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
+func isInvalidCheckTxExecution(resp cmtabci.ResponseCheckTx) bool {
+	return resp.Code != 0
 }
 
 // GetContextForTx is returns the latest committed state and sets the context given
 // the checkTx request.
-func (m MempoolParityCheckTx) GetContextForTx(req *cmtabci.RequestCheckTx) sdk.Context {
+func (m MempoolParityCheckTx) GetContextForTx(req cmtabci.RequestCheckTx) sdk.Context {
 	// Retrieve the commit multi-store which is used to retrieve the latest committed state.
 	ms := m.baseApp.CommitMultiStore().CacheMultiStore()
 
 	// Create a new context based off of the latest committed state.
 	header := cmtproto.Header{
-		Height:  m.baseApp.LastBlockHeight(),
-		ChainID: m.baseApp.ChainID(),
+		Height: m.baseApp.LastBlockHeight(),
 	}
 	ctx, _ := sdk.NewContext(ms, header, true, m.baseApp.Logger()).CacheContext()
 

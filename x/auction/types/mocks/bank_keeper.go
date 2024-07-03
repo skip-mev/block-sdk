@@ -48,34 +48,12 @@ func (_m *BankKeeper) SendCoins(ctx types.Context, fromAddr types.AccAddress, to
 	return r0
 }
 
-<<<<<<< HEAD
-=======
-// SendCoinsFromAccountToModule provides a mock function with given fields: ctx, senderAddr, recipientModule, amt
-func (_m *BankKeeper) SendCoinsFromAccountToModule(ctx context.Context, senderAddr types.AccAddress, recipientModule string, amt types.Coins) error {
-	ret := _m.Called(ctx, senderAddr, recipientModule, amt)
-
-	if len(ret) == 0 {
-		panic("no return value specified for SendCoinsFromAccountToModule")
-	}
-
-	var r0 error
-	if rf, ok := ret.Get(0).(func(context.Context, types.AccAddress, string, types.Coins) error); ok {
-		r0 = rf(ctx, senderAddr, recipientModule, amt)
-	} else {
-		r0 = ret.Error(0)
-	}
-
-	return r0
-}
-
->>>>>>> f1cde2a (fix: mempool lane size check on `CheckTx` (#561))
 // NewBankKeeper creates a new instance of BankKeeper. It also registers a testing interface on the mock and a cleanup function to assert the mocks expectations.
 // The first argument is typically a *testing.T value.
 func NewBankKeeper(t interface {
 	mock.TestingT
 	Cleanup(func())
-},
-) *BankKeeper {
+}) *BankKeeper {
 	mock := &BankKeeper{}
 	mock.Mock.Test(t)
 
