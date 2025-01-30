@@ -102,9 +102,8 @@ func (handler *MEVCheckTxHandler) CheckTx() CheckTx {
 					"err", rec,
 				)
 
-				err = fmt.Errorf("panic in check tx handler: %s", rec)
 				resp = sdkerrors.ResponseCheckTxWithEvents(
-					err,
+					fmt.Errorf("panic in check tx handler: %s", rec),
 					0,
 					0,
 					nil,
