@@ -1,0 +1,78 @@
+{
+  "$schema": "https://mintlify.com/schema.json",
+  "name": "Skip",
+  "logo": {
+    "light": "/logo/light.png",
+    "dark": "/logo/dark.png"
+  },
+  "favicon": "/favicon.png",
+  "colors": {
+    "primary": "#0E0E0E",
+    "light": "#FAFAFA",
+    "dark": "#0E0E0E",
+    "background": {
+      "dark": "#151617"
+    }
+  },
+  "topbarLinks": [
+    {
+      "name": "Products",
+      "url": "https://skip.money/products"
+    },
+    {
+      "name": "Contact",
+      "url": "https://skip.money/contact"
+    },
+    {
+      "name": "Research",
+      "url": "https://ideas.skip.money"
+    },
+    {
+      "name": "Jobs",
+      "url": "https://jobs.skip.money"
+    }
+  ],
+  "modeToggle": {
+    "default": "dark"
+  },
+  "topAnchor": {
+    "name": "Block SDK",
+    "icon": "code"
+  },
+  "anchors": [
+    {
+      "name": "Home",
+      "icon": "house",
+      "url": "https://skip.mintlify.app"
+    }
+  ],
+  "navigation": [
+    {
+      "group": "Block SDK",
+      "pages": [
+        "docs/overview",
+        "docs/integrate",
+        "docs/how-it-works",
+        "docs/for-searchers",
+        {
+          "group": "Lane App Store",
+          "pages": [
+            {
+              "group": "Choose Your Lanes",
+              "pages": [
+                "docs/lane-app-store/choose-your-lanes/mev-lane",
+                "docs/lane-app-store/choose-your-lanes/free-lane",
+                "docs/lane-app-store/choose-your-lanes/custom-fee-market-lane"
+              ]
+            },
+            "docs/lane-app-store/build-your-own-lane"
+          ]
+        }
+      ]
+    }
+  ],
+  "footerSocials": {
+    "twitter": "https://twitter.com/skipprotocol",
+    "discord": "https://discord.com/invite/hFeHVAE26P"
+  }
+}
